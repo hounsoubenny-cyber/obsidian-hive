@@ -6,14 +6,11 @@ Created on Wed Mar  4 11:48:38 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
+import os
 import asyncio
 import traceback
 import aiohttp
 import time
-import signal
 import atexit
 from datetime import datetime
 from urllib.parse import urlparse
@@ -23,34 +20,12 @@ from scanner_ia.base_class.crawler_base_class import CrawlerResult, WorkerResult
 from scanner_ia.scanner_utils.signal_manager import signal_manager
 from scanner_ia.core.parser import Parser
 from nest_asyncio import apply
-# from loguru import logger as logger_crawler
 from scanner_ia.scanner_utils.logger import get_logger
 from typing import Optional, List
 from scanner_ia.scanner_utils.helpers.resolve_helpers import resolve_helpers, HelperCall
 
 logger_crawler = get_logger()
-# logger_crawler.remove()
-# logger_crawler.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_crawler.add(
-#     "logs/crawler_logs.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
-apply()
 
 dir_ = os.path.dirname(os.path.abspath(__file__))
 s = os.path.join(dir_, "var", "crawler_cache")
@@ -99,7 +74,7 @@ class Config:
         self.MAX_DEEPTH = 5
         self.MAX_PAGES = 1000
         self.JOIN_TIMEOUT = 10 * 10
-        self.GET_TIMEOUT = 1
+        self.GET_TIMEOUT = 2
         self.SAVE_PERIOD = 100
         self.DEBUG = True
         self.Semaphore = 50
@@ -112,6 +87,7 @@ class Config:
         self.EMPTY_MAX_COUNT = 3
         self.EMPTY_AWAIT_BETWEEN = 10
         self.SKIP_EXTERNAL_LINKS:bool = True
+        self.USE_CACHE_FOR_GET_LINKS: bool = True
     
 
 class QueueEmptyError(Exception):
@@ -342,13 +318,12 @@ class Crawler:
                 
     async def _worker(
         self, 
-        url:str, 
-        visited:set, 
-        result:CrawlerResult, 
-        queue:asyncio.Queue, 
-        signal_queue:asyncio.Queue,
-        lock:asyncio.Lock, 
-        worker_id:str="",
+        url: str, 
+        visited: set, 
+        result: CrawlerResult, 
+        queue: asyncio.Queue, 
+        lock: asyncio.Lock, 
+        worker_id :str = "",
         use_playwright: bool = False
     ):
         """
@@ -382,18 +357,27 @@ class Crawler:
         """
         
         local_count = 0
+        get_timeout_err = 0
+        max_get_timeout_err = 3
+        queue_empty_count = 0
+        max_queue_empty_count = 3
         while True:
             get_item = False
             can_save = False
             can_put = False
             worker_object = WorkerResult()
             get_all_links_result = None
-            
             try:
                 worker_object:WorkerResult | None = await asyncio.wait_for(fut=queue.get(), timeout=self.config.GET_TIMEOUT)
                 get_item = True
+                get_timeout_err = 0
+                queue_empty_count = 0
+                #objet: {worker_object.to_dict() if hasattr(worker_object, 'to_dict') else None}
+                print(
+                    f"ID: {worker_id},  "
+                    f"Taille queue: {queue.qsize()}"
+                )
                 if worker_object is None:
-                    await signal_queue.put(None)
                     break
                 
                 if worker_object.deep >= self.config.MAX_DEEPTH or \
@@ -401,6 +385,7 @@ class Crawler:
                        continue
                 
                 same_domain = self.parser.is_same_domain(worker_object.url, url) 
+                print("Same domain:", same_domain, "base url:", url)
                 # async with lock:
                 #     is_same = self.parser.is_same_domain(worker_object.url, url)
                 #     should_skip = self.config.RESTRAIN_FOR_THIS_DOMAIN and not is_same
@@ -434,7 +419,8 @@ class Crawler:
                             worker_object.url, 
                             self.config.Semaphore, 
                             self.config.SKIP_EXTERNAL_LINKS,
-                            use_playwright=use_playwright
+                            use_playwright=use_playwright,
+                            use_cache=self.config.USE_CACHE_FOR_GET_LINKS
                         )
                         if get_all_links_result:
                             if get_all_links_result.error:
@@ -449,7 +435,7 @@ class Crawler:
                             logger_crawler.warning(f"Dernière tentative échoué pour {worker_object.url}")
                         await asyncio.sleep(self.config.DELAY)
                 
-                # print(get_all_links_result)
+                # print("Get all links results:", get_all_links_result)
                 if not get_all_links_result or not get_all_links_result.status or get_all_links_result.error:
                     continue
                 
@@ -458,6 +444,9 @@ class Crawler:
                 worker_object.same_domain = same_domain
                 worker_object.other_links = list(dict.fromkeys(get_all_links_result.other_links))
                 worker_object.type = get_all_links_result.type
+                print(
+                    f"ID: {worker_id}, objet: {worker_object.to_dict() if hasattr(worker_object, 'to_dict') else None} "
+                )
                 
                 for link, data in get_all_links_result.html_links.items():
                     # print(link, data)
@@ -501,22 +490,33 @@ class Crawler:
                 can_put = True
                 
             except asyncio.TimeoutError:
+                logger_crawler.info("Timeout Get!")
+                get_timeout_err += 1
                 async with lock:
-                    if queue.empty():  
+                    if queue.empty() and get_timeout_err >= max_get_timeout_err:
+                        logger_crawler.info("Queue vide, tout sera marqué done !")
                         for _ in range(self.config.MAX_WORKERS):
                             await queue.put(None)
-                    await signal_queue.put(None)
-                break
+                            # Remarque: EN fonction du timing, aussi bizarre que ça paraît, les none sont mis puis un autre
+                            # worker ajoute les objets, on a donc None, object et les workers mm si les workers mettent task
+                            # done, join va pas ceder (va bloqué) car tout les object dedans non pas été mis task done
+                        for _ in range(queue.qsize()):
+                            try:
+                                queue.task_done() 
+                            except Exception:
+                                pass
+                        break
             
             except asyncio.CancelledError:
                 logger_crawler.debug(f"Worker {worker_id} annulé")
-                await signal_queue.put(None)
                 break
             
             except asyncio.QueueEmpty:
+                queue_empty_count += 1
                 logger_crawler.debug("Queue vide !")
-                await signal_queue.put(None)
-                break
+                # Mm logique par précaution
+                if queue_empty_count >= max_queue_empty_count:
+                    break
             
             except KeyboardInterrupt:
                 break
@@ -535,7 +535,10 @@ class Crawler:
                             if can_put:
                                 result.result.append(worker_object)
                                     
-                    queue.task_done()
+                    try:
+                        queue.task_done() 
+                    except Exception:
+                        pass
                 
                 async with lock:
                     if can_save and len(result.result) % self.config.SAVE_PERIOD == 0:
@@ -623,9 +626,7 @@ class Crawler:
         visited = set()
         result = CrawlerResult()
         queue = asyncio.Queue(maxsize=self.config.MAX_QUEUE)
-        lock = asyncio.Lock()  
-        signal_queue = asyncio.Queue()
-        done, pending = [], []
+        lock = asyncio.Lock()
         
         try:
             # ========== HELPERS (si fournie) ==========
@@ -663,7 +664,7 @@ class Crawler:
             
             url = url.rstrip("/")
             result.url = url
-            result.type = await self.parser.classify_link(url)
+            result.type = await self.parser.classify_link(url, use_cache=self.config.USE_CACHE_FOR_GET_LINKS)
             result.type = result.type.type
             
             restored = False
@@ -702,7 +703,6 @@ class Crawler:
                         result=result, 
                         queue=queue, 
                         lock=lock, 
-                        signal_queue=signal_queue,
                         worker_id=f"{i}_{url[:10]}_{base_id}",
                         use_playwright=use_playwright
                     )
@@ -710,38 +710,14 @@ class Crawler:
                     for i in range(self.config.MAX_WORKERS)
                 ]
                 
-            async def monitor_queue():
-                empty_count = 0
-                while not queue.empty():
-                    await asyncio.sleep(0.2)
-                    try:
-                        item = signal_queue.get_nowait()
-                        if item is None:
-                            logger_crawler.warning("🚨 SIGNAL NONE DÉTECTÉ ! ARRÊT IMMÉDIAT")
-                            raise QueueEmptyError("Signal d'arrêt reçu d'un worker")
-            
-                    except asyncio.QueueEmpty:
-                        pass
-                    
-                    if queue.empty():
-                        await asyncio.sleep(self.config.EMPTY_AWAIT_BETWEEN)
-                        if queue.empty():
-                            empty_count += 1
-                    if empty_count >= self.config.EMPTY_MAX_COUNT:
-                        logger_crawler.info("📭 Queue vide, arrêt normal")
-                        raise asyncio.QueueEmpty("📭 Queue vide, arrêt normal")
-                    
-            
-            monitor_task = asyncio.create_task(monitor_queue())
-            join_task = asyncio.create_task(asyncio.wait_for(queue.join(), self.config.JOIN_TIMEOUT))
+            join_task = asyncio.create_task(
+                asyncio.wait_for(
+                    queue.join(),
+                    timeout=self.config.JOIN_TIMEOUT
+                )
+            )
             try:
-                done, pending = await asyncio.wait(
-                    [monitor_task, join_task],
-                    timeout=self.config.JOIN_TIMEOUT,
-                    return_when=asyncio.FIRST_EXCEPTION
-                    )
-                for task in done:
-                    task.result()   # Pour propager l'erreur
+                await join_task
                 logger_crawler.info("Queue vidée avant timeout")
                 
             except (asyncio.TimeoutError, asyncio.QueueEmpty, QueueEmptyError) as e:
@@ -767,18 +743,10 @@ class Crawler:
                     
             finally:
                 self.stop_task(tasks)
-                if pending:
-                    self.stop_task(pending)
-                    await asyncio.gather(*pending, return_exceptions=True)
                 for _ in range(self.config.MAX_WORKERS):
                     await queue.put(None)
                 await asyncio.gather(*tasks, return_exceptions=True)
-            
-            try:
-                monitor_task.cancel()
-            except Exception:
-                pass
-            
+                        
             elapsed = float(f"{time.time() - start_time :.2f}")
             await self._compute_stats(result, elapsed)
             await self.save_worker(url, visited, result)
@@ -938,11 +906,15 @@ async def test_crawl_detailed(
     session = aiohttp.ClientSession(connector=connector)
     crawler = Crawler(session)
     crawler.config.RESTRAIN_FOR_THIS_DOMAIN = True
+    crawler.config.MAX_WORKERS = 5
+    crawler.config.JOIN_TIMEOUT = 600
+    crawler.config.USE_CACHE_FOR_GET_LINKS = False
     try:
         test_urls = {
             "test_local": {
                 "name": "TEST Local", 
-                "urls": "http://localhost:8080", 
+                "urls": "https://www.wikipedia.org/", 
+                # "urls": "http://localhost:8081", 
                 "mode": "simple",
                 "helpers": helpers,
                 "raise_on_helper_error": raise_on_helper_error
@@ -969,11 +941,11 @@ async def test_crawl_detailed(
                 helpers=test_info.get('helpers'),
                 raise_on_helper_error=test_info.get('raise_on_helper_error', True),
             )
-            
+            # print(f"  Cookies: {list(session.cookie_jar)}")
             elapsed = time.time() - start_time
             
             logger_crawler.info(f"\n✅ Terminé en {elapsed:.2f}s")
-            logger_crawler.info(f"📊 Résultat:")
+            logger_crawler.info("📊 Résultat:")
             logger_crawler.info(f"   └─ Succès: {result.error is None}")
             logger_crawler.info(f"   └─ Pages: {len(result.result)}")
             if result.error:
@@ -1023,6 +995,7 @@ async def quick_test(helpers: Optional[List[callable]] = None, raise_on_helper_e
     crawler.config.MAX_PAGES = 10
     crawler.config.MAX_DEEPTH = 2
     crawler.config.DEBUG = True
+    crawler.config.MAX_WORKERS = 100
     
     logger_crawler.info("="*60)
     logger_crawler.info("TEST RAPIDE DU CRAWLER")
@@ -1038,6 +1011,7 @@ async def quick_test(helpers: Optional[List[callable]] = None, raise_on_helper_e
                 url=url, 
                 restore=False,
                 helpers=helpers,
+                use_playwright=True,
                 raise_on_helper_error=raise_on_helper_error
             )
             logger_crawler.info(f"   Pages: {len(result.result)}")
@@ -1051,15 +1025,17 @@ async def quick_test(helpers: Optional[List[callable]] = None, raise_on_helper_e
 
 
 if __name__ == "__main__":
+    apply()
     from scanner_ia.scanner_utils.helpers.dvwa_helpers import dvwa_full_setup
     
-    URL = "http://localhost:8080"
+    URL = "http://localhost:8081"
+    
     # Helper format: [func, args, kwargs]
     # session sera ajouté automatiquement
     helpers = [
         [dvwa_full_setup, (URL, "admin", "password", "low")]
     ]
-    helpers=[{'name': 'dvwa_auth',      'kwargs': {'base_url': 'http://localhost:8080', 'password': 'password', 'username': 'admin'}}]
+    helpers=[{'name': 'dvwa_auth',      'kwargs': {'base_url': 'http://localhost:8081', 'password': 'password', 'username': 'admin'}}]
     # Test avec helpers
     asyncio.run(test_crawl_detailed(
         restore=False,

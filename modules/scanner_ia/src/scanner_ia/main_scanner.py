@@ -416,7 +416,65 @@ class Scanner:
             if self.debug:
                 logger.error(traceback.format_exc())
             raise PhaseError(f"Erreur inattendue dans {phase_name}: {e}") from e
+    
+    
+    def _propagate_session(self, session: aiohttp.ClientSession):
+        """
+        Met à jour de façon défensive la référence de session dans toute l'arborescence
+        des sous-composants (Crawler, Parser, Fetcher, Fuzzer).
+        """
+        self.session = session
+        
+        # Liste de tous les composants susceptibles de porter un attribut .session
+        components = []
+        
+        # 1. Arborescence AnalyzerHelper -> Crawler -> Parser -> Fetcher
+        ah = getattr(self, "analyzer_helper", None)
+        if ah is not None:
+            components.append(ah)
+            crawler = getattr(ah, "crawler", None)
+            if crawler is not None:
+                components.append(crawler)
+                parser = getattr(crawler, "parser", None)
+                if parser is not None:
+                    components.append(parser)
+                    components.append(getattr(parser, "fetcher", None))
 
+        # 2. Arborescence Fuzzer -> Parser -> Fetcher
+        fuzzer = getattr(self, "fuzzer", None)
+        if fuzzer is not None:
+            components.append(fuzzer)
+            parser = getattr(fuzzer, "parser", None)
+            if parser is not None:
+                components.append(parser)
+                components.append(getattr(parser, "fetcher", None))
+
+        # 3. Application atomique sur tous les objets valides
+        for comp in components:
+            if comp is not None and hasattr(comp, "session"):
+                try:
+                    comp.session = session
+                except Exception as e:
+                    logger.warning(f"Impossible de propager la session sur {type(comp).__name__}: {e}")
+
+    def _ensure_session(self) -> aiohttp.ClientSession:
+        """
+        Garantit qu'une session HTTP active, valide et ouverte est disponible.
+        Recrée et propage automatiquement une nouvelle session si l'existante est fermée.
+        """
+        is_closed = True
+        try:
+            is_closed = (self.session is None) or self.session.closed
+        except Exception:
+            is_closed = True
+
+        if is_closed:
+            logger.debug("Création et propagation d'une nouvelle aiohttp.ClientSession")
+            new_session = self._get_session()
+            self._propagate_session(new_session)
+
+        return self.session
+    
     async def scan(
         self,
         url: str,
@@ -445,7 +503,7 @@ class Scanner:
             url = "https://" + url
 
         allowed_domains = allowed_domains or ["http://127.0.0.1", "http://localhost"]
-
+        
         # Vérifications pré-scan
         if not self.is_in_scope(url, allowed_domains):
             raise ScopeError(f"URL {url} hors scope. Domaines autorisés: {allowed_domains}")
@@ -490,7 +548,8 @@ class Scanner:
         fuzzer_result = None
         features_data = None
         ml_predictions = None
-
+        
+        self._ensure_session()
         try:
             # ========== HELPERS (si fournie) ==========
             if helpers:

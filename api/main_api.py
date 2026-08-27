@@ -48,23 +48,23 @@ from simulateur_attaque_ia.api.api import (
     start_tasks as sim_start_tasks, stop_task as sim_stop_task,
     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
 )
-from obsidian_hive.api.core_shared import get_engine
-from obsidian_hive.api.core_router import (
+from obsidian_hive.api.api_utils.core_shared import get_engine
+from obsidian_hive.api.routers.core_router import (
     router as core_router,
     router_no_auth as core_public_router
 )
-from obsidian_hive.api.core_ws_router import ws_router
-from obsidian_hive.api.donwloads_router import (
+from obsidian_hive.api.routers.core_ws_router import ws_router
+from obsidian_hive.api.routers.donwloads_router import (
     router as download_router, 
     public_router as download_public_router
 )
-from obsidian_hive.api.anti_phishing_extension_router import (
+from obsidian_hive.api.routers.anti_phishing_extension_router import (
     router_ext as anti_phishing_extension_router
 )
 from obsidian_hive.core.managers.extension_token_manager import ExtensionTokenManager
-from obsidian_hive.api.utils_router import router as utils_router
-from obsidian_hive.api.manager_router import router as manager_router
-from obsidian_hive.api.login_router import router as login_router
+from obsidian_hive.api.routers.utils_router import router as utils_router
+from obsidian_hive.api.routers.manager_router import router as manager_router
+from obsidian_hive.api.routers.login_router import router as login_router
 from modules_utils.logger import get_logger
 from modules_utils.limiter import limiter, get_remote_address
 from obsidian_hive.core.assets.workflows.workflow_base import WorkflowBase

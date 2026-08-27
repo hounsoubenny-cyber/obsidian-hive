@@ -6,9 +6,7 @@ Created on Tue Mar 10 20:16:59 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
-
+import os
 import json
 import copy
 import html
@@ -17,40 +15,16 @@ import traceback
 import time
 import random
 import string
-import asyncio
-from urllib.parse import parse_qs, urlparse, urlunparse, quote, urlencode
-# from loguru import logger as logger_payload_generator
-from scanner_utils.logger import get_logger
-from base_class.payloads_base_class import Payload, Payloads, PayloadResult
-from base_class.analyser_helper_base_class import OneAnalyzerHelperResult
-from base_class.parser_base_class import ParseElementResult
-from fuzzer.config import PAYLOADS_FILE, DEFAULT_FORM_VALUES
-from fuzzer.query_resolver import resolve_query_params, set_known_params_dir
+from urllib.parse import urlparse, urlunparse, quote, urlencode
+from scanner_ia.scanner_utils.logger import get_logger
+from scanner_ia.base_class.payloads_base_class import Payload, Payloads, PayloadResult
+from scanner_ia.base_class.analyser_helper_base_class import OneAnalyzerHelperResult
+from scanner_ia.base_class.parser_base_class import ParseElementResult
+from scanner_ia.fuzzer.config import PAYLOADS_FILE, DEFAULT_FORM_VALUES
+from scanner_ia.fuzzer.query_resolver import resolve_query_params, set_known_params_dir
 from nest_asyncio import apply
 
-apply()
-
 logger_payload_generator = get_logger()
-# logger_payload_generator.remove()
-# logger_payload_generator.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_payload_generator.add(
-#     "logs/payload_generator.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 # ─── Vulnérabilités envoyées en XML ──────────────────────────────────────────
 _XML_VULNS = {"XXE"}
@@ -485,20 +459,24 @@ class PayloadGenerator:
                 if not champs:
                     continue
                 
-                data = copy.deepcopy(form)
-                
                 # Stratégie A — toutes les clés simultanément
-                data["champs"] = [
+                # NB: on construit un dict FRAIS à chaque variante stockée.
+                # Réutiliser/muter un seul objet 'data' partagé entre
+                # plusieurs Payload() créait un bug d'aliasing : toutes les
+                # variantes finissaient par pointer vers le même objet et
+                # affichaient donc toutes la DERNIÈRE valeur écrite, perdant
+                # la couverture de test champ-par-champ.
+                data_a = {**form, "champs": [
                         {
                             ch["name"]: p
                             for ch in champs
                         }
-                    ]
+                    ]}
                 
                 new_variant = Payload()
                 new_variant.update_from_dict({
                     "base_element": form,
-                    "new_element": data,
+                    "new_element": data_a,
                     "element_type": "dict",
                     "payload_injected": p,
                     "vuln_name": vuln_name
@@ -515,12 +493,12 @@ class PayloadGenerator:
                     modified_copy = copy.copy(modified)
                     modified_copy[key] = p
                 
-                    data["champs"] = [modified_copy]
+                    data_b = {**form, "champs": [modified_copy]}
                     
                     new_variant = Payload()
                     new_variant.update_from_dict({
                         "base_element": form,
-                        "new_element": data,
+                        "new_element": data_b,
                         "element_type": "dict",
                         "payload_injected": p,
                         "vuln_name": vuln_name
@@ -855,7 +833,7 @@ class PayloadGenerator:
                 
                 # Tester chaque type de vulnérabilité
                 url_stats = {}
-                for vuln_name in ["XSS", "SQLi", "LFI", "CMDI", "OPEN_REDIRECT", "BufOvr"]:
+                for vuln_name in ["XSS", "SQLi", "CMDi", "OpenRedirect", "BufOvr"]:
                     if vuln_name not in self.payloads.get("payloads", {}):
                         continue
                     
@@ -900,6 +878,7 @@ class PayloadGenerator:
 
 
 if __name__ == "__main__":
+    apply()
     # Test avec le nouveau format
     pg = PayloadGenerator(debug=True)
     

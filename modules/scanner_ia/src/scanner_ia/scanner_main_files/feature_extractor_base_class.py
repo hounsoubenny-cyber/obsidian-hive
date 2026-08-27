@@ -21,10 +21,10 @@ class WorkerExtractorEntry(Base):
     )
     def __init__(self):
         self.url:str = ""
-        self.analyzer_helper_element: OneAnalyzerHelperResult = OneAnalyzerHelperResult()
-        self.fuzzer_element: List[WorkerFuzzerResult] = []
-        self.passive_analyzer_result: PagePassiveResult = PagePassiveResult()
-        self.code_analyzer_result: Dict[str, CheckResult|Dict[str, CheckResult]] = {}
+        self.analyzer_helper_element:OneAnalyzerHelperResult = OneAnalyzerHelperResult()
+        self.fuzzer_element:List[WorkerFuzzerResult] = []
+        self.passive_analyzer_result:PagePassiveResult = PagePassiveResult()
+        self.code_analyzer_result:Dict[str, CheckResult|Dict[str, CheckResult]] = {}
     
     def update_from_dict(self, data: dict):
         for key, value in data.items():
@@ -35,8 +35,8 @@ class WorkerExtractorEntry(Base):
         return {
             "url": self.url,
             "analyzer_helper_element": self.analyzer_helper_element.to_dict() if deep else self.analyzer_helper_element,
-            "fuzzer_element": [p.to_dict(deep=deep) for p in self.fuzzer_element] if deep else self.fuzzer_element,
-            "code_analyzer_result": self.code_analyzer_result,
+            "fuzzer_element": [p.to_dict() for p in self.fuzzer_element] if deep else self.fuzzer_element,
+            "code_analyzer_result": self.code_analyzer_result.to_dict(deep),
             "passive_analyzer_result": self.passive_analyzer_result.to_dict(deep),
         }
     

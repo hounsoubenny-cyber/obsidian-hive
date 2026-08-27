@@ -11,7 +11,7 @@ from fastapi import (
     HTTPException, APIRouter, status,
     Request
 )
-from obsidian_hive.api.models import LoginData, RefreshTokenData
+from obsidian_hive.api.models.models import LoginData, RefreshTokenData
 from modules_utils.api_dependencies import AuthManager
 from modules_utils.limiter import limiter
 from obsidian_hive.api.ap_config import LIMITE

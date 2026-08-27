@@ -26,10 +26,10 @@ from scanner_ia.base_class.parser_base_class import (
 from scanner_ia.core.core_config import (
     EXTENSIONS_BY_CATEGORY, CONTENT_TYPE_BY_CATEGORY, TESTS_NORMALIZE, USER_AGENT
 )
+from modules_utils.keyed_lock import KeyedLock
 from scanner_ia.scanner_utils.signal_manager import signal_manager
 from nest_asyncio import apply
 from scanner_ia.scanner_utils.logger import get_logger
-from cachetools import TTLCache
 
 logger_parser = get_logger()
 
@@ -47,7 +47,7 @@ CACHE = Cache(
 )
 CACHE_TIMEOUT = 24 *3600
 
-ROBOTS_DOMAIN_TTL_CACHE = TTLCache(maxsize=1000, ttl=60 * 30)
+LOCK = KeyedLock()
 def close_cache():
 	if hasattr(CACHE, "close"):
 		CACHE.close()
@@ -121,7 +121,6 @@ class Parser:
         self._init_cache()
         self.config = Config()
         self.update_conf(kwargs)
-        self._robot_global_lock = asyncio.Lock()
         
     def _init_cache(self):
         for k in self.keys:
@@ -460,13 +459,7 @@ class Parser:
             
             rp = robotparser.RobotFileParser()
             body = None
-            async with self._robot_global_lock:
-                lock = ROBOTS_DOMAIN_TTL_CACHE.get(domain, None)
-                if lock is None:
-                    ROBOTS_DOMAIN_TTL_CACHE[domain] = asyncio.Lock()
-                    lock = ROBOTS_DOMAIN_TTL_CACHE.get(domain)
-                    
-            async with lock:
+            async with LOCK.acquire(f"parser:{domain}"):
                 for scheme in schemes:
                     robot_url = f"{scheme}://{domain}/robots.txt"
                     r = await self.fetcher.fetch_once(

@@ -6,43 +6,19 @@ Created on Sun Mar 15 07:17:18 2026
 @author: hounsousamuel
 """
 
-import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 import random
 from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
+
 suppres_warnings()
+
 import pandas as pd
 import numpy as np
 from scanner_ia.ml_model.datamanager import DataManager, _DEFAULT_TARGET_FUNC
-from scanner_ia.ml_model.config import VULNS, FEATURES_LIST
 from scanner_ia.ml_model.modelmanager import ModelManager
 
 # from loguru import logger as scanner_ia_logger
 from scanner_ia.scanner_utils.logger import get_logger
 scanner_ia_logger = get_logger()
-
-# Configuration des logs
-# scanner_ia_logger.remove()
-# scanner_ia_logger.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# scanner_ia_logger.add(
-#     "logs/scanner_ia.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 pd.set_option("display.max_rows", 200)
 pd.set_option("display.max_columns", 200)
@@ -175,50 +151,64 @@ class ScannerIA:
         return self.model_manager.predict(X, threshold)
     
     def scanner_predict(self, X, threshold:float|np.ndarray = 0.5):
+        """
+        NOTE : "SAFE" n'est plus une classe entraînée/prédite par le modèle
+        (self.model_manager.mlb.classes_ ne contient QUE les vraies vulns :
+        XSS, SQLi, CSRF, ...). "safe" est déduit après coup : une page est
+        safe si aucune vuln n'a franchi le seuil. C'est donc structurellement
+        impossible d'obtenir "safe" + une vuln en même temps — contrairement
+        à l'ancienne approche où SAFE était un label comme un autre et où il
+        fallait une rustine post-hoc pour rattraper les incohérences.
+        """
         predict = self.model_manager.predict(X, threshold)
         predict_transform = self.model_manager.mlb.inverse_transform(predict)
         proba = self.predict_proba(X)
         classes = self.model_manager.mlb.classes_
-        safe_classe = "SAFE"
+
         to_return = {
             "predict": {k: list(v) for k, v in enumerate(predict_transform)},
             "proba": {i: dict(zip(classes, row)) for i, row in enumerate(proba)},
             "proba_predict": {i: {c:r for c, r in zip(classes, row) if c in predict_transform[i]} for i, row in enumerate(proba)},
             }
-        for k, v in list(to_return.items()):
-            for i, j in v.items():
-                if safe_classe in j:
-                    if isinstance(j, list):
-                        to_return[k][i] = [safe_classe]
-                    elif isinstance(j, dict):
-                        if safe_classe in to_return["predict"][i]:
-                            to_return[k][i] = {a : (b if a == safe_classe else random.uniform(0.01, 0.3)) for a, b in j.items()}
-                        
+
+        # Déduit, jamais prédit : une page est "safe" si aucune vuln n'est
+        # retenue par le modèle (predict vide). Aucun seuil séparé sur un
+        # label "safe" — ça évite justement la classe d'incohérence qu'on
+        # cherche à éliminer.
+        to_return["is_safe"] = {
+            i: (len(labels) == 0) for i, labels in to_return["predict"].items()
+        }
+
         return to_return
 
 if __name__ == "__main__":
+    from scanner_ia.ml_model.config import VULNS, FEATURES_LIST
+    # Démo du nouveau format : "SAFE" n'existe plus nulle part. "is_safe"
+    # est calculé automatiquement (predict vide) — impossible d'avoir une
+    # page à la fois "safe" et détectée vulnérable.
     to_return = {
         "predict": {
             0: ["XSS", "SQLi"],
             1: [],
             2: ["CSRF"],
-            3: ["SAFE"],
+            3: ["XSS"],
             4: []
         },
         "proba": {
-            0: {"XSS": 0.87, "SQLi": 0.76, "CSRF": 0.12, "SAFE": 0.05},
-            1: {"XSS": 0.08, "SQLi": 0.05, "CSRF": 0.03, "SAFE": 0.92},
-            2: {"XSS": 0.12, "SQLi": 0.04, "CSRF": 0.91, "SAFE": 0.08},
-            3: {"XSS": 0.94, "SQLi": 0.23, "CSRF": 0.11, "SAFE": 0.99},
-            4: {"XSS": 0.05, "SQLi": 0.03, "CSRF": 0.02, "SAFE": 0.96}
+            0: {"XSS": 0.87, "SQLi": 0.76, "CSRF": 0.12},
+            1: {"XSS": 0.08, "SQLi": 0.05, "CSRF": 0.03},
+            2: {"XSS": 0.12, "SQLi": 0.04, "CSRF": 0.91},
+            3: {"XSS": 0.94, "SQLi": 0.23, "CSRF": 0.11},
+            4: {"XSS": 0.05, "SQLi": 0.03, "CSRF": 0.02}
         },
         "proba_predict": {
             0: {"XSS": 0.87, "SQLi": 0.76},
             1: {},
             2: {"CSRF": 0.91},
-            3: {"SAFE": 0.99},
+            3: {"XSS": 0.94},
             4: {}
-        }
+        },
+        "is_safe": {0: False, 1: True, 2: False, 3: False, 4: True},
     }
     
     urls = ["sam.com", "sam1.com", "sam2.com", "sam3.com"]
@@ -240,13 +230,16 @@ if __name__ == "__main__":
     # y_col  = "labels"
 
     # X = df[X_cols].fillna(0).replace([np.inf, -np.inf], 0).to_numpy()
-    # y = df[y_col].apply(eval).tolist()   # "['XSS']" → ['XSS']
+    # y = df[y_col].apply(eval).tolist()   # "['XSS']" → ['XSS'], "['SAFE']" → []  (⚠️ voir note dataset ci-dessous)
 
     # print(f"✅ X shape : {X.shape}")
     # print(f"✅ y samples : {y[:5]}")
 
-    # # 3. Ajouter SAFE aux classes
-    # all_classes = ["SAFE"] + VULNS
+    # # 3. Classes = uniquement les vraies vulns, SAFE n'est plus une classe
+    # # entraînée. Les pages saines doivent avoir un label vide [] dans le
+    # # dataset, pas ["SAFE"] (sinon MultiLabelBinarizer lèvera une erreur
+    # # car "SAFE" n'appartient plus à `classes`).
+    # all_classes = VULNS
 
     # # 4. Instancier et entraîner
     # scanner = ScannerIA(

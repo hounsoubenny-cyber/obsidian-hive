@@ -10,6 +10,8 @@ import json5
 import json
 import re
 import subprocess
+import tempfile
+from uuid import uuid4
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 from scanner_utils.logger import get_logger
@@ -83,12 +85,16 @@ def discover_params_arjun(
     if url in _ARJUN_CACHE:
         return {k: list(v) for k, v in _ARJUN_CACHE[url].items()}
 
-    cmd = ["arjun", "-u", url, "--stable", "-oJ", "/tmp/arjun_result.json"]
+    # Fichier de sortie unique par appel : évite que deux scans parallèles
+    # n'écrasent/ne lisent le même fichier /tmp partagé.
+    out_path = Path(tempfile.gettempdir()) / f"arjun_{uuid4().hex}.json"
+
+    cmd = ["arjun", "-u", url, "--stable", "-oJ", str(out_path)]
     if wordlist:
         cmd += ["-w", wordlist]
 
     try:
-        result = subprocess.run(
+        subprocess.run(
             cmd,
             capture_output=True,
             text=True,
@@ -105,12 +111,19 @@ def discover_params_arjun(
         return None
 
     params = {}
-    for line in result.stdout.splitlines():
-        if "[+]" in line or "Found" in line:
-            matches = re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]{1,30})\b', line)
-            for m in matches:
-                if m not in ("Found", "GET", "POST", "the", "in", "at"):
-                    params[m] = ["test"]
+    try:
+        if out_path.exists():
+            with open(out_path, "r", encoding="utf-8") as f:
+                arjun_data = json.load(f)
+            # Structure réelle d'Arjun (vérifiée dans arjun/core/exporter.py) :
+            # {"http://url...": {"method": "GET", "params": [...], "headers": {...}}}
+            entry = arjun_data.get(url) or next(iter(arjun_data.values()), {})
+            found = entry.get("params", [])
+            params = {p: ["test"] for p in found}
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning(f"Lecture résultat Arjun impossible : {e}")
+    finally:
+        out_path.unlink(missing_ok=True)
 
     if params:
         logger.success(f"Arjun a trouvé: {list(params.keys())}")

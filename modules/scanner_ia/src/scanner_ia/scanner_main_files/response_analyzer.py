@@ -19,9 +19,7 @@ Changelog v2:
                string-indicators quand le payload était envoyé encodé
 """
 
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
-
+import os
 import json
 import html
 import math
@@ -30,44 +28,20 @@ import csv
 import base64
 import threading
 import traceback
-from datetime import datetime
-# from loguru import logger as logger_response_analyzer
 from typing import Dict, List, Tuple, Optional, Any
 from urllib.parse import quote as url_quote
-from fuzzer.config import WEIGTHS_FILE, WEIGTHS_FILE_WITH_SEMANTIC
-from base_class.payloads_base_class import Payload
-from base_class.fuzzer_base_class import WorkerFuzzerResult, pformat
-from base_class.response_analyzer_base_class import ResponseAnalyzerResult
-from fuzzer.config import CRITICAL_HEADERS, SIMILARITY_MODEL_DIR, N_FEATURES_SIM
-from fuzzer.similarity import CosineSimilarityTFIDF as SimilarityModel
-# from fuzzer.similarity_bert import CosineSimilarityBERT as SimilarityModel
+from scanner_ia.fuzzer.config import WEIGTHS_FILE, WEIGTHS_FILE_WITH_SEMANTIC
+from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, pformat
+from scanner_ia.base_class.response_analyzer_base_class import ResponseAnalyzerResult
+from scanner_ia.fuzzer.config import CRITICAL_HEADERS, SIMILARITY_MODEL_DIR, N_FEATURES_SIM
+# from fuzzer.similarity import CosineSimilarityTFIDF as SimilarityModel
+from scanner_ia.fuzzer.similarity_bert import CosineSimilarityBERT as SimilarityModel
 from cachetools import TTLCache
-from scanner_utils.logger import get_logger
+from scanner_ia.scanner_utils.logger import get_logger
 
 TTL_CACHE_SIZE = 10000
 TTL = 100 * 60
 logger_response_analyzer = get_logger()
-
-# logger_response_analyzer.remove()
-# logger_response_analyzer.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_response_analyzer.add(
-#     "logs/response_analyzer.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 # ─── Vulns où la réflexion brute du payload est une preuve forte ──────────────
 _REFLECTION_VULNS = {
@@ -124,7 +98,7 @@ _REFLECTION_PATTERNS = {
         r'set-cookie\s*:', r'location\s*:', r'x-injected',
     ],
     "XXE": [
-        r'root:x:0:0', r'<!DOCTYPE', r'<!ENTITY',
+        r'root:x:0:0', r'<!ENTITY',
         r'file://', r'SAXParseException',
     ],
     "SSRF": [
@@ -284,50 +258,6 @@ class ResponseAnalyzer:
 
         return variants
 
-    # ─── Analyse d'un seul indicateur ─────────────────────────────────────────
-
-    def _analyse_indicator(
-            self,
-            indicator: str,
-            indicator_lower: str,
-            body: str,
-            body_lower: str,
-            unescape_lower: str,
-            context_size: int = 200
-    ) -> Dict[str, Any]:
-        """
-        Analyse la présence d'un indicateur dans le corps.
-        
-        Args:
-            indicator: Indicateur original
-            indicator_lower: Indicateur en minuscules
-            body: Corps original
-            body_lower: Corps en minuscules
-            unescape_lower: Corps déséchappé en minuscules
-            context_size: Taille du contexte à extraire (FIX v2: 200 au lieu de 100)
-            
-        Returns:
-            Dict avec 'find' (bool) et 'contexte' (str)
-        """
-        result = {"find": False, "contexte": ""}
-
-        if indicator_lower in body_lower or indicator_lower in unescape_lower:
-            pos = body_lower.find(indicator_lower)
-            if pos == -1:
-                pos = unescape_lower.find(indicator_lower)
-
-            if pos != -1:
-                start = max(0, pos - context_size // 2)
-                end = min(len(body), pos + len(indicator) + context_size // 2)
-                contexte = body[start:end]
-
-                is_safe = self._analyse_contexte(contexte, indicator)
-                if not is_safe:
-                    result['find'] = True
-                    result['contexte'] = contexte
-
-        return result
-
     # ─── Score non-linéaire des indicateurs ───────────────────────────────────
 
     @staticmethod
@@ -423,7 +353,7 @@ class ResponseAnalyzer:
                     baseline_count = len(pattern.findall(baseline_body)) + len(pattern.findall(baseline_unescape))
                     test_count     = len(pattern.findall(test_body))     + len(pattern.findall(test_unescape))
 
-                    if test_count > baseline_count:
+                    if test_count > baseline_count and test_count != 0:
                         m = pattern.search(test_body)
                         source = test_body
                         if not m:
@@ -447,7 +377,12 @@ class ResponseAnalyzer:
                                 logger_response_analyzer.debug(f"⊘ [regex]  Indicator '{indicator[:60]}' dans contexte sûr")
                     else:
                         if self.debug:
-                            logger_response_analyzer.debug(f"⊘ [regex] Indicator '{indicator[:60]}' déjà présent en baseline (baseline:{baseline_count}, test:{test_count})")
+                            if baseline_count != 0:
+                                logger_response_analyzer.debug(f"⊘ [regex] Indicator '{indicator[:60]}' déjà présent en baseline (baseline:{baseline_count}, test:{test_count})")
+                            elif baseline_count != 0 and test_count > 0:
+                                logger_response_analyzer.debug(f"⊘ [regex] Indicator '{indicator[:60]}' absent en baseline mais présent après test (baseline:{baseline_count}, test:{test_count})")
+                            else:
+                                logger_response_analyzer.debug(f"⊘ [regex] Indicator '{indicator[:60]}' absent des deux")
 
                 except re.error as e:
                     logger_response_analyzer.warning(f"Regex indicateur invalide: {indicator!r} → {e}")
@@ -462,7 +397,7 @@ class ResponseAnalyzer:
                 matched_variant = None
                 match_label     = "clear"
 
-                if test_count > baseline_count:
+                if test_count > baseline_count and test_count != 0:
                     matched_variant = indicator
                 else:
                     # chercher les variantes encodées si le payload était encodé
@@ -676,7 +611,15 @@ class ResponseAnalyzer:
         if time_indicator == -1 or time_baseline < 0 or time_test < 0:
             return False, 0.0
 
-        delay          = abs(time_test - time_baseline)
+        # Seul un RALENTISSEMENT compte comme preuve (pas abs()) : une réponse
+        # plus rapide n'est jamais une preuve d'injection time-based. Avec
+        # abs(), un pic de latence ponctuel sur la baseline suivi d'une
+        # réponse test simplement "normale" (donc plus rapide) pouvait
+        # produire un score proche de 100 — l'inverse de ce que signifie
+        # une injection SLEEP(n) réussie.
+        delay = time_test - time_baseline
+        if delay <= 0:
+            return False, 0.0
         indicator_delay = abs(time_indicator - time_baseline)
 
         if indicator_delay == 0:

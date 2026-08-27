@@ -292,9 +292,9 @@ class FeatureExtractor:
                     })
                 
                 # Analyse du CodeAnalyzerResult
-                code_vuln:PagePassiveResult = data.code_analyzer_result
+                code_vuln: PagePassiveResult = data.code_analyzer_result
                 if code_vuln is not None:
-                    body_vulns:CheckResult = code_vuln.get("body", CheckResult())
+                    body_vulns: CheckResult = code_vuln.get("body", CheckResult())
                     balises_script = code_vuln.get("balises_script", {})
                     result.update({
                         "code_body_total_vulns": body_vulns.total_vulns,
@@ -309,7 +309,7 @@ class FeatureExtractor:
                         "code_scripts_medium_vulns": sum(s.medium_count for s in balises_script.values()),
                         "code_scripts_low_vulns": sum(s.low_count for s in balises_script.values()),
                         # "code_scripts_max_score": max((s.max_score for s in balises_script.values()), default=0.0),
-                        })
+                    })
                     
                 else:
                     #Mettre des valeurs par défaut
@@ -326,7 +326,7 @@ class FeatureExtractor:
                         "code_scripts_medium_vulns": 0,
                         "code_scripts_low_vulns": 0,
                         # "code_scripts_max_score": 0,
-                        })
+                    })
                 
                 #Fuzzer analyse
                 fuzzer_element = data.fuzzer_element

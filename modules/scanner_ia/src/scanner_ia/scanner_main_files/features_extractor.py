@@ -6,9 +6,7 @@ Created on Wed Mar 18 11:22:09 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
+import os
 import asyncio
 import aiohttp
 import traceback
@@ -17,38 +15,16 @@ import numpy as np
 from collections import defaultdict
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-# from loguru import logger as feature_extractor_logger
-from scanner_ia.scanner_utils.scanner_utils import calculate_entropy
+from scanner_ia.scanner_utils.utils_scanner import calculate_entropy
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult, OneAnalyzerHelperResult
-from scanner_ia.base_class.fuzzer_base_class import FuzzerResult, WorkerFuzzerResult
+from scanner_ia.base_class.fuzzer_base_class import FuzzerResult
 from scanner_ia.base_class.feature_extractor_base_class import WorkerExtractorEntry
 from scanner_ia.base_class.passive_analyzer_base_class import PassiveAnalyzerResult, PagePassiveResult
 from scanner_ia.base_class.code_analyse_base_class import CodeAnalyzerResult, CheckResult
 from scanner_ia.ml_model.config import VULNS, FEATURES_BY_CATEGORY, FEATURES_LIST
-from scanner_ia.core.parser import Parser
 from scanner_ia.scanner_utils.logger import get_logger
 
 feature_extractor_logger = get_logger()
-# feature_extractor_logger.remove()
-# feature_extractor_logger.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# feature_extractor_logger.add(
-#     "logs/feature_extractor.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 pd.set_option("display.max_rows", 200)
 pd.set_option("display.max_columns", 200)
@@ -107,7 +83,7 @@ class FeatureExtractor:
             feature_extractor_logger.error(f"Traceback : \n {traceback.format_exc()}")
             return False
     
-    def _process_data(self, data:pd.DataFrame|np.ndarray, impute:bool = True, special_cols:list[str] = []) -> pd.DataFrame|np.ndarray:
+    def _process_data(self, data:pd.DataFrame|np.ndarray, impute:bool = True, special_cols:list[str] = None) -> pd.DataFrame|np.ndarray:
         """
         Méthode de traitement des données après extraction.
 
@@ -126,6 +102,7 @@ class FeatureExtractor:
             Les données traitées.
 
         """
+        special_cols = special_cols or []
         try:
             is_np = isinstance(data, np.ndarray)
             frame = pd.DataFrame(data)
@@ -170,11 +147,13 @@ class FeatureExtractor:
         analyzer_helper_result:AnalyzerHelperResult,
         passive_analyzer_result:PassiveAnalyzerResult,
         code_analyzer_result:CodeAnalyzerResult,
-        fuzzer_result:FuzzerResult = FuzzerResult()
+        fuzzer_result:FuzzerResult = None,
     ) -> dict[str, WorkerExtractorEntry]:
         
         entries = {}
         elements = 0
+        if not isinstance(fuzzer_result, FuzzerResult):
+            fuzzer_result = FuzzerResult()
         for url, page in analyzer_helper_result.elements.items():
             entry = WorkerExtractorEntry()
             entry.url = url
@@ -263,9 +242,9 @@ class FeatureExtractor:
                         "body_length" : analyzer_helper_element.fetched.body_length(),
                         "body_entropy" : calculate_entropy(body),
                         "js_code_entropy" : calculate_entropy(js_code) if js_code else 0.0,
-                        "has_password_field": int("type='password'" in body),
-                        "has_file_upload": int("type='file'" in body),
-                        "has_hidden_fields": int("type='hidden'" in body),
+                        "has_password_field": int("type='password'" in body or 'type="password"' in body),
+                        "has_file_upload": int("type='file'" in body or 'type="file"' in body),
+                        "has_hidden_fields": int("type='hidden'" in body or 'type="hidden"' in body),
                         "num_links" : num_html_link + num_other_link,
                         "num_html_link": num_html_link,
                         "other_link_ratio" :  num_other_link / max(num_html_link + num_other_link, 1),

@@ -16,7 +16,7 @@ from modules_utils.limiter import limiter
 from obsidian_hive.api.ap_config import (
     LIMITE, AGENT_CORE_BINARY_PATH, TOOL_ENGINE_BINARY_PATH
 )
-from obsidian_hive.api.helpers import _get_asset_by_valid_install_token, _extract_bearer_token
+from obsidian_hive.api.api_utils.helpers import _get_asset_by_valid_install_token, _extract_bearer_token
 from obsidian_hive.core.assets.server_asset.scripts.install_script import INSTALL_SCRIPT_TEMPLATE
 from obsidian_hive.core.assets.server_asset.scripts.reregister_script import REREGISTER_SCRIPT_TEMPLATE
 

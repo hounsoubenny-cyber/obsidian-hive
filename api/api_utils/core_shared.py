@@ -35,7 +35,7 @@ from obsidian_hive.core.assets.asset_types import (
     WebAppAsset, WebAsset, NetworkAsset, AssetType,
     ServerAsset, utcnow, AgentStatus as ServerAgentStatus,
 )
-from obsidian_hive.api.models import (
+from obsidian_hive.api.models.models import (
     WebAssetModel, NetworkAssetModel, ServerAssetModel,
     ServerAgentRegisterData, ServerAgentRevokeData,
 )
@@ -57,11 +57,11 @@ from modules_utils.validate_config import (
 )
 from obsidian_hive.agents.core.agent import Coralie, create_coralie
 from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
-from obsidian_hive.api.ws_manager import WSManager
+from obsidian_hive.api.api_utils.ws_manager import WSManager
 from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
 from modules_utils.keyed_lock import resource_lock
 from modules_utils.cryto_utils import hashpw
-from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+from obsidian_hive.api.api_utils.server_asset_agent_ws_manager import ServerAgentWSManager
 
 # =============================================================================
 # Singletons

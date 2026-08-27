@@ -20,11 +20,11 @@ from fastapi import APIRouter, HTTPException, Request, Header, status, Depends
 from obsidian_hive.core.managers.job_manager import JobManager
 from obsidian_hive.core.managers.report_manager import ReportManager
 from obsidian_hive.core.managers.conversation_manager import (
-    ConversationManager, ConversationNotFoundError,
+    ConversationManager
 )
 from obsidian_hive.core.managers.job_catalog import JOB_CATALOG, describe_catalog
 
-from obsidian_hive.api.models import (
+from obsidian_hive.api.models.models import (
     GetJobData, ModifyJobData, AddJobData, InMemoryFilterData,
     GetReportData, GetByAssetData, ListReportsByFilterData, ReportStatsData,
     ReportIdData, UpdateReportSeverityData, DeleteOldReportsData,

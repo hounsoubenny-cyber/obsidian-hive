@@ -6,48 +6,24 @@ Created on Thu Mar  5 19:29:43 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
+import os
 import time
 import asyncio
 import aiohttp
 import traceback
-import signal
 import atexit
 from uuid import uuid4
 from diskcache import Cache
 from scanner_ia.core.parser import Parser
 from scanner_ia.core.crawler import Crawler
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult, OneAnalyzerHelperResult
-from scanner_ia.scanner_utils.scanner_utils import is_url_reachable
+from scanner_ia.scanner_utils.utils_scanner import is_url_reachable
 from scanner_ia.scanner_utils.signal_manager import signal_manager
-# from loguru import logger as logger_analyzer_helper
 from scanner_ia.scanner_utils.logger import get_logger
 from typing import Optional, List
 from scanner_ia.scanner_utils.helpers.resolve_helpers import HelperCall
 
 logger_analyzer_helper = get_logger()
-# logger_analyzer_helper.remove()
-# logger_analyzer_helper.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_analyzer_helper.add(
-#     "logs/analyzer_helper_logs.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 dir_ = os.path.dirname(os.path.abspath(__file__))
 s = os.path.join(dir_, "var", "analyzer_helper_cache")
@@ -184,16 +160,15 @@ class AnalyzerHelper:
     
     async def _process_url(
         self, 
-        queue:asyncio.Queue, 
-        signal_queue:asyncio.Queue,
-        lock:asyncio.Lock, 
-        result:AnalyzerHelperResult, 
-        parser:Parser,
-        restore:bool = False, 
-        fetch:bool = True, 
-        semaphore:int = 50,
-        worker_id:str = "",
-        silent:bool = True,
+        queue: asyncio.Queue, 
+        lock: asyncio.Lock, 
+        result: AnalyzerHelperResult, 
+        parser: Parser,
+        restore: bool = False, 
+        fetch: bool = True, 
+        semaphore: int = 50,
+        worker_id: str = "",
+        silent: bool = True,
     ):
         """
         
@@ -229,14 +204,19 @@ class AnalyzerHelper:
         None.
 
         """
+        get_timeout_err = 0
+        max_get_timeout_err = 3
+        queue_empty_count = 0
+        max_queue_empty_count = 3
         while True:
             get_item = False
             worker_object = None
             try:
                 worker_object = await asyncio.wait_for(queue.get(), timeout=self.config.GET_TIMEOUT)
                 get_item = True
+                get_timeout_err = 0
+                queue_empty_count = 0
                 if worker_object is None:
-                    await signal_queue.put(None)
                     break
                 
                 parse_html_response = await parser.parse_html(
@@ -259,26 +239,36 @@ class AnalyzerHelper:
                 
                 async with lock:
                     result.elements[worker_object.url] = new_obj
-                
+            
             except asyncio.TimeoutError:
+                logger_analyzer_helper.info("Timeout Get!")
+                get_timeout_err += 1
                 async with lock:
-                    if queue.empty():  
+                    if queue.empty() and get_timeout_err >= max_get_timeout_err:
+                        logger_analyzer_helper.info("Queue vide, tout sera marqué done !")
                         for _ in range(self.config.MAX_WORKERS):
                             await queue.put(None)
-                    await signal_queue.put(None)
-                break
-            
+                            # Remarque: Mm que celui du crawler.
+                        for _ in range(queue.qsize()):
+                            try:
+                                queue.task_done() 
+                            except Exception:
+                                pass
+                            
+                        break
+                                
             except asyncio.QueueEmpty:
+                queue_empty_count += 1
                 logger_analyzer_helper.debug("Queue vide !")
-                await signal_queue.put(None)
-                break
+                # Mm logique par précaution
+                if queue_empty_count >= max_queue_empty_count:
+                    break
             
             except KeyboardInterrupt:
                 break
             
             except asyncio.CancelledError:
                 logger_analyzer_helper.debug(f"Worker {worker_id} annulé")
-                await signal_queue.put(None)
                 break
             
             except Exception as e:
@@ -288,7 +278,10 @@ class AnalyzerHelper:
                     
             finally:
                 if get_item:
-                    queue.task_done()
+                    try:
+                        queue.task_done() 
+                    except Exception:
+                        pass
                     
     async def close(self):
         """Ferme les ressources"""
@@ -390,7 +383,6 @@ class AnalyzerHelper:
                 logger_analyzer_helper.debug("Traitement parallèle")
                 lock = asyncio.Lock()
                 queue = asyncio.Queue()
-                signal_queue = asyncio.Queue()
                 
                 for worker_result in crawl_response.result:
                     await queue.put(worker_result)
@@ -398,7 +390,9 @@ class AnalyzerHelper:
                 base_id = str(uuid4())[:10]
                 tasks = [
                     asyncio.create_task(self._process_url(
-                        queue, signal_queue, lock, result, 
+                        queue=queue, 
+                        lock=lock, 
+                        result=result, 
                         parser=self.crawler.parser,
                         restore=restore, 
                         fetch=fetch, 
@@ -409,38 +403,14 @@ class AnalyzerHelper:
                     for i in range(self.config.MAX_WORKERS)
                 ]
                 
-                async def monitor_queue():
-                    empty_count = 0
-                    while not queue.empty():
-                        await asyncio.sleep(0.2)
-                        try:
-                            item = signal_queue.get_nowait()
-                            if item is None:
-                                logger_analyzer_helper.warning("🚨 SIGNAL NONE DÉTECTÉ ! ARRÊT IMMÉDIAT")
-                                raise asyncio.TimeoutError("Signal d'arrêt reçu d'un worker")
-                
-                        except asyncio.QueueEmpty:
-                            pass
-                    
-                        if queue.empty():
-                            await asyncio.sleep(self.config.EMPTY_AWAIT_BETWEEN)
-                            if queue.empty():
-                                empty_count += 1
-                        if empty_count >= self.config.EMPTY_MAX_COUNT:
-                            logger_analyzer_helper.info("📭 Queue vide, arrêt normal")
-                            raise asyncio.QueueEmpty("📭 Queue vide, arrêt normal")
-                        
-                
-                monitor_task = asyncio.create_task(monitor_queue())
-                join_task = asyncio.create_task(asyncio.wait_for(queue.join(), self.config.JOIN_TIMEOUT))
+                join_task = asyncio.create_task(
+                    asyncio.wait_for(
+                        queue.join(), 
+                        timeout=self.config.JOIN_TIMEOUT
+                    )
+                )
                 try:
-                    done, pending = await asyncio.wait(
-                        [monitor_task, join_task],
-                        timeout=self.config.JOIN_TIMEOUT,
-                        return_when=asyncio.FIRST_EXCEPTION
-                        )
-                    for task in done:
-                        task.result()   # Pour propager l'erreur
+                    await join_task
                     logger_analyzer_helper.info("Queue vidée avant timeout")
                     
                 except (asyncio.TimeoutError, asyncio.QueueEmpty) as e:
@@ -462,18 +432,10 @@ class AnalyzerHelper:
                         
                 finally:
                     self.stop_task(tasks)
-                    if pending:
-                        self.stop_task(pending)
-                        await asyncio.gather(*pending, return_exceptions=True)
                     for _ in range(self.config.MAX_WORKERS):
                         await queue.put(None)
                     await asyncio.gather(*tasks, return_exceptions=True)
                         
-                try:
-                    monitor_task.cancel()
-                except Exception:
-                    pass
-                
             result.elapsed = time.time() - start_time
             if self.use_cache and result.elements:
                 CACHE.set(cache_key, result.to_dict(), expire=CACHE_TIMEOUT)

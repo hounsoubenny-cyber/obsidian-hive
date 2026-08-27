@@ -7,10 +7,10 @@ Created on Sun Mar 15 07:22:39 2026
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
-from scanner_utils.warnings_manager import suppres_warnings
+from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
+
 suppres_warnings()
+
 import optuna, json, io
 import traceback
 from matplotlib import pyplot as plt
@@ -47,32 +47,12 @@ import zstandard as zstd
 import skops.io as skio
 from zipfile import ZIP_DEFLATED
 
-# from loguru import logger as modelmanager_logger
-from ml_model.mlsmote import MLSMOTE
+from scanner_ia.ml_model.mlsmote import MLSMOTE
 from scanner_utils.logger import get_logger
 
 # Configuration des logs
 modelmanager_logger = get_logger()
-# modelmanager_logger.remove()
-# modelmanager_logger.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# modelmanager_logger.add(
-#     "logs/modelmanager.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
+
 
 pd.set_option("display.max_row", 200)
 pd.set_option("display.max_columns", 200)
@@ -89,22 +69,25 @@ os.makedirs(BASE_DIR, exist_ok=True)
 class ModelManager:
     def __init__(
         self,
-        classes:list = [],
-        num_features:list = [],
-        cat_features:list = [],
+        classes:list = None,
+        num_features:list = None,
+        cat_features:list = None,
         verbose:int = 0,
         wrapper:str = "chain",
         cv:int = 5,
         meta_name:str = "pipeline_estimator",
         model_dir:str = "model"
     ):
+        classes = classes or []
+        num_features = num_features or []
+        cat_features = cat_features or []
         self.verbose = verbose
         self.wrapper = wrapper
         self.cv = cv 
         self.order = None
         self.mlb = MultiLabelBinarizer(classes=classes)
-        self.num_features = []
-        self.cat_features = []
+        self.num_features = num_features
+        self.cat_features = cat_features
         self.model = None
         self.meta_name = meta_name or "pipeline_estimator"
         self.model_dir = os.path.join(BASE_DIR, model_dir)

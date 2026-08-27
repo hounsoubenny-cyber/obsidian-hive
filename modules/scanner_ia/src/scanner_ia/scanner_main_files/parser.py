@@ -7,50 +7,32 @@ Created on Wed Mar  4 00:53:06 2026
 """
 
 import os
+import re
+import time
 import asyncio
 import aiohttp
 import tldextract
-import signal
 import atexit
-import time
-import re
 from urllib.parse import urljoin, urlparse, urlunparse, urldefrag, parse_qs
 from urllib import robotparser
 from diskcache import Cache
 from lxml import html, etree
 from scanner_ia.core.fetcher import Fetcher, FetcherResult
 from datetime import datetime
-from scanner_ia.base_class.parser_base_class import ParserResult, ClassifyLinkResult, GetAllLinkResult, ParseElementResult, ParseResult
-from scanner_ia.core.core_config import EXTENSIONS_BY_CATEGORY, CONTENT_TYPE_BY_CATEGORY, TESTS_NORMALIZE, USER_AGENT
+from scanner_ia.base_class.parser_base_class import (
+    ParserResult, ClassifyLinkResult, GetAllLinkResult, 
+    ParseElementResult, ParseResult
+)
+from scanner_ia.core.core_config import (
+    EXTENSIONS_BY_CATEGORY, CONTENT_TYPE_BY_CATEGORY, TESTS_NORMALIZE, USER_AGENT
+)
 from scanner_ia.scanner_utils.signal_manager import signal_manager
 from nest_asyncio import apply
-# from loguru import logger as logger_parser
 from scanner_ia.scanner_utils.logger import get_logger
 from cachetools import TTLCache
 
 logger_parser = get_logger()
-# logger_parser.remove()
-# logger_parser.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_parser.add(
-#     "logs/parser_logs.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
-apply()
 dir_ = os.path.dirname(os.path.abspath(__file__))
 s = os.path.join(dir_, "var", "parser_cache")
 os.makedirs(s,exist_ok=True)
@@ -133,7 +115,7 @@ class Parser:
             remove_comments=False,
             remove_pis=False,
             remove_blank_text=False,
-            )
+        )
         self.session = session
         self.fetcher = Fetcher(session=self.session, **kwargs)
         self._init_cache()
@@ -167,7 +149,8 @@ class Parser:
         url_or_body:str,
         response:bool = False, 
         is_body: bool = False, 
-        use_playwright: bool = False
+        use_playwright: bool = False,
+        use_cache: bool = True,
     ) -> ParserResult:
         """
         Méthode de parsing du html.
@@ -205,7 +188,7 @@ class Parser:
         # Donc url
         method = "PLAYWRIGTH" if use_playwright else "GET"
         cache = CACHE.get(self.parse_html_key, {})
-        if cache.get(url_or_body, None):
+        if use_cache and cache.get(url_or_body, None):
             result.tree = html.fromstring(cache[url_or_body], parser=self.__parser)
             if not response:
                 return result
@@ -312,7 +295,7 @@ class Parser:
         
         logger_parser.info(f"Total {ns}/{len(test_cases)} tests réussis")
         
-    async def classify_link(self, url:str, fetch_external: bool = True, base_url: str = None):
+    async def classify_link(self, url:str, fetch_external: bool = True, base_url: str = None, use_cache: bool = True):
         """
         Méthode de classification des liens en fonction des extensions et/ou du type MIME
 
@@ -342,7 +325,7 @@ class Parser:
             path = urlparse(url).path
             ext = os.path.splitext(path)[-1]
             cache = CACHE.get(self.classify_link_key, {})
-            if cache.get(url, {}):
+            if use_cache and cache.get(url, {}):
                 result.update_from_dict(cache.get(url))
                 logger_parser.debug(f"Cache hit classify_link pour {url}")
                 return result
@@ -441,7 +424,7 @@ class Parser:
         #     return True 
         return domain1 == domain2 if all(c is not None for c in (domain1, domain2)) else False
    
-    async def robot_allow(self, url:str, agent=USER_AGENT):
+    async def robot_allow(self, url:str, agent=USER_AGENT, use_cache: bool = True):
         """
         Méthode pour verifié si les robots sont autorisés.
 
@@ -471,7 +454,7 @@ class Parser:
             schemes = [parse.scheme, "http" if parse.scheme == "https" else "https"]
             
             cache = CACHE.get(self.robot_allow_key, {})
-            if cache.get(domain, None) is not None:
+            if use_cache and cache.get(domain, None) is not None:
                 logger_parser.debug(f"Cache hit robot_allow pour {url}")
                 return cache.get(domain)
             
@@ -511,7 +494,8 @@ class Parser:
         self, url:str, 
         semaphore:int = 50, 
         skip_external_links:bool = True,
-        use_playwright: bool = False
+        use_playwright: bool = False,
+        use_cache: bool = True,
     ):
         """
         Méthode pour extraire les liens.
@@ -541,20 +525,21 @@ class Parser:
                 return result
             
             cache = CACHE.get(self.get_all_links_key, {})
-            if cache.get(url, {}):
+            if use_cache and cache.get(url, {}):
                 result.update_from_dict(cache[url])
                 logger_parser.debug(f"Cache hit get_all_links pour {url}")
                 return result
             
             parse = urlparse(url)
-            classify_link_response = await self.classify_link(url)
+            classify_link_response = await self.classify_link(url, use_cache=use_cache)
             result.type = classify_link_response.type
+            # print(f"Clasify Response: {classify_link_response.to_dict()}")
             if not classify_link_response.type.lower() == "html" or not parse.scheme.startswith("http"):
                 result.error = "Lien invalide, scheme=" + parse.scheme + ",type=" + classify_link_response.type
                 return result
             
-            parse_html_response = await self.parse_html(url, response=True, use_playwright=use_playwright)
-            # print(parse_html_response)
+            parse_html_response = await self.parse_html(url, response=True, use_playwright=use_playwright, use_cache=use_cache)
+            # print(parse_html_response.to_dict())
             if not (parse_html_response.response and not str(parse_html_response.response.error).lower() == "retryerror"):
                 return result
             tree = parse_html_response.tree
@@ -567,9 +552,9 @@ class Parser:
             async def process_link(link:str, semaphore=50):
                 async with asyncio.Semaphore(semaphore):
                     if skip_external_links:
-                        classify = await self.classify_link(link, fetch_external=False, base_url=url)
+                        classify = await self.classify_link(link, fetch_external=False, base_url=url, use_cache=use_cache)
                     else:
-                        classify = await self.classify_link(link, fetch_external=True)
+                        classify = await self.classify_link(link, fetch_external=True, use_cache=use_cache)
                     data = {
                         }
                     data["url"] = link
@@ -578,7 +563,7 @@ class Parser:
                     data["source_url"] = url
                     data["deep"] = None
                     try:
-                        data["robot_allow"] = await asyncio.wait_for(self.robot_allow(link), timeout=0.3)
+                        data["robot_allow"] = await asyncio.wait_for(self.robot_allow(link, use_cache=use_cache), timeout=0.3)
                     except Exception:
                         data["robot_allow"] = True
                     data["params"] = parse_qs(urlparse(link).query)
@@ -595,6 +580,11 @@ class Parser:
             meta = tree.xpath("//meta[@http-equiv]/@content") or []  #<meta http-equiv="refresh" content="5; url=https://example.com/nouvelle-page"> ou <meta http-equiv="refresh" content="https://example.com/nouvelle-page">
             scrsets = tree.xpath("//@srcset")  or [] # Format <img srcset="small.jpg 300w, medium.jpg 600w, large.jpg 900w">
             tasks = []
+            # print("links:", links)
+            # print("pings:", pings)
+            # print("data:", data)
+            # print("meta:", meta)
+            # print("scrsets:", scrsets)
             for link in links:
                 full_url = self.normalize_link(url, link)
                 if full_url:
@@ -1895,6 +1885,7 @@ async def test(urls:list|str = None, restore:bool = False):
 
     
 if __name__ == "__main__":
+    apply()
     parser = Parser(session=aiohttp.ClientSession())
     # print(parser.test_normalize_link(advanced=True))
     # link = 'https://google.com'

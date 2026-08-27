@@ -20,9 +20,7 @@ from uuid import uuid4
 from pathlib import Path
 from typing import Optional, Union, List, Dict, Any
 from datetime import datetime
-from dataclasses import dataclass, field
 from nest_asyncio import apply
-# from loguru import logger
 
 # Pour le spinner et progress bar
 try:
@@ -40,7 +38,6 @@ except ImportError:
 # =============================================================================
 # IMPORTS PROJET
 # =============================================================================
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
 
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult
 from scanner_ia.base_class.code_analyse_base_class import CodeAnalyzerResult
@@ -48,11 +45,10 @@ from scanner_ia.base_class.passive_analyzer_base_class import PassiveAnalyzerRes
 from scanner_ia.base_class.fuzzer_base_class import FuzzerResult
 from scanner_ia.base_class.main_scanner_base_class import ScannerResult
 
-from scanner_ia.scanner_utils.scanner_utils import is_url_reachable
+from scanner_ia.scanner_utils.utils_scanner import is_url_reachable
 from scanner_ia.scanner_utils.signal_manager import signal_manager
 from scanner_ia.config_manager import ConfigManager, DEFAULT_CONFIG_PATH
 from scanner_ia.core.fetcher import Config as FetcherConfig, PlaywrightPool
-from scanner_ia.core.crawler import Config as CrawlerConfig
 from scanner_ia.core.analyzer_helper import AnalyzerHelper
 from scanner_ia.analyzers.passive_analyzer import PassiveCodeAnalyzer
 from scanner_ia.analyzers.code_analyzer import CodeAnalyzer
@@ -65,10 +61,11 @@ from scanner_ia.reports.report_builder import ReportBuilder
 from scanner_ia.reports.llm_report import generate_report
 from scanner_ia.scanner_utils.logger import get_logger
 from scanner_ia.scanner_utils.helpers.resolve_helpers import resolve_helpers, HelperCall
+from modules_utils.loop_utils import _run_async
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-apply()
 
 REPORT_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)),'result_scan')
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),'scanner_cache','cache')
@@ -77,25 +74,6 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Configuration logger
 logger = get_logger()
-# logger.remove()
-# logger.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="INFO",
-#     colorize=True
-# )
-# logger.add(
-#     "logs/hivemind_scout.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     encoding="utf-8"
-# )
 
 MAX_CACHE_SIZE = 1 * 1024 * 1024 * 1024  # 1GB
 CACHE = diskcache.Cache(
@@ -106,7 +84,7 @@ CACHE = diskcache.Cache(
     cull_frequency=5
 )
 CACHE_TIMEOUT = 24 * 3600
-_ML_AVAILABLE = not not True
+_ML_AVAILABLE = True
 MODEL_DIR = "model_scanner_chain_mvp"
 __version__ = "2.0.0"
 __author__ = "Samuel HOUNSOU - ScannerAI" #HiveMind Scout
@@ -136,9 +114,7 @@ def cache_stats() -> Dict[str, Any]:
 def signal_handler(*args, **kwargs):
     close_cache()
     try:
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(PlaywrightPool.close())
-        loop.close()
+        _run_async(PlaywrightPool.close)
     except Exception as e:
         logger.warning(f"⚠️ Erreur lors de la fermeture du PlaywrightPool : {e}")
 
@@ -203,13 +179,17 @@ class Scanner:
         self.debug = debug
         self.fuzzer_enabled = active_scan
         
+        self.config_manager = ConfigManager()
+        self._base_scan_key = self.config_manager.configure(path=str(config_path))
+        self.sess_limit = FetcherConfig().Semaphore
+        if self.config_manager.fetcher_conf.get("Semaphore"):
+            self.sess_limit = self.config_manager.fetcher_conf.get("Semaphore")
+        
         self.loop = None
         self.loop_thread_task = None
         self.session = None
         self._get_session()
-
-        self.config_manager = ConfigManager()
-        self._base_scan_key = self.config_manager.configure(path=str(config_path))
+        
         # Modules
         self.analyzer_helper = AnalyzerHelper(
             session=self.session,
@@ -220,7 +200,6 @@ class Scanner:
         self.analyzer_helper.crawler.parser.update_conf(self.config_manager.parser_conf)
         self.analyzer_helper.crawler.parser.fetcher.update_conf(self.config_manager.fetcher_conf)
         
-        self.analyzer_helper.session
         self.passive_analyzer = PassiveCodeAnalyzer(headers_sev_map=headers_sev_map)
         self.code_analyzer = CodeAnalyzer(debug=debug)
 
@@ -233,20 +212,22 @@ class Scanner:
                 limit=limit_payloads,
                 known_params_dir=known_params_dir,
                 use_arjun=use_arjun,
-                arjun_timeout=arjun_timeout
+                arjun_timeout=arjun_timeout,
+                **self.config_manager.fuzzer_conf  # Pour que le pool soit à jour.
             )
+            self.fuzzer.update_conf(self.config_manager.fuzzer_conf)
         self.fuzzer_mock = MockFuzzer()
 
         self.feature_extractor = FeatureExtractor()
         self.scanner_ia = ScannerIA(model_dir=model_dir)
         self.report_generator = ReportGenerator(storage_dir=str(REPORT_DIR), theme=theme)
         self.report_builder = ReportBuilder()
-
+        
         if threading.current_thread() is threading.main_thread():
             signal_manager(self.override_signal_handler)
-            
+                
         self.register_close_session()
-
+        
         if RICH_AVAILABLE and debug:
             console.print(Panel.fit(
                 "[bold green]🐝 ShieldAI ScannerAI Initialisé[/bold green]\n"
@@ -255,10 +236,12 @@ class Scanner:
                 f"Sémantique: {'✅' if use_semantic else '❌'}",
                 border_style="green"
             ))
-
+            
     def _create_session(self):
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(limit=50),
+            connector=aiohttp.TCPConnector(
+                limit=self.sess_limit
+            ),
             headers=FetcherConfig.HEADERS, 
         )
     
@@ -441,11 +424,11 @@ class Scanner:
         limit_vuln_for_fuzzer: Optional[int] = None,
         time_between_for_fuzzer: float = 0.001,
         allowed_domains: Optional[List[str]] = None,
-        dynamic_timeout_for_fuzzer: bool = True,
+        dynamic_timeout_for_fuzzer: bool = False,
         filename: Optional[str] = None,
         threshold: float = 0.5,
-        use_cache: bool = True,
-        put_result_in_cache: bool = False,
+        use_cache: bool = False,
+        put_result_in_cache: bool = True,
         helpers: Optional[List[callable] | List[dict] | List[HelperCall]] = None,
         raise_on_helper_error:bool = True,
         is_spa: bool = False,
@@ -780,6 +763,32 @@ class Scanner:
             for k, v in ml_preds.items()
         }
 
+    @staticmethod
+    def _combine_ml_predictions(ml_predictions: Dict) -> Dict:
+        """
+        Combine ml_predictions['proba'] (magnitudes, toutes classes),
+        ml_predictions['predict'] (décision réelle du modèle, selon le seuil
+        utilisé à l'inférence) et ml_predictions['is_safe'] (calculé une
+        seule fois dans ScannerIA.scanner_predict — source de vérité unique,
+        jamais recalculé côté rapport) en
+        {url: {"proba": {...}, "predict": [...], "is_safe": bool}}.
+        Évite que le rapport ne réinvente sa propre règle de seuil.
+        """
+        proba   = ml_predictions.get("proba", {})
+        predict = ml_predictions.get("predict", {})
+        is_safe = ml_predictions.get("is_safe", {})
+        return {
+            url: {
+                "proba":   proba.get(url, {}),
+                "predict": predict.get(url, []),
+                # fallback si jamais "is_safe" est absent (ancien format) :
+                # on retombe sur la même règle, mais is_safe.get(url) est
+                # la source canonique tant qu'elle est présente.
+                "is_safe": is_safe.get(url, len(predict.get(url, [])) == 0),
+            }
+            for url in proba
+        }
+
     async def _generate_report(
         self,
         url: str,
@@ -804,54 +813,42 @@ class Scanner:
             passive_result=passive_result,
             code_result=code_result,
             fuzzer_result=fuzzer_result,
-            ml_predictions=ml_predictions.get("proba_predict", {}) if ml_predictions else {},
+            # On transmet "proba" (magnitudes réelles) ET "predict" (la vraie
+            # décision du modèle, quel que soit le seuil utilisé — flat 0.5
+            # ou calibré par classe). report_builder dérive "detected" de
+            # l'appartenance à "predict", jamais d'un seuil réinventé côté
+            # rapport — sinon rapport et modèle peuvent se contredire dès
+            # qu'un seuil par classe est introduit.
+            ml_predictions=self._combine_ml_predictions(ml_predictions) if ml_predictions else {},
             theme=self.report_generator.theme
         )
         paths = self.report_generator.save_all(report, filename)
         paths = list(paths) if not isinstance(paths, str) else [paths]
-        # try:
-        #     llm_path = os.path.splitext(os.path.basename(paths[0]))[0] + ".md"
-        #     llm_dir = os.path.join(REPORT_DIR, "LLM_REPORT")
-        #     os.makedirs(llm_dir, exist_ok=True)
-        #     llm_path = os.path.join(llm_dir, llm_path)
-            # entry = dict(
-            #     url=url,
-            #     scan_id=scan_id,
-            #     scanner_version=__version__,
-            #     date=str(date),
-            #     timings=timings,
-            #     analyzer_helper_result=str(analyzer_helper_result.to_dict(True)),
-            #     passive_result=str(passive_result.to_dict(True)),
-            #     code_result=str(code_result.to_dict(True)),
-            #     fuzzer_result=str(fuzzer_result.to_dict(True)),
-            #     ml_predictions=ml_predictions.get("proba_predict", {}) if ml_predictions else {},
-            # )
-            # entry = {
-            #     "url": url,
-            #     "scan_id": scan_id,
-            #     "scanner_version": __version__,
-            #     "date": date,
-            #     "elapsed": sum(timings.values()),
-            #     "timings": timings,
-            #     "vulnerabilities": fuzzer_result.stats.get("vuln_count", {}) if fuzzer_result else {},
-            #     "ml_predictions": ml_predictions.get("proba_predict", {}) if ml_predictions else {},
-            #     "pages_crawled": len(analyzer_helper_result.elements),
-            #     "phases": list(timings.keys()),
-            #     "errors": getattr(self, 'errors', [])
-            # }
-        #     generate_report(entry, llm_path)
-        #     paths.append(llm_path)
-        # except Exception as e:
-        #     logger.warning(f"⚠️ Erreur génération rapport IA: {e}")
+        try:
+            llm_path = os.path.splitext(os.path.basename(paths[0]))[0] + ".md"
+            llm_dir = os.path.join(REPORT_DIR, "LLM_REPORT")
+            os.makedirs(llm_dir, exist_ok=True)
+            llm_path = os.path.join(llm_dir, llm_path)
+            generate_report(report, llm_path)
+            paths.append(llm_path)
+        except Exception as e:
+            logger.warning(f"⚠️ Erreur génération rapport IA: {e}")
                      
-        json_path, pdf_path, html_path = paths
+        # Unpacking défensif : save_all() peut renvoyer moins de 3 chemins
+        # (ex: PDF désactivé/échoué) — un unpack strict à 3 plantait la toute
+        # fin d'un scan par ailleurs réussi.
+        json_path = paths[0] if len(paths) > 0 else None
+        pdf_path  = paths[1] if len(paths) > 1 else None
+        html_path = paths[2] if len(paths) > 2 else None
+        llm_path = paths[3] if len(paths) > 3 else None
         self._last_report_paths = {
             "json": json_path,
             "html": html_path,
             "pdf":  pdf_path, 
+            "llm":  llm_path, 
         }
         messages = "📄 Rapports générés:\n" 
-        messages += "\n  - ".join(paths)
+        messages += "\n  - ".join([p for p in paths if p]) # Eviter nonetype dedans
         if RICH_AVAILABLE:
             console.print("\n[bold green]📄 Rapports générés:[/bold green]")
             for path in paths:
@@ -1457,6 +1454,7 @@ def test():
 # POINT D'ENTRÉE
 # =============================================================================
 if __name__ == "__main__":
+    apply()
+
     # pass
-    Scanner.scan_cli()
-    
+    # Scanner.scan_cli()

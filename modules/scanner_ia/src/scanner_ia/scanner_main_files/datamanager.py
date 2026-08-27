@@ -7,42 +7,18 @@ Created on Sun Mar 15 07:19:03 2026
 """
 
 import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
 suppres_warnings()
 import joblib
 import pandas as pd
 import numpy as np
 import traceback
-# from loguru import logger as datamanager_logger
 from scanner_ia.scanner_utils.logger import get_logger
 from typing import Tuple
 from scanner_ia.ml_model.mlsmote import MLSMOTE
+
 # Configuration des logs
 datamanager_logger = get_logger()
-
-# datamanager_logger.remove()
-# datamanager_logger.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# datamanager_logger.add(
-#     "logs/datamanager.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
 
 pd.set_option("display.max_rows", 200)
 pd.set_option("display.max_columns", 200)
@@ -93,7 +69,8 @@ class DataManager:
             datamanager_logger.error(f"Traceback : \n {traceback.format_exc()}")
             return False
     
-    def add_data(self, base_data:list[dict]|pd.DataFrame, data:list[dict]|pd.DataFrame, path:str, subset:list[str] = []) -> pd.DataFrame:
+    def add_data(self, base_data:list[dict]|pd.DataFrame, data:list[dict]|pd.DataFrame, path:str, subset:list[str] = None) -> pd.DataFrame:
+        subset = subset or []
         if base_data is None or pd.DataFrame(base_data).empty:
             base_data = data
             self.save_dataset(base_data, path)

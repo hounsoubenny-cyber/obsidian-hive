@@ -23,7 +23,7 @@ import asyncio
 from fastapi import HTTPException, APIRouter, status, Request
 
 from obsidian_hive.core.assets.asset_types import list_agent_capabilities
-from obsidian_hive.api.models import (
+from obsidian_hive.api.models.models import (
     WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
     ResumeAssetData, PauseAssetData, UpdateAssetData, SyncSourceCodeData,
     AlexAnalyzeData, SearchAssetData, ServerAgentRegisterData, ServerAgentRevokeData,
@@ -47,7 +47,7 @@ from obsidian_hive.core.assets.server_asset.tools.tools import (
 )
 from modules_utils.cryto_utils import hashpw
 
-from obsidian_hive.api.core_shared import (
+from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_server_agent_ws_manager,
     handle_web_asset_creating,

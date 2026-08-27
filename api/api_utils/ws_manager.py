@@ -7,7 +7,6 @@ Created on Sun Jul 26 02:21:04 2026
 """
 
 """
-Created on Sun Jul 26 02:21:04 2026
 Réécrit le Sun Jul 26 2026 : le modèle who/to (relais user-to-user) est
 remplacé par un simple registre de connexions + push serveur->client
 (send_to/broadcast), qui correspond au besoin réel (streaming Coralie/Alex,

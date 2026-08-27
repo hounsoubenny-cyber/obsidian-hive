@@ -30,7 +30,7 @@ from fastapi import (
 from pydantic import ValidationError
 
 from obsidian_hive.core.managers.conversation_manager import ConversationManager
-from obsidian_hive.api.models import AlexAnalyzeData
+from obsidian_hive.api.models.models import AlexAnalyzeData
 from obsidian_hive.agents.analyst.agent import (
     AnalystResult,
     NoReportProducedError, create_alex
@@ -42,10 +42,10 @@ from obsidian_hive.agents.shared.human_in_loop import (
 )
 from obsidian_hive.core.managers.report_manager import ReportManager
 from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
-from obsidian_hive.api.ws_manager import WSManager
+from obsidian_hive.api.api_utils.ws_manager import WSManager
 from modules_utils.keyed_lock import resource_lock
 from modules_utils.cryto_utils import checkpw
-from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+from obsidian_hive.api.api_utils.server_asset_agent_ws_manager import ServerAgentWSManager
 from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
 from obsidian_hive.core.assets.server_asset.tools.tools import (
     need_confirmation as server_tool_need_confirmation,
@@ -54,7 +54,7 @@ from obsidian_hive.core.assets.server_asset.tools.tools import (
 )
 from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStatus as ServerAgentStatus
 
-from obsidian_hive.api.core_shared import (
+from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_ws_manager,
     get_server_agent_ws_manager,

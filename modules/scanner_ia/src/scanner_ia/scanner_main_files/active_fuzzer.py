@@ -6,58 +6,28 @@ Created on Tue Mar 10 20:16:46 2026
 @author: hounsousamuel
 """
 
-import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
 import lxml
-import copy
 import json
 import traceback
 import time
 import aiohttp
 import asyncio
+import concurrent.futures
 from collections import Counter
 from uuid import uuid4
 from typing import Any, Optional, Tuple, List, Dict
-# from loguru import logger as logger_fuzzer
 from nest_asyncio import apply
 from scanner_ia.core.parser import Parser, ParserResult
-from scanner_ia.core.fetcher import Fetcher, FetcherResult
+from scanner_ia.core.fetcher import FetcherResult
 from scanner_ia.fuzzer.response_analyzer import ResponseAnalyzer
 from scanner_ia.fuzzer.payload_generator import PayloadGenerator
-from scanner_ia.base_class.response_analyzer_base_class import ResponseAnalyzerResult
 from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, FuzzerResult, WorkerFuzzerEntry
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult, OneAnalyzerHelperResult
-from scanner_ia.base_class.payloads_base_class import PayloadResult, Payloads, Payload
 from scanner_ia.scanner_utils.signal_manager import signal_manager
 from scanner_ia.scanner_utils.logger import get_logger
-import concurrent.futures
-
-apply()
 
 logger_fuzzer = get_logger()
-# logger_fuzzer.remove()
-# logger_fuzzer.add(
-#     sys.stdout,
-#     format=(
-#         "<yellow>{time:HH:mm:ss}</yellow> | "
-#         "<level>{level: <8}</level> | "
-#         "<magenta>{name}</magenta>:<cyan>{function}</cyan>:<cyan>{line}</cyan>\n"
-#         "└─ <level>{message}</level>"
-#     ),
-#     level="DEBUG",
-#     colorize=True
-# )
-# logger_fuzzer.add(
-#     "logs/fuzzer.log",
-#     rotation="10 MB",
-#     retention="30 days",
-#     level="DEBUG",
-#     format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-#     encoding="utf-8"
-# )
-
 
 def signal_handler(*args, **kwargs):
 	pass
@@ -97,6 +67,8 @@ class Config:
         # ── Défaut ───────────────────────────────────────────────────────
         "default":               0.65,
     }
+    SEUIL_KEY = "SEUIL"
+    
     def __init__(self):
         self.GET_TIMEOUT = 1
         self.TIMEOUT = 5
@@ -189,17 +161,30 @@ class Fuzzer:
     def update_conf(self, kwargs: dict = None):
         """
         Met à jour la configuration.
-
         Args:
             kwargs: Dictionnaire des clés de configuration
         """
+        import copy
         kwargs = kwargs or {}
         for k, v in kwargs.items():
+            if k.lower() == self.config.SEUIL_KEY.lower() and isinstance(v, dict):
+                v = copy.deepcopy(v)
+                new_v = {}
+                for i, j in v.items():
+                    if i in self.config.SEUIL:
+                        if isinstance(j, (int, float)) and 0 <= j <= 1:
+                            new_v[i] = j
+                        else:
+                            new_v[i] = self.config.SEUIL[i]
+                new_v.setdefault("default", self.config.SEUIL["default"])
+                v = new_v
+
             if hasattr(self.config, k):
                 setattr(self.config, k, v)
             elif hasattr(self.config, k.upper()):
                 setattr(self.config, k.upper(), v)
-
+                
+                
     def _filter_urls(
             self,
             base_url: str,
@@ -330,6 +315,23 @@ class Fuzzer:
 
         logger_fuzzer.info(f"Génération terminée: {queue.qsize()} payloads")
         return queue, stats
+    
+    async def _fetch_checked(self, url: str, method: str, **fetch_kwargs) -> Optional[FetcherResult]:
+        """
+        Wrapper autour de fetcher.fetch() : vérifie d'abord (via OPTIONS, résultat
+        caché côté Fetcher) si `method` est supportée par cet endpoint précis.
+        Vaut pour TOUTES les méthodes (GET compris) — certaines routes "write-only"
+        refusent le GET tout autant qu'une route GET-only refuse le POST.
+
+        Skip silencieux (retourne None) uniquement si on a une confirmation fiable
+        (header Allow reçu) que la méthode n'est pas supportée. Si l'info n'a pas
+        pu être obtenue (OPTIONS bloqué/timeout/pas de header), comportement
+        inchangé : on tente quand même.
+        """
+        if await self.parser.fetcher.should_skip_method(url, method):
+            logger_fuzzer.debug(f"{method} non supporté sur {url} (OPTIONS), payload skip")
+            return None
+        return await self.parser.fetcher.fetch(url=url, method=method, **fetch_kwargs)
 
     async def send_payload(self, entry: WorkerFuzzerEntry, **kwargs) -> Optional[FetcherResult]:
         """
@@ -357,7 +359,7 @@ class Fuzzer:
                     0] if new_element.get("champs") else {} # Liste de dict d'où le [0]
 
                 if method == "POST":
-                    result = await self.parser.fetcher.fetch(
+                    result = await self._fetch_checked(
                         url=url,
                         method=method,
                         data=data,
@@ -365,7 +367,7 @@ class Fuzzer:
                         **kwargs
                     )
                 else:  # GET
-                    result = await self.parser.fetcher.fetch(
+                    result = await self._fetch_checked(
                         url=url,
                         method=method,
                         params=data,
@@ -375,7 +377,7 @@ class Fuzzer:
 
             elif "header" in ptype.lower():
                 headers = new_element
-                result = await self.parser.fetcher.fetch(
+                result = await self._fetch_checked(
                     url=entry.url,
                     method="GET",
                     headers=headers,
@@ -385,7 +387,7 @@ class Fuzzer:
 
             elif "cookie" in ptype.lower():
                 cookies = new_element
-                result = await self.parser.fetcher.fetch(
+                result = await self._fetch_checked(
                     url=entry.url,
                     method="GET",
                     cookies=cookies,
@@ -397,8 +399,9 @@ class Fuzzer:
                 body_config = new_element        # {"content_type": ..., "data": ..., "raw": ...}
                 ct = body_config["content_type"]
                 data = body_config["data"]
+
                 if body_config.get("raw"):  # XML brut donc data=data
-                    result = await self.parser.fetcher.fetch(
+                    result = await self._fetch_checked(
                         url=entry.url,
                         method="POST",
                         timeout=self.config.TIMEOUT,
@@ -407,7 +410,7 @@ class Fuzzer:
                         **kwargs
                     )
                 else: # JSON donc json=data
-                    result = await self.parser.fetcher.fetch(
+                    result = await self._fetch_checked(
                         url=entry.url,
                         method="POST",
                         timeout=self.config.TIMEOUT,
@@ -417,7 +420,7 @@ class Fuzzer:
                     )
         
             elif any(c in ptype.lower() for c in ("path", "query")):
-                result = await self.parser.fetcher.fetch(
+                result = await self._fetch_checked(
                     url=new_element,
                     method="GET",
                     timeout=self.config.TIMEOUT,
@@ -479,15 +482,12 @@ class Fuzzer:
 
         return result
     
-    @staticmethod
-    def _early_stop_min_prob(vuln_name: str) -> float:
+    def _early_stop_min_prob(self, vuln_name: str) -> float:
         """
-        Seuil de confirmation dynamique = (seuil_détection + 1.0) / 2.
-        Garanti toujours au-dessus du seuil de détection, jamais arbitraire.
-        Ex: SQLi seuil=0.60 → early_stop=0.80 | CORS seuil=0.75 → early_stop=0.875
+        Seuil de confirmation = seuil de détection lui-même (self.config.SEUIL,
+        mis à jour dynamiquement par update_conf() — pas Config.SEUIL en dur).
         """
-        seuil = Config.SEUIL.get(vuln_name, Config.SEUIL["default"])
-        return (seuil + 1.0) / 2
+        return self.config.SEUIL.get(vuln_name, self.config.SEUIL.get("default", 0.65))
 
     def _should_skip(self, url: str, vuln_name: str, result: FuzzerResult) -> bool:
         key = f"{url}|{vuln_name}"
@@ -509,7 +509,6 @@ class Fuzzer:
         self,
         base_url: str,
         queue: asyncio.Queue,
-        signal_queue: asyncio.Queue,
         lock: asyncio.Lock,
         result: FuzzerResult,
         worker_id: str = "",
@@ -528,6 +527,11 @@ class Fuzzer:
         """
 
         local_count = 0
+        get_timeout_err = 0
+        max_get_timeout_err = 3
+        queue_empty_count = 0
+        max_queue_empty_count = 3
+        
         while True:
             get_item = False
             can_put = False
@@ -536,14 +540,13 @@ class Fuzzer:
             try:
                 worker_entry: WorkerFuzzerEntry = await asyncio.wait_for(queue.get(), timeout=self.config.GET_TIMEOUT)
                 get_item = True
-
+                get_timeout_err = 0
+                queue_empty_count = 0
                 if worker_entry is None:
-                    await signal_queue.put(None)
                     break
                 
                 async with lock:
                     if self._should_skip(worker_entry.url, worker_entry.vuln_name, result):
-                        queue.task_done()
                         continue
                 
                 local_count += 1
@@ -577,13 +580,6 @@ class Fuzzer:
                             self.config.SEUIL.get("default", 0.65)
                         )
                 )
-                # response_analyzer_result = await asyncio.to_thread(
-                #     self.response_analyzer.analyse,
-                #     worker_result,
-                #     self.payload_generator.payloads.get('payloads', {}),
-                #     self.config.SEUIL.get(worker_result.vuln_name,
-                #                      self.config.SEUIL.get("default", 0.65))
-                #     )
                 worker_result.response_analyzer_result = response_analyzer_result
                 can_put = True
                 if response_analyzer_result.is_vulnerable:
@@ -591,7 +587,6 @@ class Fuzzer:
                         self._register_confirmation(
                             worker_entry.url,
                             worker_entry.vuln_name,
-                            # worker_entry.payload_type
                             response_analyzer_result.prob,
                             result
                         )
@@ -605,26 +600,30 @@ class Fuzzer:
                             ) 
 
             except asyncio.TimeoutError:
+                get_timeout_err += 1
                 async with lock:
-                    if queue.empty():
+                    if queue.empty() and get_timeout_err >= max_get_timeout_err:
+                        logger_fuzzer.info("Queue vide, tout sera marqué done !")
                         for _ in range(self.config.MAX_WORKERS):
                             await queue.put(None)
+                            # Remarque: Mm que celui du crawler.
+                        for _ in range(queue.qsize()):
+                            try:
+                                queue.task_done() 
+                            except Exception:
+                                pass
 
-                    await signal_queue.put(None)
-                break
+                        break
 
             except asyncio.QueueEmpty:
-                # async with lock:
-                #     if None not in list(queue._queue):
-                #         logger_fuzzer.debug(f"Worker {worker_id}: queue vide")
-                #         await queue.put(None)
                 logger_fuzzer.debug("Queue vide !")
-                await signal_queue.put(None)
-                break
+                queue_empty_count += 1
+                # Mm logique par précaution
+                if queue_empty_count >= max_queue_empty_count:
+                    break
             
             except asyncio.CancelledError:
                 logger_fuzzer.debug(f"Worker {worker_id} annulé")
-                await signal_queue.put(None)
                 break
             
             except KeyboardInterrupt:
@@ -641,7 +640,10 @@ class Fuzzer:
                     if can_put:
                         async with lock:
                             result.results.append(worker_result)
-                    queue.task_done()
+                    try:
+                        queue.task_done() 
+                    except Exception:
+                        pass
 
                 if local_count % 20 == 0 and worker_id:
                     logger_fuzzer.info(f"Worker {worker_id} a traité {local_count} payloads")
@@ -661,8 +663,8 @@ class Fuzzer:
         analyzer_helper_result: AnalyzerHelperResult,
         limit_vuln: Optional[int] | list[str] = None,
         time_between: float = 0.001,
-        allowed_domains: list[str] | None = ["http://127.0.0.1", "http://localhost"],
-        dynamic_timeout: bool = True,
+        allowed_domains: list[str] | None = None,
+        dynamic_timeout: bool = False,
         max_test: int | None = None,
         **kwargs
     ) -> FuzzerResult:
@@ -681,6 +683,7 @@ class Fuzzer:
         """
         max_test_b = self.config.MAX_TEST
         self.config.MAX_TEST = max_test
+        allowed_domains = allowed_domains or ["http://127.0.0.1", "http://localhost"]
         if allowed_domains:
             if not self.is_in_scope(base_url, allowed_domains=allowed_domains):
                 logger_fuzzer.error(f"URL hors scope → {base_url}")
@@ -692,7 +695,6 @@ class Fuzzer:
         start_time = time.time()
         same_domain = AnalyzerHelperResult()
         total_payloads = 0
-        done, pending = [], []
         try:
             # Sélectionner les vulnérabilités à tester
             vulns_to_test = self.select_vuln_to_test(limit_vuln)
@@ -715,14 +717,14 @@ class Fuzzer:
                 analyzer_helper_result=same_domain,
                 **kwargs
             )
-            signal_queue = asyncio.Queue()
             total_payloads = queue.qsize()
+            FUZZ_TIMEOUT = self.config.FUZZ_TIMEOUT
+            
             if dynamic_timeout:
                 estimated_time = (total_payloads / self.config.MAX_WORKERS) * (time_between + 0.1)
-                self.config.FUZZ_TIMEOUT = max(60, min(600, estimated_time * 1.5))
-                logger_fuzzer.info(f"Timeout configuré dynamiquement à {self.config.FUZZ_TIMEOUT:.1f}s")
+                FUZZ_TIMEOUT = max(60, min(600, estimated_time * 1.5))
+                logger_fuzzer.info(f"Timeout configuré dynamiquement à {FUZZ_TIMEOUT:.1f}s")
     
-                
             logger_fuzzer.info(f"Stats par URL:\n{json.dumps(stats, indent=2, ensure_ascii=False)}")
             logger_fuzzer.info(f"Lancement de {total_payloads} tests avec {self.config.MAX_WORKERS} workers")
 
@@ -735,7 +737,6 @@ class Fuzzer:
                     self._worker(
                         base_url=base_url,
                         queue=queue,
-                        signal_queue=signal_queue,
                         lock=lock,
                         result=result,
                         time_between=time_between,
@@ -747,47 +748,14 @@ class Fuzzer:
 
             logger_fuzzer.debug(f"Workers démarrés: {[t._state for t in tasks]}")
             try:
-                async def monitor_queue():
-                    empty_count = 0
-                    while not queue.empty():
-                        await asyncio.sleep(0.2)
-                        try:
-                            item = signal_queue.get_nowait()
-                            if item is None:
-                                logger_fuzzer.warning("🚨 SIGNAL NONE DÉTECTÉ ! ARRÊT IMMÉDIAT")
-                                raise asyncio.TimeoutError("Signal d'arrêt reçu d'un worker")
-
-                        except asyncio.QueueEmpty:
-                            pass
-
-                        if queue.empty():
-                            await asyncio.sleep(self.config.EMPTY_AWAIT_BETWEEN)
-                            if queue.empty():
-                                empty_count += 1
-                        if empty_count >= self.config.EMPTY_MAX_COUNT:
-                            logger_fuzzer.info("📭 Queue vide, arrêt normal")
-                            raise asyncio.QueueEmpty("📭 Queue vide, arrêt normal")
-                            
-
-                # print(self.config.FUZZ_TIMEOUT)
-                # input()
-                monitor_task = asyncio.create_task(monitor_queue())
-                # print(tasks)
                 join_task = asyncio.create_task(
-                    asyncio.wait_for(queue.join(), timeout=self.config.FUZZ_TIMEOUT)
-                    )
-
-                done, pending = await asyncio.wait(
-                    [monitor_task, join_task],
-                    timeout=None,  # ou None, c'est juste mon choix
-                    return_when=asyncio.FIRST_EXCEPTION
+                    asyncio.wait_for(queue.join(), timeout=FUZZ_TIMEOUT)
                 )
-                for task in done:
-                    task.result()   # Pour propager l'erreur
-                logger_fuzzer.success(f"Queue fuzz vidée avant timeout({self.config.FUZZ_TIMEOUT}) !")
+                await join_task
+                logger_fuzzer.success(f"Queue fuzz vidée avant timeout({FUZZ_TIMEOUT}) !")
 
             except (asyncio.TimeoutError, asyncio.QueueEmpty):
-                logger_fuzzer.warning(f"Timeout join atteint timeout={self.config.FUZZ_TIMEOUT}")
+                logger_fuzzer.warning(f"Timeout join atteint timeout={FUZZ_TIMEOUT}")
                 while not queue.empty():
                     try:
                         queue.get_nowait()
@@ -796,7 +764,6 @@ class Fuzzer:
                         break
 
                 self.stop_task(tasks)
-                self.stop_task(pending)
 
             except Exception as e:
                 logger_fuzzer.error(f"Erreur pour join : {e}")
@@ -807,16 +774,8 @@ class Fuzzer:
                 for _ in range(self.config.MAX_WORKERS):
                     await queue.put(None)
                 await asyncio.gather(*tasks, return_exceptions=True)
-                if pending:
-                    await asyncio.gather(*pending, return_exceptions=True)
-
-            try:
-                monitor_task.cancel()
-            except Exception:
-                pass
 
             self.stop_task(tasks)
-            self.stop_task(pending)
 
             logger_fuzzer.info(f"Fuzzing terminé pour {base_url}")
 
@@ -989,9 +948,10 @@ class Fuzzer:
 
 
 if __name__ == "__main__":
+    apply()
     # Test simple
     async def main():
-        from scanner_utils.helpers import dvwa_full_setup
+        from scanner_ia.scanner_utils.helpers import dvwa_full_setup
         async with aiohttp.ClientSession() as session:
             await dvwa_full_setup(session, "http://localhost:8080", "admin", "password", "low")
             fuzzer = Fuzzer(debug=True, session=session)
