@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldAI — Rapport de Sécurité — {{ summary.url }}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOKENS PAR THÈME
+═══════════════════════════════════════════════════════════════════ */
+:root { --transition:.35s cubic-bezier(.4,0,.2,1); --nav-w:220px; }
+
+[data-theme="dark"] {
+  --bg:#030712; --bg-card:rgba(15,23,42,0.75); --bg-glass:rgba(255,255,255,0.04);
+  --bg-hover:rgba(255,255,255,0.07); --border:rgba(255,255,255,0.08);
+  --border-hi:rgba(99,102,241,0.5); --text:#e2e8f0; --text-muted:#64748b;
+  --text-dim:#94a3b8; --accent:#6366f1; --accent2:#8b5cf6;
+  --glow:rgba(99,102,241,0.25); --header-bg:rgba(3,7,18,0.97);
+  --nav-bg:rgba(5,10,25,0.97); --mesh1:rgba(99,102,241,0.12);
+  --mesh2:rgba(139,92,246,0.09); --chart-grid:rgba(255,255,255,0.06);
+  --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+[data-theme="light"] {
+  --bg:#f8fafc; --bg-card:#ffffff; --bg-glass:rgba(0,0,0,0.02);
+  --bg-hover:#f1f5f9; --border:#e2e8f0; --border-hi:#6366f1;
+  --text:#0f172a; --text-muted:#64748b; --text-dim:#94a3b8;
+  --accent:#4f46e5; --accent2:#7c3aed; --glow:rgba(79,70,229,0.12);
+  --header-bg:#0f172a; --nav-bg:#ffffff; --mesh1:transparent; --mesh2:transparent;
+  --chart-grid:rgba(0,0,0,0.06); --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+[data-theme="cyber"] {
+  --bg:#000a0f; --bg-card:rgba(0,20,30,0.8); --bg-glass:rgba(0,255,200,0.03);
+  --bg-hover:rgba(0,255,200,0.06); --border:rgba(0,255,200,0.12); --border-hi:#00ffc8;
+  --text:#b0fff0; --text-muted:#3a8a7a; --text-dim:#6ab8a8;
+  --accent:#00ffc8; --accent2:#00b8ff; --glow:rgba(0,255,200,0.2);
+  --header-bg:rgba(0,5,10,0.98); --nav-bg:rgba(0,8,14,0.97);
+  --mesh1:rgba(0,255,200,0.06); --mesh2:rgba(0,184,255,0.04);
+  --chart-grid:rgba(0,255,200,0.08); --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+[data-theme="punk"] {
+  --bg:#0d0010; --bg-card:rgba(25,0,35,0.85); --bg-glass:rgba(255,0,200,0.04);
+  --bg-hover:rgba(255,0,200,0.08); --border:rgba(255,0,200,0.15); --border-hi:#ff00c8;
+  --text:#ffd6f8; --text-muted:#8a3a7a; --text-dim:#c87ab8;
+  --accent:#ff00c8; --accent2:#ff6b00; --glow:rgba(255,0,200,0.25);
+  --header-bg:rgba(13,0,16,0.98); --nav-bg:rgba(10,0,14,0.98);
+  --mesh1:rgba(255,0,200,0.08); --mesh2:rgba(255,107,0,0.06);
+  --chart-grid:rgba(255,0,200,0.08); --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+[data-theme="void"] {
+  --bg:#080808; --bg-card:rgba(16,16,16,0.9); --bg-glass:rgba(255,255,255,0.025);
+  --bg-hover:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.06);
+  --border-hi:rgba(255,255,255,0.3); --text:#d4d4d4; --text-muted:#525252; --text-dim:#737373;
+  --accent:#ffffff; --accent2:#a3a3a3; --glow:rgba(255,255,255,0.08);
+  --header-bg:#000000; --nav-bg:#050505; --mesh1:transparent; --mesh2:transparent;
+  --chart-grid:rgba(255,255,255,0.04); --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+[data-theme="aurora"] {
+  --bg:#05080f; --bg-card:rgba(8,16,32,0.8); --bg-glass:rgba(52,211,153,0.04);
+  --bg-hover:rgba(52,211,153,0.07); --border:rgba(52,211,153,0.14); --border-hi:#34d399;
+  --text:#d1fae5; --text-muted:#2d6a56; --text-dim:#6ee7b7;
+  --accent:#34d399; --accent2:#a78bfa; --glow:rgba(52,211,153,0.22);
+  --header-bg:rgba(5,8,15,0.97); --nav-bg:rgba(4,7,14,0.97);
+  --mesh1:rgba(52,211,153,0.07); --mesh2:rgba(167,139,250,0.07);
+  --chart-grid:rgba(52,211,153,0.07); --mono:'JetBrains Mono',monospace; --font:'Outfit',sans-serif;
+}
+
+[data-theme="aurora"] body::before {
+  background:
+    radial-gradient(ellipse 90% 50% at 10% 20%,rgba(52,211,153,0.10) 0%,transparent 55%),
+    radial-gradient(ellipse 70% 60% at 90% 80%,rgba(167,139,250,0.10) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%,rgba(56,189,248,0.05) 0%,transparent 55%);
+  animation:aurora-drift 14s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0%  {opacity:.7;transform:scale(1)    rotate(0deg);}
+  33% {opacity:1; transform:scale(1.04) rotate(.5deg);}
+  66% {opacity:.8;transform:scale(.97)  rotate(-.3deg);}
+  100%{opacity:1; transform:scale(1.02) rotate(.2deg);}
+}
+[data-theme="aurora"] .brand-shield{background:linear-gradient(135deg,#34d399,#a78bfa);}
+[data-theme="aurora"] .theme-btn.active{background:linear-gradient(90deg,#34d399,#a78bfa);border-color:transparent;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100vh;transition:background var(--transition),color var(--transition);
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 5%,var(--mesh1) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 95%,var(--mesh2) 0%,transparent 55%);
+  pointer-events:none;z-index:0;transition:background var(--transition);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT AVEC NAV VERTICALE
+═══════════════════════════════════════════════════════════════════ */
+.app-shell{
+  display:flex;min-height:100vh;position:relative;z-index:1;
+}
+
+/* ── Nav verticale ─────────────────────────────────────────────── */
+.sidenav{
+  width:var(--nav-w);
+  background:var(--nav-bg);
+  border-right:1px solid var(--border);
+  backdrop-filter:blur(24px);
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:200;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  overflow-x:hidden;
+  transition:transform .3s ease,background var(--transition);
+}
+.sidenav::-webkit-scrollbar{width:3px;}
+.sidenav::-webkit-scrollbar-track{background:transparent;}
+.sidenav::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.sidenav-brand{
+  padding:1.4rem 1.2rem 1rem;
+  display:flex;align-items:center;gap:.75rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sidenav-logo{
+  width:34px;height:34px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;
+  box-shadow:0 0 16px var(--glow);
+}
+.sidenav-brand-name{font-size:.9rem;font-weight:800;letter-spacing:-.02em;}
+.sidenav-brand-ver{font-size:.6rem;font-family:var(--mono);color:var(--text-muted);margin-top:1px;}
+
+.sidenav-section-label{
+  padding:.9rem 1.2rem .3rem;
+  font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--text-muted);font-weight:700;
+}
+
+.nav-link{
+  display:flex;align-items:center;gap:.7rem;
+  padding:.55rem 1.2rem;
+  color:var(--text-dim);font-size:.78rem;font-weight:500;
+  text-decoration:none;cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all .15s;
+  white-space:nowrap;
+}
+.nav-link:hover{
+  background:var(--bg-hover);color:var(--text);
+  border-left-color:var(--border-hi);
+}
+.nav-link.active{
+  background:linear-gradient(90deg,rgba(99,102,241,.12),transparent);
+  color:var(--accent);border-left-color:var(--accent);font-weight:700;
+}
+.nav-icon{font-size:.95rem;flex-shrink:0;width:20px;text-align:center;}
+.nav-badge{
+  margin-left:auto;font-family:var(--mono);font-size:.6rem;
+  background:var(--bg-glass);border:1px solid var(--border);
+  color:var(--text-muted);padding:.1rem .45rem;border-radius:999px;
+}
+.nav-badge.danger{background:rgba(255,59,92,.12);border-color:rgba(255,59,92,.3);color:#ff3b5c;}
+
+.sidenav-footer{
+  margin-top:auto;padding:1rem 1.2rem;
+  border-top:1px solid var(--border);flex-shrink:0;
+}
+.sidenav-footer-text{font-size:.6rem;color:var(--text-muted);font-family:var(--mono);line-height:1.6;}
+
+/* ── Toggle mobile ─────────────────────────────────────────────── */
+.nav-toggle{
+  display:none;position:fixed;top:.8rem;left:.8rem;z-index:300;
+  width:36px;height:36px;border-radius:8px;
+  background:var(--header-bg);border:1px solid var(--border);
+  color:var(--text);font-size:1rem;cursor:pointer;
+  align-items:center;justify-content:center;
+}
+@media(max-width:900px){
+  .sidenav{transform:translateX(-100%);}
+  .sidenav.open{transform:translateX(0);}
+  .nav-toggle{display:flex;}
+  .main-content{margin-left:0!important;}
+}
+
+/* ── Contenu principal ─────────────────────────────────────────── */
+.main-content{
+  margin-left:var(--nav-w);
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+
+/* ── Topbar ────────────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--header-bg);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(24px);
+  padding:.55rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  flex-wrap:wrap;
+  transition:background var(--transition);
+}
+.theme-pills{display:flex;gap:.35rem;flex-wrap:wrap;}
+.theme-btn{
+  padding:.28rem .8rem;border-radius:999px;
+  border:1px solid var(--border);background:var(--bg-glass);
+  color:var(--text-dim);font-size:.68rem;font-weight:600;font-family:var(--font);
+  cursor:pointer;transition:all .2s;letter-spacing:.04em;
+}
+.theme-btn:hover,.theme-btn.active{
+  background:var(--accent);color:#fff;border-color:var(--accent);
+  box-shadow:0 0 12px var(--glow);
+}
+.topbar-right{display:flex;align-items:center;gap:.6rem;}
+.export-btn{
+  padding:.28rem .9rem;border-radius:999px;
+  border:1px solid var(--border-hi);background:transparent;
+  color:var(--accent);font-size:.68rem;font-weight:700;font-family:var(--font);
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.4rem;
+}
+.export-btn:hover{background:var(--accent);color:#fff;box-shadow:0 0 14px var(--glow);}
+.topbar-url{
+  font-family:var(--mono);font-size:.62rem;color:var(--text-muted);
+  max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* ── Main inner ────────────────────────────────────────────────── */
+.main-inner{
+  padding:2rem 2.5rem 4rem;
+  max-width:1160px;
+  width:100%;
+  margin:0 auto;
+  box-sizing:border-box;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER PAGE
+═══════════════════════════════════════════════════════════════════ */
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1.5rem;flex-wrap:wrap;
+  margin-bottom:2rem;
+  padding-bottom:1.5rem;
+  border-bottom:1px solid var(--border);
+}
+.page-header-left .scan-id{font-family:var(--mono);font-size:.68rem;color:var(--text-muted);}
+.page-header-left .scan-date{font-size:.8rem;color:var(--text-dim);margin-top:3px;}
+.target-chip{
+  font-family:var(--mono);font-size:.7rem;
+  background:var(--bg-glass);border:1px solid var(--border-hi);
+  color:var(--accent);padding:.3rem .9rem;border-radius:8px;
+  max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOCK BANNER
+═══════════════════════════════════════════════════════════════════ */
+.mock-banner{
+  background:rgba(255,213,0,.07);border:1px solid rgba(255,213,0,.3);
+  border-radius:12px;padding:1rem 1.5rem;margin-bottom:2rem;
+  display:flex;align-items:flex-start;gap:1rem;
+}
+.mock-banner-title{font-size:.88rem;font-weight:700;color:#ffd166;margin-bottom:.3rem;}
+.mock-banner-body{font-size:.78rem;color:#b8960c;line-height:1.5;}
+code{font-family:var(--mono);background:rgba(255,213,0,.1);padding:.1rem .4rem;border-radius:4px;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KPI GRID
+═══════════════════════════════════════════════════════════════════ */
+.hero-grid{
+  display:grid;
+  grid-template-columns:200px 1fr 1fr 1fr;
+  gap:1.2rem;margin-bottom:2.5rem;
+}
+@media(max-width:1100px){.hero-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.hero-grid{grid-template-columns:1fr;}}
+
+.kpi-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:18px;padding:1.6rem;
+  backdrop-filter:blur(20px);
+  transition:border-color var(--transition),box-shadow var(--transition);
+  position:relative;overflow:hidden;
+}
+.kpi-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--bg-glass),transparent);pointer-events:none;
+}
+.kpi-card:hover{border-color:var(--border-hi);box-shadow:0 0 24px var(--glow);}
+.risk-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;}
+.risk-ring-wrap{position:relative;width:120px;height:120px;}
+.risk-ring-wrap canvas{position:absolute;inset:0;}
+.risk-ring-inner{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+}
+.risk-ring-value{font-size:2.2rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
+.risk-ring-label{font-size:.58rem;font-family:var(--mono);color:var(--text-muted);letter-spacing:.1em;margin-top:2px;}
+.risk-badge{
+  padding:.25rem .85rem;border-radius:999px;
+  font-size:.68rem;font-weight:700;letter-spacing:.07em;
+}
+.risk-url{font-size:.62rem;font-family:var(--mono);color:var(--text-muted);text-align:center;word-break:break-all;max-width:180px;}
+.stat-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:600;margin-bottom:.6rem;}
+.stat-value{font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
+.stat-sub{font-size:.75rem;color:var(--text-dim);margin-top:.4rem;}
+.sev-strip{display:flex;gap:.9rem;margin-top:1rem;flex-wrap:wrap;}
+.sev-item{display:flex;flex-direction:column;gap:1px;}
+.sev-count{font-size:1.4rem;font-weight:700;}
+.sev-name{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTIONS
+═══════════════════════════════════════════════════════════════════ */
+section{margin:2.5rem 0;scroll-margin-top:80px;}
+.section-header{
+  display:flex;align-items:center;gap:.9rem;
+  margin-bottom:1.5rem;padding-bottom:.9rem;border-bottom:1px solid var(--border);
+}
+.section-icon{
+  width:36px;height:36px;background:var(--bg-glass);border:1px solid var(--border);
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;flex-shrink:0;
+}
+.section-title{font-size:1rem;font-weight:700;letter-spacing:-.01em;}
+.section-badge{
+  margin-left:auto;font-family:var(--mono);font-size:.68rem;color:var(--text-muted);
+  background:var(--bg-glass);padding:.22rem .7rem;
+  border-radius:999px;border:1px solid var(--border);
+}
+.section-actions{margin-left:.5rem;display:flex;gap:.4rem;}
+
+/* Bouton plier/déplier section */
+.fold-btn{
+  flex-shrink:0;width:26px;height:26px;border-radius:6px;
+  background:var(--bg-glass);border:1px solid var(--border);
+  color:var(--text-muted);font-size:.75rem;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  margin-left:.4rem;
+}
+.fold-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Corps de section pliable */
+.section-body{
+  overflow:hidden;
+  transition:max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s;
+  max-height:9999px;
+  opacity:1;
+}
+.section-body.folded{
+  max-height:0!important;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════════════════ */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr;}}
+.chart-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:16px;padding:1.3rem;backdrop-filter:blur(16px);
+}
+.chart-title{font-size:.72rem;font-weight:600;color:var(--text-dim);margin-bottom:.9rem;text-transform:uppercase;letter-spacing:.07em;}
+.chart-wrap{position:relative;height:190px;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTER BAR
+═══════════════════════════════════════════════════════════════════ */
+.filter-bar{display:flex;gap:.4rem;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center;}
+.filter-btn{
+  padding:.28rem .75rem;border-radius:999px;
+  border:1px solid var(--border);background:var(--bg-glass);
+  color:var(--text-muted);font-size:.68rem;font-weight:600;font-family:var(--font);
+  cursor:pointer;transition:all .2s;
+}
+.filter-btn:hover{border-color:var(--border-hi);color:var(--text);}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.filter-btn[data-sev="critique"].active{background:#ff3b5c;border-color:#ff3b5c;}
+.filter-btn[data-sev="élevé"].active{background:#ff8c42;border-color:#ff8c42;}
+.filter-btn[data-sev="moyen"].active{background:#ffd166;border-color:#ffd166;color:#000;}
+.filter-btn[data-sev="faible"].active{background:#06d6a0;border-color:#06d6a0;color:#000;}
+.filter-sep{width:1px;height:18px;background:var(--border);margin:0 .2rem;}
+.filter-count{font-family:var(--mono);font-size:.62rem;color:var(--text-muted);margin-left:auto;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VULN CARDS
+═══════════════════════════════════════════════════════════════════ */
+.vuln-list{display:flex;flex-direction:column;gap:.65rem;}
+.vuln-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-left:4px solid var(--border);border-radius:14px;
+  overflow:hidden;backdrop-filter:blur(14px);
+  transition:border-color .25s,box-shadow .25s;
+}
+.vuln-card:hover{border-color:var(--border-hi);}
+.vuln-card[data-hidden="true"]{display:none;}
+
+.vuln-summary{
+  display:flex;align-items:center;gap:.9rem;
+  padding:1.1rem 1.4rem;cursor:pointer;user-select:none;
+  transition:background .15s;
+}
+.vuln-summary:hover{background:var(--bg-hover);}
+.vuln-chevron{
+  margin-left:auto;flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:var(--bg-glass);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;transition:transform .25s;color:var(--text-muted);
+}
+.vuln-card.open .vuln-chevron{transform:rotate(180deg);}
+.vuln-title-col{flex:1;min-width:0;}
+.vuln-name{font-size:.92rem;font-weight:700;}
+.vuln-full-name{font-size:.72rem;color:var(--text-dim);margin-top:2px;}
+.badge-source{
+  font-size:.6rem;font-weight:700;font-family:var(--mono);
+  padding:.16rem .5rem;border-radius:4px;
+  background:var(--bg-glass);border:1px solid var(--border);color:var(--text-muted);
+}
+.badge-sev{
+  padding:.2rem .6rem;border-radius:6px;
+  font-size:.65rem;font-weight:700;font-family:var(--mono);
+  text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;
+}
+.badge-cvss{
+  padding:.2rem .6rem;border-radius:6px;font-size:.65rem;font-weight:600;font-family:var(--mono);
+  background:var(--bg-glass);color:var(--text-dim);border:1px solid var(--border);flex-shrink:0;
+}
+.badge-prob{
+  padding:.2rem .6rem;border-radius:6px;font-size:.65rem;font-weight:600;font-family:var(--mono);
+  background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25);flex-shrink:0;
+}
+.badge-conf{
+  padding:.2rem .6rem;border-radius:6px;font-size:.6rem;font-weight:600;font-family:var(--mono);
+  background:rgba(6,214,160,.08);color:#06d6a0;border:1px solid rgba(6,214,160,.2);flex-shrink:0;
+}
+
+.vuln-details{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);}
+.vuln-card.open .vuln-details{max-height:1400px;}
+.vuln-details-inner{
+  padding:1.2rem 1.4rem 1.4rem;display:flex;flex-direction:column;gap:.95rem;
+  border-top:1px solid var(--border);
+}
+.detail-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+.detail-block{display:flex;flex-direction:column;gap:.35rem;}
+.detail-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:600;}
+.detail-value{font-size:.78rem;color:var(--text);}
+.code-block{
+  font-family:var(--mono);font-size:.7rem;color:var(--text-dim);
+  background:var(--bg-glass);padding:.5rem .8rem;border-radius:8px;
+  border:1px solid var(--border);word-break:break-all;margin-top:.3rem;
+}
+
+/* Confidence block */
+.confidence-block{
+  background:rgba(6,214,160,.04);border:1px solid rgba(6,214,160,.15);
+  border-radius:10px;padding:.9rem 1.1rem;display:flex;gap:1.5rem;flex-wrap:wrap;
+}
+.conf-item{display:flex;flex-direction:column;gap:2px;}
+.conf-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:600;}
+.conf-value{font-size:1.1rem;font-weight:700;font-family:var(--mono);color:#06d6a0;}
+
+.payload-box{
+  background:rgba(255,140,66,.07);border:1px solid rgba(255,140,66,.2);
+  border-radius:10px;padding:.9rem 1rem;position:relative;
+}
+.payload-label{
+  font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+  color:#ff8c42;font-weight:700;margin-bottom:.45rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.payload-value{font-family:var(--mono);font-size:.75rem;color:#ffa862;word-break:break-all;line-height:1.6;}
+.copy-btn{
+  position:absolute;top:.7rem;right:.7rem;padding:.18rem .55rem;border-radius:5px;
+  background:rgba(255,140,66,.15);border:1px solid rgba(255,140,66,.3);
+  color:#ff8c42;font-size:.62rem;font-family:var(--mono);cursor:pointer;transition:all .15s;
+}
+.copy-btn:hover{background:rgba(255,140,66,.3);}
+
+.indicators-wrap{display:flex;gap:.35rem;flex-wrap:wrap;}
+.indicator-chip{
+  font-size:.65rem;font-family:var(--mono);padding:.18rem .5rem;border-radius:5px;
+  background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);color:#06d6a0;
+}
+
+.signals-wrap{display:flex;gap:.45rem;flex-wrap:wrap;}
+.signal-pill{font-size:.65rem;padding:.18rem .6rem;border-radius:999px;font-weight:500;}
+.signal-pill.on{background:rgba(6,214,160,.1);color:#06d6a0;border:1px solid rgba(6,214,160,.25);}
+.signal-pill.off{background:var(--bg-glass);color:var(--text-muted);border:1px solid var(--border);}
+
+.score-bar-wrap{margin-top:.3rem;}
+.score-bar-row{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);margin-bottom:.35rem;}
+.score-bar-track{height:5px;border-radius:999px;background:var(--bg-glass);overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:999px;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGES TABLE
+═══════════════════════════════════════════════════════════════════ */
+.table-wrap{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;backdrop-filter:blur(12px);overflow-x:auto;
+}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--bg-glass);}
+th{
+  padding:.8rem 1rem;text-align:left;font-size:.64rem;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);
+  font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:.75rem 1rem;font-size:.78rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr.row-vuln{background:rgba(255,59,92,.04);}
+tr:not(.row-vuln):hover td,.row-clean:hover td{background:var(--bg-hover);}
+.url-cell{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.st-ok{color:#06d6a0;font-family:var(--mono);font-weight:700;}
+.st-warn{color:#ffd166;font-family:var(--mono);font-weight:700;}
+.st-err{color:#ff3b5c;font-family:var(--mono);font-weight:700;}
+.vuln-badge-row{display:flex;gap:.25rem;flex-wrap:wrap;}
+.vuln-badge-mini{font-size:.58rem;padding:.08rem .38rem;border-radius:3px;font-weight:600;}
+.vuln-badge-fuzzer{background:rgba(255,59,92,.12);color:#ff3b5c;border:1px solid rgba(255,59,92,.25);}
+.vuln-badge-ml{background:rgba(129,140,248,.12);color:#818cf8;border:1px solid rgba(129,140,248,.25);}
+
+.detail-btn{
+  display:inline-flex;align-items:center;gap:.3rem;
+  padding:.2rem .65rem;border-radius:6px;
+  background:var(--bg-glass);border:1px solid var(--border);
+  color:var(--accent);font-size:.65rem;font-weight:600;
+  font-family:var(--font);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.detail-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.toggle-clean-btn{
+  margin-top:.9rem;display:inline-flex;align-items:center;gap:.5rem;
+  padding:.3rem .9rem;border-radius:8px;
+  background:var(--bg-glass);border:1px solid var(--border);
+  color:var(--text-muted);font-size:.72rem;cursor:pointer;transition:all .2s;
+}
+.toggle-clean-btn:hover{border-color:var(--border-hi);color:var(--text);}
+.clean-count-badge{
+  font-family:var(--mono);font-size:.6rem;background:var(--bg-glass);
+  border:1px solid var(--border);padding:.1rem .4rem;border-radius:999px;
+}
+
+/* Ligne détail page */
+.page-detail-row{display:none;}
+.page-detail-row.open{display:table-row;}
+.page-detail-inner{
+  padding:1.1rem 1.3rem 1.3rem;background:var(--bg-glass);
+  border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.9rem;
+}
+.page-detail-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.35rem;}
+.page-vuln-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-left:4px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;
+  display:flex;flex-direction:column;gap:.7rem;
+}
+.page-vuln-header{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+.page-vuln-name{font-size:.85rem;font-weight:700;flex:1;}
+.page-payload-box{
+  background:rgba(255,140,66,.07);border:1px solid rgba(255,140,66,.2);
+  border-radius:8px;padding:.65rem .9rem;position:relative;
+}
+.page-payload-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:#ff8c42;font-weight:700;margin-bottom:.3rem;}
+.page-payload-value{font-family:var(--mono);font-size:.72rem;color:#ffa862;word-break:break-all;line-height:1.5;}
+.page-signals{display:flex;gap:.35rem;flex-wrap:wrap;}
+.page-inds{display:flex;gap:.3rem;flex-wrap:wrap;}
+
+.headers-diff-table{background:var(--bg-glass);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.headers-diff-table table{font-size:.68rem;}
+.headers-diff-table th{font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;padding:.45rem .75rem;}
+.headers-diff-table td{padding:.38rem .75rem;font-family:var(--mono);font-size:.65rem;}
+.hd-added{color:#06d6a0;} .hd-removed{color:#ff3b5c;text-decoration:line-through;} .hd-changed{color:#ffd166;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ML SECTION — CARDS PAR URL
+═══════════════════════════════════════════════════════════════════ */
+.ml-url-cards{display:flex;flex-direction:column;gap:1.2rem;}
+.ml-url-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;backdrop-filter:blur(12px);
+  transition:border-color .2s;
+}
+.ml-url-card:hover{border-color:var(--border-hi);}
+.ml-url-header{
+  display:flex;align-items:center;gap:.9rem;
+  padding:.9rem 1.3rem;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.ml-url-chip{
+  font-family:var(--mono);font-size:.68rem;
+  background:var(--bg-glass);border:1px solid var(--border);
+  color:var(--text-dim);padding:.22rem .65rem;border-radius:6px;
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ml-safe-badge{font-size:.68rem;font-weight:700;color:#06d6a0;white-space:nowrap;}
+.ml-vuln-badge{font-size:.68rem;font-weight:700;color:#ff3b5c;white-space:nowrap;}
+
+.ml-card-body{padding:1rem 1.3rem;}
+.ml-prob-filter{display:flex;gap:.35rem;margin-bottom:.9rem;flex-wrap:wrap;align-items:center;}
+.ml-prob-filter-label{font-size:.62rem;color:var(--text-muted);margin-right:.2rem;}
+
+.ml-vuln-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.7rem;}
+.ml-vuln-item{
+  background:var(--bg-glass);border:1px solid var(--border);
+  border-radius:10px;padding:.8rem;
+  transition:border-color .15s,opacity .2s;
+}
+.ml-vuln-item:hover{border-color:var(--border-hi);}
+.ml-vuln-item[data-hidden="true"]{display:none;}
+.ml-vuln-name{font-size:.78rem;font-weight:700;margin-bottom:.35rem;}
+.ml-vuln-pct{font-family:var(--mono);font-size:.82rem;font-weight:700;margin-bottom:.4rem;}
+.ml-bar-track{height:4px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;}
+.ml-bar-fill{height:100%;border-radius:999px;}
+.ml-detected-chip{
+  display:inline-block;margin-top:.4rem;
+  font-size:.58rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;
+  background:rgba(255,59,92,.12);color:#ff3b5c;border:1px solid rgba(255,59,92,.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECURITY HEADERS
+═══════════════════════════════════════════════════════════════════ */
+.headers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.9rem;}
+.header-item{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:11px;padding:.9rem 1.1rem;
+  display:flex;align-items:center;gap:.8rem;backdrop-filter:blur(12px);
+  transition:border-color .2s;
+}
+.header-item:hover{border-color:var(--border-hi);}
+.header-status-icon{
+  width:32px;height:32px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;
+}
+.header-info-name{font-family:var(--mono);font-size:.7rem;font-weight:700;}
+.header-info-rec{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TIMINGS
+═══════════════════════════════════════════════════════════════════ */
+.phases-list{display:flex;flex-direction:column;gap:.45rem;}
+.phase-row{
+  display:flex;align-items:center;gap:.9rem;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:9px;padding:.75rem 1.1rem;backdrop-filter:blur(10px);
+}
+.phase-name{flex:1;font-size:.78rem;}
+.phase-bar{flex:2;height:4px;background:var(--bg-glass);border-radius:999px;overflow:hidden;}
+.phase-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;}
+.phase-time{font-family:var(--mono);font-size:.72rem;color:var(--accent);min-width:52px;text-align:right;}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MISC
+═══════════════════════════════════════════════════════════════════ */
+.tech-list{display:flex;gap:.45rem;flex-wrap:wrap;}
+.tech-tag{
+  padding:.28rem .75rem;background:var(--bg-glass);border:1px solid var(--border);
+  border-radius:999px;font-size:.72rem;color:var(--text-dim);
+}
+.empty-state{
+  text-align:center;padding:2.5rem;
+  background:var(--bg-card);border:1px dashed var(--border);
+  border-radius:14px;color:var(--text-muted);font-size:.83rem;
+}
+.mock-section-wrap{position:relative;}
+.mock-overlay{
+  position:absolute;inset:0;z-index:10;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(6px);
+  border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;
+}
+.mock-overlay-title{font-size:.95rem;font-weight:700;color:#ffd166;}
+.mock-overlay-sub{font-size:.78rem;color:rgba(255,213,0,.6);text-align:center;max-width:300px;}
+.mock-reveal-btn{
+  padding:.45rem 1.3rem;border-radius:999px;
+  background:rgba(255,213,0,.1);border:1px solid rgba(255,213,0,.4);
+  color:#ffd166;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.mock-reveal-btn:hover{background:rgba(255,213,0,.2);}
+.mock-section-wrap.revealed .mock-overlay{display:none;}
+.mock-section-wrap.revealed .mock-min-height{min-height:0;}
+
+footer{
+  padding:1.5rem 0 2rem;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+  font-size:.72rem;color:var(--text-muted);
+}
+.footer-brand{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.8rem;color:var(--text);}
+
+/* Animations */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.animate-in{animation:fadeSlideUp .45s ease both;}
+.delay-1{animation-delay:.05s;} .delay-2{animation-delay:.1s;}
+.delay-3{animation-delay:.15s;} .delay-4{animation-delay:.2s;}
+
+@media print{
+  .sidenav,.topbar,.nav-toggle{display:none!important;}
+  .main-content{margin-left:0!important;}
+  .vuln-card.open .vuln-details{max-height:none;}
+  .mock-overlay{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- ══ Sidebar Nav ══════════════════════════════════════════════════════ -->
+<nav class="sidenav" id="sidenav">
+  <div class="sidenav-brand">
+    <div class="sidenav-logo">🛡️</div>
+    <div>
+      <div class="sidenav-brand-name">ShieldAI</div>
+      <div class="sidenav-brand-ver">v{{ scanner_version }}</div>
+    </div>
+  </div>
+
+  <div class="sidenav-section-label">Vue d'ensemble</div>
+  <a class="nav-link" onclick="navScrollTo('sec-kpi', this)">
+    <span class="nav-icon">📊</span> Dashboard
+  </a>
+  <a class="nav-link" onclick="navScrollTo('sec-charts', this)">
+    <span class="nav-icon">📈</span> Graphiques
+  </a>
+
+  <div class="sidenav-section-label">Vulnérabilités</div>
+  <a class="nav-link" onclick="navScrollTo('sec-active', this)">
+    <span class="nav-icon">⚡</span> Actives (fuzzer)
+    {% if active_vulns %}
+    <span class="nav-badge danger">{{ active_vulns | length }}</span>
+    {% endif %}
+  </a>
+  <a class="nav-link" onclick="navScrollTo('sec-passive', this)">
+    <span class="nav-icon">🔍</span> Passives
+    {% if passive_vulns %}
+    <span class="nav-badge">{{ passive_vulns | length }}</span>
+    {% endif %}
+  </a>
+  {% if code_vulns %}
+  <a class="nav-link" onclick="navScrollTo('sec-code', this)">
+    <span class="nav-icon">🧩</span> Code
+    <span class="nav-badge">{{ code_vulns | length }}</span>
+  </a>
+  {% endif %}
+
+  <div class="sidenav-section-label">Analyse</div>
+  {% if ml.available %}
+  <a class="nav-link" onclick="navScrollTo('sec-ml', this)">
+    <span class="nav-icon">🤖</span> ML — ScannerIA
+    <span class="nav-badge">{{ ml.by_url | length }}</span>
+  </a>
+  {% endif %}
+  <a class="nav-link" onclick="navScrollTo('sec-pages', this)">
+    <span class="nav-icon">🕷️</span> Pages crawlées
+    <span class="nav-badge">{{ pages | length }}</span>
+  </a>
+  {% if security_headers %}
+  <a class="nav-link" onclick="navScrollTo('sec-headers', this)">
+    <span class="nav-icon">🔐</span> Headers HTTP
+  </a>
+  {% endif %}
+  {% if technologies %}
+  <a class="nav-link" onclick="navScrollTo('sec-tech', this)">
+    <span class="nav-icon">🔧</span> Technologies
+  </a>
+  {% endif %}
+  <a class="nav-link" onclick="navScrollTo('sec-timings', this)">
+    <span class="nav-icon">⏱️</span> Timings
+  </a>
+
+  <div class="sidenav-footer">
+    <div class="sidenav-footer-text">
+      {{ summary.date }}<br>
+      {{ summary.total_time }} total<br>
+      {{ fuzzer_stats.total_tests }} tests
+    </div>
+  </div>
+</nav>
+
+<!-- ══ Toggle mobile ══ -->
+<button class="nav-toggle" onclick="toggleNav()" id="navToggle">☰</button>
+
+<!-- ══ Main ══════════════════════════════════════════════════════════════ -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="theme-pills">
+      <button class="theme-btn active" onclick="setTheme('dark')">🌑 Dark</button>
+      <button class="theme-btn" onclick="setTheme('light')">☀️ Light</button>
+      <button class="theme-btn" onclick="setTheme('cyber')">⚡ Cyber</button>
+      <button class="theme-btn" onclick="setTheme('punk')">🔥 Punk</button>
+      <button class="theme-btn" onclick="setTheme('void')">◼ Void</button>
+      <button class="theme-btn" onclick="setTheme('aurora')">🌌 Aurora</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-url">{{ summary.url }}</div>
+      <button class="export-btn" onclick="toggleAllSections(this)" id="globalFoldBtn" title="Plier/déplier toutes les sections">⊟ Tout plier</button>
+      <button class="export-btn" onclick="exportCSV()" title="Exporter les vulns en CSV">⬇ CSV</button>
+      <button class="export-btn" onclick="exportPDF()">⬇ PDF</button>
+    </div>
+  </div>
+
+  <div class="main-inner">
+
+    <!-- Header -->
+    <div class="page-header animate-in">
+      <div class="page-header-left">
+        <div class="scan-id">{{ summary.scan_id }}</div>
+        <div class="scan-date">{{ summary.date }} · Généré {{ generated_at }}</div>
+      </div>
+      <div class="target-chip">🎯 {{ summary.url }}</div>
+    </div>
+
+    <!-- Mock banner -->
+    {% if summary.is_mock %}
+    <div class="mock-banner animate-in">
+      <div style="font-size:1.3rem;flex-shrink:0;">⚠️</div>
+      <div>
+        <div class="mock-banner-title">Scan passif — Résultats fuzzer simulés</div>
+        <div class="mock-banner-body">
+          Lancé avec <code>active_scan=False</code>. Le MockFuzzer a généré des résultats fictifs.
+          Relancez avec <code>active_scan=True</code> pour un scan réel.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ══ KPIs ══ -->
+    <section id="sec-kpi">
+      <div class="hero-grid animate-in delay-1">
+        <div class="kpi-card risk-card">
+          <div class="risk-ring-wrap">
+            <canvas id="riskRing" width="120" height="120"></canvas>
+            <div class="risk-ring-inner">
+              <div class="risk-ring-value" style="color:{{ summary.risk_color }};">{{ summary.risk_score }}</div>
+              <div class="risk-ring-label">RISK</div>
+            </div>
+          </div>
+          <div class="risk-badge" style="background:{{ summary.risk_color }}20;border:1px solid {{ summary.risk_color }}50;color:{{ summary.risk_color }};">
+            {{ summary.risk_label }}
+          </div>
+          <div class="risk-url">{{ summary.url }}</div>
+        </div>
+
+        <div class="kpi-card animate-in delay-2">
+          <div class="stat-label">Vulnérabilités</div>
+          <div class="stat-value" style="color:{{ summary.risk_color }};">{{ summary.total_vulns }}</div>
+          <div class="stat-sub">Toutes sources confondues</div>
+          <div class="sev-strip">
+            {% if summary.sev_critique > 0 %}<div class="sev-item"><div class="sev-count" style="color:#ff3b5c;">{{ summary.sev_critique }}</div><div class="sev-name">Critique</div></div>{% endif %}
+            {% if summary.sev_eleve > 0 %}<div class="sev-item"><div class="sev-count" style="color:#ff8c42;">{{ summary.sev_eleve }}</div><div class="sev-name">Élevé</div></div>{% endif %}
+            {% if summary.sev_moyen > 0 %}<div class="sev-item"><div class="sev-count" style="color:#ffd166;">{{ summary.sev_moyen }}</div><div class="sev-name">Moyen</div></div>{% endif %}
+            {% if summary.sev_faible > 0 %}<div class="sev-item"><div class="sev-count" style="color:#06d6a0;">{{ summary.sev_faible }}</div><div class="sev-name">Faible</div></div>{% endif %}
+          </div>
+        </div>
+
+        <div class="kpi-card animate-in delay-3">
+          <div class="stat-label">Pages crawlées</div>
+          <div class="stat-value" style="color:#38bdf8;">{{ summary.total_pages }}</div>
+          <div class="stat-sub">{{ summary.total_time }} de scan total</div>
+        </div>
+
+        <div class="kpi-card animate-in delay-4">
+          <div class="stat-label">Tests fuzzer</div>
+          <div class="stat-value" style="color:var(--accent);">{{ fuzzer_stats.total_tests }}</div>
+          <div class="stat-sub">{{ fuzzer_stats.vuln_rate }}% taux de détection{% if summary.is_mock %} (mock){% endif %}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Charts ══ -->
+    <section id="sec-charts" class="animate-in">
+      <div class="section-header">
+        <div class="section-icon">📊</div>
+        <div class="section-title">Vue d'ensemble</div>
+        <div class="section-badge">3 graphiques</div>
+        <button class="fold-btn" onclick="toggleSection('sec-charts', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+        <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Répartition par sévérité</div>
+          <div class="chart-wrap"><canvas id="chartSev"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top vulnérabilités détectées</div>
+          <div class="chart-wrap"><canvas id="chartVulns"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Confiance par vuln (prob max)</div>
+          <div class="chart-wrap"><canvas id="chartConf"></canvas></div>
+        </div>
+      </div>
+      </div><!-- /section-body -->
+    </section>
+
+    <!-- ══ Vulnérabilités actives ══ -->
+    <section id="sec-active">
+      <div class="section-header">
+        <div class="section-icon">⚡</div>
+        <div class="section-title">Vulnérabilités actives{% if summary.is_mock %} <span style="font-size:.7rem;color:#ffd166;font-weight:400;">(simulées)</span>{% endif %}</div>
+        <div class="section-badge" id="activeVulnCount">{{ active_vulns | length }}</div>
+        <button class="fold-btn" onclick="toggleSection('sec-active', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+
+      {% if active_vulns %}
+      <!-- Filtre sévérité -->
+      <div class="filter-bar">
+        <button class="filter-btn active" data-sev="all" onclick="filterVulns('all', this, 'activeVulnList', 'activeVulnCount')">Toutes</button>
+        {% if summary.sev_critique > 0 %}<button class="filter-btn" data-sev="critique" onclick="filterVulns('critique', this, 'activeVulnList', 'activeVulnCount')" style="color:#ff3b5c;border-color:rgba(255,59,92,.3);">🔴 Critique <span style="font-family:var(--mono);font-size:.6rem;">{{ summary.sev_critique }}</span></button>{% endif %}
+        {% if summary.sev_eleve > 0 %}<button class="filter-btn" data-sev="élevé" onclick="filterVulns('élevé', this, 'activeVulnList', 'activeVulnCount')" style="color:#ff8c42;border-color:rgba(255,140,66,.3);">🟠 Élevé <span style="font-family:var(--mono);font-size:.6rem;">{{ summary.sev_eleve }}</span></button>{% endif %}
+        {% if summary.sev_moyen > 0 %}<button class="filter-btn" data-sev="moyen" onclick="filterVulns('moyen', this, 'activeVulnList', 'activeVulnCount')" style="color:#ffd166;border-color:rgba(255,209,102,.3);">🟡 Moyen <span style="font-family:var(--mono);font-size:.6rem;">{{ summary.sev_moyen }}</span></button>{% endif %}
+        {% if summary.sev_faible > 0 %}<button class="filter-btn" data-sev="faible" onclick="filterVulns('faible', this, 'activeVulnList', 'activeVulnCount')" style="color:#06d6a0;border-color:rgba(6,214,160,.3);">🟢 Faible <span style="font-family:var(--mono);font-size:.6rem;">{{ summary.sev_faible }}</span></button>{% endif %}
+      </div>
+
+      {% if summary.is_mock %}<div class="mock-section-wrap" id="activeMockWrap"><div class="mock-min-height" style="min-height:220px;">{% endif %}
+
+      <div class="vuln-list" id="activeVulnList">
+        {% for v in active_vulns %}
+        <div class="vuln-card{% if summary.is_mock %} mock-hidden{% endif %}"
+             data-sev="{{ v.severity }}"
+             style="border-left-color:{{ v.sev_color }};"
+             id="av_{{ loop.index }}">
+          <div class="vuln-summary" onclick="toggleVuln('av_{{ loop.index }}')">
+            <div class="vuln-title-col">
+              <div class="vuln-name">{{ v.vuln_full }}</div>
+              <div class="vuln-full-name">{{ v.vuln_name }} · {{ v.payload_type }}</div>
+            </div>
+            <span class="badge-source">fuzzer</span>
+            <span class="badge-sev" style="background:{{ v.sev_color }}18;color:{{ v.sev_color }};border:1px solid {{ v.sev_color }}35;">{{ v.severity | upper }}</span>
+            <span class="badge-cvss">CVSS {{ v.cvss }}</span>
+            <span class="badge-prob">{{ v.prob }}%</span>
+            {% if v.confidence.count > 1 %}<span class="badge-conf">×{{ v.confidence.count }}</span>{% endif %}
+            <div class="vuln-chevron">▼</div>
+          </div>
+          <div class="vuln-details">
+            <div class="vuln-details-inner">
+
+              <!-- URL -->
+              <div>
+                <div class="detail-label">URL ciblée</div>
+                <div class="code-block">{{ v.url }}</div>
+              </div>
+
+              <!-- Confidence block -->
+              {% if v.confidence.count > 1 %}
+              <div>
+                <div class="detail-label">Niveau de confiance ({{ v.confidence.count }} confirmations)</div>
+                <div class="confidence-block">
+                  <div class="conf-item">
+                    <div class="conf-label">Prob max</div>
+                    <div class="conf-value">{{ v.confidence.prob_max }}%</div>
+                  </div>
+                  <div class="conf-item">
+                    <div class="conf-label">Prob moy.</div>
+                    <div class="conf-value">{{ v.confidence.prob_avg }}%</div>
+                  </div>
+                  <div class="conf-item">
+                    <div class="conf-label">Confirmations</div>
+                    <div class="conf-value">{{ v.confidence.count }}</div>
+                  </div>
+                  {% if v.confidence.best_type %}
+                  <div class="conf-item">
+                    <div class="conf-label">Meilleur type</div>
+                    <div class="conf-value" style="font-size:.85rem;">{{ v.confidence.best_type }}</div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Payload -->
+              {% if v.payload %}
+              <div class="payload-box">
+                <div class="payload-label">⚡ Payload injecté
+                  {% if v.payload_encoding and v.payload_encoding != 'none' %}
+                  <span style="font-weight:400;font-size:.58rem;background:rgba(255,140,66,.15);padding:.1rem .4rem;border-radius:4px;">{{ v.payload_encoding }}</span>
+                  {% endif %}
+                </div>
+                <div class="payload-value">{{ v.payload }}</div>
+                <button class="copy-btn" onclick="copyText(this, '{{ v.payload | replace("'", "\\'") | replace('"', "&quot;") }}')">📋 Copier</button>
+              </div>
+              {% endif %}
+
+              <!-- Best payload (si différent) -->
+              {% if v.confidence.best_payload and v.confidence.best_payload != v.payload %}
+              <div class="payload-box" style="background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.2);">
+                <div class="payload-label" style="color:#818cf8;">🏆 Meilleur payload (prob max)</div>
+                <div class="payload-value" style="color:#a5b4fc;">{{ v.confidence.best_payload }}</div>
+                <button class="copy-btn" style="background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3);color:#818cf8;" onclick="copyText(this, '{{ v.confidence.best_payload | replace("'", "\\'") | replace('"', "&quot;") }}')">📋 Copier</button>
+              </div>
+              {% endif %}
+
+              <!-- Indicateurs -->
+              {% if v.indicators %}
+              <div>
+                <div class="detail-label">Indicateurs dans la réponse</div>
+                <div class="indicators-wrap" style="margin-top:.4rem;">
+                  {% for ind in v.indicators %}<span class="indicator-chip">{{ ind }}</span>{% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Signaux -->
+              <div>
+                <div class="detail-label">Signaux de détection</div>
+                <div class="signals-wrap" style="margin-top:.4rem;">
+                  <span class="signal-pill {{ 'on' if v.status_changed else 'off' }}">Status {{ '✓' if v.status_changed else '–' }}</span>
+                  <span class="signal-pill {{ 'on' if v.delay_detected else 'off' }}">Délai {{ '✓' if v.delay_detected else '–' }}</span>
+                  <span class="signal-pill {{ 'on' if v.body_changed else 'off' }}">Body {{ '✓' if v.body_changed else '–' }}</span>
+                  <span class="signal-pill {{ 'on' if v.headers_changed else 'off' }}">Headers {{ '✓' if v.headers_changed else '–' }}</span>
+                </div>
+              </div>
+
+              <!-- Infos techniques -->
+              <div class="detail-row">
+                <div class="detail-block">
+                  <div class="detail-label">Status HTTP</div>
+                  <div class="detail-value" style="font-family:var(--mono);">{{ v.response_status }}</div>
+                </div>
+                <div class="detail-block">
+                  <div class="detail-label">Délai réponse</div>
+                  <div class="detail-value" style="font-family:var(--mono);">{{ v.response_delay }}s</div>
+                </div>
+              </div>
+
+              <!-- Score bar -->
+              <div class="score-bar-wrap">
+                <div class="score-bar-row">
+                  <span>Score de détection</span>
+                  <span style="color:{{ v.sev_color }};font-family:var(--mono);font-weight:700;">{{ v.score }}/100</span>
+                </div>
+                <div class="score-bar-track">
+                  <div class="score-bar-fill" style="width:{{ v.score }}%;background:linear-gradient(90deg,{{ v.sev_color }},{{ v.sev_color }}aa);"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if summary.is_mock %}
+      </div>
+      <div class="mock-overlay">
+        <div style="font-size:1.8rem;">🎭</div>
+        <div class="mock-overlay-title">Résultats simulés</div>
+        <div class="mock-overlay-sub">Générés par le MockFuzzer — pas de vraies vulnérabilités.</div>
+        <button class="mock-reveal-btn" onclick="revealMock('activeMockWrap')">👁 Afficher quand même</button>
+      </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state">✅ Aucune vulnérabilité active détectée</div>
+      {% endif %}
+      </div><!-- /section-body -->
+    </section>
+
+    <!-- ══ Analyse passive ══ -->
+    {% if passive_vulns %}
+    <section id="sec-passive">
+      <div class="section-header">
+        <div class="section-icon">🔍</div>
+        <div class="section-title">Analyse passive</div>
+        <div class="section-badge" id="passiveVulnCount">{{ passive_vulns | length }}</div>
+        <button class="fold-btn" onclick="toggleSection('sec-passive', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-sev="all" onclick="filterVulns('all', this, 'passiveVulnList', 'passiveVulnCount')">Toutes</button>
+        {% for sev, color in [('critique','#ff3b5c'),('élevé','#ff8c42'),('moyen','#ffd166'),('faible','#06d6a0')] %}
+        {% if passive_vulns | selectattr('severity','equalto',sev) | list | length > 0 %}
+        <button class="filter-btn" data-sev="{{ sev }}" onclick="filterVulns('{{ sev }}', this, 'passiveVulnList', 'passiveVulnCount')" style="color:{{ color }};border-color:{{ color }}30;">{{ sev | title }}</button>
+        {% endif %}{% endfor %}
+      </div>
+      <div class="vuln-list" id="passiveVulnList">
+        {% for v in passive_vulns %}
+        <div class="vuln-card" data-sev="{{ v.severity }}" style="border-left-color:{{ v.sev_color }};" id="pv_{{ loop.index }}">
+          <div class="vuln-summary" onclick="toggleVuln('pv_{{ loop.index }}')">
+            <div class="vuln-title-col">
+              <div class="vuln-name">{{ v.vuln_name }}</div>
+              <div class="vuln-full-name">{{ v.vuln_full }}</div>
+            </div>
+            <span class="badge-source">passif</span>
+            <span class="badge-sev" style="background:{{ v.sev_color }}18;color:{{ v.sev_color }};border:1px solid {{ v.sev_color }}35;">{{ v.severity | upper }}</span>
+            <div class="vuln-chevron">▼</div>
+          </div>
+          <div class="vuln-details">
+            <div class="vuln-details-inner">
+              {% if v.evidence %}
+              <div>
+                <div class="detail-label">Evidence</div>
+                <div class="code-block">{{ v.evidence }}</div>
+              </div>{% endif %}
+              {% if v.recommendation %}
+              <div>
+                <div class="detail-label">Recommandation</div>
+                <div style="font-size:.8rem;color:var(--text-dim);margin-top:.3rem;">💡 {{ v.recommendation }}</div>
+              </div>{% endif %}
+              <div>
+                <div class="detail-label">URL</div>
+                <div class="code-block" style="font-size:.68rem;">{{ v.url }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <!-- ══ Vulns code ══ -->
+    {% if code_vulns %}
+    <section id="sec-code">
+      <div class="section-header">
+        <div class="section-icon">🧩</div>
+        <div class="section-title">Vulnérabilités code</div>
+        <div class="section-badge">{{ code_vulns | length }}</div>
+        <button class="fold-btn" onclick="toggleSection('sec-code', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      <div class="vuln-list">
+        {% for v in code_vulns %}
+        <div class="vuln-card" style="border-left-color:{{ v.sev_color }};" id="cv_{{ loop.index }}">
+          <div class="vuln-summary" onclick="toggleVuln('cv_{{ loop.index }}')">
+            <div class="vuln-title-col">
+              <div class="vuln-name">{{ v.vuln_name }}</div>
+              <div class="vuln-full-name">{{ v.vuln_full }}</div>
+            </div>
+            <span class="badge-source">code</span>
+            <span class="badge-sev" style="background:{{ v.sev_color }}18;color:{{ v.sev_color }};border:1px solid {{ v.sev_color }}35;">{{ v.severity | upper }}</span>
+            {% if v.cvss > 0 %}<span class="badge-cvss">CVSS {{ v.cvss }}</span>{% endif %}
+            <div class="vuln-chevron">▼</div>
+          </div>
+          <div class="vuln-details">
+            <div class="vuln-details-inner">
+              <!-- Evidence -->
+              {% if v.evidence %}
+              <div>
+                <div class="detail-label">Evidence</div>
+                <div class="code-block">{{ v.evidence }}</div>
+              </div>{% endif %}
+
+              <!-- Fragment trouvé (find) -->
+              {% if v.find %}
+              <div class="payload-box" style="background:rgba(255,59,92,.07);border-color:rgba(255,59,92,.2);">
+                <div class="payload-label" style="color:#ff3b5c;">🔍 Fragment détecté</div>
+                <div class="payload-value" style="color:#ff8c8c;">{{ v.find | e }}</div>
+                <button class="copy-btn" style="background:rgba(255,59,92,.15);border-color:rgba(255,59,92,.3);color:#ff3b5c;"
+                        onclick="copyText(this, '{{ v.find | e | replace("'", "\\'") }}')">📋 Copier</button>
+              </div>{% endif %}
+
+              <!-- Contexte d'analyse + ligne -->
+              <div class="detail-row">
+                {% if v.context %}
+                <div class="detail-block">
+                  <div class="detail-label">Contexte d'analyse</div>
+                  <div class="detail-value" style="font-family:var(--mono);font-size:.7rem;">{{ v.context }}</div>
+                </div>{% endif %}
+                {% if v.line_number %}
+                <div class="detail-block">
+                  <div class="detail-label">Ligne</div>
+                  <div class="detail-value" style="font-family:var(--mono);color:var(--accent);">L.{{ v.line_number }}</div>
+                </div>{% endif %}
+              </div>
+
+              <!-- Extrait de code -->
+              {% if v.code %}
+              <div>
+                <div class="detail-label">Extrait de code</div>
+                <div class="code-block" style="white-space:pre-wrap;line-height:1.6;margin-top:.3rem;">{{ v.code | e }}</div>
+              </div>{% endif %}
+
+              <!-- Recommandation -->
+              {% if v.recommendation %}
+              <div>
+                <div class="detail-label">Recommandation</div>
+                <div style="font-size:.8rem;color:var(--text-dim);margin-top:.3rem;">💡 {{ v.recommendation }}</div>
+              </div>{% endif %}
+
+              <!-- URL -->
+              <div>
+                <div class="detail-label">Fichier / URL</div>
+                <div class="code-block" style="font-size:.68rem;">{{ v.url }}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <!-- ══ ML Prédictions ══ -->
+    {% if ml.available %}
+    <section id="sec-ml">
+      <div class="section-header">
+        <div class="section-icon">🤖</div>
+        <div class="section-title">Prédictions ML — ScannerIA</div>
+        <div class="section-badge">{{ ml.by_url | length }} pages</div>
+        <button class="fold-btn" onclick="toggleSection('sec-ml', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      {% if ml.format == 'multi_url' and ml.by_url %}
+      <div class="ml-url-cards">
+        {% for url, ud in ml.by_url.items() %}
+        <div class="ml-url-card" id="mlcard_{{ loop.index }}">
+          <div class="ml-url-header">
+            <div class="ml-url-chip" title="{{ url }}">{{ url[:80] }}{% if url | length > 80 %}…{% endif %}</div>
+            {% if ud.is_safe %}
+            <span class="ml-safe-badge">🟢 SAFE</span>
+            {% else %}
+            <span class="ml-vuln-badge">🔴 {{ ud.count }} vuln(s)</span>
+            {% endif %}
+          </div>
+
+          {% if ud.vulns %}
+          <div class="ml-card-body">
+            <!-- Filtre prob -->
+            <div class="ml-prob-filter">
+              <span class="ml-prob-filter-label">Filtrer prob ≥</span>
+              <button class="filter-btn active" onclick="filterMLProb(0,  this, 'mlgrid_{{ loop.index }}')">Toutes</button>
+              <button class="filter-btn" onclick="filterMLProb(30, this, 'mlgrid_{{ loop.index }}')">30%</button>
+              <button class="filter-btn" onclick="filterMLProb(50, this, 'mlgrid_{{ loop.index }}')">50%</button>
+              <button class="filter-btn" onclick="filterMLProb(70, this, 'mlgrid_{{ loop.index }}')">70%</button>
+            </div>
+            <!-- Grille vulns -->
+            <div class="ml-vuln-grid" id="mlgrid_{{ loop.index }}">
+              {% for v in ud.vulns %}
+              <div class="ml-vuln-item" data-prob="{{ v.prob }}">
+                <div class="ml-vuln-name">{{ v.vuln }}</div>
+                <div class="ml-vuln-pct" style="color:{% if v.prob >= 70 %}#ff3b5c{% elif v.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};">{{ v.prob }}%</div>
+                <div class="ml-bar-track">
+                  <div class="ml-bar-fill" style="width:{{ v.prob }}%;background:{% if v.prob >= 70 %}#ff3b5c{% elif v.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};"></div>
+                </div>
+                {% if v.detected %}<span class="ml-detected-chip">⚠ Détecté</span>{% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div style="padding:1rem 1.3rem;font-size:.78rem;color:var(--text-muted);">✅ Aucune menace détectée sur cette page</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <!-- Ancien format -->
+      <div class="ml-vuln-grid">
+        {% for pred in ml.predictions %}
+        <div class="ml-vuln-item" data-prob="{{ pred.prob }}">
+          <div class="ml-vuln-name">{{ pred.vuln }}</div>
+          <div class="ml-vuln-pct" style="color:{% if pred.prob >= 70 %}#ff3b5c{% elif pred.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};">{{ pred.prob }}%</div>
+          <div class="ml-bar-track">
+            <div class="ml-bar-fill" style="width:{{ pred.prob }}%;background:{% if pred.prob >= 70 %}#ff3b5c{% elif pred.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};"></div>
+          </div>
+          {% if pred.detected %}<span class="ml-detected-chip">⚠ Détecté</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <!-- ══ Pages crawlées ══ -->
+    <section id="sec-pages">
+      <div class="section-header">
+        <div class="section-icon">🕷️</div>
+        <div class="section-title">Pages crawlées</div>
+        <div class="section-badge">
+          {%- set vuln_page_count = pages | selectattr('is_vuln') | list | length -%}
+          {%- set clean_page_count = pages | length - vuln_page_count -%}
+          {{ vuln_page_count }} vulnérable{{ 's' if vuln_page_count > 1 else '' }} · {{ clean_page_count }} clean
+        </div>
+        <button class="fold-btn" onclick="toggleSection('sec-pages', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      {% if pages %}
+      <!-- Tableau — pages vulnérables d'abord -->
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>URL</th><th>Status</th><th>Taille</th><th>Délai</th>
+            <th>Forms</th><th>Scripts</th><th>Fuzzer</th><th>ML</th><th></th>
+          </tr></thead>
+          <tbody id="pagesTableBody">
+          {% for p in pages | sort(attribute='is_vuln', reverse=True) %}
+          <tr class="{{ 'row-vuln' if p.is_vuln else 'row-clean' }}"
+              data-clean="{{ 'true' if not p.is_vuln else 'false' }}"
+              id="page_row_{{ loop.index }}">
+            <td class="url-cell" title="{{ p.url }}">{{ p.url }}</td>
+            <td><span class="{{ 'st-ok' if p.status == 200 else ('st-warn' if p.status < 500 else 'st-err') }}">{{ p.status }}</span></td>
+            <td style="font-family:var(--mono);font-size:.68rem;">{{ (p.body_length / 1024) | round(1) }}KB</td>
+            <td style="font-family:var(--mono);font-size:.68rem;">{{ p.delay }}s</td>
+            <td style="font-family:var(--mono);">{{ p.n_forms }}</td>
+            <td style="font-family:var(--mono);">{{ p.n_scripts }}</td>
+            <td>
+              {% if p.fuzzer_vulns %}
+              <div class="vuln-badge-row">
+                {% for vn in p.fuzzer_vulns %}<span class="vuln-badge-mini vuln-badge-fuzzer">{{ vn }}</span>{% endfor %}
+              </div>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if p.ml_vulns %}
+              <div class="vuln-badge-row">
+                {% for vn in p.ml_vulns %}<span class="vuln-badge-mini vuln-badge-ml">{{ vn }}</span>{% endfor %}
+              </div>
+              {% elif p.is_vuln_ml is defined and not p.is_vuln_ml %}
+              <span style="font-size:.65rem;color:var(--text-muted);">–</span>
+              {% else %}–{% endif %}
+            </td>
+            <td>
+              {% if p.vuln_details %}
+              <button class="detail-btn" onclick="togglePageDetail('pagedet_{{ loop.index }}', this)">
+                🔍 Détails <span style="font-family:var(--mono);font-size:.6rem;opacity:.6;">{{ p.vuln_details | length }}</span>
+              </button>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+
+          {% if p.vuln_details %}
+          <tr class="page-detail-row" id="pagedet_{{ loop.index }}">
+            <td colspan="9" style="padding:0;">
+              <div class="page-detail-inner">
+                <div class="page-detail-title">🔎 Détails vuln (source: fuzzer) — {{ p.url }}</div>
+                {% for vd in p.vuln_details %}
+                <div class="page-vuln-card" style="border-left-color:{{ vd.sev_color }};">
+                  <div class="page-vuln-header">
+                    <div class="page-vuln-name">{{ vd.vuln_full }}</div>
+                    <span class="badge-source">fuzzer</span>
+                    <span class="badge-sev" style="background:{{ vd.sev_color }}18;color:{{ vd.sev_color }};border:1px solid {{ vd.sev_color }}35;">{{ vd.severity | upper }}</span>
+                    <span class="badge-cvss">CVSS {{ vd.cvss }}</span>
+                    <span class="badge-prob">{{ vd.prob }}%</span>
+                    <span style="font-family:var(--mono);font-size:.68rem;color:{{ vd.sev_color }};font-weight:700;">{{ vd.score }}/100</span>
+                    <span style="font-family:var(--mono);font-size:.65rem;color:var(--text-muted);">HTTP {{ vd.response_status }} · {{ vd.response_delay }}s</span>
+                  </div>
+                  {% if vd.payload %}
+                  <div class="page-payload-box">
+                    <div class="page-payload-label">⚡ Payload — {{ vd.payload_type }}</div>
+                    <div class="page-payload-value">{{ vd.payload }}</div>
+                    <button class="copy-btn" onclick="copyText(this, '{{ vd.payload | replace("'", "\\'") | replace('"', "&quot;") }}')">📋 Copier</button>
+                  </div>{% endif %}
+                  <div>
+                    <div class="page-detail-title" style="margin-bottom:.35rem;">Signaux</div>
+                    <div class="page-signals">
+                      <span class="signal-pill {{ 'on' if vd.status_changed else 'off' }}">Status {{ '✓' if vd.status_changed else '–' }}</span>
+                      <span class="signal-pill {{ 'on' if vd.delay_detected else 'off' }}">Délai {{ '✓' if vd.delay_detected else '–' }}</span>
+                      <span class="signal-pill {{ 'on' if vd.body_changed else 'off' }}">Body {{ '✓' if vd.body_changed else '–' }}</span>
+                      <span class="signal-pill {{ 'on' if vd.headers_changed else 'off' }}">Headers {{ '✓' if vd.headers_changed else '–' }}</span>
+                    </div>
+                  </div>
+                  {% if vd.indicators %}
+                  <div>
+                    <div class="page-detail-title" style="margin-bottom:.35rem;">Indicateurs détectés</div>
+                    <div class="page-inds">{% for ind in vd.indicators %}<span class="indicator-chip">{{ ind }}</span>{% endfor %}</div>
+                  </div>{% endif %}
+                  {% if vd.headers_diff %}
+                  <div>
+                    <div class="page-detail-title" style="margin-bottom:.35rem;">Headers modifiés (baseline → payload)</div>
+                    <div class="headers-diff-table">
+                      <table><thead><tr><th>Header</th><th>Baseline</th><th>Réponse payload</th></tr></thead>
+                      <tbody>
+                      {% for hd in vd.headers_diff %}
+                      <tr>
+                        <td style="font-weight:600;color:var(--text-dim);">{{ hd.header }}</td>
+                        <td class="{{ 'hd-removed' if hd.removed else '' }}">{{ hd.baseline }}</td>
+                        <td class="{{ 'hd-added' if hd.added else 'hd-changed' }}">{{ hd.payload }}</td>
+                      </tr>{% endfor %}
+                      </tbody></table>
+                    </div>
+                  </div>{% endif %}
+                </div>
+                {% endfor %}
+
+                {% if p.ml_vuln_list %}
+                <div>
+                  <div class="page-detail-title">🤖 Prédictions ML (source: ScannerIA)</div>
+                  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+                    {% for mv in p.ml_vuln_list %}
+                    <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:8px;padding:.5rem .8rem;display:flex;flex-direction:column;gap:.3rem;min-width:120px;">
+                      <div style="font-size:.75rem;font-weight:700;">{{ mv.vuln }}</div>
+                      <div style="font-family:var(--mono);font-size:.75rem;color:{% if mv.prob >= 70 %}#ff3b5c{% elif mv.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};">{{ mv.prob }}%</div>
+                      <div class="ml-bar-track"><div class="ml-bar-fill" style="width:{{ mv.prob }}%;background:{% if mv.prob >= 70 %}#ff3b5c{% elif mv.prob >= 50 %}#ff8c42{% else %}#ffd166{% endif %};"></div></div>
+                    </div>{% endfor %}
+                  </div>
+                </div>{% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Toggle pages clean -->
+      {%- set clean_page_count = pages | length - (pages | selectattr('is_vuln') | list | length) -%}
+      {% if clean_page_count > 0 %}
+      <button class="toggle-clean-btn" id="cleanToggleBtn" onclick="toggleCleanPages()">
+        🕷️ Afficher les pages clean
+        <span class="clean-count-badge">{{ clean_page_count }}</span>
+      </button>
+      {% endif %}
+
+      {% endif %}
+      </div><!-- /section-body -->
+    </section>
+
+    <!-- ══ Security Headers ══ -->
+    {% if security_headers %}
+    <section id="sec-headers">
+      <div class="section-header">
+        <div class="section-icon">🔐</div>
+        <div class="section-title">Headers de sécurité</div>
+        <div class="section-badge">{{ security_headers | selectattr('present', 'equalto', False) | list | length }} manquants</div>
+        <button class="fold-btn" onclick="toggleSection('sec-headers', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      <div class="headers-grid">
+        {% for h in security_headers %}
+        <div class="header-item">
+          <div class="header-status-icon" style="background:{{ h.sev_color }}12;border:1px solid {{ h.sev_color }}25;">
+            {{ '✅' if h.present else '❌' }}
+          </div>
+          <div>
+            <div class="header-info-name">{{ h.header }}</div>
+            <div class="header-info-rec" style="color:{% if h.present %}#06d6a0{% else %}{{ h.sev_color }}{% endif %};">
+              {% if h.present %}{{ h.value[:50] if h.value else 'Présent' }}{% else %}{{ h.recommendation }}{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <!-- ══ Technologies ══ -->
+    {% if technologies %}
+    <section id="sec-tech">
+      <div class="section-header">
+        <div class="section-icon">🔧</div>
+        <div class="section-title">Technologies détectées</div>
+        <button class="fold-btn" onclick="toggleSection('sec-tech', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      <div class="tech-list">
+        {% for tech in technologies %}<span class="tech-tag">{{ tech }}</span>{% endfor %}
+      </div>
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <!-- ══ Timings ══ -->
+    {% if phases %}
+    <section id="sec-timings">
+      <div class="section-header">
+        <div class="section-icon">⏱️</div>
+        <div class="section-title">Temps d'exécution par phase</div>
+        <button class="fold-btn" onclick="toggleSection('sec-timings', this)" title="Plier/déplier">⊟</button>
+      </div>
+      <div class="section-body">
+      {% set max_t = phases | map(attribute='elapsed_raw') | max %}
+      <div class="phases-list">
+        {% for ph in phases %}
+        <div class="phase-row">
+          <div class="phase-name">{{ ph.name }}</div>
+          <div class="phase-bar"><div class="phase-fill" style="width:{{ ((ph.elapsed_raw / max_t) * 100) | round(1) }}%;"></div></div>
+          <div class="phase-time">{{ ph.elapsed }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      </div><!-- /section-body -->
+    </section>
+    {% endif %}
+
+    <footer>
+      <div class="footer-brand">🛡️ ShieldAI v{{ scanner_version }}</div>
+      <div>{{ generated_at }} — Confidentiel</div>
+      <div>Samuel — ShieldAI</div>
+    </footer>
+
+  </div><!-- /main-inner -->
+</div><!-- /main-content -->
+</div><!-- /app-shell -->
+
+<script>
+/* ════════════════════════════════
+   NAV
+════════════════════════════════ */
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (window.innerWidth <= 900) document.getElementById('sidenav').classList.remove('open');
+}
+// Alias utilisé dans les nav-links
+function navScrollTo(id, el) {
+  const target = document.getElementById(id);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (window.innerWidth <= 900) document.getElementById('sidenav').classList.remove('open');
+}
+function toggleNav() {
+  document.getElementById('sidenav').classList.toggle('open');
+}
+// Fermer nav mobile si clic extérieur
+document.addEventListener('click', e => {
+  const nav = document.getElementById('sidenav');
+  const toggle = document.getElementById('navToggle');
+  if (window.innerWidth <= 900 && nav.classList.contains('open')
+      && !nav.contains(e.target) && !toggle.contains(e.target)) {
+    nav.classList.remove('open');
+  }
+});
+// Highlight nav au scroll
+const sections = ['sec-kpi','sec-charts','sec-active','sec-passive','sec-code','sec-ml','sec-pages','sec-headers','sec-tech','sec-timings'];
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.toggle('active', l.getAttribute('onclick')?.includes(id));
+      });
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+
+/* ════════════════════════════════
+   THEME
+════════════════════════════════ */
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const icons = {dark:'🌑',light:'☀️',cyber:'⚡',punk:'🔥',void:'◼',aurora:'🌌'};
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(icons[t] || t));
+  });
+  setTimeout(redrawCharts, 50);
+}
+
+/* ════════════════════════════════
+   ACCORDÉONS
+════════════════════════════════ */
+function toggleVuln(id) { document.getElementById(id)?.classList.toggle('open'); }
+function togglePageDetail(id, btn) {
+  const row = document.getElementById(id);
+  const open = row?.classList.toggle('open');
+  if (btn) btn.textContent = open ? '🔼 Masquer' : '🔍 Détails';
+}
+
+/* ════════════════════════════════
+   FILTRES VULNS
+════════════════════════════════ */
+function filterVulns(sev, btn, listId, countId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  // Update active btn
+  btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Filter cards
+  let visible = 0;
+  list.querySelectorAll('.vuln-card').forEach(card => {
+    const show = sev === 'all' || card.dataset.sev === sev;
+    card.setAttribute('data-hidden', show ? 'false' : 'true');
+    if (show) visible++;
+  });
+  const countEl = document.getElementById(countId);
+  if (countEl) countEl.textContent = sev === 'all' ? list.querySelectorAll('.vuln-card').length : visible;
+}
+
+/* ════════════════════════════════
+   FILTRES ML PROB
+════════════════════════════════ */
+function filterMLProb(minProb, btn, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  btn.closest('.ml-prob-filter').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  grid.querySelectorAll('.ml-vuln-item').forEach(item => {
+    const prob = parseFloat(item.dataset.prob || 0);
+    item.setAttribute('data-hidden', prob >= minProb ? 'false' : 'true');
+  });
+}
+
+/* ════════════════════════════════
+   PAGES CLEAN TOGGLE
+════════════════════════════════ */
+let cleanVisible = false;
+function toggleCleanPages() {
+  cleanVisible = !cleanVisible;
+  document.querySelectorAll('#pagesTableBody tr[data-clean="true"]').forEach(row => {
+    row.style.display = cleanVisible ? '' : 'none';
+  });
+  const btn = document.getElementById('cleanToggleBtn');
+  if (btn) btn.textContent = cleanVisible ? '🙈 Masquer les pages clean' : '🕷️ Afficher les pages clean';
+}
+// Masquer les pages clean au départ
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#pagesTableBody tr[data-clean="true"]').forEach(r => r.style.display = 'none');
+});
+
+/* ════════════════════════════════
+   MOCK REVEAL
+════════════════════════════════ */
+function revealMock(wrapId) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  wrap.classList.add('revealed');
+  wrap.querySelectorAll('.mock-hidden').forEach(c => c.classList.remove('mock-hidden'));
+}
+
+/* ════════════════════════════════
+   COPY
+════════════════════════════════ */
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copié';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+/* ════════════════════════════════
+   EXPORT PDF
+════════════════════════════════ */
+function exportPDF() {
+  document.querySelectorAll('.vuln-card').forEach(c => c.classList.add('open'));
+  document.querySelectorAll('.mock-section-wrap').forEach(w => {
+    w.classList.add('revealed');
+    w.querySelectorAll('.mock-hidden').forEach(c => c.classList.remove('mock-hidden'));
+  });
+  document.querySelectorAll('#pagesTableBody tr[data-clean="true"]').forEach(r => r.style.display = '');
+  window.print();
+}
+
+/* ════════════════════════════════
+   CHARTS
+════════════════════════════════ */
+function getCSSVar(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+let chartSev, chartVulns, chartConf;
+
+function redrawCharts() {
+  [chartSev, chartVulns, chartConf].forEach(c => c?.destroy());
+  chartSev = chartVulns = chartConf = null;
+  initCharts();
+}
+
+function initCharts() {
+  const grid = getCSSVar('--chart-grid');
+  const muted = getCSSVar('--text-muted');
+  Chart.defaults.color = muted;
+  Chart.defaults.borderColor = grid;
+  const COLORS = ['#ff3b5c','#ff8c42','#ffd166','#06d6a0','#38bdf8','#818cf8','#f472b6','#a78bfa'];
+
+  // Donut sévérités
+  const sevCtx = document.getElementById('chartSev');
+  if (sevCtx) {
+    chartSev = new Chart(sevCtx, {
+      type:'doughnut',
+      data:{
+        labels:['Critique','Élevé','Moyen','Faible','Info'],
+        datasets:[{
+          data:[{{ summary.sev_critique }},{{ summary.sev_eleve }},{{ summary.sev_moyen }},{{ summary.sev_faible }},{{ summary.sev_info }}],
+          backgroundColor:['#ff3b5c','#ff8c42','#ffd166','#06d6a0','#38bdf8'],
+          borderWidth:0,hoverOffset:6
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,cutout:'68%',
+        plugins:{legend:{position:'right',labels:{boxWidth:12,padding:10,font:{size:10}}}}
+      }
+    });
+  }
+
+  // Bar vulns par type
+  const vulnCtx = document.getElementById('chartVulns');
+  if (vulnCtx) {
+    const d = {{ chart_vulns | tojson }};
+    chartVulns = new Chart(vulnCtx, {
+      type:'bar',
+      data:{
+        labels:d.map(x=>x[0]),
+        datasets:[{
+          label:'Occurrences',
+          data:d.map(x=>x[1]),
+          backgroundColor:d.map((_,i)=>COLORS[i%8]+'cc'),
+          borderRadius:5,borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{color:grid},ticks:{font:{size:9}}},
+          y:{grid:{color:grid},beginAtZero:true,ticks:{stepSize:1,font:{size:9}}}
+        }
+      }
+    });
+  }
+
+  // Bar confidence
+  const confCtx = document.getElementById('chartConf');
+  if (confCtx) {
+    const d = {{ chart_confidence | tojson }};
+    chartConf = new Chart(confCtx, {
+      type:'bar',
+      data:{
+        labels:d.map(x=>x[0]),
+        datasets:[{
+          label:'Prob max (%)',
+          data:d.map(x=>x[1]),
+          backgroundColor:d.map(x=> x[1]>=70?'#ff3b5ccc':x[1]>=50?'#ff8c42cc':'#ffd166cc'),
+          borderRadius:5,borderSkipped:false
+        }]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{grid:{color:grid},beginAtZero:true,max:100,ticks:{font:{size:9},callback:v=>v+'%'}},
+          y:{grid:{color:'transparent'},ticks:{font:{size:9}}}
+        }
+      }
+    });
+  }
+}
+
+// Risk ring
+function drawRiskRing() {
+  const canvas = document.getElementById('riskRing');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const score = {{ summary.risk_score }};
+  const color = '{{ summary.risk_color }}';
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, r = W/2 - 10;
+  const start = -Math.PI/2;
+  ctx.clearRect(0,0,W,H);
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=9; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,r,start, start+(score/100)*2*Math.PI);
+  ctx.strokeStyle=color; ctx.lineWidth=9; ctx.lineCap='round';
+  ctx.shadowColor=color; ctx.shadowBlur=12; ctx.stroke();
+}
+
+/* ════════════════════════════════
+   PLIER / DÉPLIER SECTIONS
+════════════════════════════════ */
+function toggleSection(sectionId, btn) {
+  const body = document.querySelector('#' + sectionId + ' .section-body');
+  if (!body) return;
+  const folded = body.classList.toggle('folded');
+  if (btn) btn.textContent = folded ? '⊞' : '⊟';
+}
+
+let _allFolded = false;
+function toggleAllSections(btn) {
+  _allFolded = !_allFolded;
+  document.querySelectorAll('.section-body').forEach(body => {
+    body.classList.toggle('folded', _allFolded);
+  });
+  document.querySelectorAll('.fold-btn').forEach(b => {
+    b.textContent = _allFolded ? '⊞' : '⊟';
+  });
+  if (btn) btn.textContent = _allFolded ? '⊞ Tout déplier' : '⊟ Tout plier';
+}
+
+/* ════════════════════════════════
+   EXPORT CSV
+════════════════════════════════ */
+function exportCSV() {
+  const rows = [
+    ['URL','Vuln','Nom complet','Sévérité','CVSS','Probabilité (%)','Score',
+     'Type payload','Payload','Status HTTP','Délai (s)',
+     'Confirmations','Prob max (%)','Prob moy (%)']
+  ];
+
+  document.querySelectorAll('#activeVulnList .vuln-card').forEach(card => {
+    if (card.getAttribute('data-hidden') === 'true') return;
+    const getText = sel => {
+      const el = card.querySelector(sel);
+      return el ? el.textContent.trim().replace(/,/g, ';') : '';
+    };
+    const url        = card.querySelector('.code-block')?.textContent.trim().replace(/,/g,';') || '';
+    const vuln_full  = getText('.vuln-name');
+    const vuln_line  = getText('.vuln-full-name');
+    const vuln       = vuln_line.split('·')[0]?.trim() || '';
+    const p_type     = vuln_line.split('·')[1]?.trim() || '';
+    const sev        = card.dataset.sev || '';
+    const cvss       = getText('.badge-cvss').replace('CVSS ','');
+    const prob       = getText('.badge-prob').replace('%','');
+    const score_el   = card.querySelector('.score-bar-row span:last-child');
+    const score      = score_el ? score_el.textContent.replace('/100','').trim() : '';
+    const payload_el = card.querySelector('.payload-box .payload-value');
+    const payload    = payload_el ? payload_el.textContent.trim().replace(/,/g,';').replace(/\n/g,' ') : '';
+    const det_vals   = card.querySelectorAll('.detail-value');
+    const status     = det_vals[0]?.textContent.trim() || '';
+    const delay      = det_vals[1]?.textContent.trim().replace('s','') || '';
+    const conf_vals  = card.querySelectorAll('.conf-value');
+    const prob_max   = conf_vals[0]?.textContent.trim().replace('%','') || prob;
+    const prob_avg   = conf_vals[1]?.textContent.trim().replace('%','') || prob;
+    const count      = conf_vals[2]?.textContent.trim() || '1';
+    rows.push([url,vuln,vuln_full,sev,cvss,prob,score,
+               p_type,payload,status,delay,count,prob_max,prob_avg]);
+  });
+
+  if (rows.length <= 1) { alert('Aucune vulnérabilité visible à exporter.'); return; }
+
+  const bom  = '\uFEFF';
+  const csv  = bom + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href:url, download:`shieldai_${new Date().toISOString().slice(0,10)}.csv` });
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  drawRiskRing();
+  initCharts();
+});
+</script>
+</body>
+</html>

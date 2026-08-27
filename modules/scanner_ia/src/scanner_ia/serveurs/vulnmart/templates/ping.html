@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Diagnostic réseau — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="tool-box">
+    <h2>Diagnostic réseau <span class="vuln-tag">Command Injection</span></h2>
+    <p style="font-size:.85rem;">Outil interne pour vérifier qu'un serveur de livraison répond.</p>
+    <form method="POST">
+      <label style="display:block;font-size:.8rem;margin-bottom:6px;">Hôte</label>
+      <input class="mono" style="width:100%;padding:8px;border:1px solid var(--line);" type="text" name="host" value="{{ host }}" placeholder="8.8.8.8">
+      <button class="btn" style="margin-top:12px;" type="submit">Ping</button>
+    </form>
+    <p style="font-size:.8rem;margin-top:10px;">Essayez : <code>127.0.0.1; whoami</code></p>
+    {% if output %}<pre class="output">{{ output }}</pre>{% endif %}
+  </div>
+</div>
+{% endblock %}

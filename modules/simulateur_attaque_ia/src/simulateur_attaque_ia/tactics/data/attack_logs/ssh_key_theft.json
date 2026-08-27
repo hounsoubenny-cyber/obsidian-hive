@@ -1,0 +1,1058 @@
+[
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Début SSHKeyTheft sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Début Command Line Execution à : Thu Jun 18 18:26:54 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Début SSHKeyTheft sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 08:47:17 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Début SSHKeyTheft sur testuser@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 09:12:03 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Username: testuser, Password: password, commandes: 17"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "✅ SUCCESS: testuser:password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "🔑 Clé volée : id_rsa (testuser) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "🔑 Clé volée : id_rsa (testuser) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Début SSHKeyTheft sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 14:51:57 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:59 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Début SSHKeyTheft sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 19:51:53 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:54 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Début SSHKeyTheft sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 20:47:58 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Début SSHKeyTheft sur admin@172.24.0.2:22"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 13:28:31 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Username: admin, Password: admin123, commandes: 17"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "🔑 Clé volée : id_rsa (admin) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "🔑 Clé volée : id_rsa (admin) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:33 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Début SSHKeyTheft sur admin@172.24.0.2:22"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 15:17:54 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Username: admin, Password: admin123, commandes: 17"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "🔑 Clé volée : id_rsa (admin) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "🔑 Clé volée : id_rsa (admin) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:55 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Début SSHKeyTheft sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 11:57:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Début SSHKeyTheft sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 15:34:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Début SSHKeyTheft sur root@172.24.0.4:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 16:49:32 2026, pour ip : 172.24.0.4 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Username: root, Password: toor, commandes: 17"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Fin Command Line Execution, 17/17 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture clé privée DSA utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé -----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: base64 decoding error: Incorrect padding"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture clé privée Ed25519 de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture clé privée ECDSA de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Accès refusé : Lecture config SSH client — alias hosts, users, clés associées"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.rsakey.RSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ecdsakey.ECDSAKey'>.\nErreur: base64 decoding error: Invalid base64-encoded string: number of data characters (177) cannot be 1 more than a multiple of 4"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "La clé === appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV est invalide pour <class 'paramiko.ed25519key.Ed25519Key'>.\nErreur: Invalid key"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "🔑 Clé volée : id_rsa (root) — UTILISABLE DIRECTEMENT"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "SSHKeyTheft terminé — 3 clé(s), 6 host(s) connus"
+    }
+]

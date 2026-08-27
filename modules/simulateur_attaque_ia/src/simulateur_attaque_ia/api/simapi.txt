@@ -1,0 +1,3353 @@
+================./api.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue May 19 20:06:55 2026
+
+@author: hounsousamuel
+"""
+
+"""
+API principale du simulateur d'attaque.
+
+Architecture :
+  /api/*     → routes avec auth JWT  (usage normal)
+
+Routers /api :
+  POST   /api/auth/login
+  ──────────────────────────────────────────
+  POST   /api/sim/start
+  POST   /api/sim/{id}/stop
+  GET    /api/sim/{id}/status
+  GET    /api/sim/list
+  GET    /api/sim/{id}/report
+  GET    /api/sim/{id}/actions       (mode interactif)
+  GET    /api/sim/history
+  GET    /api/sim/history/{id}
+  ──────────────────────────────────────────
+  GET    /api/images/list
+  ──────────────────────────────────────────
+  POST   /api/clone/start
+  GET    /api/clone/{id}/status
+  POST  /clone/{id}/stop → arrête la tâche de clonage
+  ──────────────────────────────────────────
+  GET    /api/services/capture
+  POST   /api/services/validate
+  POST   /api/services/generate
+  ──────────────────────────────────────────
+  WS     /api/ws/{session_id}?token=xxx
+
+WebSocket protocol :
+  Serveur → Client :
+    { type: "connected",          session_id, mode, status, ... }
+    { type: "replay_start",       count }
+    { type: "replay_end" }
+    { type: "sim_status",         status, message }
+    { type: "sim_ready",          ip, actions_available, state_summary }   (interactif)
+    { type: "step_start",         step, message }
+    { type: "step_progress",      step, message, data? }
+    { type: "step_result",        step, result, actions_available }        (interactif)
+    { type: "step_end",           step }
+    { type: "llm_suggest",        suggestion }
+    { type: "llm_review",         action, review }
+    { type: "sim_state",          state }
+    { type: "sim_finished",       report }
+    { type: "error",              message }
+
+  Client → Serveur (mode interactif seulement) :
+    { type: "execute_action",         action, params: { ... } }
+    { type: "request_llm_suggest" }
+    { type: "request_llm_review",     action }
+    { type: "get_state" }
+    { type: "finish" }
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import nest_asyncio
+import asyncio
+import uvicorn
+import aiohttp
+import atexit
+import time
+import threading
+from fastapi import FastAPI
+from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from slowapi.errors import RateLimitExceeded
+from simulateur_attaque_ia.configs.config import (
+    LIMITE, REACT_EXISTS, IP, PORT,
+    INDEX_FILE, STATIC_DIR, STATIC_URL,
+    BUILD_DIR, BUILD_URL, ALLOWED_ORIGINS
+)
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.orchestrator.managers.simulation_manager import SimulationManager
+from simulateur_attaque_ia.orchestrator.managers.ws_manager import WSManager
+from simulateur_attaque_ia.core.containers_manager import ContainerManager
+from simulateur_attaque_ia.core.docker_manager import DockerManager
+from simulateur_attaque_ia.api.routers.router import router
+from simulateur_attaque_ia.simulateur_utils.logger import get_logger
+from simulateur_attaque_ia.api.routers.clone_router import start_clone_cleanup, stop_clone_cleanup
+from simulateur_attaque_ia.api.routers.network_router import (
+    remove_all_networks, stop_network_cleanup, start_network_cleanup,
+    remove_ephemeral_networks
+)
+
+logger = get_logger()
+
+nest_asyncio.apply()
+
+
+async def start_tasks(sim_mgr: SimulationManager, sim_cm: ContainerManager):
+    await start_clone_cleanup()    
+    sim_mgr.start_background_tasks()
+    sim_cm.start_cleanup()
+    start_network_cleanup()
+
+async def stop_task(sim_mgr: SimulationManager, ws_mgr: WSManager, sim_cm: ContainerManager):
+    await sim_mgr.stop_all_sims(ws_mgr)
+    await sim_mgr.stop_background_tasks()
+    await stop_clone_cleanup()
+    
+    await sim_cm.stop_cleanup()
+    # await sim_cm.stop_all_containers()
+    
+    await stop_network_cleanup()
+    await asyncio.to_thread(remove_ephemeral_networks, DockerManager().client, True)
+
+async def lifespan_start(app: FastAPI):
+    app.state.sim_manager_instance = SimulationManager.get_instance()
+    app.state.sim_wsmanager_instance = WSManager.get_instance()
+    app.state.sim_container_manager_instance = ContainerManager.get_instance()
+    
+    dm = DockerManager()
+    await asyncio.to_thread(dm.ensure_network, "isolated", True)
+    app.state.sim_main_docker_manager = dm
+    await start_tasks(app.state.sim_manager_instance, app.state.sim_container_manager_instance)    
+
+async def lifespan_end(app: FastAPI):
+    if getattr(app.state, "sim_manager_instance", None):
+        await stop_task(
+            app.state.sim_manager_instance,
+            app.state.sim_wsmanager_instance,
+            app.state.sim_container_manager_instance
+        )
+    if getattr(app.state, "sim_main_docker_manager", None):
+        if not app.state.sim_main_docker_manager._network_already_exists:
+            app.state.sim_main_docker_manager.remove_network("isolated")
+            
+    
+# ── Lifespan ──────────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await lifespan_start(app)
+    logger.print("Simulateur API lancé")
+    
+    yield
+    
+    await lifespan_end(app)
+    logger.print("Fermeture")
+
+
+# ── App ───────────────────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title="Simulateur d'Attaque IA — API",
+    version="2.0.0",
+    description=__doc__,
+    lifespan=lifespan,
+    docs_url='/api/docs',
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router=router(), prefix="/api", tags=["Main API"])
+
+if REACT_EXISTS:
+    app.mount(BUILD_URL, StaticFiles(directory=BUILD_DIR), name="build")
+    app.mount(STATIC_URL, StaticFiles(directory=STATIC_DIR), name="static")
+    
+app.state.limiter = limiter
+
+
+serveur = None 
+LIMITE_STR = f"{LIMITE}/minute"
+
+ENDPOINTS = {
+    "title": "Simulateur d'Attaque IA — API",
+    "version": "2.0.0",
+    "base_url": "/api",
+    "rate_limit": f"{LIMITE}/minute",
+    "documentation": {
+        "swagger": "/api/docs",
+        "redoc": "/api/redoc",
+        "openapi": "/api/openapi.json",
+    },
+    "endpoints": {
+        # ─── AUTH ────────────────────────────────────────────────────────
+        "POST /api/auth/login": {
+            "summary": "Authentification",
+            "description": "Retourne un JWT Bearer",
+            "auth": "none",
+            "body": {"username": "str", "password": "str"},
+            "response": {"token": "str", "success": "bool", "message": "str"},
+        },
+        
+        # ─── SIMULATIONS ─────────────────────────────────────────────────
+        "POST /api/sim/start": {
+            "summary": "Lancer une simulation",
+            "auth": "JWT Bearer",
+            "body": {
+                "image": "str (obligatoire)",
+                "mode": "'auto' | 'interactive'",
+                "services": "dict (optionnel)",
+                "use_llm": "bool",
+                "llm_config": "dict (optionnel)",
+                "sim_config": "dict (optionnel)",
+                "container_name": "str (optionnel)",
+                "authorize_network": "bool",
+                "network_caps": "bool",
+            },
+            "response": {"session_id": "str", "status": "str", "message": "str"},
+        },
+        "POST /api/sim/{session_id}/stop": {
+            "summary": "Arrêter une simulation",
+            "auth": "JWT Bearer",
+            "response": {"session_id": "str", "status": "str", "message": "str"},
+        },
+        "GET /api/sim/{session_id}/status": {
+            "summary": "Status d'une simulation active",
+            "auth": "JWT Bearer",
+            "response": {
+                "session_id": "str",
+                "mode": "str",
+                "image": "str",
+                "status": "str",
+                "started_at": "datetime",
+                "ended_at": "datetime | None",
+                "current_step": "str | None",
+                "progress": "float",
+                "error": "str | None",
+                "actions_done": "List[str]",
+            },
+        },
+        "GET /api/sim/list": {
+            "summary": "Liste des simulations actives",
+            "auth": "JWT Bearer",
+            "response": {"sims": "List[dict]"},
+        },
+        "GET /api/sim/{session_id}/report": {
+            "summary": "Rapport final d'une simulation",
+            "auth": "JWT Bearer",
+            "response": "dict (rapport complet)",
+        },
+        "GET /api/sim/{session_id}/actions": {
+            "summary": "Actions disponibles (mode interactif)",
+            "auth": "JWT Bearer",
+            "response": {
+                "session_id": "str",
+                "actions_available": "List[str]",
+                "actions_done": "List[str]",
+            },
+        },
+        "GET /api/sim/history": {
+            "summary": "Historique de toutes les simulations",
+            "auth": "JWT Bearer",
+            "response": {"history": "List[dict]"},
+        },
+        "GET /api/sim/history/{sim_id}": {
+            "summary": "Détail d'une simulation passée",
+            "auth": "JWT Bearer",
+            "response": "dict",
+        },
+        
+        # ─── IMAGES ──────────────────────────────────────────────────────
+        "GET /api/images/list": {
+            "summary": "Lister les images Docker locales",
+            "auth": "JWT Bearer",
+            "response": {"images": "List[str]"},
+        },
+        
+        # ─── CLONAGE ────────────────────────────────────────────────────
+        "POST /api/clone/start": {
+            "summary": "Lancer un clonage système",
+            "auth": "JWT Bearer",
+            "body": {
+                "src": "str (optionnel)",
+                "dest": "str (optionnel)",
+                "archive_path": "str (optionnel)",
+                "remove_back_up": "bool (default True)",
+                "container_name": "str (optionnel)",
+                "network_caps": "bool (default False)",
+                "authorize_network": "bool (default False)",
+            },
+            "response": {"clone_id": "str", "status": "str", "message": "str"},
+        },
+        "GET /api/clone/{clone_id}/status": {
+            "summary": "Status d'un clonage",
+            "auth": "JWT Bearer",
+            "response": {
+                "clone_id": "str",
+                "status": "'running' | 'completed' | 'failed' | 'stopped' | 'not_found'",
+                "image": "str | None",
+                "services": "dict | None",
+                "error": "str | None",
+                "started_at": "datetime | None",
+                "ended_at": "datetime | None",
+                "message": "str | None",
+            },
+        },
+        "POST /api/clone/{clone_id}/stop": {
+            "summary": "Arrêter un clonage en cours",
+            "auth": "JWT Bearer",
+            "response": {"clone_id": "str", "status": "str", "message": "str"},
+        },
+        
+        # ─── SERVICES ────────────────────────────────────────────────────
+        "GET /api/services/capture": {
+            "summary": "Capturer les services actuels du host",
+            "auth": "JWT Bearer",
+            "response": {"services": "dict"},
+        },
+        "POST /api/services/validate": {
+            "summary": "Valider un services.json",
+            "auth": "JWT Bearer",
+            "body": {"services": "Dict[int, Dict]"},
+            "response": {"valid": "bool", "errors": "List[str]", "warnings": "List[str]"},
+        },
+        
+        # ─── WEBSOCKET ──────────────────────────────────────────────────
+        "WS /api/ws/{session_id}?token=xxx": {
+            "summary": "Communication WebSocket",
+            "auth": "JWT Bearer (query param)",
+            "description": "Bidirectionnel pour mode interactif, lecture seule pour auto",
+            "protocol": {
+                "Server → Client": [
+                    "connected", "replay_start", "replay_end",
+                    "sim_status", "sim_ready", "step_start",
+                    "step_progress", "step_result", "step_end",
+                    "llm_suggest", "llm_review", "sim_state",
+                    "sim_finished", "error"
+                ],
+                "Client → Server": [
+                    "execute_action", "request_llm_suggest",
+                    "request_llm_review", "get_state", "finish"
+                ],
+            },
+        },
+        
+        # ─── HEALTH / UTILS ────────────────────────────────────────────
+        "GET /health": {
+            "summary": "Health check",
+            "auth": "none",
+            "response": {
+                "status": "str",
+                "active_sims": "int",
+                "ws_sessions": "int",
+            },
+        },
+        "GET /api/": {
+            "summary": "Racine de l'API (documentation ou endpoint list)",
+            "auth": "none",
+        },
+        "GET /": {
+            "summary": "Racine (React ou endpoint list)",
+            "auth": "none",
+        },
+        "GET /api/close": {
+            "summary": "Fermer l'API (admin)",
+            "auth": "none",
+            "response": {"message": "str"},
+        },
+        "GET /api/test": {
+            "summary": "Test de l'API",
+            "auth": "none",
+            "response": {"message": "Test de l'api !"},
+        },
+    },
+}
+
+# =============================================================================
+# HANDLER
+# =============================================================================
+
+@app.exception_handler(RateLimitExceeded)
+async def _handler(request: Request, exc:RateLimitExceeded):
+    return JSONResponse(
+          content= {
+            "status_code": 400,
+            "message": "Trop de requêtes, veuillez patientez !"
+            },
+          status_code=429
+        )
+
+# =============================================================================
+# ROUTES
+# =============================================================================
+
+@app.get('/api/close')
+def _close_api():
+    global serveur
+    if serveur is None:
+        print('Serveur non lancé !', serveur)
+        return {
+            "message ": "Serveur non lancé !"
+            }
+    else:
+        __close_api()
+        print('Serveur fermé.')
+        return {
+            "message ": 'Serveur fermé.'
+            }
+    
+@app.get("/api/test", tags=["Test"])
+def _test():
+    return {
+        "message": "Test de l'api !"
+    }
+
+@app.get("/health", tags=["Health"])
+async def health() -> dict:
+    sim_mgr = SimulationManager.get_instance()
+    ws_mgr  = WSManager.get_instance()
+    return {
+        "status":          "ok",
+        "active_sims":     len(sim_mgr.list_sims()),
+        "ws_sessions":     len(ws_mgr.active_sessions()),
+    }
+
+@app.get("/api/")
+async def _home():
+    if REACT_EXISTS:
+       return FileResponse(INDEX_FILE)
+    else:
+        return ENDPOINTS
+
+@app.get("/")
+async def _home1():
+    if REACT_EXISTS:
+        return FileResponse(INDEX_FILE)
+   
+    else:
+        return ENDPOINTS
+    
+
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """Capture toutes les routes pour React Router"""
+    excluded_prefixes = ["api/", "docs", "redoc", "openapi.json"]
+    print(full_path)
+    print()
+    if any(full_path.startswith(prefix) for prefix in excluded_prefixes):
+        raise HTTPException(404, detail="Route non trouvée")
+        
+    if full_path.startswith(STATIC_URL):
+        return FileResponse(os.path.join(STATIC_DIR, full_path))
+    
+    elif full_path.startswith(BUILD_URL):
+        return FileResponse(os.path.join(BUILD_DIR, full_path))
+    
+    elif REACT_EXISTS:
+        return FileResponse(INDEX_FILE)
+    
+    else:
+        raise HTTPException(status_code=404, detail="Route non trouvée")
+        
+    
+# =============================================================================
+# DEMARRAGE
+# =============================================================================
+
+def start(app, host, port):
+    global serveur
+    conf = uvicorn.Config(
+        app=app, 
+        workers=10,
+        host=host,
+        port=port, 
+        loop='uvloop' if sys.platform != "win32" else "asyncio", 
+        use_colors=True,
+    )
+    serveur = uvicorn.Server(config=conf)
+    th = threading.Thread(target=serveur.run, daemon=True)
+    return th, serveur
+
+def stop(th: threading.Thread, timeout: int = 5):
+    """Arrête proprement le thread serveur."""
+    logger.info("Arrêt en cours.")
+    th.join(timeout)
+    logger.info("Arrêt terminé.")
+    
+def __close_api():
+    global serveur
+    serveur.should_exit = True
+
+async def close_api(url):
+    """Ferme l'API (utilitaire)."""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            print('Statut : ', response.status)
+
+
+def close_api_atexit(url):
+    """Enregistre la fermeture de l'API à la sortie."""
+    def _close():
+        try:
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(close_api(url))
+            loop.close()
+        except:
+            pass
+    atexit.register(_close)
+    
+def _routes():
+    for route in app.routes:
+        print("Nom :", type(route).__name__)
+        print("Name :", route.name)
+        print("Path :", route.path)
+        try:
+            print("Methode :", route.methods)
+        except: 
+            print("Methode : N/A")
+        print()
+        
+if __name__ == "__main__":
+    th, serveur = start(app, IP, PORT)
+    th.start()
+    time.sleep(2)
+    URL = f"http://{IP}:{PORT}/api/"
+    URL1 = f"http://{IP}:{PORT}/"
+    async def test():
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL+"test") as response:
+                return {
+                    "status_code": response.status,
+                    "text": await response.text(),
+                    "json": await response.json(),
+                    "headers": dict(response.headers)
+                    }
+    
+    async def test1():
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL1) as response:
+                return {
+                    "status_code": response.status,
+                    "text": await response.text(),
+                    "json": await response.json(),
+                    "headers": dict(response.headers)
+                    }
+            
+    async def test_login():
+        login_url = URL+"dash/login"
+        data = {
+            "username": "admin1ZZ",
+            "password":"ChangeMe123ZZZD",
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(login_url, json=data) as response:
+                return await response.json()
+    # print(asyncio.run(test()))
+    # print(asyncio.run(test1()))
+    print(asyncio.run(test_login()))
+    time.sleep(4)
+    while True:
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            asyncio.run(close_api(URL+"close"))                
+            break
+        
+    # asyncio.run(close_api(URL+"close"))============================
+================./models/sim_models.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Modèles Pydantic pour l'API du simulateur d'attaque.
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+from datetime import datetime
+from enum import StrEnum
+from typing import Any, Dict, List, Optional, Union, Literal
+from pydantic import BaseModel, Field, model_validator
+from simulateur_attaque_ia.core.fake_services_scripts import DEFAULT_SERVICE_REGISTRY
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Enums
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SimMode(StrEnum):
+    AUTO        = "auto"
+    INTERACTIVE = "interactive"
+
+
+class SimStatus(StrEnum):
+    STARTING  = "starting"
+    RUNNING   = "running"
+    WAITING   = "waiting"       # interactif : attend une action user
+    COMPLETED = "completed"
+    STOPPED   = "stopped"
+    FAILED    = "failed"
+
+
+class ListMergeMode(StrEnum):
+    """Comment fusionner une liste cliente avec les defaults existants."""
+    REPLACE = "replace"   # remplace entièrement
+    ADD     = "add"       # ajoute à l'existant (dédupliqué)
+    KEEP    = "keep"      # ignore les nouvelles valeurs, garde l'existant
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auth
+# ─────────────────────────────────────────────────────────────────────────────
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    success: bool
+    token:   str
+    message: str = ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SimConfig – mirrors SimulatorConfig de auto_orchestrator (tout optionnel)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ReconConfig(BaseModel):
+    port_range:      Optional[List[int]] = None
+    timeout_socket:  Optional[float]     = None
+
+
+class SSHConfig(BaseModel):
+    timeout:       Optional[float]     = None
+    total_timeout: Optional[float]     = None
+    delay:         Optional[float]     = None
+    max_attempts:  Optional[int]       = None
+    add_common:    Optional[bool]      = None
+    usernames:     Optional[List[str]] = None
+    passwords:     Optional[List[str]] = None
+
+
+class FTPConfig(BaseModel):
+    timeout:       Optional[float]     = None
+    total_timeout: Optional[float]     = None
+    max_attempts:  Optional[int]       = None
+    add_common:    Optional[bool]      = None
+    usernames:     Optional[List[str]] = None
+    passwords:     Optional[List[str]] = None
+
+
+class HTTPConfig(BaseModel):
+    timeout:    Optional[float]     = None
+    preference: Optional[str]       = None
+    add_common: Optional[bool]      = None
+    paths:      Optional[List[str]] = None
+
+
+class ExecConfig(BaseModel):
+    timeout:      Optional[float]     = None
+    exec_timeout: Optional[float]     = None
+    commands:     Optional[List[str]] = None
+    add_common:   Optional[bool]      = None
+    quick:        Optional[bool]      = None
+
+
+class ReverseShellConfig(BaseModel):
+    attaquant_ip:     Optional[str]       = None
+    attaquant_port:   Optional[int]       = None
+    timeout:          Optional[float]     = None
+    exec_timeout:     Optional[float]     = None
+    listener_timeout: Optional[float]     = None
+    total_timeout:    Optional[float]     = None
+    commands:         Optional[List[str]] = None
+
+
+class PersistenceConfig(BaseModel):
+    ssh_key_timeout:      Optional[float] = None
+    ssh_key_exec_timeout: Optional[float] = None
+    ssh_key_algo:         Optional[str]   = None
+    cron_script_path:     Optional[str]   = None
+    cron_expression:      Optional[str]   = None
+    cron_level:           Optional[str]   = None
+
+
+class PrivescConfig(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+
+
+class CredAccessConfig(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+
+
+class LateralMovConfig(BaseModel):
+    max_depth:    Optional[int]   = None
+    max_workers:  Optional[int]   = None
+    join_timeout: Optional[float] = None
+
+
+class ExfilConfig(BaseModel):
+    c2_url:  Optional[str] = None
+    timeout: Optional[int] = None
+
+
+class DefEvasionConfig(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+
+
+class SimConfig(BaseModel):
+    """Toutes les options de configuration de la simulation, toutes optionnelles."""
+    recon:            Optional[ReconConfig]       = None
+    ssh:              Optional[SSHConfig]         = None
+    ftp:              Optional[FTPConfig]         = None
+    http:             Optional[HTTPConfig]        = None
+    execution:        Optional[ExecConfig]        = None
+    python_execution: Optional[ExecConfig]        = None
+    reverse_shell:    Optional[ReverseShellConfig]= None
+    persistence:      Optional[PersistenceConfig] = None
+    privesc:          Optional[PrivescConfig]     = None
+    credential_access:Optional[CredAccessConfig]  = None
+    lateral_movement: Optional[LateralMovConfig]  = None
+    exfiltration:     Optional[ExfilConfig]       = None
+    defense_evasion:  Optional[DefEvasionConfig]  = None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LLM Config
+# ─────────────────────────────────────────────────────────────────────────────
+
+class LLMConfig(BaseModel):
+    pass
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sim Start Request
+# ─────────────────────────────────────────────────────────────────────────────
+
+DEFAULT_SERVICES = Literal[*tuple(DEFAULT_SERVICE_REGISTRY)]
+
+# class StartSimRequest(BaseModel):
+#     image:          str
+#     mode:           SimMode              = SimMode.AUTO
+#     services:       Optional[Dict[int, Dict]] = None   # services.json, None = auto-capture
+#     use_llm:        bool                 = False
+#     llm_config:     Optional[LLMConfig]  = None
+#     sim_config:     Optional[SimConfig]  = None
+#     container_name: Optional[str]        = None
+#     authorize_network:  bool                 = False  
+#     network_caps:       bool                 = False  
+
+class StartSimRequest(BaseModel):
+    image:          str
+    mode:           SimMode              = SimMode.AUTO
+    services:       Optional[Dict[int, Dict]] = None   # services.json, None = auto-capture
+    use_llm:        bool                 = False
+    llm_config:     Optional[LLMConfig]  = None
+    sim_config:     Optional[SimConfig]  = None
+    container_name: Optional[str]        = None
+    authorize_network:  bool             = False
+    network_caps:       bool             = False
+    default_services:       Optional[Dict[DEFAULT_SERVICES, List[int]]] = None
+    only_listening:          bool                = False
+    use_default_excludes:    bool                = True
+    capture_excluded_names:  Optional[List[str]] = None
+    capture_excluded_ports:  Optional[List[int]] = None
+    capture_excluded_pids:   Optional[List[int]] = None
+    auto_capture:             bool                = True
+    # False = ne jamais scanner le host, même si `services` est absent/invalide.
+    # Utile pour n'utiliser QUE default_services sans le coût du scan psutil.
+
+class StartSimResponse(BaseModel):
+    session_id: str
+    status:     SimStatus
+    message:    str = ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Clone Request
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CloneRequest(BaseModel):
+    src:              Optional[str]  = None     # défaut : / (linux) ou C:\ (windows)
+    dest:             Optional[str]  = None     # où stocker l'archive
+    archive_path:     Optional[str]  = None     # tar.gz déjà existant → skip copie
+    remove_back_up:   bool           = True
+    container_name:   Optional[str]  = None
+    network_caps:     bool           = False    # NET_RAW + NET_ADMIN
+    authorize_network:bool           = False    # False → --network=isolated
+
+
+class CloneStatusResponse(BaseModel):
+    clone_id:   str
+    status:     Literal["running", "completed", "failed", "stopped", "not_found"]
+    image:      Optional[str]        = None
+    services:   Optional[Dict]       = None
+    error:      Optional[str]        = None
+    started_at: Optional[datetime]   = None
+    ended_at:   Optional[datetime]   = None
+    message:    Optional[str]        = None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Services
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ValidateServicesRequest(BaseModel):
+    services: Dict[str, Any]
+
+
+class ValidateServicesResponse(BaseModel):
+    valid:   bool
+    errors:  List[str] = []
+    warnings:List[str] = []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Params pour chaque step interactif
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ReconParams(BaseModel):
+    timeout_socket:  Optional[float]     = None
+    port_range:      Optional[List[int]] = None
+    port_range_mode: ListMergeMode       = ListMergeMode.REPLACE
+    
+    @model_validator(mode="after")
+    def validate_model(self) -> "ReconParams":
+        if self.port_range:
+            self.port_range = [p for p in self.port_range if 0 <= p <= 65535]
+        
+        return self
+
+class SSHAttackParams(BaseModel):
+    enabled:         bool               = True
+    timeout:         Optional[float]    = None
+    total_timeout:   Optional[float]    = None
+    delay:           Optional[float]    = None
+    max_attempts:    Optional[int]      = None
+    add_common:      Optional[bool]     = None
+    usernames:       Optional[List[str]]= None
+    usernames_mode:  ListMergeMode      = ListMergeMode.KEEP
+    passwords:       Optional[List[str]]= None
+    passwords_mode:  ListMergeMode      = ListMergeMode.KEEP
+    ports:           Optional[List[int]]= None   # sous-ensemble des ports découverts
+    
+    @model_validator(mode="after")
+    def validate_model(self) -> "SSHAttackParams":
+        if self.ports:
+            self.ports = [p for p in self.ports if 0 <= p <= 65535]
+        
+        return self
+
+
+class FTPAttackParams(BaseModel):
+    enabled:         bool               = True
+    timeout:         Optional[float]    = None
+    total_timeout:   Optional[float]    = None
+    max_attempts:    Optional[int]      = None
+    add_common:      Optional[bool]     = None
+    usernames:       Optional[List[str]]= None
+    usernames_mode:  ListMergeMode      = ListMergeMode.KEEP
+    passwords:       Optional[List[str]]= None
+    passwords_mode:  ListMergeMode      = ListMergeMode.KEEP
+    ports:           Optional[List[int]]= None
+    
+    @model_validator(mode="after")
+    def validate_model(self) -> "FTPAttackParams":
+        if self.ports:
+            self.ports = [p for p in self.ports if 0 <= p <= 65535]
+        
+        return self
+
+
+class HTTPAttackParams(BaseModel):
+    enabled:     bool               = True
+    timeout:     Optional[float]    = None
+    preference:  Optional[str]      = None
+    add_common:  Optional[bool]     = None
+    paths:       Optional[List[str]]= None
+    paths_mode:  ListMergeMode      = ListMergeMode.KEEP
+    ports:       Optional[List[int]]= None
+    
+    @model_validator(mode="after")
+    def validate_model(self) -> "HTTPAttackParams":
+        if self.ports:
+            self.ports = [p for p in self.ports if 0 <= p <= 65535]
+        
+        return self
+
+
+class InitialAccessParams(BaseModel):
+    ssh:  Optional[SSHAttackParams]  = None
+    ftp:  Optional[FTPAttackParams]  = None
+    http: Optional[HTTPAttackParams] = None
+
+
+class ExecutionParams(BaseModel):
+    timeout:           Optional[float]     = None
+    exec_timeout:      Optional[float]     = None
+    commands:          Optional[List[str]] = None
+    commands_mode:     ListMergeMode       = ListMergeMode.KEEP
+    add_common:        Optional[bool]      = None
+    quick:             Optional[bool]      = None
+    credential_index:  int                 = 0      # index dans ssh_brute_force_found_credentials
+    run_reverse_shell: bool                = False
+    reverse_shell:     Optional[ReverseShellConfig] = None
+
+
+class PersistenceParams(BaseModel):
+    run_ssh_key:          bool           = True
+    ssh_key_algo:         Optional[str]  = None
+    ssh_key_timeout:      Optional[float]= None
+    ssh_key_exec_timeout: Optional[float]= None
+    run_cron:             bool           = True
+    cron_script_path:     Optional[str]  = None
+    cron_expression:      Optional[str]  = None
+    cron_level:           Optional[str]  = None     # "user" | "root"
+
+
+class PrivescParams(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+    run_sudo:     bool            = True
+    run_suid:     bool            = True
+
+
+class CredAccessParams(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+    run_dump:     bool            = True
+    run_history:  bool            = True
+    run_keys:     bool            = True
+
+
+class LateralParams(BaseModel):
+    max_depth:    Optional[int]   = None
+    max_workers:  Optional[int]   = None
+    join_timeout: Optional[float] = None
+
+
+class ExfilParams(BaseModel):
+    c2_url:  Optional[str] = None
+    timeout: Optional[int] = None
+
+
+class DefEvasionParams(BaseModel):
+    timeout:      Optional[float] = None
+    exec_timeout: Optional[float] = None
+    run_clean:    bool            = True
+    run_stomp:    bool            = True
+
+
+# Union pour le dispatcher
+StepParams = Union[
+    ReconParams,
+    InitialAccessParams,
+    ExecutionParams,
+    PersistenceParams,
+    PrivescParams,
+    CredAccessParams,
+    LateralParams,
+    ExfilParams,
+    DefEvasionParams,
+    Dict[str, Any],
+]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Messages WS Client → Serveur (mode interactif)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ExecuteActionMessage(BaseModel):
+    type:   str = "execute_action"
+    action: str                      # "reconnaissance" | "initial_access" | ...
+    params: Dict[str, Any] = {}
+
+
+class RequestLLMSuggestMessage(BaseModel):
+    type: str = "request_llm_suggest"
+
+
+class RequestLLMReviewMessage(BaseModel):
+    type:   str = "request_llm_review"
+    action: str
+
+
+class GetStateMessage(BaseModel):
+    type: str = "get_state"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Status / History
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SimStatusResponse(BaseModel):
+    session_id:   str
+    mode:         SimMode
+    image:        str
+    status:       SimStatus
+    started_at:   datetime
+    ended_at:     Optional[datetime] = None
+    current_step: Optional[str]      = None
+    progress:     float              = 0.0
+    error:        Optional[str]      = None
+    actions_done: List[str]          = []
+
+
+class SimHistoryEntry(BaseModel):
+    session_id:  str
+    mode:        SimMode
+    image:       str
+    status:      SimStatus
+    started_at:  datetime
+    ended_at:    Optional[datetime] = None
+    steps_done:  List[str]          = []
+    report:      Optional[Dict]     = None
+    error:       Optional[str]      = None
+
+
+# =============================================================================
+# Containers
+# =============================================================================
+
+ContainerStatus = Literal[
+    "created",      # Container créé mais pas démarré
+    "running",      # En cours d'exécution
+    "exited",       # Arrêté normalement
+    "paused",       # Mis en pause
+    "restarting",   # En cours de redémarrage
+    "removing",     # En cours de suppression
+    "dead",         # Mort (ne peut pas être démarré)
+    "stopped",      # Arrêté
+    "unknown",      # Statut inconnu
+]
+
+class ContainerInfo(BaseModel):
+    """Informations sur un container Docker."""
+    id: str
+    short_id: str
+    name: str
+    image: str
+    status: ContainerStatus  # "running", "created", "exited", "paused", etc.
+    ip: Optional[str] = None
+    created: str
+    size: int
+    size_human: str
+    labels: Dict[str, str]
+    is_simatk: bool
+
+
+class ContainerListResponse(BaseModel):
+    """Réponse pour GET /containers/list."""
+    total: int
+    containers: List[ContainerInfo]
+    filters: Dict[str, Any]
+
+# ─── POST /containers/create ─────────────────────────────────────────────
+
+Capability = Literal[
+    # ─── Réseau (limité, sans échappement) ─────────────────────────────
+    "NET_ADMIN",          # Configuration réseau (limité au container)
+    "NET_RAW",            # Sockets bruts (ping, ARP, scans)
+    "NET_BIND_SERVICE",   # Ports privilégiés (< 1024)
+    
+    # ─── Processus (limité au container) ────────────────────────────────
+    "KILL",               # Tuer des processus (uniquement dans le container)
+    
+    # ─── Système (limité au container) ──────────────────────────────────
+    "SYS_TIME",           # Changer l'horloge (uniquement dans le container)
+    "SYS_RESOURCE",       # Modifier les limites de ressources (container)
+    "IPC_LOCK",           # Verrouiller la mémoire (container)
+    "WAKE_ALARM",         # Réveiller le système (container)
+
+]
+class ContainerCreateRequest(BaseModel):
+    """Requête pour créer un container."""
+    image: str = Field(..., description="Image Docker à utiliser")
+    name: Optional[str] = Field(None, description="Nom du container (auto-généré si non fourni)")
+    network: str = Field("bridge", description="Réseau Docker")
+    cap_add: Optional[List[Capability] ] = Field(None, description="Capacités Linux à ajouter (ex: NET_RAW)")
+    labels: Optional[Dict[str, str]] = Field(None, description="Labels à appliquer")
+    environment: Optional[Dict[str, str]] = Field(None, description="Variables d'environnement")
+    ports: Optional[Dict[int, int]] = Field(None, description="Mapping ports {host: container}")
+    command: Optional[str] = Field("sleep infinity", description="Commande à exécuter")
+
+
+class ContainerCreateResponse(BaseModel):
+    """Réponse pour POST /containers/create."""
+    success: bool = Field(..., description="Succès de l'opération")
+    container: Dict[str, Any] = Field(..., description="Informations du container créé")
+    message: str = Field(..., description="Message de confirmation")
+
+
+# ─── POST /containers/{name}/stop ────────────────────────────────────────
+
+class ContainerStopResponse(BaseModel):
+    """Réponse pour POST /containers/{name}/stop."""
+    success: bool = Field(..., description="Succès de l'opération")
+    container: str = Field(..., description="Nom du container arrêté")
+    message: str = Field(..., description="Message de confirmation")
+
+
+# ─── POST /containers/{name}/exec ────────────────────────────────────────
+
+class ContainerExecRequest(BaseModel):
+    """Requête pour exécuter une commande dans un container."""
+    command: str | list = Field(..., description="Commande à exécuter (ex: 'whoami && ls -la')")
+
+
+class ContainerExecResponse(BaseModel):
+    """Réponse pour POST /containers/{name}/exec."""
+    success: bool = Field(..., description="Succès de l'opération")
+    container: str = Field(..., description="Nom du container")
+    command: str = Field(..., description="Commande exécutée")
+    exit_code: int = Field(..., description="Code de retour")
+    stdout: str | None = Field(None, description="Sortie de la commande (stdout)")
+    stderr: str | None = Field(None, description="Sortie de la commande (stderr)")
+    message: str | None = Field(None, description="Message en cas d'erreur")
+
+
+# ─── GET /containers/cache ───────────────────────────────────────────────
+
+class CachedContainerInfo(BaseModel):
+    """Informations sur un container en cache."""
+    name: str = Field(..., description="Nom du container")
+    status: str = Field(..., description="Statut du container")
+    image: str = Field(..., description="Image utilisée")
+    last_used: Optional[float] = Field(None, description="Timestamp de dernière utilisation")
+
+
+class CacheListResponse(BaseModel):
+    """Réponse pour GET /containers/cache."""
+    total: int = Field(..., description="Nombre total de containers en cache")
+    containers: List[CachedContainerInfo] = Field(..., description="Liste des containers en cache")
+    
+    
+# ─── Network ───────────────────────────────────────────────────────────────
+
+class NetworkCreateRequest(BaseModel):
+    """Requête pour créer un réseau Docker."""
+    name: str = Field(..., description="Nom du réseau")
+    driver: Literal["bridge", "overlay"] = Field("bridge", description="Driver réseau")
+    subnet: Optional[str] = Field(None, description="Subnet (ex: 172.30.0.0/24)")
+    internal: bool = Field(False, description="Réseau interne (pas d'accès internet)")
+    labels: Optional[Dict[str, str]] = Field(None, description="Labels")
+    
+    def is_subnet_valid(self) -> bool:
+        """
+        Vérifie que le subnet fourni (si présent) est un préfixe CIDR valide.
+        """
+        import ipaddress
+        if not self.subnet:
+            return True  
+        try:
+            ipaddress.ip_network(self.subnet, strict=False)
+            return True
+        except ValueError:
+            return False
+
+
+class NetworkInfo(BaseModel):
+    """Informations sur un réseau Docker."""
+    name: str
+    id: str
+    short_id: str
+    driver: str
+    subnet: Optional[str]
+    internal: bool
+    containers_count: int
+    labels: Dict[str, str]
+    created: str
+
+
+class NetworkListResponse(BaseModel):
+    """Réponse pour GET /network/list."""
+    total: int
+    networks: List[NetworkInfo]
+
+
+class NetworkCreateResponse(BaseModel):
+    """Réponse pour POST /network/create."""
+    success: bool
+    network: Dict[str, Any]
+    message: str
+    error: Optional[str] = None
+
+
+class NetworkContainerInfo(BaseModel):
+    """Informations sur un container dans un réseau."""
+    id: str
+    name: str
+    status: str
+    image: str
+    ip: Optional[str]
+    labels: Dict[str, str]
+    created: str
+    is_simatk: bool
+    message: Optional[str] = None          # message par container (ex: erreur récupération IP)
+
+
+class NetworkContainersResponse(BaseModel):
+    """Réponse pour GET /network/{name}/containers."""
+    network: str
+    network_id: str
+    total: int
+    containers: List[NetworkContainerInfo]
+    message: Optional[str] = None
+    error: Optional[str] = None
+
+
+class NetworkRemoveResponse(BaseModel):
+    """Réponse pour POST /network/{name}/remove."""
+    success: bool
+    network: str
+    message: str
+    containers: Optional[List[str]] = None
+    removed_containers: Optional[List[str]] = None
+    failed_containers: Optional[List[Dict[str, str]]] = None
+    error: Optional[str] = None
+
+
+class NetworkRemoveAllResponse(BaseModel):
+    """Réponse pour POST /network/remove_all."""
+    success: bool
+    total: int
+    removed: List[str]
+    failed: List[Dict[str, str]]
+    message: Optional[str] = None
+    error: Optional[str] = None
+
+
+class NetworkConnectRequest(BaseModel):
+    """Requête pour connecter un container à un réseau."""
+    container_name: str = Field(..., description="Nom du container")
+    ip: Optional[str] = Field(None, description="IP statique à attribuer")
+    aliases: Optional[List[str]] = Field(None, description="Alias DNS")
+
+
+class NetworkConnectResponse(BaseModel):
+    """Réponse pour POST /network/{name}/connect."""
+    success: bool
+    container: str
+    network: str
+    ip: Optional[str]
+    aliases: Optional[List[str]] = None
+    message: str
+    error: Optional[str] = None
+
+
+class NetworkDisconnectRequest(BaseModel):
+    """Requête pour déconnecter un container d'un réseau."""
+    container_name: str = Field(..., description="Nom du container")
+    force: bool = Field(False, description="Forcer la déconnexion")
+
+
+class NetworkDisconnectResponse(BaseModel):
+    """Réponse pour POST /network/{name}/disconnect."""
+    success: bool
+    container: str
+    network: str
+    force: bool
+    remaining_networks: List[str]
+    message: str
+    error: Optional[str] = None
+
+
+class NetworkMoveRequest(BaseModel):
+    """Requête pour déplacer un container d'un réseau à un autre."""
+    container_name: str = Field(..., description="Nom du container")
+    source_network: str = Field(..., description="Réseau source")
+    destination_network: str = Field(..., description="Réseau destination")
+    force: bool = Field(False, description="Forcer le déplacement")
+    ip: Optional[str] = Field(None, description="IP statique sur le réseau destination")
+    aliases: Optional[List[str]] = Field(None, description="Alias DNS")
+
+
+class NetworkMoveResponse(BaseModel):
+    """Réponse pour POST /network/move."""
+    success: bool
+    container: str
+    source_network: str
+    destination_network: str
+    ip: Optional[str]
+    aliases: Optional[List[str]] = None
+    networks: List[str]
+    message: str
+    error: Optional[str] = None============================
+================./models/__init__.py============
+============================
+================./routers/services_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Router /services – gestion du services.json.
+
+GET  /services/capture   → capture les services actuels du host
+POST /services/validate  → valide un services.json fourni
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+import asyncio
+from fastapi import APIRouter, HTTPException, status, Request
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE
+from simulateur_attaque_ia.api.models.sim_models import ValidateServicesRequest, ValidateServicesResponse
+from simulateur_attaque_ia.core.services_manager import ServiceManager
+from simulateur_attaque_ia.core.services_validator import validate_services_dict
+
+def make_services_router() -> APIRouter:
+    router = APIRouter()
+
+    # ── GET /capture ──────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/capture",
+        summary="Capturer les services actuels du host",
+        description="Lance `ServiceManager.capture_services()` et retourne le "
+                    "services.json correspondant au système actuel.",
+    )
+    async def capture_services(request: Request) -> dict:
+        try:
+            services = await asyncio.to_thread(ServiceManager.capture_services)
+            return {"services": services}
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"Erreur capture services : {exc}"
+            )
+
+    # ── POST /validate ────────────────────────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/validate",
+        response_model=ValidateServicesResponse,
+        summary="Valider un services.json",
+        description="Vérifie la structure d'un services.json avant de lancer une simulation.",
+    )
+    async def validate_services(
+        request: Request,
+        data: ValidateServicesRequest
+    ) -> ValidateServicesResponse:
+        return validate_services_dict(data.services)
+
+    return router
+
+
+services_router = make_services_router()
+services_router_noauth = make_services_router()
+============================
+================./routers/clone_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+
+"""
+Router /clone – clonage du système host dans un container Docker.
+
+POST /clone/start    → lance le clonage (CopyManager.clone())
+GET  /clone/{id}/status → état du clonage en cours
+POST  /clone/{id}/stop → arrête la tâche de clonage
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+import asyncio
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, Optional
+
+from fastapi import APIRouter, HTTPException, status, Request
+
+from simulateur_attaque_ia.api.models.sim_models import CloneRequest, CloneStatusResponse
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE, CLONE_KEEP_DELAY
+from simulateur_attaque_ia.core.cloner import CopyManager
+
+# ── State en mémoire des clones en cours ────────────────────────────────────
+
+_clones: Dict[str, dict] = {}
+_clone_tasks: Dict[str, asyncio.Task] = {}
+_cleanup_clone_task: Optional[asyncio.Task] = None
+
+# ── Cleanup RAM ───────────────────────────────────────────────────────────────
+
+async def _cleanup_old_clones_loop():
+    """Purge les clones completed/failed après CLONE_KEEP_DELAY secondes."""
+    while True:
+        try:
+            await asyncio.sleep(60)  # vérifie chaque minute
+            now = datetime.now(tz=timezone.utc)
+            to_delete = [
+                cid for cid, entry in list(_clones.items())
+                if entry["status"] in ("completed", "failed", "stopped")
+                and entry.get("ended_at")
+                and (now - datetime.fromisoformat(entry["ended_at"])).total_seconds() > CLONE_KEEP_DELAY
+            ]
+            for cid in to_delete:
+                _clones.pop(cid, None)
+                _clone_tasks.pop(cid, None)
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            pass
+
+async def start_clone_cleanup() -> asyncio.Task:
+    global _cleanup_clone_task
+    _cleanup_clone_task = asyncio.create_task(_cleanup_old_clones_loop())
+    return _cleanup_clone_task
+
+async def stop_clone_cleanup():
+    if _cleanup_clone_task and not _cleanup_clone_task.done():
+        _cleanup_clone_task.cancel()
+        try:
+            await _cleanup_clone_task
+        except asyncio.CancelledError:
+            pass
+        
+async def _do_clone(clone_id: str, data: CloneRequest):
+    try:
+        manager = CopyManager()
+        result = await asyncio.to_thread(
+            manager.clone,
+            src=data.src,
+            dest=data.dest,
+            archive_path=data.archive_path,
+            remove_back_up=data.remove_back_up,
+            container_name=data.container_name,
+            network_caps=data.network_caps,
+            authorize_network=data.authorize_network,
+        )
+
+        if _clones.get(clone_id, {}).get("status") == "stopped":
+            return
+
+        if not result or not isinstance(result, dict) or not result.get("success"):
+            error = result.get("error") if isinstance(result, dict) else "archive_path introuvable ou clonage échoué"
+            _clones[clone_id].update({
+                "status": "failed",
+                "ended_at": datetime.now(tz=timezone.utc).isoformat(),
+                "error": error,
+            })
+            return
+
+        _clones[clone_id].update({
+            "status":   "completed",
+            "ended_at": datetime.now(tz=timezone.utc).isoformat(),
+            "image":    result["container_name"],
+            "services": result.get("services"),
+        })
+
+    except asyncio.CancelledError:
+        pass
+    
+    except Exception as exc:
+        if _clones.get(clone_id, {}).get("status") != "stopped":
+            _clones[clone_id].update({
+                "status": "failed",
+                "ended_at": datetime.now(tz=timezone.utc).isoformat(),
+                "error": str(exc),
+            })
+         
+def make_clone_router() -> APIRouter:
+    router = APIRouter()
+
+    # ── POST /start ───────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/start",
+        summary="Lancer un clonage système",
+        description="""
+Clone le système host (ou une archive existante) dans un container Docker.
+
+- **src** : répertoire source à copier (défaut : `/` sur Linux).
+- **dest** : où stocker l'archive tar.gz temporaire.
+- **archive_path** : si un tar.gz existe déjà → skip la copie, utilise directement.
+- **remove_back_up** : supprime l'archive après import Docker.
+- **container_name** : nom du container (auto-généré si absent).
+- **network_caps** : ajoute `NET_RAW` et `NET_ADMIN` au container.
+- **authorize_network** : si `false` → `--network=isolated`.
+
+Le clonage génère aussi automatiquement un `services.json` via
+`ServiceManager.capture_services()`.
+""",
+    )
+    async def start_clone(
+        request: Request,
+        data: CloneRequest
+    ) -> dict:
+        clone_id = f"clone_{uuid.uuid4().hex[:8]}"
+        _clones[clone_id] = {
+            "clone_id":   clone_id,
+            "status":     "running",
+            "started_at": datetime.now(tz=timezone.utc).isoformat(),
+            "ended_at":   None,
+            "image":      None,
+            "services":   None,
+            "error":      None,
+        }
+
+        task = asyncio.create_task(_do_clone(clone_id, data))
+        _clone_tasks[clone_id] = task
+        return {
+            "clone_id": clone_id,
+            "status":   "running",
+            "message":  "Clonage lancé en arrière-plan. Suivez avec GET /clone/{clone_id}/status.",
+        }
+
+    # ── GET /{clone_id}/status ────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/{clone_id}/status",
+        response_model=CloneStatusResponse,
+        summary="Status d'un clonage",
+    )
+    async def clone_status(
+        request: Request,
+        clone_id: str
+    ) -> dict:
+        entry = _clones.get(clone_id)
+        if entry is None:
+            return CloneStatusResponse(
+                clone_id=clone_id,
+                status="not_found",
+                message=f"Clone '{clone_id}' introuvable ou déjà purgé.",
+            )
+        return entry
+    
+    # ── POST /{clone_id}/stop ────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{clone_id}/stop",
+        summary="Arrêter un clonage en cours",
+        description=(
+            "Marque le clone comme arrêté et annule la task asyncio. "
+            "⚠️ Le thread sous-jacent (copie fichiers / docker import) peut "
+            "continuer brièvement en background — son résultat sera ignoré."
+        ),
+    )
+    async def stop_clone(request: Request, clone_id: str) -> dict:
+        entry = _clones.get(clone_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail=f"Clone '{clone_id}' introuvable.")
+    
+        if entry["status"] != "running":
+            raise HTTPException(
+                status_code=409,
+                detail=f"Clone déjà terminé avec statut '{entry['status']}'."
+            )
+    
+        _clones[clone_id]["status"]   = "stopped"
+        _clones[clone_id]["ended_at"] = datetime.now(tz=timezone.utc).isoformat()
+    
+        task = _clone_tasks.get(clone_id)
+        if task and not task.done():
+            task.cancel()
+            try:
+                await asyncio.wait_for(task, timeout=2.0)
+            except (asyncio.CancelledError, asyncio.TimeoutError):
+                pass
+    
+        _clone_tasks.pop(clone_id, None)
+        return {
+            "clone_id": clone_id,
+            "status":   "stopped",
+            "message":  "Clone arrêté. Le thread OS sous-jacent se terminera naturellement.",
+        }
+
+    return router
+
+
+clone_router = make_clone_router()
+clone_router_noauth = make_clone_router()
+============================
+================./routers/__init__.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:20:20 2026
+
+@author: hounsousamuel
+"""
+
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+from simulateur_attaque_ia.orchestrator.orchestrator_env import get_data
+
+AUTH_DATA = get_data()
+JWT_KEY = "jwt_key"============================
+================./routers/auth_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+from fastapi import APIRouter, HTTPException, status, Request
+
+from simulateur_attaque_ia.simulateur_utils.cryto_utils import checkpw
+from simulateur_attaque_ia.simulateur_utils.jwt_utils import create_token
+from simulateur_attaque_ia.api.models.sim_models import LoginRequest, LoginResponse
+from simulateur_attaque_ia.api.routers import AUTH_DATA, JWT_KEY
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE
+
+auth_router = APIRouter()
+
+def check_creds(username, password, data):
+    if checkpw(username, data["username"]) and checkpw(password, data["password"]):
+        return True
+    
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Identifiants incorrects.",
+    )
+    
+@limiter.limit(f"{LIMITE}/minute")
+@auth_router.post(
+    "/login",
+    response_model=LoginResponse,
+    summary="Authentification",
+    description="Retourne un JWT Bearer à utiliser dans le header `Authorization: Bearer <token>`.",
+)
+async def login(request: Request, login_data: LoginRequest) -> LoginResponse:
+    username = login_data.username
+    password = login_data.password
+    check_creds(username, password, AUTH_DATA)
+    token = create_token({"username": username}, AUTH_DATA[JWT_KEY])
+    return LoginResponse(success=True, token=token, message="Authentification réussie.")
+============================
+================./routers/ws_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Router WebSocket.
+
+/api/ws/{session_id}?token=xxx  → avec vérification JWT (query param)
+/ext/ws/{session_id}            → sans auth (Obsidian gère)
+
+Comportement commun :
+  1. Connexion → replay buffer si disponible
+  2. Mode AUTO        → client écoute uniquement (lecture seule)
+  3. Mode INTERACTIVE → bidirectionnel : client envoie des messages JSON
+                        que le SimulationManager traite via action_queue
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+import asyncio
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from typing import Callable
+
+from simulateur_attaque_ia.orchestrator.managers.simulation_manager import SimulationManager
+from simulateur_attaque_ia.orchestrator.managers.ws_manager import WSManager
+from simulateur_attaque_ia.api.models.sim_models import SimMode, SimStatus
+from simulateur_attaque_ia.api.routers import AUTH_DATA, JWT_KEY
+from simulateur_attaque_ia.simulateur_utils.jwt_utils import verify_token
+
+def _check(token):
+    verify_token(token, AUTH_DATA[JWT_KEY])
+    
+def make_ws_router(verify_token_function: Callable | None = None) -> APIRouter:
+    router  = APIRouter()
+    sim_mgr = SimulationManager.get_instance()
+    ws_mgr  = WSManager.get_instance()
+
+    @router.websocket("/{session_id}")
+    async def ws_endpoint(
+        websocket: WebSocket,
+        session_id: str,
+        token: str = Query(None)
+    ) -> None:
+        
+        if verify_token_function is not None and callable(verify_token_function):
+            # ── Auth ──────────────────────────────────────────────────────────────
+            if not token:
+                await websocket.close(code=4001, reason="Token manquant.")
+                return
+            try:
+                verify_token_function(token)
+            except Exception:
+                await websocket.close(code=4003, reason="Token invalide.")
+                return
+            
+
+        # ── Session existante ? ───────────────────────────────────────────────
+        sim = sim_mgr.get_sim(session_id)
+        if sim is None:
+            await websocket.close(code=4004, reason=f"Session '{session_id}' introuvable.")
+            return
+
+        # ── Connexion + replay ────────────────────────────────────────────────
+        await ws_mgr.connect(session_id, websocket)
+
+        # Envoyer l'état courant au moment de la connexion
+        try:
+            await websocket.send_json({
+                "type":         "connected",
+                "session_id":   session_id,
+                "mode":         sim.mode.value,
+                "status":       sim.status.value,
+                "current_step": sim.current_step,
+                "actions_done": sim.actions_done,
+                "progress":     sim.progress,
+            })
+        except Exception:
+            ws_mgr.disconnect(session_id)
+            return
+
+        # ── Boucle selon le mode ──────────────────────────────────────────────
+        try:
+            if sim.mode == SimMode.AUTO:
+                await _loop_auto(websocket, sim, ws_mgr, session_id)
+            else:
+                await _loop_interactive(websocket, sim, ws_mgr, session_id)
+
+        except WebSocketDisconnect:
+            pass
+        except Exception:
+            pass
+        finally:
+            ws_mgr.disconnect(session_id)
+
+    return router
+
+
+async def _loop_auto(websocket, sim, ws_mgr, session_id):
+    """
+    Mode auto : client écoute seulement.
+    On attend juste la déconnexion (ou la fin de sim).
+    On garde le WS ouvert tant que la sim tourne.
+    """
+
+    while True:
+        if sim.status in (
+            SimStatus.COMPLETED,
+            SimStatus.FAILED,
+            SimStatus.STOPPED,
+        ):
+            break
+        # Ping léger pour détecter une déconnexion
+        try:
+            await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+        except asyncio.TimeoutError:
+            continue    # pas de message du client = normal en mode auto
+        except Exception:
+            break
+
+
+async def _loop_interactive(websocket, sim, ws_mgr, session_id):
+    """
+    Mode interactif : bidirectionnel.
+    On lit les messages JSON du client et on les push dans action_queue.
+    Le SimulationManager._run_interactive() consomme cette queue.
+    """
+
+    # Si la sim attend (WAITING) → envoyer l'état actuel au client
+    if sim.status == SimStatus.WAITING and sim.orchestrator:
+        try:
+            await websocket.send_json({
+                "type":              "sim_ready",
+                "session_id":        session_id,
+                "actions_available": sim.orchestrator.available_actions(),
+                "actions_done":      sim.actions_done,
+                "state_summary":     sim.orchestrator.get_state_summary(),
+            })
+        except Exception:
+            return
+
+    while True:
+        try:
+            data = await websocket.receive_json()
+            # print("WS Router: ", data)
+        except Exception:
+            break
+
+        msg_type = data.get("type", "")
+
+        # Messages valides côté client
+        if msg_type in (
+            "execute_action",
+            "request_llm_suggest",
+            "request_llm_review",
+            "get_state",
+            "finish",
+        ):
+            await sim.action_queue.put(data)
+        else:
+            # Message inconnu → on notifie le client
+            try:
+                await websocket.send_json({
+                    "type":    "error",
+                    "message": f"Type de message inconnu : '{msg_type}'. "
+                               "Types valides : execute_action, request_llm_suggest, "
+                               "request_llm_review, get_state, finish.",
+                })
+            except Exception:
+                break
+
+
+# ── Instances exportées ───────────────────────────────────────────────────────
+
+ws_router = make_ws_router(verify_token_function=_check)
+============================
+================./routers/images_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+import asyncio
+from fastapi import APIRouter, HTTPException, status
+from simulateur_attaque_ia.core.docker_manager import DockerManager
+
+def make_images_router() -> APIRouter:
+    router = APIRouter()
+
+    @router.get(
+        "/list",
+        summary="Lister les images Docker locales",
+        description="Retourne la liste des images disponibles localement "
+                    "via DockerManager.list_images().",
+    )
+    async def list_images() -> dict:
+        try:
+            dm = DockerManager()
+            images = await asyncio.to_thread(dm.list_images)
+            return {"images": images}   
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur Docker : {exc}",
+            )
+
+    return router
+
+
+images_router = make_images_router()
+images_router_noauth = make_images_router()
+============================
+================./routers/sim_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 00:30:38 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Router /sim – gestion du cycle de vie des simulations.
+
+Utilisé deux fois :
+  - /api/sim  (avec auth)   → monté dans main.py
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+from fastapi import APIRouter, HTTPException, status, Request
+
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE
+from simulateur_attaque_ia.orchestrator.managers.simulation_manager import SimulationManager
+from simulateur_attaque_ia.orchestrator.managers.ws_manager import WSManager
+from simulateur_attaque_ia.api.models.sim_models import StartSimRequest, StartSimResponse, SimStatus
+
+
+def make_sim_router() -> APIRouter:
+    router = APIRouter()
+    sim_mgr = SimulationManager.get_instance()
+    ws_mgr  = WSManager.get_instance()
+
+    # ── POST /start ──────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/start",
+        response_model=StartSimResponse,
+        summary="Lancer une simulation",
+        description="""
+Lance une simulation (auto ou interactive) sur l'image Docker donnée.
+
+- **image** : image Docker locale (obligatoire).
+- **services** : contenu services.json (optionnel — auto-capturé si absent).
+- **use_llm** : active le LLM pour les décisions/suggestions.
+- **mode** : `auto` (simulation autonome) ou `interactive` (dirigée via WS).
+- **sim_config** : paramètres fins de chaque tactic (tout optionnel, defaults appliqués).
+""",
+    )
+    async def start_sim(
+        request: Request,
+        data: StartSimRequest
+    ) -> StartSimResponse:
+        
+        if not sim_mgr.can_start():
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Quota de simulations parallèles atteint.",
+            )
+        
+        try:
+            session_id = await sim_mgr.start_sim(data, ws_mgr)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+            
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+            )
+
+        return StartSimResponse(
+            session_id=session_id,
+            status=SimStatus.STARTING,
+            message=f"Simulation démarrée — connectez-vous au WS /{session_id} pour suivre.",
+        )
+
+    # ── POST /{session_id}/stop ───────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{session_id}/stop",
+        summary="Arrêter une simulation",
+    )
+    async def stop_sim(
+        request: Request,
+        session_id: str
+    ) -> dict:
+        ok = await sim_mgr.stop_sim(session_id, ws_mgr)
+        if not ok:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session '{session_id}' introuvable.",
+            )
+        return {"session_id": session_id, "status": SimStatus.STOPPED.value, "message": "Simulation arrêtée."}
+
+    # ── GET /{session_id}/status ──────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/{session_id}/status",
+        summary="Status d'une simulation active",
+    )
+    async def sim_status(
+        request: Request,
+        session_id: str
+    ) -> dict:
+        sim = sim_mgr.get_sim(session_id)
+        if sim is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session '{session_id}' introuvable.",
+            )
+        return sim.to_dict()
+
+    # ── GET /list ─────────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/list",
+        summary="Liste des simulations actives",
+    )
+    async def list_sims(request: Request) -> dict:
+        return {"sims": sim_mgr.list_sims()}
+
+    # ── GET /{session_id}/report ──────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/{session_id}/report",
+        summary="Rapport final d'une simulation",
+    )
+    async def sim_report(request: Request, session_id: str) -> dict:
+        report = sim_mgr.get_report(session_id)
+        if report is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Rapport introuvable pour '{session_id}'. "
+                       "La simulation est-elle terminée ?",
+            )
+        return report
+
+    # ── GET /{session_id}/actions ─────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/{session_id}/actions",
+        summary="Actions disponibles (mode interactif)",
+    )
+    async def available_actions(request: Request, session_id: str) -> dict:
+        sim = sim_mgr.get_sim(session_id)
+        if sim is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session '{session_id}' introuvable.",
+            )
+        if sim.orchestrator is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La simulation n'est pas encore prête.",
+            )
+        if not hasattr(sim.orchestrator, "available_actions"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cette route n'est disponible qu'en mode interactif.",
+            )
+        
+        if hasattr(sim.orchestrator, "available_actions_with_details"):
+            details = sim.orchestrator.available_actions_with_details()
+        else:
+            details = None
+            
+        return {
+            "session_id":        session_id,
+            "actions_available": sim.orchestrator.available_actions(),
+            "actions_available_with_details":  details,
+            "actions_done":      sim.actions_done,
+        }
+
+    # ── GET /history ──────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/history",
+        summary="Historique de toutes les simulations",
+    )
+    async def list_history(request: Request,) -> dict:
+        return {"history": sim_mgr.list_history()}
+
+    # ── GET /history/{sim_id} ─────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/history/{sim_id}",
+        summary="Détail d'une simulation passée",
+    )
+    async def get_history(request: Request, sim_id: str) -> dict:
+        entry = sim_mgr.get_history(sim_id)
+        if entry is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Historique introuvable pour '{sim_id}'.",
+            )
+        return entry
+
+    return router
+
+
+# Instances exportées
+sim_router       = make_sim_router()    
+sim_router_noauth = make_sim_router()   
+============================
+================./routers/router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 02:05:02 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+from fastapi import APIRouter, Depends
+from simulateur_attaque_ia.api.deps import require_auth
+from simulateur_attaque_ia.api.routers.auth_router import auth_router
+from simulateur_attaque_ia.api.routers.sim_router import sim_router
+from simulateur_attaque_ia.api.routers.images_router import images_router
+from simulateur_attaque_ia.api.routers.clone_router import clone_router
+from simulateur_attaque_ia.api.routers.services_router import services_router
+from simulateur_attaque_ia.api.routers.ws_router import ws_router
+from simulateur_attaque_ia.api.routers.containers_router import containers_router
+from simulateur_attaque_ia.api.routers.network_router import network_router
+
+def router():
+    _router = APIRouter()
+    deps = [Depends(require_auth)]
+    _router.include_router(
+        auth_router, 
+        prefix="/auth",   
+        tags=["Auth"]
+    )
+    _router.include_router(
+        sim_router,      
+        prefix="/sim",   
+        tags=["Simulations"],
+        dependencies=deps
+    )
+    _router.include_router(
+        images_router,   
+        prefix="/images",  
+        tags=["Images"],   
+        dependencies=deps
+    )
+    _router.include_router(
+        clone_router,   
+        prefix="/clone", 
+        tags=["Clone"],   
+        dependencies=deps
+    )
+    _router.include_router(
+        services_router,
+        prefix="/services", 
+        tags=["Services"],  
+        dependencies=deps
+    )
+    _router.include_router(
+        containers_router,
+        prefix="/containers",
+        tags=["Containers"],
+        dependencies=deps,
+    )
+    _router.include_router(
+        network_router,
+        prefix="/network",
+        tags=["Network"],
+        dependencies=deps,
+    )
+    _router.include_router(
+        ws_router,      
+        prefix="/ws",   
+        tags=["WebSocket"]
+    )
+    return _router============================
+================./routers/router_no_auth.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 02:05:02 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+from fastapi import APIRouter
+from simulateur_attaque_ia.api.routers.sim_router import sim_router_noauth
+from simulateur_attaque_ia.api.routers.images_router import images_router_noauth
+from simulateur_attaque_ia.api.routers.clone_router import clone_router_noauth
+from simulateur_attaque_ia.api.routers.services_router import services_router_noauth
+from simulateur_attaque_ia.api.routers.containers_router import containers_router_noauth
+from simulateur_attaque_ia.api.routers.ws_router import make_ws_router
+from simulateur_attaque_ia.orchestrator.managers.simulation_manager import SimulationManager
+from simulateur_attaque_ia.orchestrator.managers.ws_manager import WSManager
+from simulateur_attaque_ia.core.containers_manager import ContainerManager
+from simulateur_attaque_ia.api.routers.network_router import network_router_noauth
+
+def attach_to_state(state):
+    state.sim_manager_instance = SimulationManager.get_instance()
+    state.sim_wsmanager_instance = WSManager.get_instance()
+    state.sim_container_manager_instance = ContainerManager().get_instance()
+    
+def router(verify_token_function):
+    if not verify_token_function or not callable(verify_token_function):
+        raise ValueError("Fonction de vérification de token requis")
+        
+    _router = APIRouter()
+    _ws_router = APIRouter()
+    _router.include_router(
+        sim_router_noauth,      
+        prefix="/sim",   
+        tags=["Simulations"],
+    )
+    _router.include_router(
+        images_router_noauth,
+        prefix="/images",  
+        tags=["Images"],   
+    )
+    _router.include_router(
+        clone_router_noauth,
+        prefix="/clone", 
+        tags=["Clone"],   
+    )
+    _router.include_router(
+        services_router_noauth,
+        prefix="/services", 
+        tags=["Services"],  
+    )
+    _router.include_router(
+        containers_router_noauth,
+        prefix="/containers",
+        tags=["Containers"],
+    )
+    _router.include_router(
+        network_router_noauth,
+        prefix="/network",
+        tags=["Network"],
+    )
+    _ws_router.include_router(
+        make_ws_router(verify_token_function),
+        prefix="/ws",   
+        tags=["WebSocket"]
+    )
+    return _router, _ws_router============================
+================./routers/containers_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 15:18:58 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Router /containers – gestion des containers Docker.
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+import asyncio
+import docker
+from fastapi import APIRouter, HTTPException, status, Request
+from typing import Optional, List
+
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE
+from simulateur_attaque_ia.core.docker_manager import DockerManager
+from simulateur_attaque_ia.core.containers_manager import ContainerManager
+from simulateur_attaque_ia.simulateur_utils.logger import get_logger
+from simulateur_attaque_ia.api.models.sim_models import (
+    ContainerListResponse, ContainerCreateRequest,
+    ContainerCreateResponse, ContainerExecRequest,
+    ContainerExecResponse, ContainerStopResponse,
+    CacheListResponse,
+)
+
+logger = get_logger()
+
+
+def make_containers_router() -> APIRouter:
+    router = APIRouter()
+    dm = DockerManager()
+    cm = ContainerManager.get_instance()
+    
+    # ─── GET /list ──────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/list",
+        summary="Lister les containers Docker",
+        response_model=ContainerListResponse,
+    )
+    async def list_containers(
+        request: Request,
+        running: bool | None = None,
+        label: Optional[str] = None,
+    ) -> ContainerListResponse:
+        filters = {}
+        if running is not None:
+            filters["status"] = "running"
+        if label:
+            filters["label"] = label
+
+        containers = dm.list_containers(all=True, filters=filters)
+
+        return ContainerListResponse(
+            total=len(containers),
+            containers=containers,
+            filters=filters,
+        )
+    
+    # ─── GET /list_my_own ──────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/list_my_own",
+        summary="Lister les containers Docker",
+        response_model=ContainerListResponse,
+    )
+    async def list_my_own_containers(
+        request: Request,
+        running: bool | None = None,
+        label: Optional[str] = None,
+    ) -> ContainerListResponse:
+        return await list_containers(
+            request=request,
+            label="simatk.owner=user"
+        )
+    
+    # ─── POST /create ──────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/create",
+        summary="Créer ou réutiliser un container",
+        response_model=ContainerCreateResponse,
+    )
+    async def create_container(
+        request: Request,
+        data: ContainerCreateRequest,
+    ) -> ContainerCreateResponse:
+        try:
+            dm.client.images.get(data.image)
+        except Exception:
+            return ContainerCreateResponse(
+                success=False,
+                container={},
+                message=f"Image '{data.image}' introuvable",
+            )
+        
+        predefined = {"bridge", "none", "host", "isolated"}
+        if data.network not in predefined:
+            try:
+                dm.client.networks.get(data.network)
+                
+            except (docker.errors.NotFound, docker.errors.APIError):
+                return ContainerCreateResponse(
+                    success=False,
+                    container={},
+                    message=(
+                        f"Réseau '{data.network}' introuvable. "
+                        f"Réseaux prédéfinis : bridge, none, host. "
+                        f"Ou créez-le avec 'docker network create {data.network}'"
+                    ),
+                )
+            
+            except Exception as e:
+                return ContainerCreateResponse(
+                    success=False,
+                    container={},
+                    message=f"Erreur vérification réseau : {e}",
+                )
+        
+        labels = dict(data.labels or {})
+        labels.setdefault("simatk", "true")
+        labels.setdefault("simatk.owner", "user")
+        kwargs = {}
+        if data.network:
+            kwargs["network"] = data.network
+        if data.cap_add:
+            kwargs["cap_add"] = data.cap_add
+        if data.ports:
+            kwargs["ports"] = data.ports
+        if data.environment:
+            kwargs["environment"] = data.environment
+        if data.command:
+            kwargs["command"] = data.command
+        kwargs["labels"] = labels
+
+        try:
+            container_manager = await asyncio.to_thread(
+                cm.get_or_create_container,
+                image=data.image,
+                name=data.name,
+                **kwargs
+            )
+        except Exception as e:
+            return ContainerCreateResponse(
+                success=False,
+                container={},
+                message=f"Erreur création: {e}",
+            )
+
+        # Récupérer l'IP
+        ip = None
+        try:
+            ip = container_manager.get_ip(network=data.network, container=None)
+        except Exception:
+            pass
+
+        return ContainerCreateResponse(
+            success=True,
+            container={
+                "name": container_manager.container.name,
+                "image": data.image,
+                "status": container_manager.container.status,
+                "ip": ip,
+                "created": container_manager.container.attrs.get("Created", ""),
+            },
+            message=f"Container '{container_manager.container.name}' prêt",
+        )
+    
+    # ─── POST /{name}/stop ────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{name}/stop",
+        summary="Arrêter un container",
+        response_model=ContainerStopResponse,
+    )
+    async def stop_container(
+        request: Request,
+        name: str,
+    ) -> ContainerStopResponse:
+        ok = await cm.stop_container(name)
+        if not ok:
+            return ContainerStopResponse(
+                success=False,
+                container=name,
+                message=f"Container '{name}' introuvable.",
+            )
+
+        return ContainerStopResponse(
+            success=True,
+            container=name,
+            message=f"Container '{name}' arrêté et supprimé",
+        )
+    
+    # ─── POST /{name}/exec ────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{name}/exec",
+        summary="Exécuter une commande dans un container",
+        response_model=ContainerExecResponse,
+    )
+    async def exec_command(
+        request: Request,
+        name: str,
+        data: ContainerExecRequest,
+    ) -> ContainerExecResponse:
+        try:
+            result = await cm.exec_command(name, data.command)
+            return ContainerExecResponse(
+                success=True,
+                container=name,
+                command=data.command,
+                stdout=result.get("stdout"),
+                stderr=result.get("stderr"),
+                exit_code=result.get("exit_code", 0),
+                message=None,
+            )
+        except ValueError as e:
+            return ContainerExecResponse(
+                success=False,
+                container=name,
+                command=data.command,
+                stdout=None,
+                stderr=None,
+                exit_code=1,
+                message=str(e),
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur exécution: {e}",
+            )
+    
+    # ─── GET /cache ────────────────────────────────────────────────────────
+    
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/cache",
+        summary="Lister les containers en cache",
+        response_model=CacheListResponse,
+    )
+    async def list_cached_containers(
+        request: Request,
+    ) -> CacheListResponse:
+        containers = cm.list_containers()
+        return CacheListResponse(
+            total=len(containers),
+            containers=containers,
+        )
+    
+    return router
+
+
+# ── Export ─────────────────────────────────────────────────────────────────
+containers_router = make_containers_router()
+containers_router_noauth = make_containers_router()============================
+================./routers/network_router.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 17:10:02 2026
+
+@author: hounsousamuel
+"""
+
+"""
+Router /network – gestion des réseaux Docker.
+
+GET    /network/list              → Lister les réseaux
+POST   /network/create            → Créer un réseau
+GET    /network/{name}/containers → Lister les containers d'un réseau
+POST   /network/{name}/remove     → Supprimer un réseau
+POST   /network/remove_all        → Supprimer tous les réseaux simatk
+POST   /network/{name}/connect    → Connecter un container à un réseau
+POST   /network/{name}/disconnect → Déconnecter un container d'un réseau
+POST   /network/move              → Déplacer un container d'un réseau à un autre
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+
+import asyncio
+import docker
+from fastapi import APIRouter, HTTPException, status, Request
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timezone
+
+from simulateur_attaque_ia.simulateur_utils.limiter import limiter
+from simulateur_attaque_ia.configs.config import LIMITE
+from simulateur_attaque_ia.core.docker_manager import DockerManager
+from simulateur_attaque_ia.simulateur_utils.logger import get_logger
+from simulateur_attaque_ia.api.models.sim_models import (
+    NetworkCreateRequest,
+    NetworkConnectRequest,
+    NetworkDisconnectRequest,
+    NetworkMoveRequest,
+    NetworkListResponse,
+    NetworkInfo,
+    NetworkCreateResponse,
+    NetworkContainersResponse,
+    NetworkContainerInfo,
+    NetworkRemoveResponse,
+    NetworkRemoveAllResponse,
+    NetworkConnectResponse,
+    NetworkDisconnectResponse,
+    NetworkMoveResponse,
+)
+
+logger = get_logger()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cleanup task
+# ─────────────────────────────────────────────────────────────────────────────
+
+_cleanup_task: Optional[asyncio.Task] = None
+_INACTIVE_TIMEOUT = 600  # 10 minutes
+
+
+async def _cleanup_empty_networks_loop():
+    """
+    Tâche de fond : supprime les réseaux simatk qui n'ont plus de containers
+    depuis plus de N minutes.
+    """
+    while True:
+        try:
+            await asyncio.sleep(120)
+            dm = DockerManager()
+            client = dm.client
+            networks = client.networks.list(filters={"label": "simatk"})
+            now = datetime.now(tz=timezone.utc)
+            for net in networks:
+                try:
+                    net.reload()
+                    containers = net.containers
+                    if containers:
+                        continue
+                    created_str = net.attrs.get("Created", "")
+                    if not created_str:
+                        continue
+                    try:
+                        created = datetime.fromisoformat(created_str.replace("Z", "+00:00"))
+                        age = (now - created).total_seconds()
+                    except Exception:
+                        continue
+                    if age > _INACTIVE_TIMEOUT:
+                        logger.print(f"🧹 Suppression réseau vide inactif: {net.name} (age: {age/60:.1f}min)")
+                        net.remove()
+                except Exception as e:
+                    logger.print(f"⚠️ Erreur cleanup réseau {net.name}: {e}")
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.print(f"⚠️ Erreur cleanup réseaux: {e}")
+
+
+def start_network_cleanup():
+    """Démarre la tâche de nettoyage des réseaux."""
+    global _cleanup_task
+    if _cleanup_task is None or _cleanup_task.done():
+        _cleanup_task = asyncio.create_task(_cleanup_empty_networks_loop())
+        logger.print("🧹 Tâche de nettoyage des réseaux démarrée")
+
+
+async def stop_network_cleanup():
+    """Arrête la tâche de nettoyage des réseaux."""
+    global _cleanup_task
+    if _cleanup_task and not _cleanup_task.done():
+        _cleanup_task.cancel()
+        try:
+            await _cleanup_task
+        except asyncio.CancelledError:
+            pass
+        logger.print("🧹 Tâche de nettoyage des réseaux arrêtée")
+
+
+def remove_networks(networks: list[docker.models.networks.Network], force: bool = True):
+    if not networks:
+        return {
+            "success": True,
+            "total": 0,
+            "removed": [],
+            "failed": [],
+            "message": "Aucun réseau simatk trouvé",
+        }
+    removed = []
+    failed = []
+    for net in networks:
+        try:
+            containers = net.containers
+            if containers:
+                if force:
+                    for container in containers:
+                        try:
+                            container.stop()
+                            container.remove(force=True)
+                        except Exception:
+                            pass
+                else:
+                    failed.append({
+                        "name": net.name,
+                        "reason": f"Contient encore {len(net.containers)} container(s)",
+                    })
+                    continue
+            net.remove()
+            removed.append(net.name)
+            logger.print(f"✅ Réseau {net.name} supprimé")
+            
+        except Exception as e:
+            failed.append({
+                "name": net.name,
+                "reason": str(e),
+            })
+    return {
+        "success": len(failed) == 0,
+        "total": len(networks),
+        "removed": removed,
+        "failed": failed,
+        "message": f"{len(removed)} réseau(x) supprimé(s), {len(failed)} échec(s)",
+    }
+
+def remove_all_networks(client, force: bool = False) -> dict:
+    """Supprime tous les réseaux simatk."""
+    try:
+        networks = client.networks.list(filters={"label": "simatk"})
+    except Exception as e:
+        return {
+            "success": False,
+            "total": 0,
+            "removed": [],
+            "failed": [{"error": str(e)}],
+            "message": f"Erreur Docker: {e}",
+        }
+    return remove_networks(networks, force)
+
+def remove_ephemeral_networks(client, force: bool = True) -> dict:
+    """
+    Nettoyage auto au shutdown : supprime UNIQUEMENT les réseaux liés à une
+    sim (simatk.owner commence par 'sim:'). Les réseaux créés à la main par
+    l'user via /network/create (simatk.owner='user') sont préservés.
+    """
+    try:
+        networks = client.networks.list(filters={"label": "simatk"})
+    except Exception as e:
+        return {"success": False, "total": 0, "removed": [], "failed": [{"error": str(e)}]}
+
+    targets = [
+        n for n in networks
+        if n.attrs.get("Labels", {}).get("simatk.owner", "").startswith("sim:")
+    ]
+
+    return remove_networks(targets, force)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Router
+# ─────────────────────────────────────────────────────────────────────────────
+
+def make_network_router() -> APIRouter:
+    router = APIRouter()
+    dm = DockerManager()
+    client = dm.client
+
+    # ─── GET /list ──────────────────────────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/list",
+        response_model=NetworkListResponse,
+        summary="Lister les réseaux Docker",
+        description="Retourne la liste de tous les réseaux Docker (filtre simatk optionnel).",
+    )
+    async def list_networks(request: Request, only_simatk: bool = False):
+        try:
+            if only_simatk:
+                networks = client.networks.list(filters={"label": "simatk"})
+            else:
+                networks = client.networks.list()
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur Docker: {e}",
+            )
+
+        result = []
+        for net in networks:
+            containers = net.containers
+            subnet = None
+            ipam_config = net.attrs.get("IPAM", {}).get("Config", [{}])
+            if ipam_config:
+                subnet = ipam_config[0].get("Subnet")
+            result.append(NetworkInfo(
+                name=net.name,
+                id=net.id,
+                short_id=net.short_id,
+                driver=net.attrs.get("Driver", "bridge"),
+                subnet=subnet,
+                internal=net.attrs.get("Internal", False),
+                containers_count=len(containers),
+                labels=net.attrs.get("Labels", {}),
+                created=net.attrs.get("Created", ""),
+            ))
+
+        return {"total": len(result), "networks": result}
+
+    # ─── POST /create ──────────────────────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/create",
+        response_model=NetworkCreateResponse,
+        summary="Créer un réseau Docker",
+        description="Crée un réseau Docker personnalisé.",
+    )
+    async def create_network(request: Request, data: NetworkCreateRequest):
+        try:
+            existing = client.networks.get(data.name)
+            err = f"Réseau '{data.name}' existe déjà"
+            return {
+                "success": False,
+                "network": {
+                    "name": existing.name,
+                    "id": existing.id,
+                },
+                "message": err,
+                "error": err,
+            }
+        except docker.errors.NotFound:
+            pass
+        
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur Docker: {e}",
+            )
+    
+        # if data.subnet and not data.is_subnet_valid():
+        #     err = f"Format de subnet invalide : '{data.subnet}' (exemple valide : 172.30.0.0/24)"
+        #     return {
+        #         "success": False,
+        #         "network": {},
+        #         "message": err,
+        #         "error": err,
+        #     }
+    
+        try:
+            ipam = None
+            # if data.subnet:
+            #     ipam = docker.types.IPAMConfig(
+            #         pool_configs=[docker.types.IPAMPool(subnet=data.subnet)]
+            #     )
+            labels = data.labels or {}
+            labels["simatk"] = "true"
+            labels["simatk.owner"] = "user"  
+            labels["simatk.created"] = datetime.now(tz=timezone.utc).isoformat()
+            network = client.networks.create(
+                data.name,
+                driver=data.driver or "bridge",
+                ipam=ipam,
+                internal=data.internal or False,
+                labels=labels,
+            )
+            return {
+                "success": True,
+                "network": {
+                    "name": network.name,
+                    "id": network.id,
+                    "short_id": network.short_id,
+                    "driver": network.attrs.get("Driver", "bridge"),
+                    "subnet": data.subnet,
+                    "internal": data.internal or False,
+                },
+                "message": f"Réseau '{data.name}' créé avec succès",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur création réseau: {e}",
+            )
+
+    # ─── GET /{network_name}/containers ────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.get(
+        "/{network_name}/containers",
+        response_model=NetworkContainersResponse,
+        summary="Lister les containers d'un réseau",
+    )
+    async def list_network_containers(request: Request, network_name: str):
+        try:
+            network = client.networks.get(network_name)
+            
+        except docker.errors.NotFound:
+            return {
+                "network": network_name,
+                "network_id": "",
+                "total": 0,
+                "containers": [],
+                "message": f"Réseau '{network_name}' introuvable",
+            }
+        
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur Docker: {e}",
+            )
+
+        containers_info: List[NetworkContainerInfo] = []
+        for container in network.containers:
+            ip = None
+            try:
+                ip = dm.get_ip(network=network_name, container=container)
+            except Exception:
+                pass
+            try:
+                containers_info.append(NetworkContainerInfo(
+                    id=container.id,
+                    name=container.name,
+                    status=container.status,
+                    image=container.image.tags[0] if container.image and container.image.tags else "<none>",
+                    ip=ip,
+                    labels=container.labels or {},
+                    created=container.attrs.get("Created", ""),
+                    is_simatk=container.labels.get("simatk") == "true" or "simatk_" in container.name,
+                    message=None
+                ))
+            except Exception as e:
+                containers_info.append(NetworkContainerInfo(
+                    id=container.id,
+                    name=container.name,
+                    status="unknown",
+                    image="unknown",
+                    ip=ip,
+                    labels={},
+                    created="",
+                    is_simatk=False,
+                    message=str(e)
+                ))
+
+        containers_info.sort(key=lambda x: x.name)
+        return {
+            "network": network_name,
+            "network_id": network.id,
+            "total": len(containers_info),
+            "containers": [c.model_dump() for c in containers_info],
+        }
+
+    # ─── POST /{network_name}/remove ──────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{network_name}/remove",
+        response_model=NetworkRemoveResponse,
+        summary="Supprimer un réseau",
+    )
+    async def remove_network(request: Request, network_name: str, force: bool = False):
+        try:
+            network = client.networks.get(network_name)
+            
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "network": network_name,
+                "message": f"Réseau '{network_name}' introuvable",
+            }
+        
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur Docker: {e}",
+            )
+            
+        containers = network.containers
+        removed_containers = []
+        failed_containers = []
+        if containers:
+            if force:
+                logger.print(f"🧹 Suppression de {len(containers)} container(s) sur {network_name}")
+                for container in containers:
+                    try:
+                        container_name = container.name
+                        container.stop()
+                        container.remove(force=True)
+                        removed_containers.append(container_name)
+                        logger.print(f"  ✅ Container {container_name} supprimé")
+                    except Exception as e:
+                        failed_containers.append({
+                            "id": container.id,
+                            "name": container.name,
+                            "message": str(e),
+                        })
+            else:
+                container_names = [c.name for c in containers]
+                return {
+                    "success": False,
+                    "network": network_name,
+                    "message": f"Le réseau a {len(containers)} container(s). Utilisez force=true.",
+                    "containers": container_names,
+                }
+
+        try:
+            network.remove()
+            if failed_containers:
+                return {
+                    "success": True,
+                    "removed_containers": removed_containers,
+                    "failed_containers": failed_containers,
+                    "network": network_name,
+                    "message": f"Réseau '{network_name}' supprimé mais certains containers n'ont pas pu être supprimés",
+                }
+            
+            return {
+                "success": True,
+                "network": network_name,
+                "message": f"Réseau '{network_name}' supprimé",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur suppression réseau: {e}",
+            )
+
+    # ─── POST /remove_all ──────────────────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/remove_all",
+        response_model=NetworkRemoveAllResponse,
+        summary="Supprimer tous les réseaux simatk",
+    )
+    async def remove_all_networks_route(request: Request, force: bool = False):
+        return remove_all_networks(client, force)
+
+    # ─── POST /{network_name}/connect ──────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{network_name}/connect",
+        response_model=NetworkConnectResponse,
+        summary="Connecter un container à un réseau",
+    )
+    async def connect_container(request: Request, network_name: str, data: NetworkConnectRequest):
+        try:
+            network = client.networks.get(network_name)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "ip": None,
+                "message": f"Réseau '{network_name}' introuvable",
+            }
+
+        try:
+            container = client.containers.get(data.container_name)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "ip": None,
+                "message": f"Container '{data.container_name}' introuvable",
+            }
+
+        existing_networks = container.attrs.get("NetworkSettings", {}).get("Networks", {})
+        if network_name in existing_networks:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "ip": None,
+                "message": f"Container déjà connecté à '{network_name}'",
+            }
+
+        try:
+            network.connect(container)
+
+            ip = None
+            try:
+                container.reload()
+                ip = dm.get_ip(network=network_name, container=container)
+            except Exception:
+                pass
+
+            return {
+                "success": True,
+                "container": data.container_name,
+                "network": network_name,
+                "ip": ip or data.ip,
+                "message": f"Container connecté au réseau '{network_name}'",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur connexion: {e}",
+            )
+
+    # ─── POST /{network_name}/disconnect ───────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/{network_name}/disconnect",
+        response_model=NetworkDisconnectResponse,
+        summary="Déconnecter un container d'un réseau",
+    )
+    async def disconnect_container(request: Request, network_name: str, data: NetworkDisconnectRequest):
+        try:
+            network = client.networks.get(network_name)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "force": data.force,
+                "remaining_networks": [],
+                "message": f"Réseau '{network_name}' introuvable",
+            }
+
+        try:
+            container = client.containers.get(data.container_name)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "force": data.force,
+                "remaining_networks": [],
+                "message": f"Container '{data.container_name}' introuvable",
+            }
+
+        existing_networks = container.attrs.get("NetworkSettings", {}).get("Networks", {})
+        if network_name not in existing_networks:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "force": data.force,
+                "remaining_networks": list(existing_networks.keys()),
+                "message": f"Container non connecté à '{network_name}'",
+            }
+
+        if len(existing_networks) == 1 and not data.force:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "network": network_name,
+                "force": data.force,
+                "remaining_networks": list(existing_networks.keys()),
+                "message": "Dernier réseau, utilisez force=true pour forcer.",
+            }
+
+        try:
+            network.disconnect(container, force=data.force)
+            container.reload()
+            remaining = list(container.attrs.get("NetworkSettings", {}).get("Networks", {}).keys())
+            return {
+                "success": True,
+                "container": data.container_name,
+                "network": network_name,
+                "force": data.force,
+                "remaining_networks": remaining,
+                "message": f"Container déconnecté de '{network_name}'",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur déconnexion: {e}",
+            )
+
+    # ─── POST /move ─────────────────────────────────────────────────────────
+    @limiter.limit(f"{LIMITE}/minute")
+    @router.post(
+        "/move",
+        response_model=NetworkMoveResponse,
+        summary="Déplacer un container d'un réseau à un autre",
+    )
+    async def move_container(request: Request, data: NetworkMoveRequest):
+        # Vérifier le container
+        try:
+            container = client.containers.get(data.container_name)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": [],
+                "message": f"Container '{data.container_name}' introuvable",
+            }
+
+        # Vérifier le réseau source
+        try:
+            source = client.networks.get(data.source_network)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": [],
+                "message": f"Réseau source '{data.source_network}' introuvable",
+            }
+
+        # Vérifier le réseau destination
+        try:
+            dest = client.networks.get(data.destination_network)
+        except docker.errors.NotFound:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": [],
+                "message": f"Réseau destination '{data.destination_network}' introuvable",
+            }
+
+        existing_networks = container.attrs.get("NetworkSettings", {}).get("Networks", {})
+        if data.source_network not in existing_networks:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": list(existing_networks.keys()),
+                "message": f"Container non connecté au réseau source '{data.source_network}'",
+            }
+
+        if data.destination_network in existing_networks:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": list(existing_networks.keys()),
+                "message": f"Container déjà connecté au réseau destination '{data.destination_network}'",
+            }
+
+        if len(existing_networks) == 1 and not data.force:
+            return {
+                "success": False,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": None,
+                "networks": list(existing_networks.keys()),
+                "message": "Dernier réseau, utilisez force=true.",
+            }
+
+        try:
+            source.disconnect(container, force=data.force)
+            dest.connect(container)
+            container.reload()
+            new_networks = list(container.attrs.get("NetworkSettings", {}).get("Networks", {}).keys())
+            ip = None
+            try:
+                ip = dm.get_ip(network=data.destination_network, container=container)
+            except Exception:
+                pass
+
+            return {
+                "success": True,
+                "container": data.container_name,
+                "source_network": data.source_network,
+                "destination_network": data.destination_network,
+                "ip": ip or data.ip,
+                "aliases": data.aliases or [],
+                "networks": new_networks,
+                "message": f"Container déplacé de '{data.source_network}' vers '{data.destination_network}'",
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur déplacement: {e}",
+            )
+
+    return router
+
+
+# ── Export ─────────────────────────────────────────────────────────────────
+network_router = make_network_router()
+network_router_noauth = make_network_router()============================
+================./__init__.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug  3 02:28:05 2026
+
+@author: hounsousamuel
+"""
+
+============================
+================./deps.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Dépendances FastAPI.
+
+require_auth  → utilisé par les routers /api/* (montés dans cette app)
+no_auth       → utilisé par les routers /ext/* (exportés pour Obsidian)
+
+Le router /ext/* N'EST PAS monté ici : Obsidian l'importe comme module
+et y ajoute son propre layer d'auth.
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from typing import Optional
+from fastapi import Header, HTTPException, status, Request
+
+from simulateur_attaque_ia.simulateur_utils.jwt_utils import verify_token
+from simulateur_attaque_ia.api.routers import AUTH_DATA, JWT_KEY
+
+async def require_auth(request: Request, authorization: Optional[str] = Header(default=None)) -> dict:
+    """
+    Vérifie le JWT Bearer présent dans le header Authorization.
+    Lève HTTP 401 si absent ou invalide.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Header Authorization manquant ou format invalide (Bearer <token>)",
+        )
+    token = authorization.removeprefix("Bearer ").strip()
+    try:
+        payload = verify_token(token, AUTH_DATA[JWT_KEY])
+        return payload
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token invalide : {exc}",
+        )
+
+
+async def no_auth() -> dict:
+    """Dépendance neutre pour les routers sans auth (Obsidian)."""
+    return {}
+============================
+================./run_api.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr  6 10:57:00 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+from simulateur_attaque_ia.api.api import start, app, close_api, close_api_atexit, stop
+from simulateur_attaque_ia.configs.config import IP, PORT
+import signal
+import time
+import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
+
+
+def run_api():
+    thread, server = start(app, host=IP, port=PORT)
+    thread.start()
+    time.sleep(2)
+    TARGET = f'http://{IP}:{PORT}/api'
+    CLOSE_TARGET = TARGET + "/close"
+    close_api_atexit(CLOSE_TARGET)
+    
+    def signal_handler(sig, frame):
+        print('Signal envoyé : ', sig)
+        server.should_exit = True
+        stop(thread, 2)
+        sys.exit(0)
+        
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    if sys.platform != "win32":
+        signal.signal(signal.SIGQUIT, signal_handler)
+    
+    print('API lancé à : ', time.ctime())
+    start_time = time.time()
+    
+    while True:
+        try:
+            time.sleep(1)
+            elapsed = time.time() - start_time
+            print(f'API lancé depuis :  {elapsed:.2f} {"seconde" if elapsed < 2 else "secondes"} ({elapsed / 60 :.2f} {"minute" if elapsed / 60 < 2 else "minutes"})', end="\r")
+            
+        except KeyboardInterrupt:
+            print('Interruption , sortie !')
+            break
+        except:
+            break
+    print('Fermeture API à : ', time.ctime())
+    
+if __name__ == '__main__':
+    run_api()
+    
+    ============================

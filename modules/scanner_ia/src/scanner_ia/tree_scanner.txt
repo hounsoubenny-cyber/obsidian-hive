@@ -1,0 +1,629 @@
+.
+├── ae_model
+│   ├── autoencoders.py
+│   ├── autoencoders_trainer.py
+│   ├── callbacks.py
+│   ├── embeddings
+│   │   ├── config.json
+│   │   ├── generation_config.json
+│   │   ├── model.safetensors
+│   │   ├── modules.json
+│   │   ├── README.md
+│   │   ├── sentence_bert_config.json
+│   │   ├── tokenizer_config.json
+│   │   ├── tokenizer.json
+│   │   ├── trainer_state.json
+│   │   └── vocab.json
+│   ├── __init__.py
+│   ├── main_fit.py
+│   ├── model_dataset.py
+│   └── normalizer.py
+├── analyzers
+│   ├── backup
+│   │   ├── html_signatures.json
+│   │   ├── js_signatures.json
+│   │   └── results.json
+│   ├── code_analyzer.py
+│   ├── config.py
+│   ├── data
+│   │   ├── html_signatures.json
+│   │   ├── js_signatures.json
+│   │   └── REGEX_COURSE.md
+│   ├── __init__.py
+│   ├── logs
+│   │   ├── analyzer_helper_logs.log
+│   │   ├── code_analyzer.log
+│   │   ├── crawler_logs.log
+│   │   ├── fetcher_logs.log
+│   │   └── parser_logs.log
+│   ├── passive_analyzer.py
+│   ├── __pycache__
+│   │   ├── code_analyzer.cpython-311.pyc
+│   │   ├── config.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   └── passive_analyzer.cpython-311.pyc
+│   └── results.json
+├── api
+│   ├── api_config.py
+│   ├── api.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── api_config.cpython-311.pyc
+│   │   ├── api.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── scanner_task_manager.cpython-311.pyc
+│   │   ├── validate_config.cpython-311.pyc
+│   │   └── ws_manager.cpython-311.pyc
+│   ├── run_api.py
+│   ├── scanner_task_manager.py
+│   ├── validate_config.py
+│   └── ws_manager.py
+├── augment_dataset.py
+├── autoencoders_and_anomaliy_model
+│   ├── anomalie_model_sklearn.py
+│   ├── autoencoder_x_torch.py
+│   ├── callbacks.py
+│   ├── config.py
+│   ├── fi_autoencoder_body.py.py
+│   ├── model_autoencoder_bodies
+│   ├── __pycache__
+│   │   ├── anomalie_model_sklearn.cpython-311.pyc
+│   │   ├── autoencoder_x_torch.cpython-311.pyc
+│   │   ├── callbacks.cpython-311.pyc
+│   │   ├── config.cpython-311.pyc
+│   │   └── trainer.cpython-311.pyc
+│   └── trainer.py
+├── base_class
+│   ├── analyser_helper_base_class.py
+│   ├── _base_class.py
+│   ├── code_analyse_base_class.py
+│   ├── crawler_base_class.py
+│   ├── feature_extractor_base_class.py
+│   ├── fetcher_base_class.py
+│   ├── fuzzer_base_class.py
+│   ├── __init__.py
+│   ├── main_scanner_base_class.py
+│   ├── parser_base_class.py
+│   ├── passive_analyzer_base_class.py
+│   ├── payloads_base_class.py
+│   ├── __pycache__
+│   │   ├── analyser_helper_base_class.cpython-311.pyc
+│   │   ├── _base_class.cpython-311.pyc
+│   │   ├── base_class.cpython-311.pyc
+│   │   ├── code_analyse_base_class.cpython-311.pyc
+│   │   ├── crawler_base_class.cpython-311.pyc
+│   │   ├── feature_extractor_base_class.cpython-311.pyc
+│   │   ├── fetcher_base_class.cpython-311.pyc
+│   │   ├── fuzzer_base_class.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── main_scanner_base_class.cpython-311.pyc
+│   │   ├── parser_base_class.cpython-311.pyc
+│   │   ├── passive_analyzer_base_class.cpython-311.pyc
+│   │   ├── payloads_base_class.cpython-311.pyc
+│   │   └── response_analyzer_base_class.cpython-311.pyc
+│   └── response_analyzer_base_class.py
+├── BENCHMARK_CRAWLER
+│   ├── benchmark.py
+│   ├── dvwa_crawler.py
+│   ├── playwright_crawler.py
+│   ├── __pycache__
+│   │   └── playwright_crawler.cpython-311.pyc
+│   └── spa_server.py
+├── CLAUDE_1
+│   ├── dataset_generated
+│   ├── generate_all_servers-1.py
+│   ├── generate_all_servers.py
+│   ├── generate_dataset_massive.py
+│   ├── README_DATASET.md
+│   └── servers_generated
+│       ├── ground_truth.json
+│       ├── server_bufovr.py
+│       ├── server_cmdi.py
+│       ├── server_credsexpose.py
+│       ├── server_crlf_injection.py
+│       ├── server_dirtrav.py
+│       ├── server_graphqli.py
+│       ├── server_infodisc.py
+│       ├── server_insecdeser.py
+│       ├── server_insecperm.py
+│       ├── server_jwt.py
+│       ├── server_nosqli.py
+│       ├── server_prototype_pollution.py
+│       ├── server_ratelimit.py
+│       ├── server_safe.py
+│       ├── server_sessfix.py
+│       ├── server_sqli.py
+│       ├── server_ssrf.py
+│       ├── server_ssti.py
+│       ├── server_xss.py
+│       ├── server_xxe.py
+│       ├── start_all.sh
+│       └── stop_all.sh
+├── config_manager.py
+├── core
+│   ├── analyzer_helper.py
+│   ├── core_config.py
+│   ├── crawler.py
+│   ├── fetcher.py
+│   ├── __init__.py
+│   ├── parser.py
+│   ├── __pycache__
+│   │   ├── analyzer_helper.cpython-311.pyc
+│   │   ├── core_config.cpython-311.pyc
+│   │   ├── crawler.cpython-311.pyc
+│   │   ├── fetcher.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   └── parser.cpython-311.pyc
+│   └── var
+│       ├── analyzer_helper_cache
+│       │   └── cache.db
+│       ├── crawler_cache
+│       │   └── cache.db
+│       └── parser_cache
+│           └── cache.db
+├── dataset
+│   ├── shieldai_dataset_augmented.csv
+│   ├── shieldai_dataset_augmented_meta.json
+│   ├── shieldai_dataset_augmented_v2.csv
+│   ├── shieldai_dataset_augmented_v2_meta.json
+│   ├── shieldai_dataset_augmented_v3.csv
+│   ├── shieldai_dataset.csv
+│   └── shieldai_dataset_meta.json
+├── fuzzer
+│   ├── active_fuzzer.py
+│   ├── backup
+│   │   ├── config.py
+│   │   ├── ENCODING_GUIDE.md
+│   │   ├── MAPPING.md
+│   │   ├── payloads_v2.json
+│   │   ├── payloads_v3_1.json
+│   │   ├── payloads_v3.json
+│   │   ├── REGEX_COURSE.md
+│   │   ├── weights_documentation_v3.docx
+│   │   ├── weights_documentation_v3.pdf
+│   │   ├── weights_v2.json
+│   │   ├── weights_v3.json
+│   │   ├── weights_v3_v1_semantic_fort.json
+│   │   └── weights_v3_v2_semantic_equilibre.json
+│   ├── bodies
+│   │   ├── bodies_deduplicate.pkl
+│   │   ├── collect_bodies_0_.pkl
+│   │   ├── collect_bodies_1_.pkl
+│   │   ├── collect_bodies_3_.pkl
+│   │   ├── collect_bodies_4_.pkl
+│   │   └── collected_bodies.pkl
+│   ├── config.py
+│   ├── data
+│   │   ├── ENCODING_GUIDE.md
+│   │   ├── MAPPING.md
+│   │   ├── normalTrafficTest.txt
+│   │   ├── normalTrafficTraining.txt
+│   │   ├── payloads_v2.json
+│   │   ├── payloads_v3_1.json
+│   │   ├── payloads_v3.json
+│   │   ├── REGEX_COURSE.md
+│   │   ├── weights_documentation_v3.docx
+│   │   ├── weights_documentation_v3.pdf
+│   │   ├── weights_v2.json
+│   │   ├── weights_v3.json
+│   │   ├── weights_v3_v1_semantic_fort.json
+│   │   └── weights_v3_v2_semantic_equilibre.json
+│   ├── dvwa_injection_test.py
+│   ├── __init__.py
+│   ├── know_params_dir
+│   │   └── known_params.json
+│   ├── mock_fuzzer.py
+│   ├── MODEL_BERT
+│   │   ├── 1_Pooling
+│   │   │   └── config.json
+│   │   ├── config.json
+│   │   ├── config_sentence_transformers.json
+│   │   ├── data_config.json
+│   │   ├── model.safetensors
+│   │   ├── modules.json
+│   │   ├── README.md
+│   │   ├── sentence_bert_config.json
+│   │   ├── special_tokens_map.json
+│   │   ├── tokenizer_config.json
+│   │   ├── tokenizer.json
+│   │   ├── train_script.py
+│   │   └── vocab.txt
+│   ├── model_similarity
+│   │   ├── collected_bodies.pkl
+│   │   ├── metadata.json
+│   │   └── model_similarity.joblib.zst
+│   ├── payload_generator.py
+│   ├── payload_v3.1.json
+│   ├── __pycache__
+│   │   ├── active_fuzzer.cpython-311.pyc
+│   │   ├── config.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── mock_fuzzer.cpython-311.pyc
+│   │   ├── payload_generator.cpython-311.pyc
+│   │   ├── query_resolver.cpython-311.pyc
+│   │   ├── response_analyzer.cpython-311.pyc
+│   │   ├── similarity_bert.cpython-311.pyc
+│   │   └── similarity.cpython-311.pyc
+│   ├── query_resolver.py
+│   ├── refactor_payload.py
+│   ├── response_analyzer.py
+│   ├── similarity_bert.py
+│   ├── similarity.py
+│   ├── test_payloads.py
+│   └── test_similarity
+│       ├── metadata.json
+│       └── model_similarity.joblib.zst
+├── generate_dataset2.py
+├── generate_dataset.py
+├── __init__.py
+├── main_scanner.py
+├── ml_model
+│   ├── config_params.py
+│   ├── config.py
+│   ├── datamanager.py
+│   ├── features_extractor.py
+│   ├── final_model.py
+│   ├── __init__.py
+│   ├── merge.csv
+│   ├── merge.pkl
+│   ├── mlsmote.py
+│   ├── modelmanager.py
+│   ├── modelsaver.py
+│   ├── model_scanner_chain_mvp
+│   │   ├── metadata.json
+│   │   └── model.joblib.zst
+│   ├── __pycache__
+│   │   ├── config.cpython-311.pyc
+│   │   ├── datamanager.cpython-311.pyc
+│   │   ├── features_extractor.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── mlsmote.cpython-311.pyc
+│   │   ├── modelmanager.cpython-311.pyc
+│   │   └── scanner_ia_v2.cpython-311.pyc
+│   ├── scanner_ia_v2.py
+│   ├── test.csv
+│   ├── test_feature_extraction.py
+│   ├── test_ovr.py
+│   ├── test.pkl
+│   ├── test_scanner.py
+│   └── V1
+│       ├── modeloptimize.py
+│       ├── modelstack.py
+│       ├── __pycache__
+│       │   └── seuiltunning.cpython-311.pyc
+│       ├── scanner2.py
+│       ├── scanner_ia.py
+│       ├── seuils
+│       │   ├── binary_thresholds.png
+│       │   ├── multilabel_thresholds.png
+│       │   └── suivi_seuil.png
+│       ├── seuiltunning.py
+│       ├── test_model.py
+│       ├── test_scanner_ia.py
+│       └── threshold_tuning_complete_test.py
+├── __pycache__
+│   ├── config_manager.cpython-311.pyc
+│   ├── __init__.cpython-311.pyc
+│   └── main_scanner.cpython-311.pyc
+├── pyproject.toml
+├── reports
+│   ├── generated
+│   │   ├── HTML
+│   │   │   ├── ShieldAI — https___example.com — Rapport de Sécurité.pdf
+│   │   │   ├── test_report2.html
+│   │   │   └── test_report.html
+│   │   ├── JSON
+│   │   │   └── test_report2.json
+│   │   ├── PDF
+│   │   │   └── test_report2.pdf
+│   │   ├── report_builder.py
+│   │   └── report_generator.py
+│   ├── __init__.py
+│   ├── llm_report.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── llm_report.cpython-311.pyc
+│   │   ├── report_builder.cpython-311.pyc
+│   │   └── report_generator.cpython-311.pyc
+│   ├── report_builder.py
+│   ├── report_generator.py
+│   ├── templates
+│   │   ├── logs
+│   │   │   ├── fetcher_logs.log
+│   │   │   ├── fuzzer.log
+│   │   │   └── response_analyzer.log
+│   │   ├── OLD_TEMPLATES
+│   │   │   ├── newfile.py
+│   │   │   ├── rapport.html
+│   │   │   ├── template1.html
+│   │   │   ├── template.html
+│   │   │   ├── template_report_dark.html
+│   │   │   ├── template_report_deluxe++.html
+│   │   │   ├── template_report_deluxe.html
+│   │   │   └── template_report.html
+│   │   ├── template_dark.html
+│   │   ├── template_light.html
+│   │   ├── template_multi_theme1.html
+│   │   ├── template_multi_theme_claude_2.html
+│   │   └── template_multi_theme.html
+│   └── test_groq.py
+├── result_scan
+│   ├── HTML
+│   │   ├── report_26-06-2026_15-04-14.html
+│   │   ├── report_26-06-2026_15-07-22.html
+│   │   ├── report_26-06-2026_15-10-46.html
+│   │   ├── report_26-06-2026_15-16-14.html
+│   │   ├── report_26-06-2026_15-20-58.html
+│   │   ├── report_26-06-2026_15-23-46.html
+│   │   ├── report_26-06-2026_15-42-25.html
+│   │   ├── report_26-06-2026_15-44-57.html
+│   │   ├── report_27-06-2026_21-10-16.html
+│   │   ├── report_27-06-2026_21-12-59.html
+│   │   ├── report_27-06-2026_21-25-57.html
+│   │   └── report_27-06-2026_21-28-58.html
+│   ├── JSON
+│   │   ├── report_26-06-2026_15-04-14.json
+│   │   ├── report_26-06-2026_15-07-22.json
+│   │   ├── report_26-06-2026_15-10-46.json
+│   │   ├── report_26-06-2026_15-16-14.json
+│   │   ├── report_26-06-2026_15-20-58.json
+│   │   ├── report_26-06-2026_15-23-46.json
+│   │   ├── report_26-06-2026_15-42-25.json
+│   │   ├── report_26-06-2026_15-44-57.json
+│   │   ├── report_27-06-2026_21-10-16.json
+│   │   ├── report_27-06-2026_21-12-59.json
+│   │   ├── report_27-06-2026_21-25-57.json
+│   │   └── report_27-06-2026_21-28-58.json
+│   ├── LLM_REPORT
+│   └── PDF
+│       ├── report_17-05-2026_08-50-12.pdf
+│       ├── report_26-06-2026_15-04-14.pdf
+│       ├── report_26-06-2026_15-07-22.pdf
+│       ├── report_26-06-2026_15-10-46.pdf
+│       ├── report_26-06-2026_15-20-58.pdf
+│       ├── report_26-06-2026_15-23-46.pdf
+│       ├── report_26-06-2026_15-42-25.pdf
+│       ├── report_26-06-2026_15-44-57.pdf
+│       ├── report_27-06-2026_21-10-16.pdf
+│       ├── report_27-06-2026_21-12-59.pdf
+│       ├── report_27-06-2026_21-25-57.pdf
+│       ├── report_27-06-2026_21-28-58.pdf
+│       └── sh_sc-a21d2a6d1572722b30c9aa8466ec779c5b0d262a47d116bd24b038f9ebefeb5e.pdf
+├── resum1
+│   ├── ae_model
+│   │   ├── autoencoders.py
+│   │   ├── autoencoders_trainer.py
+│   │   ├── callbacks.py
+│   │   ├── embeddings
+│   │   │   ├── config.json
+│   │   │   ├── generation_config.json
+│   │   │   ├── model.safetensors
+│   │   │   ├── modules.json
+│   │   │   ├── README.md
+│   │   │   ├── sentence_bert_config.json
+│   │   │   ├── tokenizer_config.json
+│   │   │   ├── tokenizer.json
+│   │   │   ├── trainer_state.json
+│   │   │   └── vocab.json
+│   │   ├── __init__.py
+│   │   ├── main_fit.py
+│   │   ├── model_dataset.py
+│   │   └── normalizer.py
+│   ├── analyzers
+│   │   ├── code_analyzer.py
+│   │   ├── config.py
+│   │   ├── __init__.py
+│   │   └── passive_analyzer.py
+│   ├── api
+│   │   ├── api_config.py
+│   │   ├── api.py
+│   │   ├── run_api.py
+│   │   ├── scanner_task_manager.py
+│   │   ├── validate_config.py
+│   │   └── ws_manager.py
+│   ├── augment_dataset.py
+│   ├── autoencoders_and_anomaliy_model
+│   │   ├── anomalie_model_sklearn.py
+│   │   ├── autoencoder_x_torch.py
+│   │   ├── callbacks.py
+│   │   ├── config.py
+│   │   ├── fi_autoencoder_body.py.py
+│   │   └── trainer.py
+│   ├── base_class
+│   │   ├── analyser_helper_base_class.py
+│   │   ├── _base_class.py
+│   │   ├── code_analyse_base_class.py
+│   │   ├── crawler_base_class.py
+│   │   ├── feature_extractor_base_class.py
+│   │   ├── fetcher_base_class.py
+│   │   ├── fuzzer_base_class.py
+│   │   ├── main_scanner_base_class.py
+│   │   ├── parser_base_class.py
+│   │   ├── passive_analyzer_base_class.py
+│   │   ├── payloads_base_class.py
+│   │   └── response_analyzer_base_class.py
+│   ├── config_manager.py
+│   ├── core
+│   │   ├── analyzer_helper.py
+│   │   ├── core_config.py
+│   │   ├── crawler.py
+│   │   ├── fetcher.py
+│   │   └── parser.py
+│   ├── fuzzer
+│   │   ├── active_fuzzer.py
+│   │   ├── config.py
+│   │   ├── mock_fuzzer.py
+│   │   ├── payload_generator.py
+│   │   ├── query_resolver.py
+│   │   ├── refactor_payload.py
+│   │   ├── response_analyzer.py
+│   │   ├── similarity_bert.py
+│   │   └── similarity.py
+│   ├── main_scanner.py
+│   ├── ml_model
+│   │   ├── config.py
+│   │   ├── datamanager.py
+│   │   ├── features_extractor.py
+│   │   ├── mlsmote.py
+│   │   ├── modelmanager.py
+│   │   └── scanner_ia_v2.py
+│   ├── reports
+│   │   ├── llm_report.py
+│   │   ├── report_builder.py
+│   │   └── report_generator.py
+│   ├── resum_scanner.txt
+│   ├── test_scanner.py
+│   └── utils_scanner
+│       ├── cryto_utils.py
+│       ├── ids_utils.py
+│       ├── jwt_utils.py
+│       ├── logger.py
+│       ├── mock_logger.py
+│       ├── signal_manager.py
+│       ├── utils_scanner.py
+│       └── warnings_manager.py
+├── resumé_scanner.md
+├── scanner_cache
+│   └── cache
+│       ├── cache.db
+│       └── e8
+│           └── a1
+│               └── cad04a6e11fb88c94057fe17d9a2.val
+├── scanner.txt
+├── serveurs
+│   ├── local_serveur.py
+│   ├── logs
+│   │   └── feature_extractor.log
+│   ├── test_site
+│   │   ├── index.html
+│   │   ├── level1
+│   │   │   ├── page0.html
+│   │   │   ├── page1.html
+│   │   │   ├── page2.html
+│   │   │   ├── page3.html
+│   │   │   ├── page4.html
+│   │   │   ├── page5.html
+│   │   │   ├── page6.html
+│   │   │   ├── page7.html
+│   │   │   ├── page8.html
+│   │   │   └── page9.html
+│   │   ├── level2
+│   │   │   ├── page0.html
+│   │   │   ├── page1.html
+│   │   │   ├── page2.html
+│   │   │   ├── page3.html
+│   │   │   ├── page4.html
+│   │   │   ├── page5.html
+│   │   │   ├── page6.html
+│   │   │   ├── page7.html
+│   │   │   ├── page8.html
+│   │   │   └── page9.html
+│   │   ├── level3
+│   │   │   ├── page0.html
+│   │   │   ├── page1.html
+│   │   │   ├── page2.html
+│   │   │   ├── page3.html
+│   │   │   ├── page4.html
+│   │   │   ├── page5.html
+│   │   │   ├── page6.html
+│   │   │   ├── page7.html
+│   │   │   ├── page8.html
+│   │   │   └── page9.html
+│   │   ├── level4
+│   │   │   ├── page0.html
+│   │   │   ├── page1.html
+│   │   │   ├── page2.html
+│   │   │   ├── page3.html
+│   │   │   ├── page4.html
+│   │   │   ├── page5.html
+│   │   │   ├── page6.html
+│   │   │   ├── page7.html
+│   │   │   ├── page8.html
+│   │   │   └── page9.html
+│   │   ├── level5
+│   │   │   ├── page0.html
+│   │   │   ├── page1.html
+│   │   │   ├── page2.html
+│   │   │   ├── page3.html
+│   │   │   ├── page4.html
+│   │   │   ├── page5.html
+│   │   │   ├── page6.html
+│   │   │   ├── page7.html
+│   │   │   ├── page8.html
+│   │   │   └── page9.html
+│   │   └── sitemap.xml
+│   ├── train_server_for_tfidf.py
+│   ├── vuln_server.py
+│   ├── vuln_server_v2.py
+│   ├── vuln_server_v3_0_1.py
+│   ├── vuln_server_v3_0_2.py
+│   ├── vuln_server_v3.py
+│   └── vuln_test_server_simple.py
+├── shieldai_scanner.config.json5
+├── test
+│   ├── bechmark_scapy_selenium.py
+│   ├── benchmarck.py
+│   ├── note.py
+│   ├── __pycache__
+│   │   └── regex.cpython-311.pyc
+│   ├── _regex.py
+│   ├── shieldai_scanner.config.json5
+│   ├── tes_crawler_worker.py
+│   ├── test1.py
+│   ├── test_analyzer_on_vuln_apps.py
+│   ├── test_anomalie_model.py
+│   ├── test_api.py
+│   ├── test_cache_robot.py
+│   ├── test_fuzzer_on_vuln_server.py
+│   ├── test_mock_fuzzer.py
+│   ├── test_model_for_response_analyzer.py
+│   ├── tests
+│   │   ├── conftest.py
+│   │   ├── __pycache__
+│   │   │   ├── conftest.cpython-311-pytest-9.0.1.pyc
+│   │   │   ├── test_fetcher.cpython-311-pytest-9.0.1.pyc
+│   │   │   └── test_parser.cpython-311-pytest-9.0.1.pyc
+│   │   ├── pytest.ini
+│   │   ├── test_fetcher.py
+│   │   ├── test_parser.py
+│   │   └── test_passive_analyzer.py
+│   └── test_scanner.py
+├── test_api.py
+├── test_scanner.py
+├── tree_scanner.txt
+└── utils_scanner
+    ├── cryto_utils.py
+    ├── helpers
+    │   ├── auth_helpers.py
+    │   ├── dvwa_helpers.py
+    │   ├── helpers_registry.py
+    │   ├── __init__.py
+    │   ├── __pycache__
+    │   │   ├── auth_helpers.cpython-311.pyc
+    │   │   ├── dvwa_helpers.cpython-311.pyc
+    │   │   ├── helpers.cpython-311.pyc
+    │   │   ├── helpers_registry.cpython-311.pyc
+    │   │   ├── __init__.cpython-311.pyc
+    │   │   └── resolve_helpers.cpython-311.pyc
+    │   └── resolve_helpers.py
+    ├── ids_utils.py
+    ├── __init__.py
+    ├── jwt_utils.py
+    ├── logger.py
+    ├── mock_logger.py
+    ├── __pycache__
+    │   ├── cryto_utils.cpython-311.pyc
+    │   ├── ids_utils.cpython-311.pyc
+    │   ├── __init__.cpython-311.pyc
+    │   ├── logger.cpython-311.pyc
+    │   ├── mock_logger.cpython-311.pyc
+    │   ├── signal_manager.cpython-311.pyc
+    │   ├── stdout_capture.cpython-311.pyc
+    │   ├── utils_scanner.cpython-311.pyc
+    │   └── warnings_manager.cpython-311.pyc
+    ├── signal_manager.py
+    ├── stdout_capture.py
+    ├── utils_scanner.py
+    └── warnings_manager.py
+
+90 directories, 537 files

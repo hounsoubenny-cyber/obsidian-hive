@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Recherche</title>
+</head>
+<body>
+    <h1>Résultat de recherche</h1>
+    <div id="result"></div>
+
+    <script>
+        // ⚠️ VULNÉRABLE : DOM XSS — injection directe du hash dans innerHTML sans échappement
+        var query = decodeURIComponent(window.location.hash.substring(1));
+        document.getElementById("result").innerHTML = "Vous avez cherché : " + query;
+    </script>
+
+    <p><a href="index.html">Retour</a></p>
+    <!-- Test: page_xss_dom.html#<img src=x onerror=alert(1)> -->
+</body>
+</html>

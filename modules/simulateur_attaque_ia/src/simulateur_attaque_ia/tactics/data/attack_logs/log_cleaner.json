@@ -1,0 +1,282 @@
+[
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Début LogCleaner sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Début Command Line Execution à : Thu Jun 18 18:26:55 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:56 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.65s"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Début LogCleaner sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 08:47:18 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:18 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.64s"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Début LogCleaner sur testuser@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 09:12:15 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Username: testuser, Password: password, commandes: 25"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "✅ SUCCESS: testuser:password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:15 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.71s"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:11 2026",
+        "message": "Début LogCleaner sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:11 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:11 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 14:52:11 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:11 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:11 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:12 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:52:12 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.87s"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:08 2026",
+        "message": "Début LogCleaner sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:08 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:08 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 19:52:08 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:08 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:08 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:09 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:52:09 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.65s"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Début LogCleaner sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 20:47:59 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:00 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:48:00 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.68s"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Début LogCleaner sur admin@172.24.0.2:22"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 15:19:16 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Username: admin, Password: admin123, commandes: 25"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:19:16 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.58s"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Début LogCleaner sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 11:57:28 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.52s"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Début LogCleaner sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 15:34:28 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:28 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.56s"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Début LogCleaner sur root@172.24.0.4:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Exécution de 25 commandes de nettoyage"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 16:49:33 2026, pour ip : 172.24.0.4 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "Username: root, Password: toor, commandes: 25"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:33 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:34 2026",
+        "message": "Fin Command Line Execution, 25/25 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:34 2026",
+        "message": "Fin LogCleaner — nettoyage terminé en 0.71s"
+    }
+]

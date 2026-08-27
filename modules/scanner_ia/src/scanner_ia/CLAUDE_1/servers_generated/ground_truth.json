@@ -1,0 +1,911 @@
+{
+  "http://localhost:5001/format?data=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/input?text=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/header": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/sprintf?str=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/copy?src=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/overflow?buffer=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/stack?value=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/heap?size=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/boundary?index=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/printf?format=test": [
+    "BufOvr"
+  ],
+  "http://localhost:5001/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5001/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5002/ping?host=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/exec?cmd=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/system?command=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/lookup?domain=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/shell?input=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/run?script=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/execute?prog=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/cmd?action=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/process?name=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/tool?util=test": [
+    "CMDi"
+  ],
+  "http://localhost:5002/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5002/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5003/header?name=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/redirect?url=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/log?data=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/response?value=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/cookie?name=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/location?path=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/cache?control=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/setcookie?value=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/custom?header=test": [
+    "CRLF_Injection"
+  ],
+  "http://localhost:5003/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5003/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5004/.env": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/config.json": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/database.yml": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/secrets.yml": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/id_rsa": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/.git/config": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/backup.sql": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/credentials.json": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/.aws/credentials": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/phpinfo.php": [
+    "CredsExpose"
+  ],
+  "http://localhost:5004/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5004/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5005/read?file=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/download?path=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/include?page=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/load?template=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/view?doc=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/get?resource=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/fetch?file=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/static?path=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/assets?name=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/image?img=test": [
+    "DirTrav"
+  ],
+  "http://localhost:5005/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5005/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5006/graphql?query=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/graphql/batch?queries=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/api/graphql?mutation=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/gql?q=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/graphql/playground": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/graphql/introspection": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/api/gql?operation=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/query?gql=test": [
+    "GraphQLi"
+  ],
+  "http://localhost:5006/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5006/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5007/debug": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/error?msg=test": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/trace": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/version": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/info": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/status": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/health": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/metrics": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/logs": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/env": [
+    "InfoDisc"
+  ],
+  "http://localhost:5007/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5007/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5008/deserialize?data=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/pickle?obj=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/unmarshal?payload=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/unserialize?input=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/load?object=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/restore?state=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/decode?encoded=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/parse?serialized=test": [
+    "InsecDeser"
+  ],
+  "http://localhost:5008/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5008/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5009/admin": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/api/users?id=test": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/api/admin": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/dashboard": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/config": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/settings": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/users": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/delete?id=test": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/edit?id=test": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/manage": [
+    "InsecPerm"
+  ],
+  "http://localhost:5009/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5009/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5010/jwt/login?username=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/jwt/decode?token=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/jwt/verify?jwt=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/jwt/none?token=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/jwt/weak": [
+    "JWT"
+  ],
+  "http://localhost:5010/auth/token?user=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/api/jwt?token=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/verify?jwt=test": [
+    "JWT"
+  ],
+  "http://localhost:5010/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5010/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5011/nosql/login?username=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/nosql/search?query=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/nosql/find?filter=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/mongo/query?q=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/api/search?term=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/find?criteria=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/filter?condition=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/query?nosql=test": [
+    "NoSQLi"
+  ],
+  "http://localhost:5011/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5011/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5012/merge?obj=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/extend?props=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/assign?data=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/clone?object=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/parse?json=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/update?fields=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/set?key=test": [
+    "Prototype_Pollution"
+  ],
+  "http://localhost:5012/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5012/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5013/api/endpoint": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/login?username=test": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/register?email=test": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/otp?code=test": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/reset?email=test": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/api/data": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/download?file=test": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/upload": [
+    "RateLimit"
+  ],
+  "http://localhost:5013/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5013/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5014/login?username=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/search?q=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/user?id=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/product?pid=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/query?sql=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/filter?where=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/order?sort=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/union?id=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/blind?id=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/time?id=test": [
+    "SQLi"
+  ],
+  "http://localhost:5014/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5014/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5015/fetch?url=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/proxy?target=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/webhook?callback=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/image?url=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/preview?link=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/avatar?url=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/import?url=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/load?resource=test": [
+    "SSRF"
+  ],
+  "http://localhost:5015/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5015/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5016/greet?name=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/render?template=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/email?body=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/page?content=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/message?text=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/preview?tmpl=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/format?pattern=test": [
+    "SSTI"
+  ],
+  "http://localhost:5016/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5016/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5017/login?sessionid=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/auth?sid=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/session/set?id=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/token?session=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/fixate?sessid=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/setsession?id=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/auth/session?sid=test": [
+    "SessFix"
+  ],
+  "http://localhost:5017/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5017/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5018/reflected?q=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/search?query=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/comment?text=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/profile?name=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/message?msg=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/input?data=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/form?value=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/display?content=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/echo?text=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/render?html=test": [
+    "XSS"
+  ],
+  "http://localhost:5018/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5018/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5019/xml/parse?xml=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/xml/upload": [
+    "XXE"
+  ],
+  "http://localhost:5019/xml/import?data=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/xml/process?xml=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/soap?request=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/rss?feed=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/xml/read?file=test": [
+    "XXE"
+  ],
+  "http://localhost:5019/safe1": [
+    "SAFE"
+  ],
+  "http://localhost:5019/safe2": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint1": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint2": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint3": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint4": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint5": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint6": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint7": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint8": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint9": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint10": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint11": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint12": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint13": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint14": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint15": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint16": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint17": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint18": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint19": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint20": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint21": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint22": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint23": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint24": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint25": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint26": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint27": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint28": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint29": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint30": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint31": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint32": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint33": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint34": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint35": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint36": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint37": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint38": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint39": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint40": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint41": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint42": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint43": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint44": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint45": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint46": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint47": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint48": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint49": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint50": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint51": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint52": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint53": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint54": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint55": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint56": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint57": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint58": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint59": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint60": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint61": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint62": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint63": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint64": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint65": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint66": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint67": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint68": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint69": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint70": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint71": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint72": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint73": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint74": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint75": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint76": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint77": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint78": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint79": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint80": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint81": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint82": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint83": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint84": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint85": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint86": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint87": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint88": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint89": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint90": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint91": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint92": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint93": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint94": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint95": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint96": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint97": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint98": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint99": [
+    "SAFE"
+  ],
+  "http://localhost:5020/api/endpoint100": [
+    "SAFE"
+  ]
+}

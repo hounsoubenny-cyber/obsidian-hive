@@ -1,0 +1,146 @@
+       <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Scan - {{ url }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #1e1e2f;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 950px;
+            margin: auto;
+            background: #2c2c3c;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.6);
+        }
+        h1 {
+            text-align: center;
+            color: #9bd1ff;
+        }
+        .summary {
+            background: linear-gradient(135deg, #3a6186, #89253e);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .summary .score {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .summary .grade {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .summary .date {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #f0f0f0;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #3a3a4f;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            width: 18%;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #2e2e40;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table th, table td {
+            padding: 12px;
+            border: 1px solid #444;
+            text-align: left;
+        }
+        table th {
+            background-color: #444c67;
+            color: #ffffff;
+        }
+        .severity-low {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .severity-medium {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+        .severity-high {
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .severity-critical {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #aaaaaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rapport de Sécurité (Mode Sombre)</h1>
+
+        <div class="summary">
+            <p>URL analysée : <strong>{{ url }}</strong></p>
+            <p class="score">Score global : {{ score_total }}/100</p>
+            <p class="grade">Note : {{ grade }}</p>
+            <p class="date">Date d'analyse : {{ date }}</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">Total<br>{{ stats.total_vulns }}</div>
+            <div class="stat-box" style="color:#e74c3c;">Critiques<br>{{ stats.critical }}</div>
+            <div class="stat-box" style="color:#e67e22;">Hautes<br>{{ stats.high }}</div>
+            <div class="stat-box" style="color:#f1c40f;">Moyennes<br>{{ stats.medium }}</div>
+            <div class="stat-box" style="color:#2ecc71;">Basses<br>{{ stats.low }}</div>
+        </div>
+
+        <h2 style="color:#9bd1ff;">Rapport des Vulnérabilités</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Niveau</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vuln in vulnerability_report %}
+                <tr>
+                    <td>{{ vuln.name }}</td>
+                    <td class="severity-{{ vuln.level|lower }}">{{ vuln.level }}</td>
+                    <td>{{ vuln.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            Généré automatiquement par le module <strong>Cyber IA - Scanner Intelligent</strong>
+        </div>
+    </div>
+</body>
+</html>

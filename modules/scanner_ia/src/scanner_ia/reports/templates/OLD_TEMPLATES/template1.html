@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Sécurité - {{ url }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --critical: #dc2626;
+            --bg: #ffffff;
+            --bg-secondary: #f9fafb;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body.dark {
+            --bg: #0f172a;
+            --bg-secondary: #1e293b;
+            --text: #f1f5f9;
+            --text-light: #cbd5e1;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        /* DUAL SCORE CARDS */
+        .dual-scores {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: -50px 0 40px 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .score-section {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 5px solid;
+        }
+
+        .score-section.source {
+            border-left-color: #8b5cf6;
+        }
+
+        .score-section.active {
+            border-left-color: #ec4899;
+        }
+
+        .score-section h3 {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .score-value {
+            font-size: 3em;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: #6366f1;
+        }
+
+        .score-grade {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 900;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .grade-a { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .grade-b { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
+        .grade-c { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .grade-d { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+        .grade-f { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+
+        /* INFO SECTION */
+        .info-section {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 16px;
+            margin: 40px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .info-item strong {
+            display: block;
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .info-item span {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        /* SECTION DIVIDER */
+        .section-divider {
+            margin: 50px 0;
+            padding: 40px 0;
+            border-top: 2px solid var(--border);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-divider h2 {
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        /* VULNERABILITIES TABLE */
+        .vuln-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .vuln-table thead {
+            background: linear-gradient(135deg, #6366f1, #6366f1);
+            color: white;
+        }
+
+        .vuln-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 0.95em;
+        }
+
+        .vuln-table td {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .vuln-table tbody tr:hover {
+            background-color: var(--bg);
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .severity-critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .severity-high {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .severity-medium {
+            background: #fef08a;
+            color: #b45309;
+        }
+
+        .severity-low {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .severity-info {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-name {
+            font-size: 0.85em;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* VULNERABILITY BREAKDOWN */
+        .vuln-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .breakdown-section h4 {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .breakdown-item-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .breakdown-item-value {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--primary);
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--bg-secondary);
+            padding: 40px 20px;
+            margin-top: 60px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        footer p {
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        .footer-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 20px 0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            z-index: 1000;
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            .theme-toggle {
+                display: none;
+            }
+
+            body {
+                background: white;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            page-break-inside: avoid;
+        }
+
+        @page {
+            margin: 1cm;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+
+    <header>
+        <div class="container">
+            <h1>🔒 Rapport de Sécurité Complet</h1>
+            <p>Analyse approfondie des vulnérabilités - Code Source & Tests Actifs</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- DUAL SCORES -->
+        <div class="dual-scores">
+            <div class="score-section source">
+                <h3>📄 Analyse du Code Source</h3>
+                <div class="score-value">{{ score_vuln }}/200</div>
+                <div>
+                    <div class="score-grade grade-{{ grade_vuln|lower }}">{{ grade_vuln }}</div>
+                </div>
+            </div>
+
+            <div class="score-section active">
+                <h3>🔴 Tests Actifs</h3>
+                <div class="score-value">{{ score_active }}/200</div>
+                <div>
+                    <div class="score-grade grade-{{ grade_active|lower }}">{{ grade_active }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INFO SECTION -->
+        <div class="info-section">
+            <h3>📋 Informations du Scan</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>URL Scannée</strong>
+                    <span>{{ url }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Date du Scan</strong>
+                    <span>{{ start_time }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Durée Totale</strong>
+                    <span>{{ (elapsed/60)|round(2) }} min</span>
+                </div>
+                <div class="info-item">
+                    <strong>Profondeur Max</strong>
+                    <span>{{ config.max_deep }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CODE SOURCE VULNERABILITIES -->
+        <div class="section-divider">
+            <h2>📊 Vulnérabilités du Code Source</h2>
+
+            {% if code_vuln and code_vuln|length > 0 %}
+            <p style="margin-bottom: 20px; color: var(--text-light);">
+                {{ code_vuln|length }} vulnérabilité(s) détectée(s) lors de l'analyse statique
+            </p>
+
+            <table class="vuln-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Nombre</th>
+                        <th>Sévérité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in code_vuln %}
+                    <tr>
+                        <td><strong>Vulnérabilité Détectée</strong></td>
+                        <td>1</td>
+                        <td>
+                            <span class="severity-badge severity-high">CRITIQUE</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: var(--success); font-weight: 600;">✅ Aucune vulnérabilité du code source détectée</p>
+            {% endif %}
+        </div>
+
+        <!-- ACTIVE TESTING VULNERABILITIES -->
+        <div class="section-divider">
+            <h2>🎯 Vulnérabilités Détectées - Tests Actifs</h2>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-name">Total Vulnérabilités</div>
+                    <div class="stat-number">{{ active_vuln_count.values()|sum }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-name">Pages Affectées</div>
+                    <div class="stat-number">{{ active_pages_vulns|length }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-name">Tests Effectués</div>
+                    <div class="stat-number">{{ total_active_tests }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-name">Couverture</div>
+                    <div class="stat-number">{{ ((active_pages_vulns|length / (config.max_pages|float)) * 100)|round(1) }}%</div>
+                </div>
+            </div>
+
+            <table class="vuln-table">
+                <thead>
+                    <tr>
+                        <th>Type de Vulnérabilité</th>
+                        <th>Occurrences</th>
+                        <th>Sévérité</th>
+                        <th>Pages Affectées</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vuln_type, count in active_vuln_count.items() %}
+                    <tr>
+                        <td><strong>{{ vuln_type }}</strong></td>
+                        <td>{{ count }}</td>
+                        <td>
+                            {% if count > 10 %}
+                            <span class="severity-badge severity-critical">CRITIQUE</span>
+                            {% elif count > 5 %}
+                            <span class="severity-badge severity-high">ÉLEVÉ</span>
+                            {% else %}
+                            <span class="severity-badge severity-medium">MOYEN</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ active_pages_vulns.values()|length }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BREAKDOWN BY VULNERABILITY TYPE -->
+        <div class="vuln-breakdown">
+            <div class="breakdown-section">
+                <h4>📈 Vulnérabilités par Type</h4>
+                {% for vuln_type, count in active_vuln_count.items() %}
+                <div class="breakdown-item">
+                    <span class="breakdown-item-name">{{ vuln_type }}</span>
+                    <span class="breakdown-item-value">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="breakdown-section">
+                <h4>🗺️ Pages Affectées</h4>
+                {% for url, vulns in active_pages_vulns.items() %}
+                    {% if loop.index < 8 %}
+                    <div class="breakdown-item">
+                        <span class="breakdown-item-name">{{ url|truncate(40) }}</span>
+                        <span class="breakdown-item-value">{{ vulns|length }}</span>
+                    </div>
+                    {% elif loop.index == 8 %}
+                    <div class="breakdown-item" style="opacity: 0.6;">
+                        <span class="breakdown-item-name">... et {{ active_pages_vulns|length - 7 }} autre(s)</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>🛡️ Rapport généré automatiquement par <strong>Cyber IA - Scanner Intelligent v2.0</strong></p>
+        <div class="footer-divider"></div>
+        <p style="font-size: 0.85em;">⚠️ Ce rapport contient des informations sensibles. À usage interne uniquement.</p>
+        <p style="font-size: 0.85em; margin-top: 10px;">📅 {{ start_time }} | 🔗 {{ url }}</p>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            updateToggleButton();
+        }
+
+        function updateToggleButton() {
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
+        updateToggleButton();
+    </script>
+</body>
+</html>

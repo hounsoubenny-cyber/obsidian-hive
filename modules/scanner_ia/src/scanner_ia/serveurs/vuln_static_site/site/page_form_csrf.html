@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier mon profil</title>
+</head>
+<body>
+    <h1>Modifier mon email</h1>
+    <!-- ⚠️ VULNÉRABLE : pas de token CSRF, action en GET, credentials en clair sur formulaire login -->
+    <form action="http://localhost:8090/api/update-email" method="POST">
+        <input type="email" name="new_email" value="user@example.com">
+        <input type="hidden" name="user_id" value="42">
+        <button type="submit">Mettre à jour</button>
+    </form>
+
+    <h2>Connexion</h2>
+    <form action="http://localhost:8090/api/login" method="GET" autocomplete="on">
+        <input type="text" name="username" placeholder="Utilisateur">
+        <input type="password" name="password" placeholder="Mot de passe" autocomplete="on">
+        <button type="submit">Se connecter</button>
+    </form>
+
+    <p><a href="index.html">Retour</a></p>
+</body>
+</html>

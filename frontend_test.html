@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShieldAI — Tableau de bord</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #141a24; }
+        ::-webkit-scrollbar-thumb { background: #2a8bf2; border-radius: 8px; }
+
+        /* ===== LAYOUT ===== */
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: #0b0e14;
+            position: relative;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 72px;
+            background: rgba(16, 22, 34, 0.85);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            flex-shrink: 0;
+            z-index: 10;
+            transition: width 0.25s ease;
+        }
+        .sidebar .logo {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #2a8bf2, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar .logo i {
+            font-size: 32px;
+            -webkit-text-fill-color: initial;
+            color: #2a8bf2;
+            margin-right: 6px;
+        }
+        .sidebar .nav-item {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: #6b7a93;
+            font-size: 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .sidebar .nav-item:hover,
+        .sidebar .nav-item.active {
+            color: #fff;
+            background: rgba(42, 139, 242, 0.18);
+        }
+        .sidebar .nav-item.active::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 10px;
+            height: 24px;
+            width: 3px;
+            background: #2a8bf2;
+            border-radius: 4px;
+        }
+        .sidebar .nav-item .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #f03e5a;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: 18px 32px;
+            background: rgba(16, 22, 34, 0.6);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+        .header .title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        .header .title span {
+            color: #2a8bf2;
+        }
+        .header .right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 14px;
+        }
+        .header .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #7eeda4;
+        }
+        .header .status .dot {
+            width: 8px;
+            height: 8px;
+            background: #7eeda4;
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .header .user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #b0c4dd;
+            cursor: default;
+        }
+        .header .user i {
+            font-size: 18px;
+            color: #4a6a8a;
+        }
+
+        /* ===== DASHBOARD ===== */
+        .dashboard {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* ===== LEFT PANEL ===== */
+        .panel-left {
+            background: rgba(12, 17, 27, 0.6);
+            backdrop-filter: blur(8px);
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 20px 18px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 14px;
+            padding: 14px 14px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .stat-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #6b7a93;
+            font-weight: 600;
+        }
+        .stat-card .value {
+            font-size: 26px;
+            font-weight: 700;
+            margin-top: 4px;
+            letter-spacing: -0.5px;
+        }
+        .stat-card .value.green { color: #7eeda4; }
+        .stat-card .value.blue { color: #2a8bf2; }
+        .stat-card .value.orange { color: #f9a84c; }
+        .stat-card .value.red { color: #f03e5a; }
+        .stat-card .sub {
+            font-size: 12px;
+            color: #4a5a72;
+            margin-top: 2px;
+        }
+
+        /* ===== MODULES ===== */
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #4a5a72;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .module-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .module-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border-left: 3px solid #2a8bf2;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .module-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .module-item .name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .module-item .name i {
+            color: #2a8bf2;
+            font-size: 14px;
+            width: 20px;
+        }
+        .module-item .status-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: rgba(126, 237, 164, 0.12);
+            color: #7eeda4;
+        }
+        .module-item .status-badge.warning {
+            background: rgba(249, 168, 76, 0.12);
+            color: #f9a84c;
+        }
+        .module-item .status-badge.critical {
+            background: rgba(240, 62, 90, 0.12);
+            color: #f03e5a;
+        }
+        .module-item .status-badge.inactive {
+            background: rgba(75, 90, 110, 0.15);
+            color: #4a5a72;
+        }
+
+        /* ===== ALERTS ===== */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 220px;
+        }
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border-left: 3px solid #f9a84c;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .alert-item .icon {
+            margin-top: 2px;
+            font-size: 14px;
+        }
+        .alert-item .content {
+            flex: 1;
+        }
+        .alert-item .time {
+            font-size: 10px;
+            color: #4a5a72;
+            white-space: nowrap;
+        }
+        .alert-item.critical { border-left-color: #f03e5a; }
+        .alert-item.info { border-left-color: #2a8bf2; }
+
+        /* ===== RIGHT PANEL : MAP 3D ===== */
+        .panel-right {
+            position: relative;
+            flex: 1;
+            background: #080b12;
+            overflow: hidden;
+        }
+        #map-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* ===== OVERLAY SUR LA MAP ===== */
+        .map-overlay {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 20;
+        }
+        .map-overlay .btn {
+            background: rgba(16, 22, 34, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #b0c4dd;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+        .map-overlay .btn:hover {
+            background: rgba(42, 139, 242, 0.2);
+            color: #fff;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .panel-left { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.04); max-height: 45vh; }
+            .panel-right { min-height: 55vh; }
+        }
+        @media (max-width: 480px) {
+            .sidebar { width: 56px; padding: 12px 0; }
+            .sidebar .logo { font-size: 20px; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            .header .title { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar">
+            <div class="logo"><i class="fas fa-shield-halved"></i></div>
+            <div class="nav-item active"><i class="fas fa-gauge-high"></i></div>
+            <div class="nav-item"><i class="fas fa-shield-alt"></i><span class="badge">3</span></div>
+            <div class="nav-item"><i class="fas fa-bolt"></i></div>
+            <div class="nav-item"><i class="fas fa-bug"></i></div>
+            <div class="nav-item"><i class="fas fa-envelope"></i></div>
+            <div class="nav-item" style="margin-top: auto;"><i class="fas fa-gear"></i></div>
+        </aside>
+
+        <!-- ===== MAIN ===== -->
+        <main class="main">
+            <!-- HEADER -->
+            <header class="header">
+                <div class="title"><span>Shield</span>AI · <span style="font-weight:400;color:#6b7a93;">Autonomous Defense</span></div>
+                <div class="right">
+                    <div class="status"><span class="dot"></span> All systems nominal</div>
+                    <div class="user"><i class="fas fa-user-astronaut"></i> Admin</div>
+                </div>
+            </header>
+
+            <!-- DASHBOARD -->
+            <div class="dashboard">
+                <!-- LEFT PANEL -->
+                <div class="panel-left">
+                    <!-- STATS -->
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <div class="label">Threats blocked</div>
+                            <div class="value green">1,284</div>
+                            <div class="sub">+12% this week</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">Active assets</div>
+                            <div class="value blue">47</div>
+                            <div class="sub">3 in quarantine</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">Critical alerts</div>
+                            <div class="value orange">8</div>
+                            <div class="sub">2 pending action</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">AI Agents</div>
+                            <div class="value red">3</div>
+                            <div class="sub">Core · Analyst · Red</div>
+                        </div>
+                    </div>
+
+                    <!-- MODULES -->
+                    <div class="section-title"><i class="fas fa-puzzle-piece" style="margin-right:6px;"></i> Active modules</div>
+                    <div class="module-list">
+                        <div class="module-item"><span class="name"><i class="fas fa-shield-halved"></i> IDS/IPS</span><span class="status-badge">active</span></div>
+                        <div class="module-item"><span class="name"><i class="fas fa-flask"></i> Sandbox</span><span class="status-badge">active</span></div>
+                        <div class="module-item"><span class="name"><i class="fas fa-bug"></i> Attack Sim</span><span class="status-badge warning">simulating</span></div>
+                        <div class="module-item"><span class="name"><i class="fas fa-envelope"></i> Mail Proxy</span><span class="status-badge inactive">idle</span></div>
+                        <div class="module-item"><span class="name"><i class="fas fa-code"></i> Anti-Phishing</span><span class="status-badge">active</span></div>
+                        <div class="module-item"><span class="name"><i class="fas fa-robot"></i> ContextGuard</span><span class="status-badge">active</span></div>
+                    </div>
+
+                    <!-- ALERTS -->
+                    <div class="section-title"><i class="fas fa-bell" style="margin-right:6px;"></i> Recent alerts</div>
+                    <div class="alert-list">
+                        <div class="alert-item critical">
+                            <span class="icon">🔴</span>
+                            <div class="content"><strong>Critical</strong> — Ransomware pattern detected on 10.0.0.5</div>
+                            <span class="time">2 min ago</span>
+                        </div>
+                        <div class="alert-item">
+                            <span class="icon">🟡</span>
+                            <div class="content"><strong>Warning</strong> — SSH brute force from 45.33.22.11</div>
+                            <span class="time">14 min ago</span>
+                        </div>
+                        <div class="alert-item info">
+                            <span class="icon">🔵</span>
+                            <div class="content"><strong>Info</strong> — Asset scan completed for api.example.com</div>
+                            <span class="time">1h ago</span>
+                        </div>
+                        <div class="alert-item">
+                            <span class="icon">🟡</span>
+                            <div class="content"><strong>Warning</strong> — Suspicious outbound traffic to 192.168.1.100</div>
+                            <span class="time">2h ago</span>
+                        </div>
+                        <div class="alert-item critical">
+                            <span class="icon">🔴</span>
+                            <div class="content"><strong>Critical</strong> — Malware detected in sandbox (Trojan.FakeAV)</div>
+                            <span class="time">3h ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL : MAP 3D -->
+                <div class="panel-right">
+                    <div id="map-container"></div>
+                    <div class="map-overlay">
+                        <button class="btn" id="btn-rotate"><i class="fas fa-rotate-right"></i> Rotate</button>
+                        <button class="btn" id="btn-reset"><i class="fas fa-home"></i> Reset view</button>
+                        <button class="btn" id="btn-mock"><i class="fas fa-bolt"></i> Simulate attack</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== THREE.JS ===== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+    </script>
+    <script>
+        // ============================================================
+        // 1. THREE.JS — SCENE SETUP
+        // ============================================================
+        const container = document.getElementById('map-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x080b12);
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(0, 0, 18);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // ============================================================
+        // 2. LIGHTS
+        // ============================================================
+        const ambient = new THREE.AmbientLight(0x223355, 0.6);
+        scene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const backLight = new THREE.DirectionalLight(0x2a8bf2, 0.5);
+        backLight.position.set(-5, 0, -5);
+        scene.add(backLight);
+
+        // ============================================================
+        // 3. GLOBE (SPHERE + TEXTURE)
+        // ============================================================
+        // Création d'une texture de grille "cyber" en canvas (pas de dépendance externe)
+        function createGlobeTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // Fond
+            const grad = ctx.createRadialGradient(1024, 512, 100, 1024, 512, 800);
+            grad.addColorStop(0, '#0f1a2b');
+            grad.addColorStop(1, '#05080e');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grille (longitudes)
+            ctx.strokeStyle = 'rgba(42, 139, 242, 0.15)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 24; i++) {
+                const x = (i / 24) * canvas.width;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            // Latitudes
+            for (let i = 0; i < 12; i++) {
+                const y = (i / 12) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Contours simplifiés des continents (mock)
+            ctx.strokeStyle = 'rgba(42, 139, 242, 0.35)';
+            ctx.lineWidth = 2;
+            // Amérique du Nord
+            ctx.beginPath();
+            ctx.moveTo(300, 200);
+            ctx.quadraticCurveTo(400, 180, 500, 220);
+            ctx.quadraticCurveTo(550, 280, 480, 320);
+            ctx.quadraticCurveTo(400, 340, 350, 300);
+            ctx.quadraticCurveTo(280, 270, 300, 200);
+            ctx.stroke();
+            // Amérique du Sud
+            ctx.beginPath();
+            ctx.moveTo(380, 380);
+            ctx.quadraticCurveTo(430, 420, 400, 520);
+            ctx.quadraticCurveTo(370, 580, 340, 540);
+            ctx.quadraticCurveTo(310, 480, 350, 400);
+            ctx.stroke();
+            // Europe / Afrique
+            ctx.beginPath();
+            ctx.moveTo(950, 220);
+            ctx.quadraticCurveTo(1000, 200, 1050, 240);
+            ctx.quadraticCurveTo(1080, 300, 1020, 380);
+            ctx.quadraticCurveTo(1000, 440, 940, 400);
+            ctx.quadraticCurveTo(900, 340, 920, 280);
+            ctx.stroke();
+            // Asie
+            ctx.beginPath();
+            ctx.moveTo(1100, 180);
+            ctx.quadraticCurveTo(1200, 150, 1300, 200);
+            ctx.quadraticCurveTo(1400, 260, 1350, 320);
+            ctx.quadraticCurveTo(1280, 380, 1180, 340);
+            ctx.quadraticCurveTo(1100, 300, 1100, 180);
+            ctx.stroke();
+
+            // Points de lumière "villes" mockées
+            const cities = [
+                [350, 220],
+                [420, 280],
+                [450, 400],
+                [500, 250],
+                [960, 200],
+                [1020, 240],
+                [1000, 340],
+                [1100, 200],
+                [1150, 280],
+                [1250, 240],
+                [800, 300],
+                [600, 350],
+                [1400, 200],
+                [1500, 260]
+            ];
+            cities.forEach(([x, y]) => {
+                const r = 4 + Math.random() * 4;
+                const grad2 = ctx.createRadialGradient(x, y, 0, x, y, r * 2);
+                grad2.addColorStop(0, 'rgba(42, 139, 242, 0.8)');
+                grad2.addColorStop(1, 'rgba(42, 139, 242, 0)');
+                ctx.fillStyle = grad2;
+                ctx.beginPath();
+                ctx.arc(x, y, r * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.6)';
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const texture = createGlobeTexture();
+        const geometry = new THREE.SphereGeometry(5, 64, 64);
+        const material = new THREE.MeshPhongMaterial({
+            map: texture,
+            emissive: new THREE.Color(0x0a1a2a),
+            emissiveIntensity: 0.2,
+            transparent: true,
+            opacity: 0.92,
+            shininess: 20,
+        });
+        const globe = new THREE.Mesh(geometry, material);
+        globe.castShadow = true;
+        scene.add(globe);
+
+        // ============================================================
+        // 4. ATMOSPHERE (GLOW)
+        // ============================================================
+        const atmGeo = new THREE.SphereGeometry(5.15, 64, 64);
+        const atmMat = new THREE.MeshBasicMaterial({
+            color: 0x2a8bf2,
+            transparent: true,
+            opacity: 0.08,
+            wireframe: true,
+        });
+        const atmosphere = new THREE.Mesh(atmGeo, atmMat);
+        scene.add(atmosphere);
+
+        // ============================================================
+        // 5. ORBITAL RING
+        // ============================================================
+        const ringGeo = new THREE.TorusGeometry(6.2, 0.02, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x2a8bf2,
+            transparent: true,
+            opacity: 0.25,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 3;
+        ring.rotation.z = 0.2;
+        scene.add(ring);
+
+        const ring2 = new THREE.Mesh(
+            new THREE.TorusGeometry(6.6, 0.015, 16, 100),
+            new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.12 })
+        );
+        ring2.rotation.x = -0.8;
+        ring2.rotation.z = 0.5;
+        scene.add(ring2);
+
+        // ============================================================
+        // 6. PARTICLES (étoiles / satellites)
+        // ============================================================
+        const particleCount = 600;
+        const positions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i++) {
+            const r = 8 + Math.random() * 15;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            positions[i * 3 + 2] = r * Math.cos(phi);
+        }
+        const particleGeo = new THREE.BufferGeometry();
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x2a8bf2,
+            size: 0.06,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // ============================================================
+        // 7. MOCKED ATTACK MARKERS (pulsating dots)
+        // ============================================================
+        const markers = [];
+        const markerPositions = [
+            { lat: 0.4, lon: -0.8, color: 0xf03e5a },
+            { lat: 0.6, lon: 1.2, color: 0xf9a84c },
+            { lat: -0.3, lon: -0.5, color: 0xf03e5a },
+            { lat: 0.1, lon: 1.8, color: 0xf9a84c },
+            { lat: -0.5, lon: -1.2, color: 0x7eeda4 },
+        ];
+
+        function latLonToVec3(lat, lon, radius) {
+            const phi = (90 - lat * 180) * Math.PI / 180;
+            const theta = (lon * 180 + 180) * Math.PI / 180;
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            return new THREE.Vector3(x, y, z);
+        }
+
+        markerPositions.forEach((pos) => {
+            const vec = latLonToVec3(pos.lat, pos.lon, 5.3);
+            const dotGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const dotMat = new THREE.MeshBasicMaterial({ color: pos.color });
+            const dot = new THREE.Mesh(dotGeo, dotMat);
+            dot.position.copy(vec);
+            scene.add(dot);
+            markers.push({
+                mesh: dot,
+                basePos: vec.clone(),
+                phase: Math.random() * Math.PI * 2,
+                color: pos.color,
+                pulse: 0
+            });
+
+            // halo
+            const haloGeo = new THREE.SphereGeometry(0.15, 8, 8);
+            const haloMat = new THREE.MeshBasicMaterial({
+                color: pos.color,
+                transparent: true,
+                opacity: 0.3,
+                depthWrite: false,
+            });
+            const halo = new THREE.Mesh(haloGeo, haloMat);
+            halo.position.copy(vec);
+            scene.add(halo);
+            markers[markers.length - 1].halo = halo;
+        });
+
+        // ============================================================
+        // 8. ANIMATION LOOP
+        // ============================================================
+        let autoRotate = true;
+        let time = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.005;
+
+            // Globe rotation
+            if (autoRotate) {
+                globe.rotation.y += 0.0015;
+                atmosphere.rotation.y += 0.0015;
+                ring.rotation.y += 0.002;
+                ring2.rotation.y -= 0.001;
+                particles.rotation.y += 0.0004;
+            }
+
+            // Pulse markers
+            markers.forEach((m, i) => {
+                const s = 1 + 0.15 * Math.sin(time * 2 + m.phase);
+                m.mesh.scale.set(s, s, s);
+                if (m.halo) {
+                    const hs = 1 + 0.3 * Math.sin(time * 1.5 + m.phase + 0.5);
+                    m.halo.scale.set(hs, hs, hs);
+                    m.halo.material.opacity = 0.15 + 0.15 * Math.sin(time * 1.5 + m.phase);
+                }
+            });
+
+            // Atmosphere pulse
+            atmosphere.material.opacity = 0.06 + 0.03 * Math.sin(time * 0.5);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // ============================================================
+        // 9. RESIZE
+        // ============================================================
+        function resize() {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        window.addEventListener('resize', resize);
+
+        // ============================================================
+        // 10. CONTROLS (via buttons)
+        // ============================================================
+        document.getElementById('btn-rotate').addEventListener('click', () => {
+            autoRotate = !autoRotate;
+            document.getElementById('btn-rotate').innerHTML =
+                `<i class="fas ${autoRotate ? 'fa-pause' : 'fa-play'}"></i> ${autoRotate ? 'Pause' : 'Rotate'}`;
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            globe.rotation.x = 0;
+            globe.rotation.y = 0;
+            globe.rotation.z = 0;
+            atmosphere.rotation.copy(globe.rotation);
+            ring.rotation.x = Math.PI / 3;
+            ring.rotation.z = 0.2;
+            ring2.rotation.x = -0.8;
+            ring2.rotation.z = 0.5;
+            camera.position.set(0, 0, 18);
+            camera.lookAt(0, 0, 0);
+        });
+
+        document.getElementById('btn-mock').addEventListener('click', () => {
+            // Simulate attack flash
+            const flash = document.createElement('div');
+            flash.style.cssText =
+                'position:absolute;inset:0;background:rgba(240,62,90,0.15);z-index:15;pointer-events:none;transition:opacity 0.8s;';
+            document.querySelector('.panel-right').appendChild(flash);
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
+            setTimeout(() => { flash.remove(); }, 1200);
+
+            // Add a temporary marker
+            const lat = (Math.random() - 0.5) * 1.5;
+            const lon = (Math.random() - 0.5) * 3;
+            const vec = latLonToVec3(lat, lon, 5.3);
+            const dotGeo = new THREE.SphereGeometry(0.12, 8, 8);
+            const dotMat = new THREE.MeshBasicMaterial({ color: 0xf03e5a });
+            const dot = new THREE.Mesh(dotGeo, dotMat);
+            dot.position.copy(vec);
+            scene.add(dot);
+            const haloGeo = new THREE.SphereGeometry(0.25, 8, 8);
+            const haloMat = new THREE.MeshBasicMaterial({
+                color: 0xf03e5a,
+                transparent: true,
+                opacity: 0.4,
+                depthWrite: false,
+            });
+            const halo = new THREE.Mesh(haloGeo, haloMat);
+            halo.position.copy(vec);
+            scene.add(halo);
+
+            let t = 0;
+            const interval = setInterval(() => {
+                t += 0.03;
+                const s = 1 + 0.4 * Math.sin(t * 3);
+                dot.scale.set(s, s, s);
+                const hs = 1 + 0.6 * Math.sin(t * 2.5);
+                halo.scale.set(hs, hs, hs);
+                halo.material.opacity = 0.2 + 0.2 * Math.sin(t * 2.5);
+                if (t > 4) {
+                    clearInterval(interval);
+                    scene.remove(dot);
+                    scene.remove(halo);
+                }
+            }, 30);
+
+            // Add alert in panel
+            const alertList = document.querySelector('.alert-list');
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item critical';
+            alertItem.innerHTML = `
+                <span class="icon">🔴</span>
+                <div class="content"><strong>Critical</strong> — New attack simulation: ${['Ransomware', 'Reverse Shell', 'Data Exfil', 'Priv Esc'][Math.floor(Math.random()*4)]} detected</div>
+                <span class="time">just now</span>
+            `;
+            alertList.prepend(alertItem);
+            if (alertList.children.length > 8) alertList.removeChild(alertList.lastChild);
+
+            // Update stat
+            const statEl = document.querySelector('.stat-card .value.orange');
+            const current = parseInt(statEl.textContent);
+            statEl.textContent = current + 1;
+        });
+
+        // ============================================================
+        // 11. INITIAL MOCK ALERT
+        // ============================================================
+        setTimeout(() => {
+            const alertList = document.querySelector('.alert-list');
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item critical';
+            alertItem.innerHTML = `
+                <span class="icon">🔴</span>
+                <div class="content"><strong>Critical</strong> — Suspicious outbound traffic detected from 10.0.0.5 to 45.33.22.11</div>
+                <span class="time">just now</span>
+            `;
+            alertList.prepend(alertItem);
+        }, 2000);
+    </script>
+</body>
+</html>

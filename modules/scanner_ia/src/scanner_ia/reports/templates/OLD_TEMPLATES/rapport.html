@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport de Sécurité - Site E-commerce</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 shadow-lg">
+    <h1 class="text-4xl font-bold">Rapport de Sécurité</h1>
+    <p class="text-lg">Projet : <span class="font-semibold">Site E-commerce</span></p>
+    <p>Date du scan : <span class="font-semibold">2025-08-21</span></p>
+  </header>
+
+  <main class="p-6 space-y-8">
+
+    <!-- DASHBOARD GLOBAL -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Vue d'ensemble</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-red-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-red-600">3</p>
+          <p>Critiques</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-yellow-600">5</p>
+          <p>Majeures</p>
+        </div>
+        <div class="bg-blue-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-blue-600">7</p>
+          <p>Mineures</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-green-600">82</p>
+          <p>Score Sécurité /100</p>
+        </div>
+      </div>
+      <canvas id="severityChart" class="mt-6"></canvas>
+    </section>
+
+    <!-- INFORMATIONS GÉNÉRALES -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Informations Générales</h2>
+      <ul class="space-y-2">
+        <li><span class="font-semibold">Domaine :</span> exemple.com</li>
+        <li><span class="font-semibold">Adresse IP :</span> 192.168.1.1</li>
+        <li><span class="font-semibold">Système d'exploitation :</span> Ubuntu 20.04</li>
+        <li><span class="font-semibold">Serveur Web :</span> Nginx 1.18</li>
+        <li><span class="font-semibold">Technologie CMS :</span> WordPress 6.2</li>
+      </ul>
+    </section>
+
+    <!-- VULNÉRABILITÉS -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Vulnérabilités Détectées</h2>
+      
+      
+      <div class="border-l-4 pl-4 mb-4 
+         border-red-500 
+        ">
+        
+        <h3 class="text-xl font-semibold 
+           text-red-600 
+          ">
+          SQL Injection
+        </h3>
+        
+        <p><span class="font-semibold">Gravité :</span> Critique</p>
+        <p><span class="font-semibold">Description :</span> Injection possible via paramètre 'id'.</p>
+        <p><span class="font-semibold">Preuve :</span> dump de table 'users'.</p>
+        <p><span class="font-semibold">Remédiation :</span> Utiliser des requêtes préparées.</p>
+      </div>
+      
+      <div class="border-l-4 pl-4 mb-4 
+         border-yellow-500 
+        ">
+        
+        <h3 class="text-xl font-semibold 
+           text-yellow-600 
+          ">
+          XSS Reflected
+        </h3>
+        
+        <p><span class="font-semibold">Gravité :</span> Majeure</p>
+        <p><span class="font-semibold">Description :</span> Script injecté via paramètre GET.</p>
+        <p><span class="font-semibold">Preuve :</span> popup JavaScript exécutée.</p>
+        <p><span class="font-semibold">Remédiation :</span> Échapper les entrées utilisateurs.</p>
+      </div>
+      
+    </section>
+
+    <!-- RECOMMANDATIONS -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Plan de Remédiation</h2>
+      <ol class="list-decimal ml-6 space-y-2">
+        
+          <li>Corriger immédiatement la faille SQL Injection.</li>
+        
+          <li>Mettre à jour WordPress et plugins.</li>
+        
+          <li>Activer HSTS et CSP.</li>
+        
+      </ol>
+    </section>
+
+    <!-- ANNEXES -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Annexes Techniques</h2>
+      
+      <pre class="bg-gray-900 text-green-400 p-4 rounded-xl overflow-x-auto">
+GET /vulnerable.php?id=1' OR '1'='1 --
+      </pre>
+      
+      <pre class="bg-gray-900 text-green-400 p-4 rounded-xl overflow-x-auto">
+Exemple de payload utilisé...
+      </pre>
+      
+    </section>
+
+  </main>
+
+  <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+    Rapport généré automatiquement - Confidentiel 🔒
+  </footer>
+
+  <script>
+    const ctx = document.getElementById('severityChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Critique', 'Majeure', 'Mineure'],
+        datasets: [{
+          data: [3, 5, 7],
+          backgroundColor: ['#dc2626', '#facc15', '#3b82f6'],
+        }]
+      }
+    });
+  </script>
+
+</body>
+</html>

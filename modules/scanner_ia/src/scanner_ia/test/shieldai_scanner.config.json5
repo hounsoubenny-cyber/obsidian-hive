@@ -1,0 +1,184 @@
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║   ShieldAI — Configuration Globale                                       ║
+// ║   Fichier : shieldai_scanner.config.json5                                ║
+// ║   Toutes les clés correspondent aux attributs des classes Config         ║
+// ║   des modules du projet.                                                 ║
+// ║                                                                          ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+{
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CORE — Fetcher
+  // Fichier : core/fetcher.py → class Config
+  // ✅ Câblé via ConfigManager → Scanner.analyzer_helper.crawler.parser.fetcher.update_conf(...)
+  // ⚠️ TTL / MAX_ATTEMPT / WAIT_BETWEEN / CacheMaxSize sont des CONSTANTES MODULE,
+  //    pas des attributs de Config → les changer ici n'a AUCUN effet actuellement.
+  // ══════════════════════════════════════════════════════════════════════════
+  "fetcher": {
+    "MAX_REDIRECTS": 3,           // Nombre max de redirections HTTP suivies — ✅ actif
+    "Semaphore": 20,              // Concurrence max simultanée — ✅ actif (défaut code: 20, pas 50)
+    "TIMEOUT": 2,                 // Timeout total par requête (secondes) — ✅ actif (défaut code: 2, pas 5)
+    "DEBUG": false,               // Affiche les tracebacks complets — ✅ actif
+
+    // ⛔ Les 4 clés ci-dessous sont IGNORÉES par update_conf() : ce sont des
+    //    constantes globales dans fetcher.py (lignes 51-54), utilisées directement
+    //    par les décorateurs @retry et TTLCache à l'import du module.
+    //    Pour les rendre configurables, il faudrait soit les lire depuis os.environ,
+    //    soit les sortir du décorateur vers un wrapper dynamique.
+    "TTL": 600,                   // ⛔ ignoré — vraie valeur: TTL=600 (10*60) en dur dans fetcher.py
+    "MAX_ATTEMPT": 3,             // ⛔ ignoré — vraie valeur: MAX_ATTEMPT=3 en dur dans fetcher.py
+    "WAIT_BETWEEN": 3,            // ⛔ ignoré — vraie valeur: WAIT_BETWEEN=3 en dur dans fetcher.py
+    "CacheMaxSize": 1000,         // ⛔ ignoré — vraie valeur: CacheMaxSize=1000 en dur dans fetcher.py
+
+    "HEADERS": {                  // ⛔ ignoré aussi — HEADERS est un attribut de CLASSE (pas self.),
+                                   //    jamais lu par update_conf() qui ne fait que setattr(self.config, k, v)
+      "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "fr-FR,fr;q=0.5",
+      "Accept-Encoding": "gzip, deflate",
+      "Connection": "keep-alive"
+    }
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CORE — Crawler
+  // Fichier : core/crawler.py → class Config
+  // ✅ Câblé via ConfigManager → Scanner.analyzer_helper.crawler.update_conf(...)
+  // ══════════════════════════════════════════════════════════════════════════
+  "crawler": {
+    "MAX_DEEPTH": 5,              // Profondeur maximale de crawl
+    "MAX_PAGES": 1000,            // Nombre max de pages à crawler par site
+    "JOIN_TIMEOUT": 100,          // Timeout global du crawl (secondes) — défaut code: 10*10=100, pas 600
+    "GET_TIMEOUT": 1,             // Timeout pour récupérer un élément de la queue — défaut code: 1, pas 5
+    "SAVE_PERIOD": 100,           // Sauvegarde tous les N URLs crawlés
+    "DEBUG": true,                // Mode debug verbose — défaut code: true
+    "Semaphore": 50,              // Concurrence max
+    "RETRIES": 2,                 // Retries si une URL échoue
+    "DELAY": 1,                   // Délai entre les retries (secondes)
+    "MAX_QUEUE": 1000000,         // Taille max de la queue de crawl
+    "MAX_WORKERS": 10,             // Nombre de workers parallèles — défaut code: 10
+    "PRINT_INTERVAL": 10,         // Intervalle d'affichage des stats (secondes)
+    "RESTRAIN_FOR_THIS_DOMAIN": true, // Restreindre le crawl au domaine source
+    "EMPTY_MAX_COUNT": 3,         // Nb de fois que la queue peut être vide avant arrêt
+    "EMPTY_AWAIT_BETWEEN": 10,    // Délai d'attente si queue vide (secondes) — défaut code: 10, pas 5
+    "SKIP_EXTERNAL_LINKS": true   // 🆕 absent de ton ancienne config — ignore les liens hors domaine pendant le crawl
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CORE — Parser
+  // Fichier : core/parser.py → class Config
+  // ✅ Câblé via ConfigManager → Scanner.analyzer_helper.crawler.parser.update_conf(...)
+  // ══════════════════════════════════════════════════════════════════════════
+  "parser": {
+    "DEBUG": false                 // Mode debug pour le parsing HTML
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CORE — AnalyzerHelper
+  // Fichier : core/analyzer_helper.py → class Config
+  // ✅ Câblé via ConfigManager → Scanner.analyzer_helper.update_conf(...)
+  // ══════════════════════════════════════════════════════════════════════════
+  "analyzer_helper": {
+    "MAX_WORKERS": 10,             // Nombre de workers parallèles — défaut code: 10
+    "MAX_URL": 100,               // Seuil bascule séquentiel → parallèle
+    "DEBUG": false,               // Mode debug verbose
+    "JOIN_TIMEOUT": 600,          // Timeout global (secondes)
+    "GET_TIMEOUT": 3,             // Timeout récupération queue (secondes) — défaut code: 0.1, ta valeur 3 est volontairement plus large, ok
+    "EMPTY_MAX_COUNT": 3,         // Nb max de queue vide consécutifs
+    "EMPTY_AWAIT_BETWEEN": 10     // Délai si queue vide (secondes)
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // FUZZER — Fuzzer actif
+  // Fichier : fuzzer/active_fuzzer.py → class Config
+  // ══════════════════════════════════════════════════════════════════════════
+  "fuzzer": {
+    "MAX_WORKERS": 10,            // Nombre de workers de fuzzing en parallèle
+    "GET_TIMEOUT": 1,             // Attente max sur la queue avant qu'un worker se considère "idle"
+    "TIMEOUT": 5,                 // Timeout HTTP par payload envoyé
+    "FUZZ_TIMEOUT": 3600,          // Timeout global d'un run de fuzz (secondes) — voir dynamic_timeout dans "scanner"
+    "MAX_KEYS_H": 3,              // Nb max de clés header testées par requête
+    "MAX_KEYS_C": 3,              // Nb max de clés cookie testées par requête
+    "MAX_KEYS_QUERY": 5,          // Nb max de clés query testées
+    "LIMIT_PER_KEY_QUERY": 2,     // Nb max de payloads par clé query
+    "PATH_LIMIT": 5,              // Nb max de segments de path testés
+    "MAX_TEST": null,             // Limite globale de payloads (null = illimité)
+    "EMPTY_MAX_COUNT": 3,         // Nb de fois que la queue peut être vue vide avant arrêt normal
+    "EMPTY_AWAIT_BETWEEN": 5,     // Délai d'attente si queue vide (secondes)
+    "EARLY_STOP_PER_VULN": 3,     // Nb de confirmations haute-confiance avant d'arrêter de tester une vuln
+    "EARLY_STOP_MIN_PROB": 0.80,  // Seuil de probabilité pour qu'une confirmation compte dans l'early stop
+
+    // Seuils de détection par type de vuln (probabilité mini pour "is_vulnerable")
+    "SEUIL": {
+      "XSS": 0.65,
+      "SQLi": 0.60,
+      "DirTrav": 0.65,
+      "XXE": 0.65,
+      "SSTI": 0.65,
+      "IDOR": 0.65,
+      "SSRF": 0.60,
+      "NoSQLi": 0.60,
+      "LDAPi": 0.60,
+      "XPATH_Injection": 0.60,
+      "GraphQLi": 0.60,
+      "CredsExpose": 0.55,
+      "InfoDisc": 0.55,
+      "CMDi": 0.70,
+      "OpenRedirect": 0.70,
+      "SessFix": 0.70,
+      "CRLF_Injection": 0.70,
+      "InsecCrypto": 0.70,
+      "RaceCondition": 0.70,
+      "BufOvr": 0.70,
+      "CORS": 0.75,
+      "BrokenAuth": 0.75,
+      "HTTP_Request_Smuggling": 0.75,
+      "default": 0.65
+    }
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ML_MODEL — ScannerIA / ModelManager
+  // Fichier : ml_model/scanner_ia_v2.py → class Config
+  // ⛔ PAS câblé non plus — ScannerIA(model_dir=model_dir) ne reçoit que model_dir
+  //    depuis Scanner.__init__, jamais depuis le json5.
+  // ══════════════════════════════════════════════════════════════════════════
+  "ml_model": {
+    "CLASSES": [],                // Liste des classes de vuln pour le MultiLabelBinarizer (vide = auto-détecté au fit)
+    "NUM_FEATURES": [],           // Features numériques (vide = auto-détecté via get_idx)
+    "CAT_FEATURES": [],           // Features catégorielles (vide = auto-détecté via get_idx)
+    "VERBOSE": 0,                 // Verbosité du pipeline sklearn/optuna
+    "WRAPPER": "chain",           // Stratégie multi-label ("chain" = ClassifierChain)
+    "CV": 5,                      // Nombre de folds en cross-validation
+    "META_NAME": "pipeline_estimator", // Nom du pipeline sauvegardé
+    "MODEL_DIR": "model_scanner_chain_mvp" // Dossier du modèle — recoupe scanner.model_dir plus bas
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // SCANNER PRINCIPAL
+  // Fichier : main_scanner.py → class Scanner (pas de "class Config" ici,
+  // ce sont directement les paramètres de Scanner.__init__)
+  // ⛔ PAS câblé — passés en kwargs Python à Scanner(), jamais lus depuis le json5
+  //    malgré config_path pris en argument (config_path ne sert qu'à fetcher/
+  //    crawler/parser/analyzer_helper via ConfigManager).
+  // ══════════════════════════════════════════════════════════════════════════
+  "scanner": {
+    "active_scan": true,          // 🆕 Active le Fuzzer (sinon scan passif seul)
+    "use_cache": true,            // Utiliser le cache disque entre les scans
+    "restore": false,             // Restaurer depuis le cache existant
+    "debug": true,                // Mode debug — défaut code: true, pas false
+    "semaphore": 50,              // Concurrence max pour le scanner
+    "limit_payloads": null,       // null = tous les payloads, sinon N max
+    "use_semantic": true,         // Activer le score cosine similarity
+    "theme": null,                // 🆕 Thème du rapport généré (ReportGenerator)
+    "model_dir": "model_scanner_chain_mvp", // 🆕 Doit matcher ml_model.MODEL_DIR
+    "use_arjun": false,           // 🆕 Active Arjun pour la découverte de paramètres cachés
+    "arjun_timeout": 30,          // 🆕 Timeout Arjun (secondes)
+    "known_params_dir": null,     // 🆕 Dossier de paramètres connus pré-chargés
+
+    "cache_dir": "scanner_cache/cache", // ⚠️ non lu — vraie valeur = REPORT_DIR/CACHE_DIR calculés en dur dans main_scanner.py
+    "report_dir": "result_scan",        // ⚠️ idem
+    "cache_size_gb": 1,                 // ⚠️ idem — MAX_CACHE_SIZE = 1*1024*1024*1024 en dur
+    "cache_ttl": 86400                  // ⚠️ idem — CACHE_TIMEOUT = 24*3600 en dur
+  },
+}

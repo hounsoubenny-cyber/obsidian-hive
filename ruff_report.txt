@@ -1,0 +1,5230 @@
+F541 [*] f-string without any placeholders
+   --> agents/analyst/TEST/analyst_test_package/interactive_analyst_test.py:180:15
+    |
+178 |     if prompt_injection:
+179 |         print("\n⚠️  ANOMALIE : tentative de prompt injection détectée et signalée")
+180 |         print(f"    (voir le champ 'comment' ci-dessus pour le détail)")
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+181 |
+182 |     fix_output = report.get("fix_output")
+    |
+help: Remove extraneous `f` prefix
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:23:1
+   |
+21 | """
+22 |
+23 | import json
+   | ^^^^^^^^^^^
+24 | import inspect
+25 | import asyncio
+   |
+
+F401 [*] `json` imported but unused
+  --> agents/analyst/agent.py:23:8
+   |
+21 | """
+22 |
+23 | import json
+   |        ^^^^
+24 | import inspect
+25 | import asyncio
+   |
+help: Remove unused import: `json`
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:24:1
+   |
+23 | import json
+24 | import inspect
+   | ^^^^^^^^^^^^^^
+25 | import asyncio
+26 | import logging
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:25:1
+   |
+23 | import json
+24 | import inspect
+25 | import asyncio
+   | ^^^^^^^^^^^^^^
+26 | import logging
+27 | from pydantic import BaseModel, Field
+   |
+
+F401 [*] `asyncio` imported but unused
+  --> agents/analyst/agent.py:25:8
+   |
+23 | import json
+24 | import inspect
+25 | import asyncio
+   |        ^^^^^^^
+26 | import logging
+27 | from pydantic import BaseModel, Field
+   |
+help: Remove unused import: `asyncio`
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:26:1
+   |
+24 | import inspect
+25 | import asyncio
+26 | import logging
+   | ^^^^^^^^^^^^^^
+27 | from pydantic import BaseModel, Field
+28 | from typing import Any, Awaitable, Callable, Optional, Union
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:27:1
+   |
+25 | import asyncio
+26 | import logging
+27 | from pydantic import BaseModel, Field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from typing import Any, Awaitable, Callable, Optional, Union
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:28:1
+   |
+26 | import logging
+27 | from pydantic import BaseModel, Field
+28 | from typing import Any, Awaitable, Callable, Optional, Union
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 |
+30 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:30:1
+   |
+28 | from typing import Any, Awaitable, Callable, Optional, Union
+29 |
+30 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from obsidian_hive.config.config import ANALYST_CONFIG
+32 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:31:1
+   |
+30 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+31 | from obsidian_hive.config.config import ANALYST_CONFIG
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+33 | from obsidian_hive.agents.analyst.tools.tools import MAPPING
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:32:1
+   |
+30 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+31 | from obsidian_hive.config.config import ANALYST_CONFIG
+32 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from obsidian_hive.agents.analyst.tools.tools import MAPPING
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/agent.py:33:1
+   |
+31 | from obsidian_hive.config.config import ANALYST_CONFIG
+32 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+33 | from obsidian_hive.agents.analyst.tools.tools import MAPPING
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |
+35 | logger = logging.getLogger("obsidian_analyst")
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:21:1
+   |
+19 | """
+20 |
+21 | import os
+   | ^^^^^^^^^
+22 | import json
+23 | import shutil
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:22:1
+   |
+21 | import os
+22 | import json
+   | ^^^^^^^^^^^
+23 | import shutil
+24 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:23:1
+   |
+21 | import os
+22 | import json
+23 | import shutil
+   | ^^^^^^^^^^^^^
+24 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:24:1
+   |
+22 | import json
+23 | import shutil
+24 | import asyncio
+   | ^^^^^^^^^^^^^^
+25 |
+26 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:26:1
+   |
+24 | import asyncio
+25 |
+26 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from obsidian_hive.agents.analyst.agent import Analyst, NoReportProducedError
+28 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:27:1
+   |
+26 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+27 | from obsidian_hive.agents.analyst.agent import Analyst, NoReportProducedError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex.py:28:1
+   |
+26 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+27 | from obsidian_hive.agents.analyst.agent import Analyst, NoReportProducedError
+28 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 |
+30 | # =============================================================================
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex_fixture/auth.py:15:1
+   |
+13 | """
+14 |
+15 | import sqlite3
+   | ^^^^^^^^^^^^^^
+16 | from flask import Flask, request, jsonify
+   |
+
+E402 Module level import not at top of file
+  --> agents/analyst/test_alex_fixture/auth.py:16:1
+   |
+15 | import sqlite3
+16 | from flask import Flask, request, jsonify
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 |
+18 | app = Flask(__name__)
+   |
+
+F401 [*] `time` imported but unused
+  --> agents/analyst/tools/tools.py:15:8
+   |
+14 | import os
+15 | import time
+   |        ^^^^
+16 | import shlex
+17 | import shutil
+   |
+help: Remove unused import: `time`
+
+F401 [*] `difflib` imported but unused
+  --> agents/analyst/tools/tools.py:18:8
+   |
+16 | import shlex
+17 | import shutil
+18 | import difflib
+   |        ^^^^^^^
+19 | import functools
+20 | import subprocess
+   |
+help: Remove unused import: `difflib`
+
+F401 [*] `functools` imported but unused
+  --> agents/analyst/tools/tools.py:19:8
+   |
+17 | import shutil
+18 | import difflib
+19 | import functools
+   |        ^^^^^^^^^
+20 | import subprocess
+21 | from enum import StrEnum
+   |
+help: Remove unused import: `functools`
+
+F401 [*] `subprocess` imported but unused
+  --> agents/analyst/tools/tools.py:20:8
+   |
+18 | import difflib
+19 | import functools
+20 | import subprocess
+   |        ^^^^^^^^^^
+21 | from enum import StrEnum
+22 | from pydantic import BaseModel, Field, field_validator, model_validator
+   |
+help: Remove unused import: `subprocess`
+
+F401 [*] `modules_utils.agent_utils._get_allowed_roots` imported but unused
+  --> agents/analyst/tools/tools.py:28:5
+   |
+26 | from modules_utils.agent_utils import (
+27 |     timer, _validate_confined, _validate_path,
+28 |     _get_allowed_roots, _compute_diff
+   |     ^^^^^^^^^^^^^^^^^^
+29 | )
+30 | from obsidian_hive.agents.analyst.tools.tool_docs import TOOL_DOCS
+   |
+help: Remove unused import: `modules_utils.agent_utils._get_allowed_roots`
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:31:1
+   |
+29 | """
+30 |
+31 | import asyncio
+   | ^^^^^^^^^^^^^^
+32 | import inspect
+33 | import logging
+   |
+
+F401 [*] `asyncio` imported but unused
+  --> agents/core/agent.py:31:8
+   |
+29 | """
+30 |
+31 | import asyncio
+   |        ^^^^^^^
+32 | import inspect
+33 | import logging
+   |
+help: Remove unused import: `asyncio`
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:32:1
+   |
+31 | import asyncio
+32 | import inspect
+   | ^^^^^^^^^^^^^^
+33 | import logging
+34 | from pydantic import BaseModel, Field
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:33:1
+   |
+31 | import asyncio
+32 | import inspect
+33 | import logging
+   | ^^^^^^^^^^^^^^
+34 | from pydantic import BaseModel, Field
+35 | from typing import Any, Awaitable, Callable, Optional, Union
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:34:1
+   |
+32 | import inspect
+33 | import logging
+34 | from pydantic import BaseModel, Field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+35 | from typing import Any, Awaitable, Callable, Optional, Union
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:35:1
+   |
+33 | import logging
+34 | from pydantic import BaseModel, Field
+35 | from typing import Any, Awaitable, Callable, Optional, Union
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |
+37 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:37:1
+   |
+35 | from typing import Any, Awaitable, Callable, Optional, Union
+36 |
+37 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 | from obsidian_hive.core.managers.job_manager import JobManager
+39 | from obsidian_hive.core.engine import ObsidianEngine
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:38:1
+   |
+37 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+38 | from obsidian_hive.core.managers.job_manager import JobManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from obsidian_hive.core.engine import ObsidianEngine
+40 | from obsidian_hive.core.managers.report_manager import ReportManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:39:1
+   |
+37 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+38 | from obsidian_hive.core.managers.job_manager import JobManager
+39 | from obsidian_hive.core.engine import ObsidianEngine
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 | from obsidian_hive.core.managers.report_manager import ReportManager
+41 | from obsidian_hive.agents.core.prompts.system import get_system_prompt
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:40:1
+   |
+38 | from obsidian_hive.core.managers.job_manager import JobManager
+39 | from obsidian_hive.core.engine import ObsidianEngine
+40 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 | from obsidian_hive.agents.core.prompts.system import get_system_prompt
+42 | from obsidian_hive.agents.core.tools.tools import CoreTools
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:41:1
+   |
+39 | from obsidian_hive.core.engine import ObsidianEngine
+40 | from obsidian_hive.core.managers.report_manager import ReportManager
+41 | from obsidian_hive.agents.core.prompts.system import get_system_prompt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 | from obsidian_hive.agents.core.tools.tools import CoreTools
+43 | from obsidian_hive.config.config import CORE_CONFIG
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:42:1
+   |
+40 | from obsidian_hive.core.managers.report_manager import ReportManager
+41 | from obsidian_hive.agents.core.prompts.system import get_system_prompt
+42 | from obsidian_hive.agents.core.tools.tools import CoreTools
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 | from obsidian_hive.config.config import CORE_CONFIG
+44 | from obsidian_hive.agents.shared.human_in_loop import Confirmer
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:43:1
+   |
+41 | from obsidian_hive.agents.core.prompts.system import get_system_prompt
+42 | from obsidian_hive.agents.core.tools.tools import CoreTools
+43 | from obsidian_hive.config.config import CORE_CONFIG
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | from obsidian_hive.agents.shared.human_in_loop import Confirmer
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/agent.py:44:1
+   |
+42 | from obsidian_hive.agents.core.tools.tools import CoreTools
+43 | from obsidian_hive.config.config import CORE_CONFIG
+44 | from obsidian_hive.agents.shared.human_in_loop import Confirmer
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+45 |
+46 | logger = logging.getLogger("obsidian_coralie")
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:28:1
+   |
+26 | """
+27 |
+28 | import os
+   | ^^^^^^^^^
+29 | import asyncio
+30 | import tempfile
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:29:1
+   |
+28 | import os
+29 | import asyncio
+   | ^^^^^^^^^^^^^^
+30 | import tempfile
+31 | import shutil
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:30:1
+   |
+28 | import os
+29 | import asyncio
+30 | import tempfile
+   | ^^^^^^^^^^^^^^^
+31 | import shutil
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:31:1
+   |
+29 | import asyncio
+30 | import tempfile
+31 | import shutil
+   | ^^^^^^^^^^^^^
+32 |
+33 | # --- Guard nest_asyncio, même pattern que core/engine.py::_test() ---
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:39:1
+   |
+37 |     loop = asyncio.new_event_loop()
+38 |     asyncio.set_event_loop(loop)
+39 | import nest_asyncio
+   | ^^^^^^^^^^^^^^^^^^^
+40 | nest_asyncio.apply()
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:42:1
+   |
+40 | nest_asyncio.apply()
+41 |
+42 | from obsidian_hive.core.engine import ObsidianEngine
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+44 | from obsidian_hive.core.managers.job_manager import JobManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:43:1
+   |
+42 | from obsidian_hive.core.engine import ObsidianEngine
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | from obsidian_hive.core.managers.job_manager import JobManager
+45 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:44:1
+   |
+42 | from obsidian_hive.core.engine import ObsidianEngine
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+44 | from obsidian_hive.core.managers.job_manager import JobManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+45 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+46 | from obsidian_hive.core.assets.asset_types import WebAsset, Priority
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:45:1
+   |
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+44 | from obsidian_hive.core.managers.job_manager import JobManager
+45 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+46 | from obsidian_hive.core.assets.asset_types import WebAsset, Priority
+47 | from obsidian_hive.agents.core.agent import Coralie
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:46:1
+   |
+44 | from obsidian_hive.core.managers.job_manager import JobManager
+45 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+46 | from obsidian_hive.core.assets.asset_types import WebAsset, Priority
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+47 | from obsidian_hive.agents.core.agent import Coralie
+   |
+
+E402 Module level import not at top of file
+  --> agents/core/test/test_coralie.py:47:1
+   |
+45 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+46 | from obsidian_hive.core.assets.asset_types import WebAsset, Priority
+47 | from obsidian_hive.agents.core.agent import Coralie
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+F541 [*] f-string without any placeholders
+   --> agents/core/test/test_coralie.py:216:11
+    |
+214 |     )
+215 |
+216 |     print(f"✅ Données factices : 2 assets, 3 rapports")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+217 |     print(f"   - {asset1.name} ({asset1.id})")
+218 |     print(f"   - {asset2.name} ({asset2.id})")
+    |
+help: Remove extraneous `f` prefix
+
+F401 [*] `os` imported but unused
+  --> agents/core/tools/tools.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os
+   |        ^^
+10 | import asyncio
+11 | import functools
+   |
+help: Remove unused import: `os`
+
+F401 [*] `asyncio` imported but unused
+  --> agents/core/tools/tools.py:10:8
+   |
+ 9 | import os
+10 | import asyncio
+   |        ^^^^^^^
+11 | import functools
+12 | import inspect
+   |
+help: Remove unused import: `asyncio`
+
+F401 [*] `functools` imported but unused
+  --> agents/core/tools/tools.py:11:8
+   |
+ 9 | import os
+10 | import asyncio
+11 | import functools
+   |        ^^^^^^^^^
+12 | import inspect
+13 | from datetime import datetime, timedelta
+   |
+help: Remove unused import: `functools`
+
+F401 [*] `modules_utils.safe_subprocess.safe_run` imported but unused
+  --> agents/core/tools/tools.py:22:43
+   |
+20 | from obsidian_hive.core.managers.job_manager import JobManager
+21 | from obsidian_hive.core.managers.report_manager import ReportManager
+22 | from modules_utils.safe_subprocess import safe_run, CommandNotAllowedError
+   |                                           ^^^^^^^^
+23 | from obsidian_hive.agents.core.tools.tools_model_entry import (
+24 |     GetAssetEntry, GetAssetByNameEntry, ListAssetEntry, ListAssetByTagsEntry,
+   |
+help: Remove unused import
+
+F401 [*] `modules_utils.safe_subprocess.CommandNotAllowedError` imported but unused
+  --> agents/core/tools/tools.py:22:53
+   |
+20 | from obsidian_hive.core.managers.job_manager import JobManager
+21 | from obsidian_hive.core.managers.report_manager import ReportManager
+22 | from modules_utils.safe_subprocess import safe_run, CommandNotAllowedError
+   |                                                     ^^^^^^^^^^^^^^^^^^^^^^
+23 | from obsidian_hive.agents.core.tools.tools_model_entry import (
+24 |     GetAssetEntry, GetAssetByNameEntry, ListAssetEntry, ListAssetByTagsEntry,
+   |
+help: Remove unused import
+
+F401 [*] `modules_utils.agent_utils.timer` imported but unused
+  --> agents/core/tools/tools_model_entry.py:12:5
+   |
+10 | from pydantic import BaseModel, Field, field_validator, model_validator
+11 | from modules_utils.agent_utils import (
+12 |     timer, _validate_confined, _validate_path,
+   |     ^^^^^
+13 | )
+14 | from obsidian_hive.core.assets.asset_types import (
+   |
+help: Remove unused import
+
+F401 [*] `modules_utils.agent_utils._validate_confined` imported but unused
+  --> agents/core/tools/tools_model_entry.py:12:12
+   |
+10 | from pydantic import BaseModel, Field, field_validator, model_validator
+11 | from modules_utils.agent_utils import (
+12 |     timer, _validate_confined, _validate_path,
+   |            ^^^^^^^^^^^^^^^^^^
+13 | )
+14 | from obsidian_hive.core.assets.asset_types import (
+   |
+help: Remove unused import
+
+F401 [*] `modules_utils.agent_utils._validate_path` imported but unused
+  --> agents/core/tools/tools_model_entry.py:12:32
+   |
+10 | from pydantic import BaseModel, Field, field_validator, model_validator
+11 | from modules_utils.agent_utils import (
+12 |     timer, _validate_confined, _validate_path,
+   |                                ^^^^^^^^^^^^^^
+13 | )
+14 | from obsidian_hive.core.assets.asset_types import (
+   |
+help: Remove unused import
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:46:1
+   |
+44 | """
+45 |
+46 | import inspect
+   | ^^^^^^^^^^^^^^
+47 | import asyncio
+48 | from functools import wraps
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:47:1
+   |
+46 | import inspect
+47 | import asyncio
+   | ^^^^^^^^^^^^^^
+48 | from functools import wraps
+49 | from typing import Any, Awaitable, Callable, NamedTuple, Optional
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:48:1
+   |
+46 | import inspect
+47 | import asyncio
+48 | from functools import wraps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 | from typing import Any, Awaitable, Callable, NamedTuple, Optional
+50 | from uuid import uuid4
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:49:1
+   |
+47 | import asyncio
+48 | from functools import wraps
+49 | from typing import Any, Awaitable, Callable, NamedTuple, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 | from uuid import uuid4
+51 | from modules_utils.logger import get_logger
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:50:1
+   |
+48 | from functools import wraps
+49 | from typing import Any, Awaitable, Callable, NamedTuple, Optional
+50 | from uuid import uuid4
+   | ^^^^^^^^^^^^^^^^^^^^^^
+51 | from modules_utils.logger import get_logger
+52 | logger = get_logger("human_in_loop")
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/human_in_loop.py:51:1
+   |
+49 | from typing import Any, Awaitable, Callable, NamedTuple, Optional
+50 | from uuid import uuid4
+51 | from modules_utils.logger import get_logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+52 | logger = get_logger("human_in_loop")
+   |
+
+E402 Module level import not at top of file
+   --> agents/shared/human_in_loop.py:351:1
+    |
+351 | import contextvars
+    | ^^^^^^^^^^^^^^^^^^
+352 |
+353 | current_confirm_username: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
+    |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop.py:24:1
+   |
+22 | """
+23 |
+24 | import asyncio
+   | ^^^^^^^^^^^^^^
+25 | from functools import partial
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop.py:25:1
+   |
+24 | import asyncio
+25 | from functools import partial
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |
+27 | from obsidian_hive.agents.shared.human_in_loop import (
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop.py:27:1
+   |
+25 |   from functools import partial
+26 |
+27 | / from obsidian_hive.agents.shared.human_in_loop import (
+28 | |     Decision,
+29 | |     ConfirmationDenied,
+30 | |     ConfirmationTimeout,
+31 | |     confirm,
+32 | |     WSConfirmer,
+33 | | )
+   | |_^
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop_pytest.py:22:1
+   |
+20 | """
+21 |
+22 | import asyncio
+   | ^^^^^^^^^^^^^^
+23 | from functools import partial
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop_pytest.py:23:1
+   |
+22 | import asyncio
+23 | from functools import partial
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | import pytest
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop_pytest.py:25:1
+   |
+23 | from functools import partial
+24 |
+25 | import pytest
+   | ^^^^^^^^^^^^^
+26 |
+27 | from obsidian_hive.agents.shared.human_in_loop import (
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/test/test_human_in_loop_pytest.py:27:1
+   |
+25 |   import pytest
+26 |
+27 | / from obsidian_hive.agents.shared.human_in_loop import (
+28 | |     Decision,
+29 | |     ConfirmationDenied,
+30 | |     ConfirmationTimeout,
+31 | |     confirm,
+32 | |     WSConfirmer,
+33 | | )
+   | |_^
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/tool_docs_utils.py:31:1
+   |
+29 | """
+30 |
+31 | from typing import Callable
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from obsidian_hive.core.managers.llm_managers.tool_builder import function_to_generic_schema
+   |
+
+E402 Module level import not at top of file
+  --> agents/shared/tool_docs_utils.py:32:1
+   |
+31 | from typing import Callable
+32 | from obsidian_hive.core.managers.llm_managers.tool_builder import function_to_generic_schema
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |
+34 | # Valeurs par défaut si un tool existe dans le code mais n'a pas encore
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:21:1
+   |
+19 | """
+20 |
+21 | import asyncio
+   | ^^^^^^^^^^^^^^
+22 |
+23 | from fastapi import HTTPException, APIRouter, status, Request
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:23:1
+   |
+21 | import asyncio
+22 |
+23 | from fastapi import HTTPException, APIRouter, status, Request
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | from obsidian_hive.core.assets.asset_types import list_agent_capabilities
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:25:1
+   |
+23 | from fastapi import HTTPException, APIRouter, status, Request
+24 |
+25 | from obsidian_hive.core.assets.asset_types import list_agent_capabilities
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from obsidian_hive.api.models import (
+27 |     WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:26:1
+   |
+25 |   from obsidian_hive.core.assets.asset_types import list_agent_capabilities
+26 | / from obsidian_hive.api.models import (
+27 | |     WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
+28 | |     ResumeAssetData, PauseAssetData, UpdateAssetData, SyncSourceCodeData,
+29 | |     AlexAnalyzeData, SearchAssetData, ServerAgentRegisterData, ServerAgentRevokeData,
+30 | |     ServerAssetModel, ServerToolsData, ServerCapabilitiesData,
+31 | |     PauseAssetsData, ResumeAssetsData, RotateSecretData, ReactivateServerAssetData
+32 | | )
+   | |_^
+33 |   from scanner_ia.api.api import _resolve_helpers
+34 |   from obsidian_hive.agents.analyst.agent import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:33:1
+   |
+31 |     PauseAssetsData, ResumeAssetsData, RotateSecretData, ReactivateServerAssetData
+32 | )
+33 | from scanner_ia.api.api import _resolve_helpers
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 | from obsidian_hive.agents.analyst.agent import (
+35 |     Analyst, AnalystResult,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:34:1
+   |
+32 |   )
+33 |   from scanner_ia.api.api import _resolve_helpers
+34 | / from obsidian_hive.agents.analyst.agent import (
+35 | |     Analyst, AnalystResult,
+36 | |     NoReportProducedError, create_alex
+37 | | )
+   | |_^
+38 |   from obsidian_hive.core.managers.report_manager import ReportManager
+39 |   from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:38:1
+   |
+36 |     NoReportProducedError, create_alex
+37 | )
+38 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+40 | from modules_utils.limiter import limiter
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:39:1
+   |
+37 | )
+38 | from obsidian_hive.core.managers.report_manager import ReportManager
+39 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 | from modules_utils.limiter import limiter
+41 | from obsidian_hive.api.ap_config import LIMITE
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:40:1
+   |
+38 | from obsidian_hive.core.managers.report_manager import ReportManager
+39 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+40 | from modules_utils.limiter import limiter
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+41 | from obsidian_hive.api.ap_config import LIMITE
+42 | from modules_utils.keyed_lock import resource_lock
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:41:1
+   |
+39 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+40 | from modules_utils.limiter import limiter
+41 | from obsidian_hive.api.ap_config import LIMITE
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 | from modules_utils.keyed_lock import resource_lock
+43 | from obsidian_hive.core.assets.asset_types import AssetItem
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:42:1
+   |
+40 | from modules_utils.limiter import limiter
+41 | from obsidian_hive.api.ap_config import LIMITE
+42 | from modules_utils.keyed_lock import resource_lock
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 | from obsidian_hive.core.assets.asset_types import AssetItem
+44 | from obsidian_hive.core.assets.server_asset.tools.tools import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:43:1
+   |
+41 | from obsidian_hive.api.ap_config import LIMITE
+42 | from modules_utils.keyed_lock import resource_lock
+43 | from obsidian_hive.core.assets.asset_types import AssetItem
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | from obsidian_hive.core.assets.server_asset.tools.tools import (
+45 |     tool_exists as server_tool_exists,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:44:1
+   |
+42 |   from modules_utils.keyed_lock import resource_lock
+43 |   from obsidian_hive.core.assets.asset_types import AssetItem
+44 | / from obsidian_hive.core.assets.server_asset.tools.tools import (
+45 | |     tool_exists as server_tool_exists,
+46 | |     list_tools as server_list_tools
+47 | | )
+   | |_^
+48 |   from modules_utils.cryto_utils import hashpw
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:48:1
+   |
+46 |     list_tools as server_list_tools
+47 | )
+48 | from modules_utils.cryto_utils import hashpw
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 |
+50 | from obsidian_hive.api.core_shared import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:50:1
+   |
+48 |   from modules_utils.cryto_utils import hashpw
+49 |
+50 | / from obsidian_hive.api.core_shared import (
+51 | |     get_engine,
+52 | |     get_server_agent_ws_manager,
+53 | |     handle_web_asset_creating,
+54 | |     handle_network_asset_creating,
+55 | |     handle_server_asset_creating,
+56 | |     register_server_agent,
+57 | |     revoke_server_asset,
+58 | |     add_asset,
+59 | |     _server_error,
+60 | |     _update_server_asset_field,
+61 | | )
+   | |_^
+62 |   from obsidian_hive.core.assets.asset_types import ServerAsset
+   |
+
+E402 Module level import not at top of file
+  --> api/core_router.py:62:1
+   |
+60 |     _update_server_asset_field,
+61 | )
+62 | from obsidian_hive.core.assets.asset_types import ServerAsset
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+63 |
+64 | router = APIRouter()
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:20:1
+   |
+18 | """
+19 |
+20 | import os
+   | ^^^^^^^^^
+21 | import json5
+22 | import shutil
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:21:1
+   |
+20 | import os
+21 | import json5
+   | ^^^^^^^^^^^^
+22 | import shutil
+23 | import functools
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:22:1
+   |
+20 | import os
+21 | import json5
+22 | import shutil
+   | ^^^^^^^^^^^^^
+23 | import functools
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:23:1
+   |
+21 | import json5
+22 | import shutil
+23 | import functools
+   | ^^^^^^^^^^^^^^^^
+24 |
+25 | from fastapi import HTTPException, status
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:25:1
+   |
+23 | import functools
+24 |
+25 | from fastapi import HTTPException, status
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from pydantic import ValidationError
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:26:1
+   |
+25 | from fastapi import HTTPException, status
+26 | from pydantic import ValidationError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |
+28 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:28:1
+   |
+26 | from pydantic import ValidationError
+27 |
+28 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id
+30 | from obsidian_hive.core.engine import ObsidianEngine
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:29:1
+   |
+28 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+29 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from obsidian_hive.core.engine import ObsidianEngine
+31 | from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:30:1
+   |
+28 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+29 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id
+30 | from obsidian_hive.core.engine import ObsidianEngine
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:31:1
+   |
+29 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id
+30 | from obsidian_hive.core.engine import ObsidianEngine
+31 | from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+33 | from modules_utils.api_dependencies import AuthManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:32:1
+   |
+30 | from obsidian_hive.core.engine import ObsidianEngine
+31 | from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from modules_utils.api_dependencies import AuthManager
+34 | from obsidian_hive.core.assets.asset_types import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:33:1
+   |
+31 | from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+33 | from modules_utils.api_dependencies import AuthManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 | from obsidian_hive.core.assets.asset_types import (
+35 |     WebAppAsset, WebAsset, NetworkAsset, AssetType,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:34:1
+   |
+32 |   from obsidian_hive.core.managers.conversation_manager import ConversationManager
+33 |   from modules_utils.api_dependencies import AuthManager
+34 | / from obsidian_hive.core.assets.asset_types import (
+35 | |     WebAppAsset, WebAsset, NetworkAsset, AssetType,
+36 | |     ServerAsset, utcnow, AgentStatus as ServerAgentStatus,
+37 | | )
+   | |_^
+38 |   from obsidian_hive.api.models import (
+39 |       WebAssetModel, NetworkAssetModel, ServerAssetModel,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:38:1
+   |
+36 |       ServerAsset, utcnow, AgentStatus as ServerAgentStatus,
+37 |   )
+38 | / from obsidian_hive.api.models import (
+39 | |     WebAssetModel, NetworkAssetModel, ServerAssetModel,
+40 | |     ServerAgentRegisterData, ServerAgentRevokeData,
+41 | | )
+   | |_^
+42 |   from obsidian_hive.config.config import (
+43 |       ENGINE_CONFIG,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:42:1
+   |
+40 |       ServerAgentRegisterData, ServerAgentRevokeData,
+41 |   )
+42 | / from obsidian_hive.config.config import (
+43 | |     ENGINE_CONFIG,
+44 | |     SCANNER_CONF_REQUIRED_KEYS,
+45 | |     IDS_CONF_REQUIRED_KEYS,
+46 | | )
+   | |_^
+47 |   from scanner_ia.api.api_config import (
+48 |       CONFIG_TEMP_DIR, DEFAULT_SCAN_PATH,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:47:1
+   |
+45 |       IDS_CONF_REQUIRED_KEYS,
+46 |   )
+47 | / from scanner_ia.api.api_config import (
+48 | |     CONFIG_TEMP_DIR, DEFAULT_SCAN_PATH,
+49 | |     MAX_CONFIG_SIZE,
+50 | | )
+   | |_^
+51 |   from scanner_ia.api.api import _resolve_helpers  # noqa: F401 (ré-exporté, utilisé aussi par core_router.py)
+52 |   from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:51:1
+   |
+49 |     MAX_CONFIG_SIZE,
+50 | )
+51 | from scanner_ia.api.api import _resolve_helpers  # noqa: F401 (ré-exporté, utilisé aussi par core_router.py)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+52 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+53 | from ids_ips_ia.main.orchestrator import build_ifaces
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:52:1
+   |
+50 | )
+51 | from scanner_ia.api.api import _resolve_helpers  # noqa: F401 (ré-exporté, utilisé aussi par core_router.py)
+52 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+53 | from ids_ips_ia.main.orchestrator import build_ifaces
+54 | from modules_utils.validate_config import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:53:1
+   |
+51 | from scanner_ia.api.api import _resolve_helpers  # noqa: F401 (ré-exporté, utilisé aussi par core_router.py)
+52 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+53 | from ids_ips_ia.main.orchestrator import build_ifaces
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+54 | from modules_utils.validate_config import (
+55 |     validate_and_merge_config,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:54:1
+   |
+52 |   from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+53 |   from ids_ips_ia.main.orchestrator import build_ifaces
+54 | / from modules_utils.validate_config import (
+55 | |     validate_and_merge_config,
+56 | |     ConfigError,
+57 | | )
+   | |_^
+58 |   from obsidian_hive.agents.core.agent import Coralie, create_coralie
+59 |   from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:58:1
+   |
+56 |     ConfigError,
+57 | )
+58 | from obsidian_hive.agents.core.agent import Coralie, create_coralie
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+59 | from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
+60 | from obsidian_hive.api.ws_manager import WSManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:59:1
+   |
+57 | )
+58 | from obsidian_hive.agents.core.agent import Coralie, create_coralie
+59 | from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+60 | from obsidian_hive.api.ws_manager import WSManager
+61 | from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:60:1
+   |
+58 | from obsidian_hive.agents.core.agent import Coralie, create_coralie
+59 | from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
+60 | from obsidian_hive.api.ws_manager import WSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+61 | from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
+62 | from modules_utils.keyed_lock import resource_lock
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:61:1
+   |
+59 | from obsidian_hive.agents.shared.human_in_loop import WSConfirmer
+60 | from obsidian_hive.api.ws_manager import WSManager
+61 | from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+62 | from modules_utils.keyed_lock import resource_lock
+63 | from modules_utils.cryto_utils import hashpw
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:62:1
+   |
+60 | from obsidian_hive.api.ws_manager import WSManager
+61 | from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
+62 | from modules_utils.keyed_lock import resource_lock
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+63 | from modules_utils.cryto_utils import hashpw
+64 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:63:1
+   |
+61 | from obsidian_hive.api.ap_config import ASSETS_CONFIG_DIR
+62 | from modules_utils.keyed_lock import resource_lock
+63 | from modules_utils.cryto_utils import hashpw
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+64 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_shared.py:64:1
+   |
+62 | from modules_utils.keyed_lock import resource_lock
+63 | from modules_utils.cryto_utils import hashpw
+64 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+65 |
+66 | # =============================================================================
+   |
+
+E713 [*] Test for membership should be `not in`
+   --> api/core_shared.py:168:16
+    |
+166 |     missing = []
+167 |     for key in keys:
+168 |         if not key in obj:
+    |                ^^^^^^^^^^
+169 |             missing.append(key)
+    |
+help: Convert to `not in`
+
+E722 Do not use bare `except`
+   --> api/core_shared.py:512:9
+    |
+510 |         try:
+511 |             os.unlink(path)
+512 |         except:
+    |         ^^^^^^
+513 |             pass
+    |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:24:1
+   |
+22 | """
+23 |
+24 | import asyncio
+   | ^^^^^^^^^^^^^^
+25 | from uuid import uuid4
+26 | from fastapi import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:25:1
+   |
+24 | import asyncio
+25 | from uuid import uuid4
+   | ^^^^^^^^^^^^^^^^^^^^^^
+26 | from fastapi import (
+27 |     HTTPException, APIRouter, status,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:26:1
+   |
+24 |   import asyncio
+25 |   from uuid import uuid4
+26 | / from fastapi import (
+27 | |     HTTPException, APIRouter, status,
+28 | |     WebSocket, WebSocketDisconnect, WebSocketException
+29 | | )
+   | |_^
+30 |   from pydantic import ValidationError
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:30:1
+   |
+28 |     WebSocket, WebSocketDisconnect, WebSocketException
+29 | )
+30 | from pydantic import ValidationError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:32:1
+   |
+30 | from pydantic import ValidationError
+31 |
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from obsidian_hive.api.models import AlexAnalyzeData
+34 | from obsidian_hive.agents.analyst.agent import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:33:1
+   |
+32 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+33 | from obsidian_hive.api.models import AlexAnalyzeData
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 | from obsidian_hive.agents.analyst.agent import (
+35 |     AnalystResult,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:34:1
+   |
+32 |   from obsidian_hive.core.managers.conversation_manager import ConversationManager
+33 |   from obsidian_hive.api.models import AlexAnalyzeData
+34 | / from obsidian_hive.agents.analyst.agent import (
+35 | |     AnalystResult,
+36 | |     NoReportProducedError, create_alex
+37 | | )
+   | |_^
+38 |   from obsidian_hive.agents.core.agent import Coralie, CoralieResult
+39 |   from obsidian_hive.agents.shared.human_in_loop import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:38:1
+   |
+36 |     NoReportProducedError, create_alex
+37 | )
+38 | from obsidian_hive.agents.core.agent import Coralie, CoralieResult
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from obsidian_hive.agents.shared.human_in_loop import (
+40 |     WSConfirmer, ConfirmerNotAttachedError, ConfirmationTimeout, ConfirmationDenied,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:39:1
+   |
+37 |   )
+38 |   from obsidian_hive.agents.core.agent import Coralie, CoralieResult
+39 | / from obsidian_hive.agents.shared.human_in_loop import (
+40 | |     WSConfirmer, ConfirmerNotAttachedError, ConfirmationTimeout, ConfirmationDenied,
+41 | |     current_confirm_username,
+42 | | )
+   | |_^
+43 |   from obsidian_hive.core.managers.report_manager import ReportManager
+44 |   from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:43:1
+   |
+41 |     current_confirm_username,
+42 | )
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+45 | from obsidian_hive.api.ws_manager import WSManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:44:1
+   |
+42 | )
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+44 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+45 | from obsidian_hive.api.ws_manager import WSManager
+46 | from modules_utils.keyed_lock import resource_lock
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:45:1
+   |
+43 | from obsidian_hive.core.managers.report_manager import ReportManager
+44 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+45 | from obsidian_hive.api.ws_manager import WSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+46 | from modules_utils.keyed_lock import resource_lock
+47 | from modules_utils.cryto_utils import checkpw
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:46:1
+   |
+44 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+45 | from obsidian_hive.api.ws_manager import WSManager
+46 | from modules_utils.keyed_lock import resource_lock
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+47 | from modules_utils.cryto_utils import checkpw
+48 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:47:1
+   |
+45 | from obsidian_hive.api.ws_manager import WSManager
+46 | from modules_utils.keyed_lock import resource_lock
+47 | from modules_utils.cryto_utils import checkpw
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+49 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:48:1
+   |
+46 | from modules_utils.keyed_lock import resource_lock
+47 | from modules_utils.cryto_utils import checkpw
+48 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+50 | from obsidian_hive.core.assets.server_asset.tools.tools import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:49:1
+   |
+47 | from modules_utils.cryto_utils import checkpw
+48 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+49 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 | from obsidian_hive.core.assets.server_asset.tools.tools import (
+51 |     need_confirmation as server_tool_need_confirmation,
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:50:1
+   |
+48 |   from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+49 |   from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+50 | / from obsidian_hive.core.assets.server_asset.tools.tools import (
+51 | |     need_confirmation as server_tool_need_confirmation,
+52 | |     tool_risk as server_tool_risk,
+53 | |     tool_exists as server_tool_exists,
+54 | | )
+   | |_^
+55 |   from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStatus as ServerAgentStatus
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:55:1
+   |
+53 |     tool_exists as server_tool_exists,
+54 | )
+55 | from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStatus as ServerAgentStatus
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+56 |
+57 | from obsidian_hive.api.core_shared import (
+   |
+
+E402 Module level import not at top of file
+  --> api/core_ws_router.py:57:1
+   |
+55 |   from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStatus as ServerAgentStatus
+56 |
+57 | / from obsidian_hive.api.core_shared import (
+58 | |     get_engine,
+59 | |     get_ws_manager,
+60 | |     get_server_agent_ws_manager,
+61 | |     get_confirmer,
+62 | |     get_coralie,
+63 | |     get_auth_manager,
+64 | |     get_conversation_manager,
+65 | |     _notify_agent_config_updated,
+66 | | )
+   | |_^
+67 |
+68 |   ws_router = APIRouter()
+   |
+
+E722 Do not use bare `except`
+   --> api/core_ws_router.py:769:9
+    |
+767 |         try:
+768 |             await ws.close()
+769 |         except:
+    |         ^^^^^^
+770 |             pass
+    |
+
+E401 [*] Multiple imports on one line
+  --> api/login_router.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> api/login_router.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |        ^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `sys` imported but unused
+  --> api/login_router.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `modules_utils.cryto_utils.checkpw` imported but unused
+  --> api/login_router.py:17:39
+   |
+15 |     Request
+16 | )
+17 | from modules_utils.cryto_utils import checkpw
+   |                                       ^^^^^^^
+18 | from obsidian_hive.api.models import LoginData, RefreshTokenData
+19 | from modules_utils.api_dependencies import AuthManager
+   |
+help: Remove unused import: `modules_utils.cryto_utils.checkpw`
+
+E401 [*] Multiple imports on one line
+  --> api/main_api.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> api/main_api.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `time` imported but unused
+  --> api/main_api.py:12:8
+   |
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+11 |
+12 | import time
+   |        ^^^^
+13 | import aiohttp
+14 | import asyncio
+   |
+help: Remove unused import: `time`
+
+F401 [*] `fastapi.status` imported but unused
+  --> api/main_api.py:21:14
+   |
+19 | from dotenv import load_dotenv
+20 | from fastapi import (
+21 |     FastAPI, status, Depends, HTTPException,
+   |              ^^^^^^
+22 |     Request
+23 | )
+   |
+help: Remove unused import: `fastapi.status`
+
+F401 [*] `scanner_ia.api.api.get_shared_scanner_ia` imported but unused
+  --> api/main_api.py:31:31
+   |
+29 | from modules_utils.api_dependencies import AuthManager, get_loop
+30 | from scanner_ia.api.api import (
+31 |     router as scanner_router, get_shared_scanner_ia,
+   |                               ^^^^^^^^^^^^^^^^^^^^^
+32 |     ws_router as scanner_ws_router,
+33 | )
+   |
+help: Remove unused import: `scanner_ia.api.api.get_shared_scanner_ia`
+
+F401 [*] `anti_phishing_ia.main_phish.get_ap_instance` imported but unused
+  --> api/main_api.py:34:62
+   |
+32 |     ws_router as scanner_ws_router,
+33 | )
+34 | from anti_phishing_ia.main_phish import router as ap_router, get_ap_instance
+   |                                                              ^^^^^^^^^^^^^^^
+35 | from sandbox_ia.api.router import router as sandbox_router, get_orchestrator
+36 | from ids_ips_ia.main.api import (
+   |
+help: Remove unused import: `anti_phishing_ia.main_phish.get_ap_instance`
+
+F401 [*] `sandbox_ia.api.router.get_orchestrator` imported but unused
+  --> api/main_api.py:35:61
+   |
+33 | )
+34 | from anti_phishing_ia.main_phish import router as ap_router, get_ap_instance
+35 | from sandbox_ia.api.router import router as sandbox_router, get_orchestrator
+   |                                                             ^^^^^^^^^^^^^^^^
+36 | from ids_ips_ia.main.api import (
+37 |     router_no_auth as ids_ips_router
+   |
+help: Remove unused import: `sandbox_ia.api.router.get_orchestrator`
+
+F401 [*] `simulateur_attaque_ia.api.routers.router_no_auth.attach_to_state` imported but unused
+  --> api/main_api.py:43:51
+   |
+41 | )
+42 | from simulateur_attaque_ia.api.routers.router_no_auth import (
+43 |     router as make_sim_router, attach_to_state as sim_attach_to_state,
+   |                                                   ^^^^^^^^^^^^^^^^^^^
+44 |     SimulationManager, WSManager as SimWSManager, ContainerManager as SimContainerManager
+45 | )
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.routers.router_no_auth.SimulationManager` imported but unused
+  --> api/main_api.py:44:5
+   |
+42 | from simulateur_attaque_ia.api.routers.router_no_auth import (
+43 |     router as make_sim_router, attach_to_state as sim_attach_to_state,
+44 |     SimulationManager, WSManager as SimWSManager, ContainerManager as SimContainerManager
+   |     ^^^^^^^^^^^^^^^^^
+45 | )
+46 | from simulateur_attaque_ia.api.api import (
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.routers.router_no_auth.WSManager` imported but unused
+  --> api/main_api.py:44:37
+   |
+42 | from simulateur_attaque_ia.api.routers.router_no_auth import (
+43 |     router as make_sim_router, attach_to_state as sim_attach_to_state,
+44 |     SimulationManager, WSManager as SimWSManager, ContainerManager as SimContainerManager
+   |                                     ^^^^^^^^^^^^
+45 | )
+46 | from simulateur_attaque_ia.api.api import (
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.routers.router_no_auth.ContainerManager` imported but unused
+  --> api/main_api.py:44:71
+   |
+42 | from simulateur_attaque_ia.api.routers.router_no_auth import (
+43 |     router as make_sim_router, attach_to_state as sim_attach_to_state,
+44 |     SimulationManager, WSManager as SimWSManager, ContainerManager as SimContainerManager
+   |                                                                       ^^^^^^^^^^^^^^^^^^^
+45 | )
+46 | from simulateur_attaque_ia.api.api import (
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.api.start_tasks` imported but unused
+  --> api/main_api.py:47:20
+   |
+45 | )
+46 | from simulateur_attaque_ia.api.api import (
+47 |     start_tasks as sim_start_tasks, stop_task as sim_stop_task,
+   |                    ^^^^^^^^^^^^^^^
+48 |     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
+49 | )
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.api.stop_task` imported but unused
+  --> api/main_api.py:47:50
+   |
+45 | )
+46 | from simulateur_attaque_ia.api.api import (
+47 |     start_tasks as sim_start_tasks, stop_task as sim_stop_task,
+   |                                                  ^^^^^^^^^^^^^
+48 |     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
+49 | )
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.api.lifespan_start` imported but unused
+  --> api/main_api.py:48:23
+   |
+46 | from simulateur_attaque_ia.api.api import (
+47 |     start_tasks as sim_start_tasks, stop_task as sim_stop_task,
+48 |     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
+   |                       ^^^^^^^^^^^^^^^^^^
+49 | )
+50 | from obsidian_hive.api.core_shared import get_engine
+   |
+help: Remove unused import
+
+F401 [*] `simulateur_attaque_ia.api.api.lifespan_end` imported but unused
+  --> api/main_api.py:48:59
+   |
+46 | from simulateur_attaque_ia.api.api import (
+47 |     start_tasks as sim_start_tasks, stop_task as sim_stop_task,
+48 |     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
+   |                                                           ^^^^^^^^^^^^^^^^
+49 | )
+50 | from obsidian_hive.api.core_shared import get_engine
+   |
+help: Remove unused import
+
+E722 Do not use bare `except`
+   --> api/main_api.py:362:9
+    |
+360 |             loop.run_until_complete(close_api(url))
+361 |             loop.close()
+362 |         except:
+    |         ^^^^^^
+363 |             pass
+364 |     atexit.register(_close)
+    |
+
+E722 Do not use bare `except`
+   --> api/main_api.py:373:9
+    |
+371 |         try:
+372 |             print("Methode :", route.methods)
+373 |         except: 
+    |         ^^^^^^
+374 |             print("Methode : N/A")
+375 |         print()
+    |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:18:1
+   |
+16 | """
+17 |
+18 | from fastapi import APIRouter, HTTPException, Request, Header, status, Depends
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |
+20 | from obsidian_hive.core.managers.job_manager import JobManager
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:20:1
+   |
+18 | from fastapi import APIRouter, HTTPException, Request, Header, status, Depends
+19 |
+20 | from obsidian_hive.core.managers.job_manager import JobManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from obsidian_hive.core.managers.report_manager import ReportManager
+22 | from obsidian_hive.core.managers.conversation_manager import (
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:21:1
+   |
+20 | from obsidian_hive.core.managers.job_manager import JobManager
+21 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from obsidian_hive.core.managers.conversation_manager import (
+23 |     ConversationManager, ConversationNotFoundError,
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:22:1
+   |
+20 |   from obsidian_hive.core.managers.job_manager import JobManager
+21 |   from obsidian_hive.core.managers.report_manager import ReportManager
+22 | / from obsidian_hive.core.managers.conversation_manager import (
+23 | |     ConversationManager, ConversationNotFoundError,
+24 | | )
+   | |_^
+25 |   from obsidian_hive.core.managers.job_catalog import JOB_CATALOG, describe_catalog
+   |
+
+F401 [*] `obsidian_hive.core.managers.conversation_manager.ConversationNotFoundError` imported but unused
+  --> api/manager_router.py:23:26
+   |
+21 | from obsidian_hive.core.managers.report_manager import ReportManager
+22 | from obsidian_hive.core.managers.conversation_manager import (
+23 |     ConversationManager, ConversationNotFoundError,
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+24 | )
+25 | from obsidian_hive.core.managers.job_catalog import JOB_CATALOG, describe_catalog
+   |
+help: Remove unused import: `obsidian_hive.core.managers.conversation_manager.ConversationNotFoundError`
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:25:1
+   |
+23 |     ConversationManager, ConversationNotFoundError,
+24 | )
+25 | from obsidian_hive.core.managers.job_catalog import JOB_CATALOG, describe_catalog
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |
+27 | from obsidian_hive.api.models import (
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:27:1
+   |
+25 |   from obsidian_hive.core.managers.job_catalog import JOB_CATALOG, describe_catalog
+26 |
+27 | / from obsidian_hive.api.models import (
+28 | |     GetJobData, ModifyJobData, AddJobData, InMemoryFilterData,
+29 | |     GetReportData, GetByAssetData, ListReportsByFilterData, ReportStatsData,
+30 | |     ReportIdData, UpdateReportSeverityData, DeleteOldReportsData,
+31 | |     CreateConversationData, ConversationRefData, ListConversationsData,
+32 | |     SearchConversationsData, UpdateConversationTitleData, SetFavoriteData,
+33 | |     SetArchivedData, GetMessagesData, GetLastMessageData, MessageIdData,
+34 | |     UpdateMessageContentData, ListCriticalReportsData
+35 | | )
+   | |_^
+36 |   from modules_utils.limiter import limiter
+37 |   from obsidian_hive.api.ap_config import LIMITE
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:36:1
+   |
+34 |     UpdateMessageContentData, ListCriticalReportsData
+35 | )
+36 | from modules_utils.limiter import limiter
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 | from obsidian_hive.api.ap_config import LIMITE
+38 | from modules_utils.keyed_lock import resource_lock
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:37:1
+   |
+35 | )
+36 | from modules_utils.limiter import limiter
+37 | from obsidian_hive.api.ap_config import LIMITE
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 | from modules_utils.keyed_lock import resource_lock
+39 | router = APIRouter()
+   |
+
+E402 Module level import not at top of file
+  --> api/manager_router.py:38:1
+   |
+36 | from modules_utils.limiter import limiter
+37 | from obsidian_hive.api.ap_config import LIMITE
+38 | from modules_utils.keyed_lock import resource_lock
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | router = APIRouter()
+   |
+
+E401 [*] Multiple imports on one line
+  --> api/models.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..")))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> api/models.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..")))
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `scanner_ia.api.api.DEFAULT_SCAN_PATH` imported but unused
+  --> api/models.py:21:33
+   |
+19 | )
+20 | from scanner_ia.api.api import (
+21 |     ScanArgs, ScanInstanceArgs, DEFAULT_SCAN_PATH
+   |                                 ^^^^^^^^^^^^^^^^^
+22 | )
+23 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+   |
+help: Remove unused import: `scanner_ia.api.api.DEFAULT_SCAN_PATH`
+
+F401 [*] `ids_ips_ia.config.config_manager._config_path` imported but unused
+  --> api/models.py:23:62
+   |
+21 |     ScanArgs, ScanInstanceArgs, DEFAULT_SCAN_PATH
+22 | )
+23 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+   |                                                              ^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | class LoginData(BaseModel):
+   |
+help: Remove unused import: `ids_ips_ia.config.config_manager._config_path`
+
+E401 [*] Multiple imports on one line
+  --> api/run_api.py:10:1
+   |
+10 | import os, sys
+   | ^^^^^^^^^^^^^^
+11 | import signal
+12 | import asyncio
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> api/run_api.py:10:8
+   |
+10 | import os, sys
+   |        ^^
+11 | import signal
+12 | import asyncio
+   |
+help: Remove unused import: `os`
+
+F401 [*] `asyncio` imported but unused
+  --> api/run_api.py:12:8
+   |
+10 | import os, sys
+11 | import signal
+12 | import asyncio
+   |        ^^^^^^^
+13 | import time
+14 | from obsidian_hive.api.main_api import start, app, close_api_atexit, close_api, stop
+   |
+help: Remove unused import: `asyncio`
+
+F401 [*] `obsidian_hive.api.main_api.close_api_atexit` imported but unused
+  --> api/run_api.py:14:52
+   |
+12 | import asyncio
+13 | import time
+14 | from obsidian_hive.api.main_api import start, app, close_api_atexit, close_api, stop
+   |                                                    ^^^^^^^^^^^^^^^^
+15 | from obsidian_hive.api.ap_config import API_HOST, API_PORT
+16 | import nest_asyncio
+   |
+help: Remove unused import
+
+F401 [*] `obsidian_hive.api.main_api.close_api` imported but unused
+  --> api/run_api.py:14:70
+   |
+12 | import asyncio
+13 | import time
+14 | from obsidian_hive.api.main_api import start, app, close_api_atexit, close_api, stop
+   |                                                                      ^^^^^^^^^
+15 | from obsidian_hive.api.ap_config import API_HOST, API_PORT
+16 | import nest_asyncio
+   |
+help: Remove unused import
+
+F841 Local variable `CLOSE_TARGET` is assigned to but never used
+  --> api/run_api.py:24:5
+   |
+22 |     time.sleep(2)
+23 |     TARGET = f'http://{API_HOST}:{API_PORT}/api'
+24 |     CLOSE_TARGET = TARGET + "/close"
+   |     ^^^^^^^^^^^^
+25 |     # close_api_atexit(CLOSE_TARGET)
+   |
+help: Remove assignment to unused variable `CLOSE_TARGET`
+
+E722 Do not use bare `except`
+  --> api/run_api.py:52:9
+   |
+50 |             print('Interruption , sortie !')
+51 |             break
+52 |         except:
+   |         ^^^^^^
+53 |             break
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:23:1
+   |
+21 | """
+22 |
+23 | import os
+   | ^^^^^^^^^
+24 | import sys
+25 | import json
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:24:1
+   |
+23 | import os
+24 | import sys
+   | ^^^^^^^^^^
+25 | import json
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:25:1
+   |
+23 | import os
+24 | import sys
+25 | import json
+   | ^^^^^^^^^^^
+26 |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+   |
+
+F401 [*] `json` imported but unused
+  --> api/test_api.py:25:8
+   |
+23 | import os
+24 | import sys
+25 | import json
+   |        ^^^^
+26 |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+   |
+help: Remove unused import: `json`
+
+E402 Module level import not at top of file
+  --> api/test_api.py:27:1
+   |
+25 | import json
+26 |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+29 | from fastapi.testclient import TestClient
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:28:1
+   |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from fastapi.testclient import TestClient
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+   |
+
+F401 [*] `obsidian_hive.api.models.WebAssetModel` imported but unused
+  --> api/test_api.py:28:38
+   |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+   |                                      ^^^^^^^^^^^^^
+29 | from fastapi.testclient import TestClient
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+   |
+help: Remove unused import
+
+F401 [*] `obsidian_hive.api.models.NetworkAssetModel` imported but unused
+  --> api/test_api.py:28:53
+   |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+   |                                                     ^^^^^^^^^^^^^^^^^
+29 | from fastapi.testclient import TestClient
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+   |
+help: Remove unused import
+
+E402 Module level import not at top of file
+  --> api/test_api.py:29:1
+   |
+27 | from obsidian_hive.api.main_api import app, lifespan_start, lifespan_end
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+29 | from fastapi.testclient import TestClient
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+31 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:30:1
+   |
+28 | from obsidian_hive.api.models import WebAssetModel, NetworkAssetModel
+29 | from fastapi.testclient import TestClient
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from modules_utils.loop_utils import _run_async
+32 | from dotenv import load_dotenv
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:31:1
+   |
+29 | from fastapi.testclient import TestClient
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+31 | from modules_utils.loop_utils import _run_async
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from dotenv import load_dotenv
+33 | load_dotenv(verbose=True)
+   |
+
+E402 Module level import not at top of file
+  --> api/test_api.py:32:1
+   |
+30 | from obsidian_hive.api.ap_config import USER_ENV_KEY, PASSWD_ENV_KEY
+31 | from modules_utils.loop_utils import _run_async
+32 | from dotenv import load_dotenv
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | load_dotenv(verbose=True)
+34 | # =============================================================================
+   |
+
+F401 [*] `fastapi.HTTPException` imported but unused
+  --> api/utils_router.py:12:32
+   |
+10 | import socket
+11 | import asyncio
+12 | from fastapi import APIRouter, HTTPException, Request, Header, status, Depends, Query
+   |                                ^^^^^^^^^^^^^
+13 | from modules_utils.limiter import limiter
+14 | from obsidian_hive.api.ap_config import LIMITE
+   |
+help: Remove unused import
+
+F401 [*] `fastapi.Header` imported but unused
+  --> api/utils_router.py:12:56
+   |
+10 | import socket
+11 | import asyncio
+12 | from fastapi import APIRouter, HTTPException, Request, Header, status, Depends, Query
+   |                                                        ^^^^^^
+13 | from modules_utils.limiter import limiter
+14 | from obsidian_hive.api.ap_config import LIMITE
+   |
+help: Remove unused import
+
+F401 [*] `fastapi.Depends` imported but unused
+  --> api/utils_router.py:12:72
+   |
+10 | import socket
+11 | import asyncio
+12 | from fastapi import APIRouter, HTTPException, Request, Header, status, Depends, Query
+   |                                                                        ^^^^^^^
+13 | from modules_utils.limiter import limiter
+14 | from obsidian_hive.api.ap_config import LIMITE
+   |
+help: Remove unused import
+
+E402 Module level import not at top of file
+  --> api/ws_manager.py:20:1
+   |
+18 | """
+19 |
+20 | import json
+   | ^^^^^^^^^^^
+21 | from fastapi import WebSocket
+   |
+
+E402 Module level import not at top of file
+  --> api/ws_manager.py:21:1
+   |
+20 | import json
+21 | from fastapi import WebSocket
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+E714 [*] Test for object identity should be `is not`
+  --> api/ws_manager.py:45:35
+   |
+43 |         enregistré (no-op silencieux, pratique à appeler dans un `finally`
+44 |         même si la connexion n'a jamais abouti)."""
+45 |         if ws is not None and not self.ws.get(username) is ws:
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+46 |             return
+47 |         return self.ws.pop(username, None) is not None
+   |
+help: Convert to `is not`
+
+F401 [*] `os` imported but unused
+  --> config/config.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os
+   |        ^^
+10 | from typing import Dict, List
+11 | from dotenv import load_dotenv, find_dotenv
+   |
+help: Remove unused import: `os`
+
+F401 [*] `dotenv.find_dotenv` imported but unused
+  --> config/config.py:11:33
+   |
+ 9 | import os
+10 | from typing import Dict, List
+11 | from dotenv import load_dotenv, find_dotenv
+   |                                 ^^^^^^^^^^^
+12 | from obsidian_hive.config.config_manager import ConfigManager
+13 | from modules_utils.env_utils import getenv_required
+   |
+help: Remove unused import: `dotenv.find_dotenv`
+
+F401 [*] `dotenv.find_dotenv` imported but unused
+  --> config/config_manager.py:13:33
+   |
+11 | import tomllib
+12 | from pydantic import BaseModel, Field, field_validator, model_validator
+13 | from dotenv import load_dotenv, find_dotenv
+   |                                 ^^^^^^^^^^^
+14 |
+15 | scanner_conf_required_keys_func = lambda: ['fetcher', 'crawler', 'parser', 'analyzer_helper', 'scanner']
+   |
+help: Remove unused import: `dotenv.find_dotenv`
+
+E731 Do not assign a `lambda` expression, use a `def`
+  --> config/config_manager.py:15:1
+   |
+13 | from dotenv import load_dotenv, find_dotenv
+14 |
+15 | scanner_conf_required_keys_func = lambda: ['fetcher', 'crawler', 'parser', 'analyzer_helper', 'scanner']
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 | ids_conf_required_keys_func = lambda: [
+17 |     'SEUIL', 
+   |
+help: Rewrite `scanner_conf_required_keys_func` as a `def`
+
+E731 Do not assign a `lambda` expression, use a `def`
+  --> config/config_manager.py:16:1
+   |
+15 |   scanner_conf_required_keys_func = lambda: ['fetcher', 'crawler', 'parser', 'analyzer_helper', 'scanner']
+16 | / ids_conf_required_keys_func = lambda: [
+17 | |     'SEUIL', 
+18 | |     'CRITICAL_PORT', 
+19 | |     'DANGEROUS_LOCALISATION', 
+20 | |     'SCORING_CONFIG', 
+21 | |     'ANOMALY_RATE_THRESHOLDS', 
+22 | |     'DECAY_CONFIG', 
+23 | |     'ANOMALY_CONFIG', 
+24 | |     'CAPTURE_CONFIG', 
+25 | |     'GLOBAL_CONFIG'
+26 | | ]
+   | |_^
+27 |
+28 |   def _get_llm_env(name: str, default, cast_to: callable = None, prefix:str = "OBSIDIAN_LLM_MANAGER_"):
+   |
+help: Rewrite `ids_conf_required_keys_func` as a `def`
+
+E713 [*] Test for membership should be `not in`
+   --> config/config_manager.py:211:16
+    |
+209 |     @classmethod
+210 |     def validate_system_prompt_mode(cls, system_prompt_mode: str):
+211 |         if not system_prompt_mode in ("full", "short"):
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+212 |             raise ValueError("system_prompt_mode value is unknown")
+    |
+help: Convert to `not in`
+
+E713 [*] Test for membership should be `not in`
+   --> config/config_manager.py:252:16
+    |
+250 |     @classmethod
+251 |     def validate_system_prompt_mode(cls, system_prompt_mode: str):
+252 |         if not system_prompt_mode in ("full", "short"):
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+253 |             raise ValueError("system_prompt_mode value is unknown")
+    |
+help: Convert to `not in`
+
+E401 [*] Multiple imports on one line
+  --> core/assets/asset_types.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/assets/asset_types.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `json` imported but unused
+  --> core/assets/asset_types.py:13:8
+   |
+12 | import time
+13 | import json
+   |        ^^^^
+14 | import json5
+15 | import random
+   |
+help: Remove unused import: `json`
+
+F401 [*] `random` imported but unused
+  --> core/assets/asset_types.py:15:8
+   |
+13 | import json
+14 | import json5
+15 | import random
+   |        ^^^^^^
+16 | from typing import Dict, List, Any
+17 | from uuid import uuid4
+   |
+help: Remove unused import: `random`
+
+F401 [*] `pydantic.ConfigDict` imported but unused
+  --> core/assets/asset_types.py:20:74
+   |
+18 | from datetime import datetime, timezone, timedelta
+19 | from enum import IntEnum, StrEnum
+20 | from pydantic import Field, BaseModel, field_validator, model_validator, ConfigDict
+   |                                                                          ^^^^^^^^^^
+21 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+22 | from scanner_ia.api.api_config import DEFAULT_SCAN_PATH
+   |
+help: Remove unused import: `pydantic.ConfigDict`
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:13:1
+   |
+11 | """
+12 |
+13 | import os
+   | ^^^^^^^^^
+14 | import tomllib
+15 | import tomli_w
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:14:1
+   |
+13 | import os
+14 | import tomllib
+   | ^^^^^^^^^^^^^^
+15 | import tomli_w
+16 | import copy
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:15:1
+   |
+13 | import os
+14 | import tomllib
+15 | import tomli_w
+   | ^^^^^^^^^^^^^^
+16 | import copy
+17 | from pydantic import BaseModel, PrivateAttr, Field
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:16:1
+   |
+14 | import tomllib
+15 | import tomli_w
+16 | import copy
+   | ^^^^^^^^^^^
+17 | from pydantic import BaseModel, PrivateAttr, Field
+18 | from dotenv import load_dotenv
+   |
+
+F401 [*] `copy` imported but unused
+  --> core/assets/server_asset/core_agent/config.py:16:8
+   |
+14 | import tomllib
+15 | import tomli_w
+16 | import copy
+   |        ^^^^
+17 | from pydantic import BaseModel, PrivateAttr, Field
+18 | from dotenv import load_dotenv
+   |
+help: Remove unused import: `copy`
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:17:1
+   |
+15 | import tomli_w
+16 | import copy
+17 | from pydantic import BaseModel, PrivateAttr, Field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from dotenv import load_dotenv
+19 | load_dotenv()
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/config.py:18:1
+   |
+16 | import copy
+17 | from pydantic import BaseModel, PrivateAttr, Field
+18 | from dotenv import load_dotenv
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | load_dotenv()
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:13:1
+   |
+11 | """
+12 |
+13 | import os
+   | ^^^^^^^^^
+14 | import copy
+15 | import json
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:14:1
+   |
+13 | import os
+14 | import copy
+   | ^^^^^^^^^^^
+15 | import json
+16 | import json5
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:15:1
+   |
+13 | import os
+14 | import copy
+15 | import json
+   | ^^^^^^^^^^^
+16 | import json5
+17 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:16:1
+   |
+14 | import copy
+15 | import json
+16 | import json5
+   | ^^^^^^^^^^^^
+17 | import asyncio
+18 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:17:1
+   |
+15 | import json
+16 | import json5
+17 | import asyncio
+   | ^^^^^^^^^^^^^^
+18 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:18:1
+   |
+16 | import json5
+17 | import asyncio
+18 | import subprocess
+   | ^^^^^^^^^^^^^^^^^
+19 |
+20 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+   |
+
+F401 [*] `subprocess` imported but unused
+  --> core/assets/server_asset/core_agent/dispatcher.py:18:8
+   |
+16 | import json5
+17 | import asyncio
+18 | import subprocess
+   |        ^^^^^^^^^^
+19 |
+20 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+   |
+help: Remove unused import: `subprocess`
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:20:1
+   |
+18 | import subprocess
+19 |
+20 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+22 | from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import ReceiveMsgType
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:21:1
+   |
+20 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+21 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import ReceiveMsgType
+23 | from obsidian_hive.core.assets.server_asset.core_agent.transport import AgentHttpClient, AgentWSClient
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:22:1
+   |
+20 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+21 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+22 | from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import ReceiveMsgType
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 | from obsidian_hive.core.assets.server_asset.core_agent.transport import AgentHttpClient, AgentWSClient
+   |
+
+E402 Module level import not at top of file
+  --> core/assets/server_asset/core_agent/dispatcher.py:23:1
+   |
+21 | from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
+22 | from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import ReceiveMsgType
+23 | from obsidian_hive.core.assets.server_asset.core_agent.transport import AgentHttpClient, AgentWSClient
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | TOOL_ENGINE_PATH = "/opt/obsidian-agent/bin/tool_engine"
+   |
+
+F841 Local variable `process` is assigned to but never used
+   --> core/assets/server_asset/core_agent/dispatcher.py:159:13
+    |
+157 |         try:
+158 |             os.chmod(UNINSTALL_SCRIPT_PATH, 0o755) # Rendre exécutable
+159 |             process = await asyncio.create_subprocess_exec(
+    |             ^^^^^^^
+160 |                 "sudo", UNINSTALL_SCRIPT_PATH,
+161 |                 start_new_session=True,
+    |
+help: Remove assignment to unused variable `process`
+
+F401 [*] `os` imported but unused
+  --> core/assets/server_asset/core_agent/main.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os
+   |        ^^
+10 | import asyncio
+11 | import signal
+   |
+help: Remove unused import: `os`
+
+F401 [*] `obsidian_hive.core.assets.server_asset.core_agent.dispatcher.TOOL_ENGINE_PATH` imported but unused
+  --> core/assets/server_asset/core_agent/main.py:15:91
+   |
+13 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+14 | from obsidian_hive.core.assets.server_asset.core_agent.transport import AgentHttpClient, AgentWSClient
+15 | from obsidian_hive.core.assets.server_asset.core_agent.dispatcher import AgentDispatcher, TOOL_ENGINE_PATH
+   |                                                                                           ^^^^^^^^^^^^^^^^
+16 | from obsidian_hive.core.assets.server_asset.core_agent.utils import get_system_info
+17 | from modules_utils.loop_utils import _run_async
+   |
+help: Remove unused import: `obsidian_hive.core.assets.server_asset.core_agent.dispatcher.TOOL_ENGINE_PATH`
+
+F401 [*] `modules_utils.loop_utils._run_async` imported but unused
+  --> core/assets/server_asset/core_agent/main.py:17:38
+   |
+15 | from obsidian_hive.core.assets.server_asset.core_agent.dispatcher import AgentDispatcher, TOOL_ENGINE_PATH
+16 | from obsidian_hive.core.assets.server_asset.core_agent.utils import get_system_info
+17 | from modules_utils.loop_utils import _run_async
+   |                                      ^^^^^^^^^^
+18 | from obsidian_hive.core.assets.server_asset.core_agent.signal import build_shutdown_handler
+19 | from urllib.parse import urlencode
+   |
+help: Remove unused import: `modules_utils.loop_utils._run_async`
+
+F841 [*] Local variable `e` is assigned to but never used
+  --> core/assets/server_asset/core_agent/main.py:95:29
+   |
+93 |             pass
+94 |         
+95 |         except Exception as e:
+   |                             ^
+96 |             raise
+   |
+help: Remove assignment to unused variable `e`
+
+E722 Do not use bare `except`
+   --> core/assets/server_asset/core_agent/main.py:107:9
+    |
+105 |             for sig in (signal.SIGTERM, signal.SIGINT):
+106 |                 loop.add_signal_handler(sig, functools.partial(handler, sig.name))
+107 |         except:
+    |         ^^^^^^
+108 |             pass
+    |
+
+F841 [*] Local variable `e` is assigned to but never used
+   --> core/assets/server_asset/core_agent/main.py:117:29
+    |
+115 |             pass
+116 |         
+117 |         except Exception as e:
+    |                             ^
+118 |             raise
+    |
+help: Remove assignment to unused variable `e`
+
+F401 [*] `pydantic.Field` imported but unused
+  --> core/assets/server_asset/core_agent/server_asset_types.py:10:33
+   |
+ 9 | from enum import StrEnum
+10 | from pydantic import BaseModel, Field
+   |                                 ^^^^^
+11 |
+12 | class RequestResponse(BaseModel):
+   |
+help: Remove unused import: `pydantic.Field`
+
+F401 [*] `signal` imported but unused
+  --> core/assets/server_asset/core_agent/signal.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import signal
+   |        ^^^^^^
+10 | import functools
+11 | import asyncio
+   |
+help: Remove unused import: `signal`
+
+F401 [*] `functools` imported but unused
+  --> core/assets/server_asset/core_agent/signal.py:10:8
+   |
+ 9 | import signal
+10 | import functools
+   |        ^^^^^^^^^
+11 | import asyncio
+   |
+help: Remove unused import: `functools`
+
+F401 [*] `obsidian_hive.core.assets.server_asset.core_agent.server_asset_types.ReceiveMsgType` imported but unused
+  --> core/assets/server_asset/core_agent/transport.py:18:35
+   |
+16 | from tenacity import stop_after_attempt, retry_if_exception, wait_exponential, retry
+17 | from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import (
+18 |     RequestResponse, SendMsgType, ReceiveMsgType
+   |                                   ^^^^^^^^^^^^^^
+19 | )
+20 | from obsidian_hive.core.assets.server_asset.core_agent.utils import exec_func, cancel_tasks
+   |
+help: Remove unused import: `obsidian_hive.core.assets.server_asset.core_agent.server_asset_types.ReceiveMsgType`
+
+F401 [*] `platform` imported but unused
+  --> core/assets/server_asset/tools/tools.py:11:8
+   |
+ 9 | import os
+10 | import shlex
+11 | import platform
+   |        ^^^^^^^^
+12 | from modules_utils.func_utils import (
+13 |     get_func_kwargs as get_tool_kwargs
+   |
+help: Remove unused import: `platform`
+
+F401 [*] `functools.wraps` imported but unused
+  --> core/assets/server_asset/tools/utils.py:9:23
+   |
+ 7 | """
+ 8 |
+ 9 | from functools import wraps
+   |                       ^^^^^
+10 | from obsidian_hive.core.assets.asset_types import Severity
+   |
+help: Remove unused import: `functools.wraps`
+
+E401 [*] Multiple imports on one line
+  --> core/assets/workflows/email_workflow.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import asyncio
+   |
+help: Split imports
+
+E401 [*] Multiple imports on one line
+  --> core/assets/workflows/network_workflow.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json5
+   |
+help: Split imports
+
+F401 [*] `json5` imported but unused
+  --> core/assets/workflows/network_workflow.py:11:8
+   |
+ 9 | import os, sys
+10 | sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json5
+   |        ^^^^^
+12 | import signal
+13 | import asyncio
+   |
+help: Remove unused import: `json5`
+
+E401 [*] Multiple imports on one line
+  --> core/assets/workflows/web_workflow.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/assets/workflows/web_workflow.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `obsidian_hive.agents.analyst.tools.tools.MAPPING` imported but unused
+  --> core/assets/workflows/web_workflow.py:28:65
+   |
+26 |     AnalystResult, create_alex
+27 | )
+28 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as TOOL_MAPPING
+   |                                                                 ^^^^^^^^^^^^
+29 | from modules_utils.logger import get_logger
+30 | from obsidian_hive.config.config import ANALYST_CONFIG
+   |
+help: Remove unused import: `obsidian_hive.agents.analyst.tools.tools.MAPPING`
+
+F401 [*] `obsidian_hive.config.config.ANALYST_CONFIG` imported but unused
+  --> core/assets/workflows/web_workflow.py:30:41
+   |
+28 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as TOOL_MAPPING
+29 | from modules_utils.logger import get_logger
+30 | from obsidian_hive.config.config import ANALYST_CONFIG
+   |                                         ^^^^^^^^^^^^^^
+31 |
+32 | scanner_logger = scanner_get_logger()
+   |
+help: Remove unused import: `obsidian_hive.config.config.ANALYST_CONFIG`
+
+E401 [*] Multiple imports on one line
+  --> core/assets/workflows/workflow_base.py:11:1
+   |
+ 9 | from uuid import uuid4
+10 | from typing import TYPE_CHECKING
+11 | import os, sys
+   | ^^^^^^^^^^^^^^
+12 | sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+   |
+help: Split imports
+
+E401 [*] Multiple imports on one line
+  --> core/engine.py:12:1
+   |
+10 | """
+11 |
+12 | import os, sys
+   | ^^^^^^^^^^^^^^
+13 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/engine.py:12:12
+   |
+10 | """
+11 |
+12 | import os, sys
+   |            ^^^
+13 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+F541 [*] f-string without any placeholders
+   --> core/engine.py:423:15
+    |
+421 |     ) as engine:
+422 |
+423 |         print(f"\n✅ Moteur démarré")
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+424 |         print(f"   Status: {engine.status()}")
+    |
+help: Remove extraneous `f` prefix
+
+E401 [*] Multiple imports on one line
+ --> core/managers/asset_manager.py:8:1
+  |
+6 | @author: hounsousamuel
+7 | """
+8 | import os, sys
+  | ^^^^^^^^^^^^^^
+9 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+  |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+ --> core/managers/asset_manager.py:8:12
+  |
+6 | @author: hounsousamuel
+7 | """
+8 | import os, sys
+  |            ^^^
+9 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+  |
+help: Remove unused import: `sys`
+
+F401 [*] `datetime.timezone` imported but unused
+  --> core/managers/asset_manager.py:19:32
+   |
+17 | from sqlmodel import SQLModel, select, func, Field, or_, and_, String
+18 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+19 | from datetime import datetime, timezone
+   |                                ^^^^^^^^
+20 | from contextlib import asynccontextmanager
+21 | from obsidian_hive.core.assets.asset_types import (
+   |
+help: Remove unused import: `datetime.timezone`
+
+E713 [*] Test for membership should be `not in`
+   --> core/managers/asset_manager.py:172:16
+    |
+170 |         asset_item_db_dict.pop("asset_item_cls")
+171 |         asset_class = asset_item_db.asset_item_cls
+172 |         if not asset_class in ASSET_CLASS_MAPPING:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |             raise ValueError(f"Asset class is not registed ({asset_class})")
+174 |         asset_class = ASSET_CLASS_MAPPING[asset_class]
+    |
+help: Convert to `not in`
+
+F541 [*] f-string without any placeholders
+   --> core/managers/asset_manager.py:926:11
+    |
+924 |     )
+925 |     assert updated is True, "La mise à jour a échoué"
+926 |     print(f"   ✅ Mise à jour réussie")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+927 |     
+928 |     # Vérifier la mise à jour
+    |
+help: Remove extraneous `f` prefix
+
+F841 Local variable `deleted` is assigned to but never used
+   --> core/managers/asset_manager.py:953:5
+    |
+951 |     # 17. Tester delete_by_identifier
+952 |     print("\n🔍 Test delete_by_identifier...")
+953 |     deleted = await manager.delete_by_identifier(
+    |     ^^^^^^^
+954 |         "Site Staging",
+955 |         include_name=True,
+    |
+help: Remove assignment to unused variable `deleted`
+
+F541 [*] f-string without any placeholders
+   --> core/managers/asset_manager.py:958:11
+    |
+956 |         first=True
+957 |     )
+958 |     print(f"   ✅ Asset 'Site Staging' supprimé")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+959 |     
+960 |     # Vérifier la suppression
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> core/managers/asset_manager.py:967:11
+    |
+965 |     )
+966 |     assert not deleted_asset, "L'asset n'a pas été supprimé"
+967 |     print(f"   ✅ Vérification: 'Site Staging' n'existe plus")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+968 |     
+969 |     # 18. Tester delete_by_identifier (multiple)
+    |
+help: Remove extraneous `f` prefix
+
+E401 [*] Multiple imports on one line
+    --> core/managers/asset_manager.py:1011:5
+     |
+1009 |     aidbn, extra_aidb = AssetManager.normalize_asset_item_db(aidb)
+1010 |     aidbt = AssetManager.asset_item_db_to_asset_item(aidb)
+1011 |     import nest_asyncio, asyncio
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1012 |     nest_asyncio.apply()
+1013 |     asyncio.run(test_asset_manager())
+     |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:13:1
+   |
+11 | """
+12 |
+13 | import os
+   | ^^^^^^^^^
+14 | import json
+15 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:14:1
+   |
+13 | import os
+14 | import json
+   | ^^^^^^^^^^^
+15 | import asyncio
+16 | import functools
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:15:1
+   |
+13 | import os
+14 | import json
+15 | import asyncio
+   | ^^^^^^^^^^^^^^
+16 | import functools
+17 | from uuid import uuid4
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:16:1
+   |
+14 | import json
+15 | import asyncio
+16 | import functools
+   | ^^^^^^^^^^^^^^^^
+17 | from uuid import uuid4
+18 | from typing import Optional
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:17:1
+   |
+15 | import asyncio
+16 | import functools
+17 | from uuid import uuid4
+   | ^^^^^^^^^^^^^^^^^^^^^^
+18 | from typing import Optional
+19 | from sqlmodel import SQLModel, Field, Relationship, select
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:18:1
+   |
+16 | import functools
+17 | from uuid import uuid4
+18 | from typing import Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from sqlmodel import SQLModel, Field, Relationship, select
+20 | from pydantic import BaseModel, Field as Pydantic_Field
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:19:1
+   |
+17 | from uuid import uuid4
+18 | from typing import Optional
+19 | from sqlmodel import SQLModel, Field, Relationship, select
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from pydantic import BaseModel, Field as Pydantic_Field
+21 | from sqlalchemy import func as sa_func
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:20:1
+   |
+18 | from typing import Optional
+19 | from sqlmodel import SQLModel, Field, Relationship, select
+20 | from pydantic import BaseModel, Field as Pydantic_Field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from sqlalchemy import func as sa_func
+22 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:21:1
+   |
+19 | from sqlmodel import SQLModel, Field, Relationship, select
+20 | from pydantic import BaseModel, Field as Pydantic_Field
+21 | from sqlalchemy import func as sa_func
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+23 | from datetime import datetime, timezone
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:22:1
+   |
+20 | from pydantic import BaseModel, Field as Pydantic_Field
+21 | from sqlalchemy import func as sa_func
+22 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 | from datetime import datetime, timezone
+24 | from contextlib import asynccontextmanager
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:23:1
+   |
+21 | from sqlalchemy import func as sa_func
+22 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+23 | from datetime import datetime, timezone
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 | from contextlib import asynccontextmanager
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:24:1
+   |
+22 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+23 | from datetime import datetime, timezone
+24 | from contextlib import asynccontextmanager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |
+26 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/conversation_manager.py:26:1
+   |
+24 | from contextlib import asynccontextmanager
+25 |
+26 | from modules_utils.loop_utils import _run_async
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+E401 [*] Multiple imports on one line
+   --> core/managers/conversation_manager.py:744:5
+    |
+743 | if __name__ == "__main__":
+744 |     import nest_asyncio, asyncio
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+745 |     nest_asyncio.apply()
+746 |     asyncio.run(test_conversation_manager())
+    |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> core/managers/job_catalog.py:28:1
+   |
+26 | """
+27 |
+28 | from dataclasses import dataclass, field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from typing import Callable, Any, Literal
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/job_catalog.py:29:1
+   |
+28 | from dataclasses import dataclass, field
+29 | from typing import Callable, Any, Literal
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |
+31 | @dataclass(frozen=True)
+   |
+
+F401 [*] `json` imported but unused
+  --> core/managers/job_manager.py:10:8
+   |
+ 9 | import re
+10 | import json
+   |        ^^^^
+11 | import asyncio
+12 | import functools
+   |
+help: Remove unused import: `json`
+
+F401 [*] `datetime.datetime` imported but unused
+  --> core/managers/job_to_dict.py:12:22
+   |
+10 | import json
+11 | from apscheduler.job import Job
+12 | from datetime import datetime
+   |                      ^^^^^^^^
+13 | from typing import Any
+14 | import asyncio
+   |
+help: Remove unused import: `datetime.datetime`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:21:1
+   |
+19 | """
+20 |
+21 | import os
+   | ^^^^^^^^^
+22 | import sys
+23 | import json
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:22:1
+   |
+21 | import os
+22 | import sys
+   | ^^^^^^^^^^
+23 | import json
+24 | import time
+   |
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/chat_interactif.py:22:8
+   |
+21 | import os
+22 | import sys
+   |        ^^^
+23 | import json
+24 | import time
+   |
+help: Remove unused import: `sys`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:23:1
+   |
+21 | import os
+22 | import sys
+23 | import json
+   | ^^^^^^^^^^^
+24 | import time
+25 | import base64
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:24:1
+   |
+22 | import sys
+23 | import json
+24 | import time
+   | ^^^^^^^^^^^
+25 | import base64
+26 | import random
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:25:1
+   |
+23 | import json
+24 | import time
+25 | import base64
+   | ^^^^^^^^^^^^^
+26 | import random
+27 | import hashlib
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:26:1
+   |
+24 | import time
+25 | import base64
+26 | import random
+   | ^^^^^^^^^^^^^
+27 | import hashlib
+28 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:27:1
+   |
+25 | import base64
+26 | import random
+27 | import hashlib
+   | ^^^^^^^^^^^^^^
+28 | import asyncio
+29 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:28:1
+   |
+26 | import random
+27 | import hashlib
+28 | import asyncio
+   | ^^^^^^^^^^^^^^
+29 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:29:1
+   |
+27 | import hashlib
+28 | import asyncio
+29 | from datetime import datetime
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |
+31 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif.py:31:1
+   |
+29 | from datetime import datetime
+30 |
+31 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 |
+33 | # =============================================================================
+   |
+
+F841 Local variable `t0` is assigned to but never used
+   --> core/managers/llm_managers/chat_interactif.py:308:13
+    |
+306 |                 use_tools = False
+307 |
+308 |             t0 = time.time()
+    |             ^^
+309 |             result = await mgr.chat(
+310 |                 prompt=user_input,
+    |
+help: Remove assignment to unused variable `t0`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:28:1
+   |
+26 | """
+27 |
+28 | import os
+   | ^^^^^^^^^
+29 | import sys
+30 | import json
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:29:1
+   |
+28 | import os
+29 | import sys
+   | ^^^^^^^^^^
+30 | import json
+31 | import time
+   |
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/chat_interactif_steam.py:29:8
+   |
+28 | import os
+29 | import sys
+   |        ^^^
+30 | import json
+31 | import time
+   |
+help: Remove unused import: `sys`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:30:1
+   |
+28 | import os
+29 | import sys
+30 | import json
+   | ^^^^^^^^^^^
+31 | import time
+32 | import base64
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:31:1
+   |
+29 | import sys
+30 | import json
+31 | import time
+   | ^^^^^^^^^^^
+32 | import base64
+33 | import random
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:32:1
+   |
+30 | import json
+31 | import time
+32 | import base64
+   | ^^^^^^^^^^^^^
+33 | import random
+34 | import hashlib
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:33:1
+   |
+31 | import time
+32 | import base64
+33 | import random
+   | ^^^^^^^^^^^^^
+34 | import hashlib
+35 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:34:1
+   |
+32 | import base64
+33 | import random
+34 | import hashlib
+   | ^^^^^^^^^^^^^^
+35 | import asyncio
+36 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:35:1
+   |
+33 | import random
+34 | import hashlib
+35 | import asyncio
+   | ^^^^^^^^^^^^^^
+36 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:36:1
+   |
+34 | import hashlib
+35 | import asyncio
+36 | from datetime import datetime
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 |
+38 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/chat_interactif_steam.py:38:1
+   |
+36 | from datetime import datetime
+37 |
+38 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 |
+40 | # =============================================================================
+   |
+
+F841 Local variable `t0` is assigned to but never used
+   --> core/managers/llm_managers/chat_interactif_steam.py:386:13
+    |
+384 |             call_kwargs = dict(CALLBACKS)
+385 |
+386 |             t0 = time.time()
+    |             ^^
+387 |             result = await mgr.chat(
+388 |                 prompt=user_input,
+    |
+help: Remove assignment to unused variable `t0`
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/interactive_llm_test.py:16:1
+   |
+14 |     GROQ_API_KEY_3=gsk_...
+15 | """
+16 | import os, sys
+   | ^^^^^^^^^^^^^^
+17 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/interactive_llm_test.py:16:12
+   |
+14 |     GROQ_API_KEY_3=gsk_...
+15 | """
+16 | import os, sys
+   |            ^^^
+17 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/llm_manager.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/llm_manager.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json
+   |
+help: Remove unused import: `sys`
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/llm_manager__.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/llm_manager__.py:17:12
+   |
+15 | """
+16 |
+17 | import os, sys
+   |            ^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+help: Remove unused import: `sys`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:19:1
+   |
+17 | import os, sys
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   | ^^^^^^^^^^^
+20 | import time
+21 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:20:1
+   |
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+20 | import time
+   | ^^^^^^^^^^^
+21 | import asyncio
+22 | import requests
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:21:1
+   |
+19 | import json
+20 | import time
+21 | import asyncio
+   | ^^^^^^^^^^^^^^
+22 | import requests
+23 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:22:1
+   |
+20 | import time
+21 | import asyncio
+22 | import requests
+   | ^^^^^^^^^^^^^^^
+23 | import subprocess
+24 | import itertools
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:23:1
+   |
+21 | import asyncio
+22 | import requests
+23 | import subprocess
+   | ^^^^^^^^^^^^^^^^^
+24 | import itertools
+25 | import configparser
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:24:1
+   |
+22 | import requests
+23 | import subprocess
+24 | import itertools
+   | ^^^^^^^^^^^^^^^^
+25 | import configparser
+26 | from collections import defaultdict
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:25:1
+   |
+23 | import subprocess
+24 | import itertools
+25 | import configparser
+   | ^^^^^^^^^^^^^^^^^^^
+26 | from collections import defaultdict
+27 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:26:1
+   |
+24 | import itertools
+25 | import configparser
+26 | from collections import defaultdict
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from datetime import datetime
+28 | from urllib.parse import urljoin
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:27:1
+   |
+25 | import configparser
+26 | from collections import defaultdict
+27 | from datetime import datetime
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from urllib.parse import urljoin
+29 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:28:1
+   |
+26 | from collections import defaultdict
+27 | from datetime import datetime
+28 | from urllib.parse import urljoin
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+30 | from modules_utils.logger import get_logger
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:29:1
+   |
+27 | from datetime import datetime
+28 | from urllib.parse import urljoin
+29 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from modules_utils.logger import get_logger
+31 | from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:30:1
+   |
+28 | from urllib.parse import urljoin
+29 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+30 | from modules_utils.logger import get_logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+32 |     get_client,
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:31:1
+   |
+29 |   from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+30 |   from modules_utils.logger import get_logger
+31 | / from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+32 | |     get_client,
+33 | |     CLIENT_UNION
+34 | | )
+   | |_^
+35 |   from anthropic import Anthropic, AsyncAnthropic
+36 |   from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:35:1
+   |
+33 |     CLIENT_UNION
+34 | )
+35 | from anthropic import Anthropic, AsyncAnthropic
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+37 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:36:1
+   |
+34 | )
+35 | from anthropic import Anthropic, AsyncAnthropic
+36 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager__.py:37:1
+   |
+35 | from anthropic import Anthropic, AsyncAnthropic
+36 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+37 | from modules_utils.loop_utils import _run_async
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |
+39 | BASEDIR = os.path.abspath(os.path.dirname(__file__))
+   |
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/llm_manager_back.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/llm_manager_back.py:17:12
+   |
+15 | """
+16 |
+17 | import os, sys
+   |            ^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   |
+help: Remove unused import: `sys`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:19:1
+   |
+17 | import os, sys
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+   | ^^^^^^^^^^^
+20 | import time
+21 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:20:1
+   |
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+19 | import json
+20 | import time
+   | ^^^^^^^^^^^
+21 | import asyncio
+22 | import requests
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:21:1
+   |
+19 | import json
+20 | import time
+21 | import asyncio
+   | ^^^^^^^^^^^^^^
+22 | import requests
+23 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:22:1
+   |
+20 | import time
+21 | import asyncio
+22 | import requests
+   | ^^^^^^^^^^^^^^^
+23 | import subprocess
+24 | import itertools
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:23:1
+   |
+21 | import asyncio
+22 | import requests
+23 | import subprocess
+   | ^^^^^^^^^^^^^^^^^
+24 | import itertools
+25 | import configparser
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:24:1
+   |
+22 | import requests
+23 | import subprocess
+24 | import itertools
+   | ^^^^^^^^^^^^^^^^
+25 | import configparser
+26 | from datetime import datetime
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:25:1
+   |
+23 | import subprocess
+24 | import itertools
+25 | import configparser
+   | ^^^^^^^^^^^^^^^^^^^
+26 | from datetime import datetime
+27 | from urllib.parse import urljoin
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:26:1
+   |
+24 | import itertools
+25 | import configparser
+26 | from datetime import datetime
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from urllib.parse import urljoin
+28 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:27:1
+   |
+25 | import configparser
+26 | from datetime import datetime
+27 | from urllib.parse import urljoin
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+29 | from modules_utils.logger import get_logger
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:28:1
+   |
+26 | from datetime import datetime
+27 | from urllib.parse import urljoin
+28 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from modules_utils.logger import get_logger
+30 | from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:29:1
+   |
+27 | from urllib.parse import urljoin
+28 | from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+29 | from modules_utils.logger import get_logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+31 |     get_client,
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:30:1
+   |
+28 |   from typing import Callable, Optional, Any, Dict, List, Union, Awaitable
+29 |   from modules_utils.logger import get_logger
+30 | / from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
+31 | |     get_client,
+32 | |     CLIENT_UNION
+33 | | )
+   | |_^
+34 |   from anthropic import Anthropic, AsyncAnthropic
+35 |   from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:34:1
+   |
+32 |     CLIENT_UNION
+33 | )
+34 | from anthropic import Anthropic, AsyncAnthropic
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+35 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+36 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:35:1
+   |
+33 | )
+34 | from anthropic import Anthropic, AsyncAnthropic
+35 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | from modules_utils.loop_utils import _run_async
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/llm_manager_back.py:36:1
+   |
+34 | from anthropic import Anthropic, AsyncAnthropic
+35 | from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
+36 | from modules_utils.loop_utils import _run_async
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 |
+38 | BASEDIR = os.path.abspath(os.path.dirname(__file__))
+   |
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/llm_manager_back2.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> core/managers/llm_managers/llm_manager_back2.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+11 | import json
+   |
+help: Remove unused import: `sys`
+
+E401 [*] Multiple imports on one line
+  --> core/managers/llm_managers/pytest_llm_test.py:25:1
+   |
+23 |     pytest test_llm_manager.py -v -s
+24 | """
+25 | import os, sys
+   | ^^^^^^^^^^^^^^
+26 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+27 | import asyncio
+   |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:25:1
+   |
+23 |     pytest test_llm_manager.py -v -s
+24 | """
+25 | import os, sys
+   | ^^^^^^^^^^^^^^
+26 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+27 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:27:1
+   |
+25 | import os, sys
+26 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+27 | import asyncio
+   | ^^^^^^^^^^^^^^
+28 | import pytest
+29 | import pytest_asyncio
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:28:1
+   |
+26 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
+27 | import asyncio
+28 | import pytest
+   | ^^^^^^^^^^^^^
+29 | import pytest_asyncio
+30 | from unittest.mock import AsyncMock, MagicMock, patch
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:29:1
+   |
+27 | import asyncio
+28 | import pytest
+29 | import pytest_asyncio
+   | ^^^^^^^^^^^^^^^^^^^^^
+30 | from unittest.mock import AsyncMock, MagicMock, patch
+31 | from dotenv import load_dotenv
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:30:1
+   |
+28 | import pytest
+29 | import pytest_asyncio
+30 | from unittest.mock import AsyncMock, MagicMock, patch
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from dotenv import load_dotenv
+   |
+
+F401 [*] `unittest.mock.AsyncMock` imported but unused
+  --> core/managers/llm_managers/pytest_llm_test.py:30:27
+   |
+28 | import pytest
+29 | import pytest_asyncio
+30 | from unittest.mock import AsyncMock, MagicMock, patch
+   |                           ^^^^^^^^^
+31 | from dotenv import load_dotenv
+   |
+help: Remove unused import: `unittest.mock.AsyncMock`
+
+E402 Module level import not at top of file
+  --> core/managers/llm_managers/pytest_llm_test.py:31:1
+   |
+29 | import pytest_asyncio
+30 | from unittest.mock import AsyncMock, MagicMock, patch
+31 | from dotenv import load_dotenv
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 |
+33 | load_dotenv()
+   |
+
+E401 [*] Multiple imports on one line
+  --> core/managers/main_manager.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> core/managers/main_manager.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |        ^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `sys` imported but unused
+  --> core/managers/main_manager.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `obsidian_hive.core.managers.task_manager.TaskManager` imported but unused
+  --> core/managers/main_manager.py:16:54
+   |
+14 | from typing import Dict, Tuple, Any
+15 | from obsidian_hive.core.managers.asset_manager import AssetManager, AssetItemDB
+16 | from obsidian_hive.core.managers.task_manager import TaskManager
+   |                                                      ^^^^^^^^^^^
+17 | from obsidian_hive.core.managers.workflow_manager import WorkflowManager
+18 | from obsidian_hive.core.assets.asset_types import AssetItem, Priority
+   |
+help: Remove unused import: `obsidian_hive.core.managers.task_manager.TaskManager`
+
+F401 [*] `typing.Any` imported but unused
+  --> core/managers/report_manager.py:18:36
+   |
+16 | from enum import Enum
+17 | import zstandard as zstd
+18 | from typing import Optional, List, Any
+   |                                    ^^^
+19 | from sqlmodel import SQLModel, Field, select, func, or_, and_, String
+20 | from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+   |
+help: Remove unused import: `typing.Any`
+
+E712 Avoid equality comparisons to `True`; use `AnalysisReportDB.has_fix:` for truth checks
+   --> core/managers/report_manager.py:505:17
+    |
+503 |                 #     AnalysisReportDB.report_json.contains('"all_fix_applied": true'),
+504 |                 # )
+505 |                 AnalysisReportDB.has_fix == True
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+506 |             ]
+507 |             statement = select(func.count(AnalysisReportDB.id)).where(and_(*fix_conditions))
+    |
+help: Replace with `AnalysisReportDB.has_fix`
+
+F541 [*] f-string without any placeholders
+   --> core/managers/report_manager.py:909:11
+    |
+907 |     print("\n🔍 Test summary_stats...")
+908 |     stats = await manager.summary_stats("asset-001")
+909 |     print(f"   ✅ Stats asset-001:")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+910 |     print(f"      - Total: {stats['total']}")
+911 |     print(f"      - Par sévérité: {stats['by_severity']}")
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> core/managers/report_manager.py:918:11
+    |
+916 |     print("\n🔍 Test summary_stats (global)...")
+917 |     global_stats = await manager.summary_stats()
+918 |     print(f"   ✅ Stats globales:")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^
+919 |     print(f"      - Total: {global_stats['total']}")
+920 |     print(f"      - Par sévérité: {global_stats['by_severity']}")
+    |
+help: Remove extraneous `f` prefix
+
+E401 [*] Multiple imports on one line
+  --> core/managers/task_manager.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> core/managers/task_manager.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |        ^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `sys` imported but unused
+  --> core/managers/task_manager.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+E402 Module level import not at top of file
+  --> core/managers/test_job_manager.py:27:1
+   |
+25 | """
+26 |
+27 | import asyncio
+   | ^^^^^^^^^^^^^^
+28 | import os
+29 | import tempfile
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/test_job_manager.py:28:1
+   |
+27 | import asyncio
+28 | import os
+   | ^^^^^^^^^
+29 | import tempfile
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/test_job_manager.py:29:1
+   |
+27 | import asyncio
+28 | import os
+29 | import tempfile
+   | ^^^^^^^^^^^^^^^
+30 |
+31 | from obsidian_hive.core.managers.job_manager import JobManager, TriggerKind
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/test_job_manager.py:31:1
+   |
+29 | import tempfile
+30 |
+31 | from obsidian_hive.core.managers.job_manager import JobManager, TriggerKind
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from obsidian_hive.core.managers._test_funcs import noop, async_noop
+   |
+
+E402 Module level import not at top of file
+  --> core/managers/test_job_manager.py:32:1
+   |
+31 | from obsidian_hive.core.managers.job_manager import JobManager, TriggerKind
+32 | from obsidian_hive.core.managers._test_funcs import noop, async_noop
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |
+34 | def _make_manager(start: bool = True) -> tuple[JobManager, str]:
+   |
+
+E401 [*] Multiple imports on one line
+  --> core/managers/workflow_manager.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> core/managers/workflow_manager.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |        ^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `sys` imported but unused
+  --> core/managers/workflow_manager.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import
+
+E401 [*] Multiple imports on one line
+  --> core/test.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `os` imported but unused
+  --> core/test.py:9:8
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |        ^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import
+
+F401 [*] `sys` imported but unused
+  --> core/test.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import
+
+E722 Do not use bare `except`
+  --> core/test.py:66:5
+   |
+64 |             except KeyboardInterrupt:
+65 |                 break
+66 |     except:
+   |     ^^^^^^
+67 |         pass
+   |
+
+F401 [*] `sys` imported but unused
+  --> core/test_engine.py:8:8
+   |
+ 6 | import tempfile
+ 7 | import os
+ 8 | import sys
+   |        ^^^
+ 9 |
+10 | from obsidian_hive.core.engine import ObsidianEngine
+   |
+help: Remove unused import: `sys`
+
+F541 [*] f-string without any placeholders
+  --> core/test_engine.py:29:19
+   |
+28 |             # 1. Status initial
+29 |             print(f"\n✅ Moteur démarré")
+   |                   ^^^^^^^^^^^^^^^^^^^^^^
+30 |             print(f"   {engine.status()}")
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> core/test_engine.py:76:19
+   |
+74 |             # 5. Pause
+75 |             await engine.pause_asset(asset.id)
+76 |             print(f"\n⏸️  Asset mis en pause")
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+77 |             print(f"   Tasks actives: {engine.status()['active_tasks']}")
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> core/test_engine.py:81:19
+   |
+79 |             # 6. Resume
+80 |             await engine.resume_asset(asset.id)
+81 |             print(f"\n▶️  Asset repris")
+   |                   ^^^^^^^^^^^^^^^^^^^^
+82 |             print(f"   Tasks actives: {engine.status()['active_tasks']}")
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> core/test_engine.py:86:19
+   |
+84 |             # 7. Remove
+85 |             await engine.remove_asset(asset.id)
+86 |             print(f"\n🗑️  Asset retiré")
+   |                   ^^^^^^^^^^^^^^^^^^^^
+87 |
+88 |             # Vérifier suppression
+   |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+  --> core/test_engine.py:91:19
+   |
+89 |             asset_db = await engine.asset_manager.get_by_item_id(asset.id)
+90 |             assert asset_db is None, "❌ Asset toujours en DB après suppression"
+91 |             print(f"✅ Asset bien supprimé de la DB")
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+92 |
+93 |         print("\n✅ Moteur arrêté proprement")
+   |
+help: Remove extraneous `f` prefix
+
+E402 Module level import not at top of file
+  --> obsidian_code_fix/test-alex-sqli-001/auth.py:15:1
+   |
+13 | """
+14 |
+15 | import sqlite3
+   | ^^^^^^^^^^^^^^
+16 | from flask import Flask, request, jsonify
+   |
+
+E402 Module level import not at top of file
+  --> obsidian_code_fix/test-alex-sqli-001/auth.py:16:1
+   |
+15 | import sqlite3
+16 | from flask import Flask, request, jsonify
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 |
+18 | app = Flask(__name__)
+   |
+
+E401 [*] Multiple imports on one line
+  --> server_asset_etat/core_router.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Split imports
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:17:1
+   |
+15 | """
+16 |
+17 | import os, sys
+   | ^^^^^^^^^^^^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+
+F401 [*] `sys` imported but unused
+  --> server_asset_etat/core_router.py:17:12
+   |
+15 | """
+16 |
+17 | import os, sys
+   |            ^^^
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:20:1
+   |
+18 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+19 |
+20 | import json5
+   | ^^^^^^^^^^^^
+21 | import asyncio
+22 | import functools
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:21:1
+   |
+20 | import json5
+21 | import asyncio
+   | ^^^^^^^^^^^^^^
+22 | import functools
+23 | from uuid import uuid4
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:22:1
+   |
+20 | import json5
+21 | import asyncio
+22 | import functools
+   | ^^^^^^^^^^^^^^^^
+23 | from uuid import uuid4
+24 | from fastapi import (
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:23:1
+   |
+21 | import asyncio
+22 | import functools
+23 | from uuid import uuid4
+   | ^^^^^^^^^^^^^^^^^^^^^^
+24 | from fastapi import (
+25 |     HTTPException, APIRouter, status,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:24:1
+   |
+22 |   import functools
+23 |   from uuid import uuid4
+24 | / from fastapi import (
+25 | |     HTTPException, APIRouter, status,
+26 | |     Request, WebSocket, WebSocketDisconnect, WebSocketException
+27 | | )
+   | |_^
+28 |   import shutil
+29 |   from pydantic import ValidationError
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:28:1
+   |
+26 |     Request, WebSocket, WebSocketDisconnect, WebSocketException
+27 | )
+28 | import shutil
+   | ^^^^^^^^^^^^^
+29 | from pydantic import ValidationError
+30 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:29:1
+   |
+27 | )
+28 | import shutil
+29 | from pydantic import ValidationError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:30:1
+   |
+28 | import shutil
+29 | from pydantic import ValidationError
+30 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+32 | from obsidian_hive.core.engine import ObsidianEngine
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:31:1
+   |
+29 | from pydantic import ValidationError
+30 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from obsidian_hive.core.engine import ObsidianEngine
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:32:1
+   |
+30 | from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+32 | from obsidian_hive.core.engine import ObsidianEngine
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+34 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:33:1
+   |
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+32 | from obsidian_hive.core.engine import ObsidianEngine
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+35 | from modules_utils.api_dependencies import AuthManager
+   |
+
+F401 [*] `obsidian_hive.core.managers.main_manager.ObsidianManager` imported but unused
+  --> server_asset_etat/core_router.py:33:54
+   |
+31 | from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id, list_agent_capabilities
+32 | from obsidian_hive.core.engine import ObsidianEngine
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+   |                                                      ^^^^^^^^^^^^^^^
+34 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+35 | from modules_utils.api_dependencies import AuthManager
+   |
+help: Remove unused import: `obsidian_hive.core.managers.main_manager.ObsidianManager`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:34:1
+   |
+32 | from obsidian_hive.core.engine import ObsidianEngine
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+34 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+35 | from modules_utils.api_dependencies import AuthManager
+36 | from obsidian_hive.core.assets.asset_types import (
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:35:1
+   |
+33 | from obsidian_hive.core.managers.main_manager import ObsidianManager
+34 | from obsidian_hive.core.managers.conversation_manager import ConversationManager
+35 | from modules_utils.api_dependencies import AuthManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | from obsidian_hive.core.assets.asset_types import (
+37 |     WebAppAsset, WebAsset, NetworkAsset, AssetType,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:36:1
+   |
+34 |   from obsidian_hive.core.managers.conversation_manager import ConversationManager
+35 |   from modules_utils.api_dependencies import AuthManager
+36 | / from obsidian_hive.core.assets.asset_types import (
+37 | |     WebAppAsset, WebAsset, NetworkAsset, AssetType,
+38 | |     ServerAsset, utcnow, AgentStatus as ServerAgentStatus
+39 | | )
+   | |_^
+40 |   from obsidian_hive.api.models import (
+41 |       WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:40:1
+   |
+38 |       ServerAsset, utcnow, AgentStatus as ServerAgentStatus
+39 |   )
+40 | / from obsidian_hive.api.models import (
+41 | |     WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
+42 | |     ResumeAssetData, PauseAssetData, UpdateAssetData, SyncSourceCodeData,
+43 | |     AlexAnalyzeData, SearchAssetData, ServerAgentRegisterData, ServerAgentRevokeData,
+44 | |     ServerAssetModel, ServerToolsData, ServerCapabilitiesData
+45 | | )
+   | |_^
+46 |   from obsidian_hive.config.config import (
+47 |       ENGINE_CONFIG,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:46:1
+   |
+44 |       ServerAssetModel, ServerToolsData, ServerCapabilitiesData
+45 |   )
+46 | / from obsidian_hive.config.config import (
+47 | |     ENGINE_CONFIG,
+48 | |     SCANNER_CONF_REQUIRED_KEYS,
+49 | |     IDS_CONF_REQUIRED_KEYS
+50 | | )
+   | |_^
+51 |   from scanner_ia.api.api_config import (
+52 |       CONFIG_TEMP_DIR, DEFAULT_SCAN_PATH,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:51:1
+   |
+49 |       IDS_CONF_REQUIRED_KEYS
+50 |   )
+51 | / from scanner_ia.api.api_config import (
+52 | |     CONFIG_TEMP_DIR, DEFAULT_SCAN_PATH,
+53 | |     MAX_CONFIG_SIZE
+54 | | )
+   | |_^
+55 |   from scanner_ia.api.api import (
+56 |       _resolve_helpers
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:55:1
+   |
+53 |       MAX_CONFIG_SIZE
+54 |   )
+55 | / from scanner_ia.api.api import (
+56 | |     _resolve_helpers
+57 | | )
+   | |_^
+58 |   from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+59 |   from ids_ips_ia.main.orchestrator import build_ifaces
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:58:1
+   |
+56 |     _resolve_helpers
+57 | )
+58 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+59 | from ids_ips_ia.main.orchestrator import build_ifaces
+60 | from modules_utils.validate_config import (
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:59:1
+   |
+57 | )
+58 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+59 | from ids_ips_ia.main.orchestrator import build_ifaces
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+60 | from modules_utils.validate_config import (
+61 |     validate_and_merge_config,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:60:1
+   |
+58 |   from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+59 |   from ids_ips_ia.main.orchestrator import build_ifaces
+60 | / from modules_utils.validate_config import (
+61 | |     validate_and_merge_config,
+62 | |     ConfigError
+63 | | )
+   | |_^
+64 |   from obsidian_hive.config.config import ANALYST_CONFIG
+65 |   from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:64:1
+   |
+62 |     ConfigError
+63 | )
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   |
+
+F401 [*] `obsidian_hive.config.config.ANALYST_CONFIG` imported but unused
+  --> server_asset_etat/core_router.py:64:41
+   |
+62 |     ConfigError
+63 | )
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+   |                                         ^^^^^^^^^^^^^^
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   |
+help: Remove unused import: `obsidian_hive.config.config.ANALYST_CONFIG`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:65:1
+   |
+63 | )
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+67 | from obsidian_hive.agents.analyst.agent import (
+   |
+
+F401 [*] `obsidian_hive.agents.analyst.tools.tools.MAPPING` imported but unused
+  --> server_asset_etat/core_router.py:65:65
+   |
+63 | )
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+   |                                                                 ^^^^^^^^^^^^^^^^^
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+67 | from obsidian_hive.agents.analyst.agent import (
+   |
+help: Remove unused import: `obsidian_hive.agents.analyst.tools.tools.MAPPING`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:66:1
+   |
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+67 | from obsidian_hive.agents.analyst.agent import (
+68 |     Analyst, AnalystResult,
+   |
+
+F401 [*] `obsidian_hive.agents.analyst.prompts.system.get_system_prompt` imported but unused
+  --> server_asset_etat/core_router.py:66:57
+   |
+64 | from obsidian_hive.config.config import ANALYST_CONFIG
+65 | from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+66 | from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+   |                                                         ^^^^^^^^^^^^^^^^^
+67 | from obsidian_hive.agents.analyst.agent import (
+68 |     Analyst, AnalystResult,
+   |
+help: Remove unused import: `obsidian_hive.agents.analyst.prompts.system.get_system_prompt`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:67:1
+   |
+65 |   from obsidian_hive.agents.analyst.tools.tools import MAPPING as ALEX_TOOL_MAPPING
+66 |   from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
+67 | / from obsidian_hive.agents.analyst.agent import (
+68 | |     Analyst, AnalystResult,
+69 | |     NoReportProducedError, create_alex
+70 | | )
+   | |_^
+71 |   from obsidian_hive.agents.core.agent import Coralie, CoralieResult, create_coralie
+72 |   from obsidian_hive.agents.shared.human_in_loop import (
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:71:1
+   |
+69 |     NoReportProducedError, create_alex
+70 | )
+71 | from obsidian_hive.agents.core.agent import Coralie, CoralieResult, create_coralie
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+72 | from obsidian_hive.agents.shared.human_in_loop import (
+73 |     WSConfirmer, ConfirmerNotAttachedError, ConfirmationTimeout, ConfirmationDenied,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:72:1
+   |
+70 |   )
+71 |   from obsidian_hive.agents.core.agent import Coralie, CoralieResult, create_coralie
+72 | / from obsidian_hive.agents.shared.human_in_loop import (
+73 | |     WSConfirmer, ConfirmerNotAttachedError, ConfirmationTimeout, ConfirmationDenied,
+74 | |     current_confirm_username, ChannelAlreadyAttachedError,
+75 | | )
+   | |_^
+76 |   from obsidian_hive.core.managers.report_manager import ReportManager
+77 |   from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   |
+
+F401 [*] `obsidian_hive.agents.shared.human_in_loop.ChannelAlreadyAttachedError` imported but unused
+  --> server_asset_etat/core_router.py:74:31
+   |
+72 | from obsidian_hive.agents.shared.human_in_loop import (
+73 |     WSConfirmer, ConfirmerNotAttachedError, ConfirmationTimeout, ConfirmationDenied,
+74 |     current_confirm_username, ChannelAlreadyAttachedError,
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+75 | )
+76 | from obsidian_hive.core.managers.report_manager import ReportManager
+   |
+help: Remove unused import: `obsidian_hive.agents.shared.human_in_loop.ChannelAlreadyAttachedError`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:76:1
+   |
+74 |     current_confirm_username, ChannelAlreadyAttachedError,
+75 | )
+76 | from obsidian_hive.core.managers.report_manager import ReportManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+77 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+78 | from obsidian_hive.api.ws_manager import WSManager
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:77:1
+   |
+75 | )
+76 | from obsidian_hive.core.managers.report_manager import ReportManager
+77 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+78 | from obsidian_hive.api.ws_manager import WSManager
+79 | from modules_utils.limiter import limiter
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:78:1
+   |
+76 | from obsidian_hive.core.managers.report_manager import ReportManager
+77 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+78 | from obsidian_hive.api.ws_manager import WSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+79 | from modules_utils.limiter import limiter
+80 | from obsidian_hive.api.ap_config import LIMITE, ASSETS_CONFIG_DIR
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:79:1
+   |
+77 | from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+78 | from obsidian_hive.api.ws_manager import WSManager
+79 | from modules_utils.limiter import limiter
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+80 | from obsidian_hive.api.ap_config import LIMITE, ASSETS_CONFIG_DIR
+81 | from modules_utils.keyed_lock import resource_lock
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:80:1
+   |
+78 | from obsidian_hive.api.ws_manager import WSManager
+79 | from modules_utils.limiter import limiter
+80 | from obsidian_hive.api.ap_config import LIMITE, ASSETS_CONFIG_DIR
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+81 | from modules_utils.keyed_lock import resource_lock
+82 | from modules_utils.cryto_utils import hashpw, checkpw
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:81:1
+   |
+79 | from modules_utils.limiter import limiter
+80 | from obsidian_hive.api.ap_config import LIMITE, ASSETS_CONFIG_DIR
+81 | from modules_utils.keyed_lock import resource_lock
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+82 | from modules_utils.cryto_utils import hashpw, checkpw
+83 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:82:1
+   |
+80 | from obsidian_hive.api.ap_config import LIMITE, ASSETS_CONFIG_DIR
+81 | from modules_utils.keyed_lock import resource_lock
+82 | from modules_utils.cryto_utils import hashpw, checkpw
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+83 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+84 | from obsidian_hive.core.assets.server_asset.type import ToolResult, ToolCall
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:83:1
+   |
+81 | from modules_utils.keyed_lock import resource_lock
+82 | from modules_utils.cryto_utils import hashpw, checkpw
+83 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+84 | from obsidian_hive.core.assets.server_asset.type import ToolResult, ToolCall
+85 | from obsidian_hive.core.assets.server_asset.tools import (
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:84:1
+   |
+82 | from modules_utils.cryto_utils import hashpw, checkpw
+83 | from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+84 | from obsidian_hive.core.assets.server_asset.type import ToolResult, ToolCall
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+85 | from obsidian_hive.core.assets.server_asset.tools import (
+86 |     need_confirmation as server_tool_need_confirmation,
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/core_router.py:85:1
+   |
+83 |   from obsidian_hive.api.server_asset_agent_ws_manager import ServerAgentWSManager
+84 |   from obsidian_hive.core.assets.server_asset.type import ToolResult, ToolCall
+85 | / from obsidian_hive.core.assets.server_asset.tools import (
+86 | |     need_confirmation as server_tool_need_confirmation,
+87 | |     tool_risk as server_tool_risk,
+88 | |     tool_exists as server_tool_exists,
+89 | |     list_tools as server_list_tools
+90 | | )
+   | |_^
+91 |
+92 |   router = APIRouter()
+   |
+
+E713 [*] Test for membership should be `not in`
+   --> server_asset_etat/core_router.py:232:16
+    |
+230 |     missing = []
+231 |     for key in keys:
+232 |         if not key in obj:
+    |                ^^^^^^^^^^
+233 |             missing.append(key)
+    |
+help: Convert to `not in`
+
+E722 Do not use bare `except`
+   --> server_asset_etat/core_router.py:569:9
+    |
+567 |         try:
+568 |             os.unlink(path)
+569 |         except:
+    |         ^^^^^^
+570 |             pass
+    |
+
+F841 Local variable `client_ws_manager` is assigned to but never used
+    --> server_asset_etat/core_router.py:1665:5
+     |
+1663 |     engine = get_engine()
+1664 |     ws_manager = get_server_agent_ws_manager()
+1665 |     client_ws_manager = get_ws_manager()
+     |     ^^^^^^^^^^^^^^^^^
+1666 |     
+1667 |     asset_db = await engine.asset_manager.get_by_identifier(asset_id, first=True)
+     |
+help: Remove assignment to unused variable `client_ws_manager`
+
+E722 Do not use bare `except`
+    --> server_asset_etat/core_router.py:1723:9
+     |
+1721 |         try:
+1722 |             await ws.close()
+1723 |         except:
+     |         ^^^^^^
+1724 |             pass
+     |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/safe_subprocess.py:30:1
+   |
+28 | """
+29 |
+30 | import os
+   | ^^^^^^^^^
+31 | import shlex
+32 | import shutil
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/safe_subprocess.py:31:1
+   |
+30 | import os
+31 | import shlex
+   | ^^^^^^^^^^^^
+32 | import shutil
+33 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/safe_subprocess.py:32:1
+   |
+30 | import os
+31 | import shlex
+32 | import shutil
+   | ^^^^^^^^^^^^^
+33 | import subprocess
+34 | from dataclasses import dataclass, field
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/safe_subprocess.py:33:1
+   |
+31 | import shlex
+32 | import shutil
+33 | import subprocess
+   | ^^^^^^^^^^^^^^^^^
+34 | from dataclasses import dataclass, field
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/safe_subprocess.py:34:1
+   |
+32 | import shutil
+33 | import subprocess
+34 | from dataclasses import dataclass, field
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+F401 [*] `functools.wraps` imported but unused
+  --> server_asset_etat/server_asset/utils.py:9:23
+   |
+ 7 | """
+ 8 |
+ 9 | from functools import wraps
+   |                       ^^^^^
+10 | from obsidian_hive.core.assets.asset_types import Severity
+   |
+help: Remove unused import: `functools.wraps`
+
+E401 [*] Multiple imports on one line
+  --> server_asset_etat/types.py:9:1
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   | ^^^^^^^^^^^^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Split imports
+
+F401 [*] `sys` imported but unused
+  --> server_asset_etat/types.py:9:12
+   |
+ 7 | """
+ 8 |
+ 9 | import os, sys
+   |            ^^^
+10 | # sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `json` imported but unused
+  --> server_asset_etat/types.py:13:8
+   |
+12 | import time
+13 | import json
+   |        ^^^^
+14 | import json5
+15 | import random
+   |
+help: Remove unused import: `json`
+
+F401 [*] `random` imported but unused
+  --> server_asset_etat/types.py:15:8
+   |
+13 | import json
+14 | import json5
+15 | import random
+   |        ^^^^^^
+16 | from typing import Dict, List, Any
+17 | from uuid import uuid4
+   |
+help: Remove unused import: `random`
+
+F401 [*] `pydantic.ConfigDict` imported but unused
+  --> server_asset_etat/types.py:20:74
+   |
+18 | from datetime import datetime, timezone, timedelta
+19 | from enum import IntEnum, StrEnum
+20 | from pydantic import Field, BaseModel, field_validator, model_validator, ConfigDict
+   |                                                                          ^^^^^^^^^^
+21 | from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+22 | from scanner_ia.api.api_config import DEFAULT_SCAN_PATH
+   |
+help: Remove unused import: `pydantic.ConfigDict`
+
+E402 Module level import not at top of file
+  --> server_asset_etat/ws_manager.py:20:1
+   |
+18 | """
+19 |
+20 | import json
+   | ^^^^^^^^^^^
+21 | from fastapi import WebSocket
+   |
+
+E402 Module level import not at top of file
+  --> server_asset_etat/ws_manager.py:21:1
+   |
+20 | import json
+21 | from fastapi import WebSocket
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+E714 [*] Test for object identity should be `is not`
+  --> server_asset_etat/ws_manager.py:45:35
+   |
+43 |         enregistré (no-op silencieux, pratique à appeler dans un `finally`
+44 |         même si la connexion n'a jamais abouti)."""
+45 |         if ws is not None and not self.ws.get(username) is ws:
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+46 |             return
+47 |         return self.ws.pop(username, None) is not None
+   |
+help: Convert to `is not`
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:18:1
+   |
+16 | """
+17 |
+18 | import os
+   | ^^^^^^^^^
+19 | import sys
+20 | import json
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:19:1
+   |
+18 | import os
+19 | import sys
+   | ^^^^^^^^^^
+20 | import json
+21 | import uuid
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:20:1
+   |
+18 | import os
+19 | import sys
+20 | import json
+   | ^^^^^^^^^^^
+21 | import uuid
+22 | import httpx
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:21:1
+   |
+19 | import sys
+20 | import json
+21 | import uuid
+   | ^^^^^^^^^^^
+22 | import httpx
+23 | import asyncio
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:22:1
+   |
+20 | import json
+21 | import uuid
+22 | import httpx
+   | ^^^^^^^^^^^^
+23 | import asyncio
+24 | import tempfile
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:23:1
+   |
+21 | import uuid
+22 | import httpx
+23 | import asyncio
+   | ^^^^^^^^^^^^^^
+24 | import tempfile
+25 | import subprocess
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:24:1
+   |
+22 | import httpx
+23 | import asyncio
+24 | import tempfile
+   | ^^^^^^^^^^^^^^^
+25 | import subprocess
+26 | import websockets
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:25:1
+   |
+23 | import asyncio
+24 | import tempfile
+25 | import subprocess
+   | ^^^^^^^^^^^^^^^^^
+26 | import websockets
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:26:1
+   |
+24 | import tempfile
+25 | import subprocess
+26 | import websockets
+   | ^^^^^^^^^^^^^^^^^
+27 |
+28 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:28:1
+   |
+26 | import websockets
+27 |
+28 | from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from obsidian_hive.api.ap_config import (
+30 |     USER_ENV_KEY, PASSWD_ENV_KEY, SECRET_KEY_ENV_KEY, EXP, NOT_BEFORE,
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:29:1
+   |
+28 |   from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
+29 | / from obsidian_hive.api.ap_config import (
+30 | |     USER_ENV_KEY, PASSWD_ENV_KEY, SECRET_KEY_ENV_KEY, EXP, NOT_BEFORE,
+31 | | )
+   | |_^
+32 |   from modules_utils.api_dependencies import AuthManager
+   |
+
+E402 Module level import not at top of file
+  --> test_agent_e2e.py:32:1
+   |
+30 |     USER_ENV_KEY, PASSWD_ENV_KEY, SECRET_KEY_ENV_KEY, EXP, NOT_BEFORE,
+31 | )
+32 | from modules_utils.api_dependencies import AuthManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |
+34 | CENTRAL_HTTP_URL = "http://127.0.0.1:8000"
+   |
+
+Found 464 errors.
+[*] 151 fixable with the `--fix` option (9 hidden fixes can be enabled with the `--unsafe-fixes` option).

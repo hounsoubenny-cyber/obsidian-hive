@@ -1,0 +1,1369 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "created": "2026-03-08",
+    "updated": "2026-03-08",
+    "description": "Signatures optimisées pour analyse CODE SOURCE JavaScript - Détection vulnérabilités dans <script> tags et fichiers .js",
+    "author": "Samuel - ShieldAI Scanner",
+    "total_signatures": 85,
+    "target": "javascript_source_code",
+    "usage": "Analyser contenu JavaScript (dans <script> ou fichiers .js)",
+    "note": "Pour HTML structure, utiliser signatures.json séparé"
+  },
+  "vulnerability_names": {
+    "eval_usage": "EvalCode",
+    "function_constructor": "FuncConstr",
+    "innerHTML_assignment": "InnerHTML",
+    "outerHTML_assignment": "OuterHTML",
+    "document_write": "DocWrite",
+    "document_cookie_access": "CookieAccess",
+    "location_href_assignment": "LocHref",
+    "setTimeout_string": "SetTimeoutStr",
+    "setInterval_string": "SetIntervalStr",
+    "postMessage_wildcard": "PostMsgWild",
+    "prototype_pollution": "ProtoPollut",
+    "dynamic_import_unsafe": "DynImport",
+    "websocket_insecure": "WSInsec",
+    "web_worker_creation": "WorkerCreate",
+    "javascript_protocol": "JSProtocol",
+    "data_uri_html": "DataHTML",
+    "vbscript_protocol": "VBScript",
+    "inline_event_handler": "InlineEvent",
+    "jquery_globaleval": "jQueryEval",
+    "jquery_parsehtml": "jQueryParse",
+    "localStorage_sensitive": "LocalStorSens",
+    "atob_suspicious": "AtobSusp",
+    "redos_pattern": "ReDoS",
+    "weak_crypto_md5": "WeakCryptoMD5",
+    "weak_crypto_sha1": "WeakCryptoSHA1",
+    "insecure_random": "InsecRand",
+    "react_dangerous_html": "ReactDangHTML",
+    "console_log_production": "ConsoleProd",
+    "debugger_statement": "Debugger",
+    "aws_access_key": "AWSAccessKey",
+    "aws_secret_key": "AWSSecretKey",
+    "github_token": "GitHubToken",
+    "stripe_live_key": "StripeLiveKey",
+    "google_api_key": "GoogleAPIKey",
+    "slack_token": "SlackToken",
+    "jwt_token_hardcoded": "JWTHardcoded",
+    "private_key_rsa": "RSAPrivKey",
+    "private_key_openssh": "SSHPrivKey",
+    "generic_api_key": "GenericAPIKey",
+    "database_password": "DBPassword",
+    "connection_string_creds": "ConnStrCreds",
+    "basic_auth_header": "BasicAuthHeader",
+    "bearer_token_hardcoded": "BearerToken",
+    "sql_injection_pattern": "SQLiPattern",
+    "xss_payload_pattern": "XSSPattern",
+    "command_injection_pattern": "CMDiPattern",
+    "path_traversal_pattern": "PathTravPattern",
+    "todo_comment": "TODOComment",
+    "fixme_comment": "FIXMEComment",
+    "hack_comment": "HACKComment",
+    "password_in_comment": "PassInComment",
+    "api_key_in_comment": "APIKeyInComment",
+    "email_address_exposed": "EmailExposed",
+    "internal_ip_exposed": "InternalIP",
+    "phone_number_exposed": "PhoneExposed",
+    "credit_card_number": "CreditCard",
+    "jquery_version_old": "jQueryOld",
+    "angular_version_old": "AngularOld",
+    "react_version_old": "ReactOld",
+    "window_open_unsafe": "WindowOpenUnsafe",
+    "insertAdjacentHTML": "InsertAdjacentHTML"
+  },
+  "categories": {
+    "code_execution_critical": {
+      "description": "Fonctions d'exécution de code dynamique - CRITIQUE",
+      "severity_default": "critique",
+      "signatures": [
+        {
+          "id": "EXEC-001",
+          "name": "eval_usage",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "code_execution",
+          "patterns": [
+            "\\beval\\s*\\(",
+            "\\bwindow\\.eval\\s*\\(",
+            "\\bglobalThis\\.eval\\s*\\(",
+            "\\[\\s*['\"]eval['\"]\\s*\\]\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "Utilisation de eval() - Code Injection directe",
+          "recommendation": "Remplacer par JSON.parse() pour données ou alternatives sûres",
+          "cwe": "CWE-94",
+          "owasp": "A03:2021 - Injection",
+          "false_positive_keywords": [
+            "evaluation",
+            "medieval"
+          ],
+          "example_vulnerable": "eval(userInput);",
+          "example_safe": "JSON.parse(userInput);"
+        },
+        {
+          "id": "EXEC-002",
+          "name": "function_constructor",
+          "severity": "critique",
+          "score": 9.9,
+          "category": "code_execution",
+          "patterns": [
+            "\\bnew\\s+Function\\s*\\(",
+            "\\bFunction\\s*\\(\\s*['\"]",
+            "\\bwindow\\.Function\\s*\\(",
+            "\\[\\s*['\"]Function['\"]\\s*\\]"
+          ],
+          "context_aware": false,
+          "description": "Function constructor - Équivalent à eval()",
+          "recommendation": "Éviter Function constructor, utiliser fonctions déclarées",
+          "cwe": "CWE-94",
+          "owasp": "A03:2021",
+          "example_vulnerable": "new Function('return ' + userCode)()",
+          "example_safe": "// Utiliser fonctions normales"
+        },
+        {
+          "id": "EXEC-003",
+          "name": "setTimeout_string",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "code_execution",
+          "patterns": [
+            "\\bsetTimeout\\s*\\(\\s*['\"`]",
+            "\\bsetTimeout\\s*\\(\\s*['\"]\\s*\\w+"
+          ],
+          "context_aware": false,
+          "description": "setTimeout() avec string au lieu de function",
+          "recommendation": "Utiliser function reference: setTimeout(myFunction, 1000)",
+          "cwe": "CWE-94",
+          "owasp": "A03:2021",
+          "example_vulnerable": "setTimeout('alert(1)', 1000)",
+          "example_safe": "setTimeout(() => alert(1), 1000)"
+        },
+        {
+          "id": "EXEC-004",
+          "name": "setInterval_string",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "code_execution",
+          "patterns": [
+            "\\bsetInterval\\s*\\(\\s*['\"`]",
+            "\\bsetInterval\\s*\\(\\s*['\"]\\s*\\w+"
+          ],
+          "context_aware": false,
+          "description": "setInterval() avec string",
+          "recommendation": "Utiliser function reference",
+          "cwe": "CWE-94",
+          "owasp": "A03:2021",
+          "example_vulnerable": "setInterval('updateUI()', 1000)",
+          "example_safe": "setInterval(updateUI, 1000)"
+        }
+      ]
+    },
+    "dom_xss_vectors": {
+      "description": "Manipulation DOM dangereuse - Vecteurs XSS",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "DOM-001",
+          "name": "innerHTML_assignment",
+          "severity": "élevé",
+          "score": 8.8,
+          "category": "xss",
+          "patterns": [
+            "\\.innerHTML\\s*=\\s*(?!['\"`]\\s*['\"`])",
+            "\\.innerHTML\\s*\\+=",
+            "\\[\\s*['\"]innerHTML['\"]\\s*\\]\\s*="
+          ],
+          "context_aware": true,
+          "description": "Assignment à innerHTML sans sanitization",
+          "recommendation": "Utiliser textContent pour texte pur, ou DOMPurify.sanitize() pour HTML",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "div.innerHTML = userInput;",
+          "example_safe": "div.textContent = userInput; // OU div.innerHTML = DOMPurify.sanitize(userInput);"
+        },
+        {
+          "id": "DOM-002",
+          "name": "outerHTML_assignment",
+          "severity": "élevé",
+          "score": 8.7,
+          "category": "xss",
+          "patterns": [
+            "\\.outerHTML\\s*=\\s*(?!['\"`]\\s*['\"`])",
+            "\\.outerHTML\\s*\\+=",
+            "\\[\\s*['\"]outerHTML['\"]\\s*\\]\\s*="
+          ],
+          "context_aware": true,
+          "description": "Assignment à outerHTML",
+          "recommendation": "Éviter outerHTML avec données utilisateur",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "element.outerHTML = '<div>' + userInput + '</div>';",
+          "example_safe": "element.textContent = userInput;"
+        },
+        {
+          "id": "DOM-003",
+          "name": "document_write",
+          "severity": "élevé",
+          "score": 8.8,
+          "category": "xss",
+          "patterns": [
+            "\\bdocument\\.write\\s*\\(",
+            "\\bdocument\\.writeln\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "document.write() - XSS + performance issues",
+          "recommendation": "Utiliser DOM manipulation moderne (createElement, appendChild)",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "document.write('<div>' + data + '</div>');",
+          "example_safe": "const div = document.createElement('div'); div.textContent = data; document.body.appendChild(div);"
+        },
+        {
+          "id": "DOM-004",
+          "name": "insertAdjacentHTML",
+          "severity": "élevé",
+          "score": 8.5,
+          "category": "xss",
+          "patterns": [
+            "\\.insertAdjacentHTML\\s*\\("
+          ],
+          "context_aware": true,
+          "description": "insertAdjacentHTML() sans sanitization",
+          "recommendation": "Sanitizer HTML avant insertion",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "element.insertAdjacentHTML('beforeend', userHTML);",
+          "example_safe": "element.insertAdjacentHTML('beforeend', DOMPurify.sanitize(userHTML));"
+        }
+      ]
+    },
+    "session_and_cookies": {
+      "description": "Manipulation cookies et session - Session Hijacking",
+      "severity_default": "critique",
+      "signatures": [
+        {
+          "id": "COOKIE-001",
+          "name": "document_cookie_access",
+          "severity": "critique",
+          "score": 9.8,
+          "category": "session_hijacking",
+          "patterns": [
+            "\\bdocument\\.cookie\\s*=",
+            "\\bdocument\\.cookie\\s*\\+=",
+            "\\[\\s*['\"]cookie['\"]\\s*\\]"
+          ],
+          "context_aware": false,
+          "description": "Manipulation de document.cookie côté client",
+          "recommendation": "Utiliser cookies HttpOnly côté serveur. Éviter accès JS aux cookies sensibles",
+          "cwe": "CWE-1004",
+          "owasp": "A07:2021 - Identification and Authentication Failures",
+          "example_vulnerable": "document.cookie = 'session=' + token;",
+          "example_safe": "// Set cookie HttpOnly côté serveur (PHP/Node/etc)"
+        }
+      ]
+    },
+    "navigation_and_redirect": {
+      "description": "Navigation et redirections - Open Redirect",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "NAV-001",
+          "name": "location_href_assignment",
+          "severity": "élevé",
+          "score": 8.5,
+          "category": "open_redirect",
+          "patterns": [
+            "\\blocation\\.href\\s*=\\s*(?!['\"]https?://[a-zA-Z0-9.-]+)",
+            "\\bwindow\\.location\\s*=\\s*(?!['\"]https?://)",
+            "\\bdocument\\.location\\s*=",
+            "\\.location\\.replace\\s*\\(",
+            "\\.location\\.assign\\s*\\("
+          ],
+          "context_aware": true,
+          "description": "Assignment dynamique à location - Open Redirect Risk",
+          "recommendation": "Valider URLs avec allowlist avant redirection",
+          "cwe": "CWE-601",
+          "owasp": "A01:2021 - Broken Access Control",
+          "example_vulnerable": "location.href = userInput;",
+          "example_safe": "const allowedDomains = ['example.com']; if (allowedDomains.includes(new URL(url).hostname)) location.href = url;"
+        },
+        {
+          "id": "NAV-002",
+          "name": "window_open_unsafe",
+          "severity": "élevé",
+          "score": 7.5,
+          "category": "open_redirect",
+          "patterns": [
+            "\\bwindow\\.open\\s*\\(",
+            "\\bopen\\s*\\(\\s*['\"`]"
+          ],
+          "context_aware": true,
+          "description": "window.open() - Popup/Redirect potentiel",
+          "recommendation": "Valider URLs avant window.open()",
+          "cwe": "CWE-601",
+          "owasp": "A01:2021",
+          "example_vulnerable": "window.open(userURL);",
+          "example_safe": "if (isValidURL(url)) window.open(url);"
+        }
+      ]
+    },
+    "postmessage_security": {
+      "description": "PostMessage API - Cross-origin messaging",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "MSG-001",
+          "name": "postMessage_wildcard",
+          "severity": "élevé",
+          "score": 8.5,
+          "category": "xss",
+          "patterns": [
+            "\\.postMessage\\s*\\([^,]*,\\s*['\"`]\\*['\"`]",
+            "\\.postMessage\\s*\\([^)]*\\*"
+          ],
+          "context_aware": true,
+          "description": "postMessage() avec wildcard origin '*'",
+          "recommendation": "Spécifier targetOrigin exact au lieu de '*'",
+          "cwe": "CWE-346",
+          "owasp": "A01:2021",
+          "example_vulnerable": "targetWindow.postMessage(data, '*');",
+          "example_safe": "targetWindow.postMessage(data, 'https://trusted-domain.com');"
+        }
+      ]
+    },
+    "prototype_pollution": {
+      "description": "Prototype Pollution - Object manipulation",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "PROTO-001",
+          "name": "prototype_pollution",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "prototype_pollution",
+          "patterns": [
+            "\\b__proto__\\s*\\[",
+            "\\b__proto__\\s*\\.",
+            "\\.constructor\\s*\\.\\s*prototype\\s*\\[",
+            "\\[\\s*['\"]__proto__['\"]\\s*\\]"
+          ],
+          "context_aware": false,
+          "description": "Accès à __proto__ - Prototype Pollution possible",
+          "recommendation": "Éviter __proto__. Utiliser Object.create(null) pour objets sans prototype",
+          "cwe": "CWE-1321",
+          "owasp": "A08:2021 - Software and Data Integrity Failures",
+          "example_vulnerable": "obj[userKey] = value; // Si userKey = '__proto__'",
+          "example_safe": "const obj = Object.create(null); // Pas de prototype"
+        }
+      ]
+    },
+    "dynamic_code_loading": {
+      "description": "Chargement dynamique de code",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "LOAD-001",
+          "name": "dynamic_import_unsafe",
+          "severity": "élevé",
+          "score": 7.8,
+          "category": "code_loading",
+          "patterns": [
+            "\\bimport\\s*\\((?!\\s*['\"][./])",
+            "\\bSystem\\.import\\s*\\(",
+            "\\brequire\\s*\\([^'\".]"
+          ],
+          "context_aware": true,
+          "description": "Dynamic import() avec variable non validée",
+          "recommendation": "Valider chemins modules avant import dynamique",
+          "cwe": "CWE-829",
+          "owasp": "A06:2021 - Vulnerable and Outdated Components",
+          "example_vulnerable": "import(userPath);",
+          "example_safe": "const allowedModules = ['./module1.js']; if (allowedModules.includes(path)) import(path);"
+        },
+        {
+          "id": "LOAD-002",
+          "name": "web_worker_creation",
+          "severity": "élevé",
+          "score": 7.2,
+          "category": "code_loading",
+          "patterns": [
+            "\\bnew\\s+Worker\\s*\\(",
+            "\\bnew\\s+SharedWorker\\s*\\(",
+            "\\bimportScripts\\s*\\("
+          ],
+          "context_aware": true,
+          "description": "Web Worker creation - Script execution en background",
+          "recommendation": "Valider URLs de worker scripts. Éviter sources externes",
+          "cwe": "CWE-829",
+          "owasp": "A06:2021",
+          "example_vulnerable": "new Worker(userScriptURL);",
+          "example_safe": "new Worker('/trusted/worker.js');"
+        }
+      ]
+    },
+    "network_security": {
+      "description": "Sécurité réseau - WebSocket, CORS",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "NET-001",
+          "name": "websocket_insecure",
+          "severity": "élevé",
+          "score": 7.9,
+          "category": "network",
+          "patterns": [
+            "\\bnew\\s+WebSocket\\s*\\(\\s*['\"]ws://",
+            "\\bnew\\s+WebSocket\\s*\\(\\s*[a-zA-Z_]"
+          ],
+          "context_aware": true,
+          "description": "WebSocket avec protocole ws:// au lieu de wss://",
+          "recommendation": "Utiliser wss:// (secure WebSocket) au lieu de ws://",
+          "cwe": "CWE-319",
+          "owasp": "A02:2021 - Cryptographic Failures",
+          "example_vulnerable": "new WebSocket('ws://example.com');",
+          "example_safe": "new WebSocket('wss://example.com');"
+        }
+      ]
+    },
+    "dangerous_protocols": {
+      "description": "Protocoles dangereux dans URLs",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "PROTO-101",
+          "name": "javascript_protocol",
+          "severity": "élevé",
+          "score": 9.0,
+          "category": "xss",
+          "patterns": [
+            "(?i)href\\s*=\\s*['\"]?\\s*javascript:",
+            "(?i)src\\s*=\\s*['\"]?\\s*javascript:",
+            "(?i)action\\s*=\\s*['\"]?\\s*javascript:",
+            "['\"`]javascript:\\s*"
+          ],
+          "context_aware": true,
+          "description": "Protocole javascript: - XSS Vector classique",
+          "recommendation": "Ne jamais utiliser javascript: dans href/src/action",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "<a href='javascript:alert(1)'>Click</a>",
+          "example_safe": "<a href='#' onclick='handleClick()'>Click</a>"
+        },
+        {
+          "id": "PROTO-102",
+          "name": "data_uri_html",
+          "severity": "élevé",
+          "score": 8.8,
+          "category": "xss",
+          "patterns": [
+            "data:text/html\\s*[,;]",
+            "data:text/html\\s*;\\s*base64\\s*,",
+            "data:application/javascript"
+          ],
+          "context_aware": true,
+          "description": "Data URI avec HTML/JavaScript",
+          "recommendation": "Éviter data: URIs avec code exécutable",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "iframe.src = 'data:text/html,<script>alert(1)</script>';",
+          "example_safe": "// Utiliser URLs normales"
+        },
+        {
+          "id": "PROTO-103",
+          "name": "vbscript_protocol",
+          "severity": "élevé",
+          "score": 9.0,
+          "category": "xss",
+          "patterns": [
+            "(?i)vbscript:",
+            "(?i)href\\s*=\\s*['\"]?\\s*vbscript:"
+          ],
+          "context_aware": true,
+          "description": "Protocole vbscript: (IE legacy)",
+          "recommendation": "Supprimer tout usage de vbscript:",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "<a href='vbscript:MsgBox(1)'>Click</a>",
+          "example_safe": "// Ne pas utiliser vbscript:"
+        }
+      ]
+    },
+    "jquery_dangerous": {
+      "description": "Fonctions jQuery dangereuses",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "JQ-001",
+          "name": "jquery_globaleval",
+          "severity": "critique",
+          "score": 9.7,
+          "category": "code_execution",
+          "patterns": [
+            "\\$\\.globalEval\\s*\\(",
+            "\\bjQuery\\.globalEval\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "jQuery.globalEval() - Équivalent eval()",
+          "recommendation": "Éviter globalEval, utiliser alternatives sûres",
+          "cwe": "CWE-94",
+          "owasp": "A03:2021",
+          "example_vulnerable": "$.globalEval(userCode);",
+          "example_safe": "// Éviter exécution code dynamique"
+        },
+        {
+          "id": "JQ-002",
+          "name": "jquery_parsehtml",
+          "severity": "élevé",
+          "score": 7.0,
+          "category": "xss",
+          "patterns": [
+            "\\$\\.parseHTML\\s*\\(",
+            "\\$\\s*\\(\\s*['\"`]<"
+          ],
+          "context_aware": true,
+          "description": "jQuery HTML parsing sans sanitization",
+          "recommendation": "Sanitizer HTML avant parsing avec jQuery",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "$('<div>' + userHTML + '</div>');",
+          "example_safe": "$('<div>').text(userData);"
+        }
+      ]
+    },
+    "storage_security": {
+      "description": "Local/Session Storage - Données sensibles",
+      "severity_default": "moyen",
+      "signatures": [
+        {
+          "id": "STOR-001",
+          "name": "localStorage_sensitive",
+          "severity": "moyen",
+          "score": 5.5,
+          "category": "data_exposure",
+          "patterns": [
+            "localStorage\\.setItem\\s*\\([^,]*(?:password|token|secret|key|jwt|session)",
+            "sessionStorage\\.setItem\\s*\\([^,]*(?:password|token|secret|key)"
+          ],
+          "context_aware": true,
+          "description": "Stockage de données sensibles en localStorage/sessionStorage",
+          "recommendation": "Ne jamais stocker passwords/tokens/secrets en localStorage. Utiliser cookies HttpOnly",
+          "cwe": "CWE-922",
+          "owasp": "A02:2021",
+          "example_vulnerable": "localStorage.setItem('jwt_token', token);",
+          "example_safe": "// Stocker JWT en cookie HttpOnly côté serveur"
+        }
+      ]
+    },
+    "encoding_obfuscation": {
+      "description": "Encodage/Décodage - Possible obfuscation malveillante",
+      "severity_default": "moyen",
+      "signatures": [
+        {
+          "id": "ENC-001",
+          "name": "atob_suspicious",
+          "severity": "moyen",
+          "score": 5.5,
+          "category": "obfuscation",
+          "patterns": [
+            "\\batob\\s*\\(",
+            "\\bbtoa\\s*\\("
+          ],
+          "context_aware": true,
+          "description": "Base64 decode/encode - Souvent utilisé pour obfuscation",
+          "recommendation": "Vérifier usage légitime vs obfuscation malveillante",
+          "cwe": "CWE-506",
+          "owasp": "A08:2021",
+          "example_vulnerable": "eval(atob('YWxlcnQoMSk='));",
+          "example_safe": "// Utilisation légitime de atob/btoa OK"
+        }
+      ]
+    },
+    "regex_dos": {
+      "description": "Regular Expression Denial of Service (ReDoS)",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "REDOS-001",
+          "name": "redos_pattern",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "dos",
+          "patterns": [
+            "/[^/\\n]*\\([^)]*[+*][^)]*\\)[+*][^/\\n]*/[a-z]*",
+            "RegExp\\s*\\(\\s*['\\\"][^'\\\"]*\\([^)]*[+*][^)]*\\)[+*][^'\\\"]*['\\\"]"
+          ],
+          "context_aware": false,
+          "description": "ReDoS - Catastrophic backtracking dans regex",
+          "recommendation": "Éviter quantifiers imbriqués dans regex. Tester avec long inputs",
+          "cwe": "CWE-1333",
+          "owasp": "A01:2021",
+          "example_vulnerable": "new RegExp('(a+)+b')",
+          "example_safe": "new RegExp('a+b')"
+        }
+      ]
+    },
+    "weak_cryptography": {
+      "description": "Cryptographie faible ou obsolète",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "CRYPTO-001",
+          "name": "weak_crypto_md5",
+          "severity": "élevé",
+          "score": 7.5,
+          "category": "weak_crypto",
+          "patterns": [
+            "crypto\\.createHash\\s*\\(\\s*['\"]md5['\"]",
+            "CryptoJS\\.MD5\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "MD5 hash algorithm (broken)",
+          "recommendation": "Utiliser SHA-256 minimum, SHA-512 recommandé",
+          "cwe": "CWE-327",
+          "owasp": "A02:2021",
+          "example_vulnerable": "crypto.createHash('md5').update(password);",
+          "example_safe": "crypto.createHash('sha256').update(password);"
+        },
+        {
+          "id": "CRYPTO-002",
+          "name": "weak_crypto_sha1",
+          "severity": "élevé",
+          "score": 7.0,
+          "category": "weak_crypto",
+          "patterns": [
+            "crypto\\.createHash\\s*\\(\\s*['\"]sha1['\"]",
+            "CryptoJS\\.SHA1\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "SHA1 hash algorithm (deprecated)",
+          "recommendation": "Utiliser SHA-256 ou SHA-512",
+          "cwe": "CWE-327",
+          "owasp": "A02:2021",
+          "example_vulnerable": "CryptoJS.SHA1(data);",
+          "example_safe": "CryptoJS.SHA256(data);"
+        },
+        {
+          "id": "CRYPTO-003",
+          "name": "insecure_random",
+          "severity": "moyen",
+          "score": 5.0,
+          "category": "weak_crypto",
+          "patterns": [
+            "\\bMath\\.random\\s*\\(\\)",
+            "\\bnew\\s+Date\\s*\\(\\)\\.getTime\\s*\\(\\)"
+          ],
+          "context_aware": true,
+          "description": "Math.random() - Non cryptographically secure",
+          "recommendation": "Utiliser crypto.getRandomValues() pour génération sécurisée",
+          "cwe": "CWE-338",
+          "owasp": "A02:2021",
+          "example_vulnerable": "const token = Math.random().toString(36);",
+          "example_safe": "const array = new Uint32Array(1); crypto.getRandomValues(array); const token = array[0];"
+        }
+      ]
+    },
+    "react_specific": {
+      "description": "Vulnérabilités spécifiques React",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "REACT-001",
+          "name": "react_dangerous_html",
+          "severity": "élevé",
+          "score": 8.5,
+          "category": "xss",
+          "patterns": [
+            "dangerouslySetInnerHTML\\s*=",
+            "__html\\s*:\\s*"
+          ],
+          "context_aware": true,
+          "description": "React dangerouslySetInnerHTML sans sanitization",
+          "recommendation": "Sanitizer HTML avec DOMPurify avant dangerouslySetInnerHTML",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "<div dangerouslySetInnerHTML={{__html: userHTML}} />",
+          "example_safe": "<div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(userHTML)}} />"
+        }
+      ]
+    },
+    "debug_information_disclosure": {
+      "description": "Debug info et console statements en production",
+      "severity_default": "faible",
+      "signatures": [
+        {
+          "id": "DEBUG-001",
+          "name": "console_log_production",
+          "severity": "faible",
+          "score": 2.5,
+          "category": "information_disclosure",
+          "patterns": [
+            "\\bconsole\\.(log|debug|info|warn|error|trace|dir|table)\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "Console statements en production",
+          "recommendation": "Supprimer console.* avant déploiement production",
+          "cwe": "CWE-215",
+          "owasp": "A01:2021",
+          "example_vulnerable": "console.log('User data:', userData);",
+          "example_safe": "// Remove console.* in production build"
+        },
+        {
+          "id": "DEBUG-002",
+          "name": "debugger_statement",
+          "severity": "faible",
+          "score": 3.0,
+          "category": "information_disclosure",
+          "patterns": [
+            "\\bdebugger\\s*;"
+          ],
+          "context_aware": false,
+          "description": "Debugger statement dans code production",
+          "recommendation": "Supprimer debugger; statements",
+          "cwe": "CWE-215",
+          "owasp": "A01:2021",
+          "example_vulnerable": "debugger;",
+          "example_safe": "// Remove debugger statements"
+        }
+      ]
+    },
+    "secrets_exposure": {
+      "description": "Secrets et credentials hardcodés",
+      "severity_default": "critique",
+      "signatures": [
+        {
+          "id": "SECRET-001",
+          "name": "aws_access_key",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\bAKIA[0-9A-Z]{16}\\b"
+          ],
+          "context_aware": false,
+          "false_positive_keywords": [
+            "AKIAIOSFODNN7EXAMPLE",
+            "AKIAEXAMPLE"
+          ],
+          "description": "AWS Access Key ID hardcodée",
+          "recommendation": "Rotate credentials immédiatement. Utiliser variables d'environnement",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const key = 'AKIAIOSFODNN7EXAMPLE';",
+          "example_safe": "const key = process.env.AWS_ACCESS_KEY_ID;"
+        },
+        {
+          "id": "SECRET-002",
+          "name": "aws_secret_key",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "(?i)aws_secret_access_key\\s*[=:]\\s*['\"]([A-Za-z0-9/+=]{40})['\"]"
+          ],
+          "context_aware": false,
+          "description": "AWS Secret Access Key hardcodée",
+          "recommendation": "Rotate et utiliser IAM roles",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const secret = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';",
+          "example_safe": "const secret = process.env.AWS_SECRET_ACCESS_KEY;"
+        },
+        {
+          "id": "SECRET-003",
+          "name": "github_token",
+          "severity": "critique",
+          "score": 9.8,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\bgh[pousr]_[A-Za-z0-9_]{36,255}\\b",
+            "\\bgho_[A-Za-z0-9_]{36,255}\\b"
+          ],
+          "context_aware": false,
+          "description": "GitHub Personal Access Token hardcodé",
+          "recommendation": "Révoquer token. Utiliser GitHub Secrets",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const token = 'ghp_abcd1234...';",
+          "example_safe": "const token = process.env.GITHUB_TOKEN;"
+        },
+        {
+          "id": "SECRET-004",
+          "name": "stripe_live_key",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\bsk_live_[0-9a-zA-Z]{24,99}\\b"
+          ],
+          "context_aware": false,
+          "description": "Stripe Live Secret Key hardcodée",
+          "recommendation": "Révoquer immédiatement",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const stripeKey = 'sk_live_...';",
+          "example_safe": "const stripeKey = process.env.STRIPE_SECRET_KEY;"
+        },
+        {
+          "id": "SECRET-005",
+          "name": "google_api_key",
+          "severity": "critique",
+          "score": 9.5,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\bAIza[0-9A-Za-z_\\-]{35}\\b"
+          ],
+          "context_aware": false,
+          "description": "Google API Key hardcodée",
+          "recommendation": "Restreindre avec domain/IP restrictions",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const apiKey = 'AIzaSyD...';",
+          "example_safe": "const apiKey = process.env.GOOGLE_API_KEY;"
+        },
+        {
+          "id": "SECRET-006",
+          "name": "slack_token",
+          "severity": "critique",
+          "score": 9.5,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\bxox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[0-9a-zA-Z]{24,32}\\b"
+          ],
+          "context_aware": false,
+          "description": "Slack Token hardcodé",
+          "recommendation": "Révoquer token",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const slack = 'xoxb-...';",
+          "example_safe": "const slack = process.env.SLACK_TOKEN;"
+        },
+        {
+          "id": "SECRET-007",
+          "name": "jwt_token_hardcoded",
+          "severity": "élevé",
+          "score": 8.5,
+          "category": "credential_exposure",
+          "patterns": [
+            "\\beyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\b"
+          ],
+          "context_aware": false,
+          "description": "JWT Token hardcodé",
+          "recommendation": "Ne jamais hardcoder JWTs",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const jwt = 'eyJhbGc...';",
+          "example_safe": "// Générer JWT dynamiquement"
+        },
+        {
+          "id": "SECRET-008",
+          "name": "private_key_rsa",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----"
+          ],
+          "context_aware": false,
+          "description": "RSA Private Key dans code",
+          "recommendation": "Supprimer immédiatement. Utiliser key management",
+          "cwe": "CWE-798",
+          "owasp": "A02:2021",
+          "example_vulnerable": "const key = '-----BEGIN PRIVATE KEY-----...';",
+          "example_safe": "// Utiliser key management service"
+        },
+        {
+          "id": "SECRET-009",
+          "name": "private_key_openssh",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "-----BEGIN\\s+OPENSSH\\s+PRIVATE\\s+KEY-----"
+          ],
+          "context_aware": false,
+          "description": "OpenSSH Private Key dans code",
+          "recommendation": "Supprimer immédiatement",
+          "cwe": "CWE-798",
+          "owasp": "A02:2021",
+          "example_vulnerable": "const sshKey = '-----BEGIN OPENSSH PRIVATE KEY-----...';",
+          "example_safe": "// Ne jamais commiter keys privées"
+        },
+        {
+          "id": "SECRET-010",
+          "name": "generic_api_key",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "(?i)api[_-]?key\\s*[=:]\\s*['\"]([A-Za-z0-9_\\-]{20,64})['\"]"
+          ],
+          "context_aware": false,
+          "false_positive_keywords": [
+            "your_api_key",
+            "api_key_here",
+            "YOUR_API_KEY",
+            "example"
+          ],
+          "description": "Generic API Key hardcodée",
+          "recommendation": "Utiliser variables d'environnement",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const apiKey = 'abcd1234...';",
+          "example_safe": "const apiKey = process.env.API_KEY;"
+        },
+        {
+          "id": "SECRET-011",
+          "name": "database_password",
+          "severity": "critique",
+          "score": 9.5,
+          "category": "credential_exposure",
+          "patterns": [
+            "(?i)(db_password|database_password|db_pass)\\s*[=:]\\s*['\"]([^'\"]{6,})['\"]"
+          ],
+          "context_aware": false,
+          "false_positive_keywords": [
+            "password",
+            "changeme",
+            "secret",
+            "***",
+            "xxx"
+          ],
+          "description": "Database password hardcodé",
+          "recommendation": "Utiliser secrets manager",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const dbPass = 'secretpass123';",
+          "example_safe": "const dbPass = process.env.DB_PASSWORD;"
+        },
+        {
+          "id": "SECRET-012",
+          "name": "connection_string_creds",
+          "severity": "critique",
+          "score": 9.8,
+          "category": "credential_exposure",
+          "patterns": [
+            "(mongodb|mysql|postgresql|sqlserver|redis)://[^:]+:[^@]+@[^/\\s]+"
+          ],
+          "context_aware": false,
+          "description": "Connection string avec credentials",
+          "recommendation": "Utiliser variables d'environnement",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "const conn = 'mongodb://user:pass@host/db';",
+          "example_safe": "const conn = process.env.DATABASE_URL;"
+        },
+        {
+          "id": "SECRET-013",
+          "name": "basic_auth_header",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "(?i)Authorization\\s*:\\s*['\"]?Basic\\s+[A-Za-z0-9+/=]{20,}['\"]?"
+          ],
+          "context_aware": false,
+          "description": "Basic Authentication header hardcodé",
+          "recommendation": "Ne pas hardcoder auth headers",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "headers: {'Authorization': 'Basic dXNlcjpwYXNz'}",
+          "example_safe": "// Générer auth headers dynamiquement"
+        },
+        {
+          "id": "SECRET-014",
+          "name": "bearer_token_hardcoded",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "(?i)Authorization\\s*:\\s*['\"]?Bearer\\s+[A-Za-z0-9_\\-\\.]{20,}['\"]?"
+          ],
+          "context_aware": false,
+          "description": "Bearer Token hardcodé",
+          "recommendation": "Générer tokens dynamiquement",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "headers: {'Authorization': 'Bearer abc123...'}",
+          "example_safe": "// Obtenir token via OAuth flow"
+        }
+      ]
+    },
+    "injection_patterns": {
+      "description": "Patterns d'injection dans strings (SQLi, XSS, CMDi, etc.)",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "INJ-001",
+          "name": "sql_injection_pattern",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "injection",
+          "patterns": [
+            "['\"]\\s*OR\\s*['\"]?1['\"]?\\s*=\\s*['\"]?1",
+            "['\"]\\s*OR\\s*1\\s*=\\s*1\\s*--",
+            "(?i)UNION\\s+SELECT\\s+",
+            "['\"]\\s*;\\s*DROP\\s+TABLE",
+            "(?i)WAITFOR\\s+DELAY"
+          ],
+          "context_aware": false,
+          "description": "SQL Injection patterns dans strings",
+          "recommendation": "Utiliser prepared statements",
+          "cwe": "CWE-89",
+          "owasp": "A03:2021",
+          "example_vulnerable": "const query = \"SELECT * FROM users WHERE id=\" + userInput;",
+          "example_safe": "// Use parameterized queries"
+        },
+        {
+          "id": "INJ-002",
+          "name": "xss_payload_pattern",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "injection",
+          "patterns": [
+            "<script[^>]*>.*?</script>",
+            "(?i)javascript:\\s*alert\\s*\\(",
+            "(?i)onerror\\s*=\\s*['\"]?alert\\s*\\("
+          ],
+          "context_aware": false,
+          "description": "XSS payloads dans code",
+          "recommendation": "Sanitizer entrées utilisateur",
+          "cwe": "CWE-79",
+          "owasp": "A03:2021",
+          "example_vulnerable": "const html = '<script>alert(1)</script>';",
+          "example_safe": "// Sanitize user input"
+        },
+        {
+          "id": "INJ-003",
+          "name": "command_injection_pattern",
+          "severity": "critique",
+          "score": 9.0,
+          "category": "injection",
+          "patterns": [
+            "[;|&]\\s*(whoami|id|cat|ls|dir|net\\s+user)",
+            "`(whoami|id|cat|ls|pwd)`",
+            "\\$\\((whoami|id|cat|ls)\\)"
+          ],
+          "context_aware": false,
+          "description": "Command Injection patterns",
+          "recommendation": "Ne jamais exécuter shell commands avec user input",
+          "cwe": "CWE-78",
+          "owasp": "A03:2021",
+          "example_vulnerable": "exec('ls ' + userPath);",
+          "example_safe": "// Validate and sanitize all inputs"
+        },
+        {
+          "id": "INJ-004",
+          "name": "path_traversal_pattern",
+          "severity": "élevé",
+          "score": 8.0,
+          "category": "injection",
+          "patterns": [
+            "\\.\\./\\.\\./\\.\\./etc/passwd",
+            "\\.\\./\\.\\./\\.\\./windows/system32",
+            "(?i)file:///etc/passwd",
+            "(?i)php://filter/convert\\.base64-encode"
+          ],
+          "context_aware": false,
+          "description": "Path Traversal patterns",
+          "recommendation": "Valider et sanitizer chemins fichiers",
+          "cwe": "CWE-22",
+          "owasp": "A01:2021",
+          "example_vulnerable": "fs.readFile('../../../etc/passwd');",
+          "example_safe": "// Validate file paths against allowlist"
+        }
+      ]
+    },
+    "comment_leaks": {
+      "description": "Fuites d'informations dans commentaires",
+      "severity_default": "moyen",
+      "signatures": [
+        {
+          "id": "COMMENT-001",
+          "name": "todo_comment",
+          "severity": "info",
+          "score": 1.0,
+          "category": "code_quality",
+          "patterns": [
+            "//\\s*TODO:",
+            "/\\*\\s*TODO:"
+          ],
+          "context_aware": false,
+          "description": "TODO comments - Code incomplet",
+          "recommendation": "Résoudre TODOs avant production",
+          "cwe": "CWE-1053",
+          "example_vulnerable": "// TODO: Add authentication",
+          "example_safe": "// Implement proper authentication"
+        },
+        {
+          "id": "COMMENT-002",
+          "name": "fixme_comment",
+          "severity": "faible",
+          "score": 2.5,
+          "category": "code_quality",
+          "patterns": [
+            "//\\s*FIXME:",
+            "/\\*\\s*FIXME:"
+          ],
+          "context_aware": false,
+          "description": "FIXME comments - Bug connu",
+          "recommendation": "Corriger issues FIXME",
+          "cwe": "CWE-1053",
+          "example_vulnerable": "// FIXME: SQL injection vulnerability",
+          "example_safe": "// Use prepared statements"
+        },
+        {
+          "id": "COMMENT-003",
+          "name": "hack_comment",
+          "severity": "moyen",
+          "score": 5.0,
+          "category": "code_quality",
+          "patterns": [
+            "//\\s*HACK:",
+            "/\\*\\s*HACK:"
+          ],
+          "context_aware": false,
+          "description": "HACK comments - Code smell",
+          "recommendation": "Refactorer code proprement",
+          "cwe": "CWE-1053",
+          "example_vulnerable": "// HACK: Bypass authentication for testing",
+          "example_safe": "// Proper implementation needed"
+        },
+        {
+          "id": "COMMENT-004",
+          "name": "password_in_comment",
+          "severity": "élevé",
+          "score": 7.0,
+          "category": "credential_exposure",
+          "patterns": [
+            "//.*(password|passwd|pwd)\\s*[=:]\\s*['\"]?[^'\"\\s]{6,}",
+            "/\\*.*(password|passwd)\\s*[=:].*\\*/"
+          ],
+          "context_aware": false,
+          "description": "Password dans commentaires",
+          "recommendation": "Supprimer credentials des commentaires",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "// password: admin123",
+          "example_safe": "// Use environment variables"
+        },
+        {
+          "id": "COMMENT-005",
+          "name": "api_key_in_comment",
+          "severity": "élevé",
+          "score": 7.5,
+          "category": "credential_exposure",
+          "patterns": [
+            "//.*(api[_-]?key|apikey)\\s*[=:]\\s*['\"]?[A-Za-z0-9_\\-]{20,}",
+            "/\\*.*(api[_-]?key)\\s*[=:].*\\*/"
+          ],
+          "context_aware": false,
+          "description": "API key dans commentaires",
+          "recommendation": "Supprimer API keys des commentaires",
+          "cwe": "CWE-798",
+          "owasp": "A07:2021",
+          "example_vulnerable": "// api_key: abcd1234...",
+          "example_safe": "// Configure API key via environment"
+        }
+      ]
+    },
+    "sensitive_data_exposure": {
+      "description": "Exposition de données sensibles",
+      "severity_default": "faible",
+      "signatures": [
+        {
+          "id": "DATA-001",
+          "name": "email_address_exposed",
+          "severity": "faible",
+          "score": 3.0,
+          "category": "information_disclosure",
+          "patterns": [
+            "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,7}\\b"
+          ],
+          "context_aware": false,
+          "description": "Email addresses hardcodées",
+          "recommendation": "Éviter emails hardcodées côté client",
+          "cwe": "CWE-200",
+          "owasp": "A01:2021",
+          "example_vulnerable": "const email = 'admin@example.com';",
+          "example_safe": "// Fetch email from API"
+        },
+        {
+          "id": "DATA-002",
+          "name": "internal_ip_exposed",
+          "severity": "moyen",
+          "score": 5.5,
+          "category": "information_disclosure",
+          "patterns": [
+            "\\b192\\.168\\.\\d{1,3}\\.\\d{1,3}\\b",
+            "\\b10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b",
+            "\\b172\\.(1[6-9]|2[0-9]|3[01])\\.\\d{1,3}\\.\\d{1,3}\\b"
+          ],
+          "context_aware": false,
+          "description": "Internal IP addresses (RFC 1918)",
+          "recommendation": "Éviter IPs internes dans code client",
+          "cwe": "CWE-200",
+          "owasp": "A01:2021",
+          "example_vulnerable": "const server = '192.168.1.100';",
+          "example_safe": "const server = 'api.example.com';"
+        },
+        {
+          "id": "DATA-003",
+          "name": "phone_number_exposed",
+          "severity": "faible",
+          "score": 3.5,
+          "category": "information_disclosure",
+          "patterns": [
+            "\\b\\d{3}[-.\\s]?\\d{3}[-.\\s]?\\d{4}\\b"
+          ],
+          "context_aware": false,
+          "description": "Phone numbers hardcodés",
+          "recommendation": "Éviter numéros hardcodés",
+          "cwe": "CWE-200",
+          "example_vulnerable": "const phone = '555-123-4567';",
+          "example_safe": "// Fetch from API"
+        },
+        {
+          "id": "DATA-004",
+          "name": "credit_card_number",
+          "severity": "critique",
+          "score": 10.0,
+          "category": "pci_dss",
+          "patterns": [
+            "\\b4[0-9]{12}(?:[0-9]{3})?\\b",
+            "\\b5[1-5][0-9]{14}\\b",
+            "\\b3[47][0-9]{13}\\b"
+          ],
+          "context_aware": false,
+          "description": "Credit card numbers (Visa/MC/Amex)",
+          "recommendation": "NE JAMAIS stocker credit cards en clair",
+          "cwe": "CWE-359",
+          "owasp": "A02:2021",
+          "example_vulnerable": "const cc = '4532123456781234';",
+          "example_safe": "// Never store credit card numbers"
+        }
+      ]
+    },
+    "outdated_libraries": {
+      "description": "Bibliothèques JavaScript obsolètes",
+      "severity_default": "élevé",
+      "signatures": [
+        {
+          "id": "LIB-001",
+          "name": "jquery_version_old",
+          "severity": "élevé",
+          "score": 7.0,
+          "category": "vulnerable_dependency",
+          "patterns": [
+            "jquery[/-](1\\.\\d+(\\.\\d+)?|2\\.[0-2](\\.\\d+)?)\\.min\\.js",
+            "jquery[/-](1\\.|2\\.)(?!6\\.4|7\\.[0-1])"
+          ],
+          "context_aware": false,
+          "description": "jQuery version obsolète (< 3.x)",
+          "recommendation": "Upgrade vers jQuery 3.6+ ou vanilla JS",
+          "cwe": "CWE-1104",
+          "owasp": "A06:2021",
+          "example_vulnerable": "<script src='jquery-1.11.1.min.js'>",
+          "example_safe": "<script src='jquery-3.6.0.min.js'>"
+        },
+        {
+          "id": "LIB-002",
+          "name": "angular_version_old",
+          "severity": "élevé",
+          "score": 7.5,
+          "category": "vulnerable_dependency",
+          "patterns": [
+            "angular[/-]1\\.[0-9]",
+            "angularjs[/-]1\\."
+          ],
+          "context_aware": false,
+          "description": "AngularJS 1.x (End of Life)",
+          "recommendation": "Migrer vers Angular 2+",
+          "cwe": "CWE-1104",
+          "owasp": "A06:2021",
+          "example_vulnerable": "<script src='angular-1.5.js'>",
+          "example_safe": "// Migrate to Angular 2+"
+        },
+        {
+          "id": "LIB-003",
+          "name": "react_version_old",
+          "severity": "moyen",
+          "score": 5.5,
+          "category": "vulnerable_dependency",
+          "patterns": [
+            "react[/-](1[0-5]\\.|16\\.[0-9]\\.)"
+          ],
+          "context_aware": false,
+          "description": "React version obsolète (< 17.x)",
+          "recommendation": "Upgrade vers React 17+ ou 18",
+          "cwe": "CWE-1104",
+          "owasp": "A06:2021",
+          "example_vulnerable": "<script src='react-16.8.0.js'>",
+          "example_safe": "<script src='react-18.2.0.js'>"
+        }
+      ]
+    }
+  },
+  "detection_config": {
+    "false_positive_filters": {
+      "test_data_keywords": [
+        "test",
+        "example",
+        "demo",
+        "sample",
+        "xxx",
+        "placeholder",
+        "changeme"
+      ],
+      "documentation_keywords": [
+        "docs",
+        "documentation",
+        "tutorial",
+        "guide",
+        "readme"
+      ],
+      "comment_prefixes": [
+        "//",
+        "/*",
+        "<!--"
+      ],
+      "min_entropy_secrets": 3.0
+    },
+    "priority_execution_order": [
+      "eval_usage",
+      "function_constructor",
+      "command_injection_pattern",
+      "aws_access_key",
+      "aws_secret_key",
+      "private_key_rsa",
+      "credit_card_number",
+      "connection_string_creds",
+      "document_cookie_access",
+      "innerHTML_assignment",
+      "sql_injection_pattern"
+    ],
+    "performance": {
+      "precompile_regex": true,
+      "cache_results": true,
+      "max_file_size_kb": 512,
+      "skip_minified_files": false
+    }
+  },
+  "field_explanations": {
+    "id": "Identifiant unique de la signature (ex: EXEC-001)",
+    "name": "Nom technique mappé à vulnerability_names",
+    "severity": "Niveau de criticité: critique | élevé | moyen | faible | info",
+    "score": "Score numérique 0.0-10.0 pour priorisation",
+    "category": "Type de vulnérabilité (ex: xss, code_execution, credential_exposure)",
+    "patterns": "Liste de regex patterns Python (raw strings)",
+    "context_aware": "Boolean - true si besoin analyser contexte HTML autour du match",
+    "description": "Description courte de la vulnérabilité",
+    "recommendation": "Action recommandée pour corriger",
+    "cwe": "Common Weakness Enumeration ID",
+    "owasp": "OWASP Top 10 mapping",
+    "false_positive_keywords": "Mots-clés pour filtrer faux positifs",
+    "example_vulnerable": "Exemple de code vulnérable",
+    "example_safe": "Exemple de code sécurisé"
+  }
+}

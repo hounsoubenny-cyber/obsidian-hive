@@ -1,0 +1,48 @@
+# Modèles (lourds)
+*.pt
+*.onnx
+*.onnx.data
+*.db
+model/models/*.pt
+model/models/*.onnx
+model/models/*.onnx.data
+
+# Datasets (lourds)
+datasets/**/data/*.parquet
+datasets/**/full/*.parquet
+datasets/**/core/*.parquet
+datasets/**/*.parquet
+datasets/*
+!datasets/generated/*.json
+
+# Caches Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.core/.pytest_cache/
+
+# Cache HuggingFace
+datasets/**/.cache/
+
+# Base de données
+*.db
+.user_cache/
+contextguarddatabase.db
+
+# Fichiers temporaires
+tous_les_fichiers.txt
+tree.txt
+testzz.py
+*.txt
+!requirements.txt
+
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

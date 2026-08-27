@@ -1,0 +1,43 @@
+{
+  "injection": [
+    "(?i)\\bignore\\s+(?:all\\s+)?(?:previous|prior|above)\\s+(?:instructions|directives|commands)\\b",
+    "(?i)\\bbypass\\s+(?:your\\s+)?(?:safety|security|filters|restrictions)\\b",
+    "(?i)\\boverride\\s+(?:system|instructions|configuration)\\b",
+    "(?i)\\[\\s*(?:INST|SYSTEM|ROOT|OVERRIDE)\\s*\\]",
+    "(?i)(?:DROP\\s+TABLE|SELECT\\s+\\*\\s+FROM|DELETE\\s+FROM)\\b",
+    "(?i)(?:cat\\s+/etc/passwd|rm\\s+-rf\\s+/|sudo\\s+rm)\\b",
+    "(?i)annuler?\\s+(?:toutes?\\s+)?(?:instructions|règles|directives)\\b",
+    "(?i)ignorer?\\s+(?:instructions|règles|consignes)\\s+précédentes?\\b",
+    "(?i)désactiver?\\s+(?:filtres|restrictions|sécurité)\\b"
+  ],
+
+  "jailbreak": [
+    "(?i)\\b(?:DAN|ARIA|STAN|CHAOS)\\s*(?:mode|version)?\\b",
+    "(?i)do\\s+anything\\s+now",
+    "(?i)act\\s+as\\s+(?:DAN|jailbroken|unrestricted)",
+    "(?i)pretend\\s+you(?:'re|\\s+are)\\s+(?:an?\\s+)?AI\\s+with(?:out)?\\s+restrictions",
+    "(?i)simulate\\s+(?:an?\\s+)?(?:evil|malicious|unrestricted)\\s+AI",
+    "(?i)you\\s+are\\s+now\\s+(?:jailbroken|unchained|unleashed)",
+    "(?i)joue\\s+le\\s+rôle\\s+d'une?\\s+IA\\s+sans\\s+restrictions",
+    "(?i)fais\\s+semblant\\s+d'être\\s+une?\\s+IA\\s+sans\\s+limites",
+    "(?i)tu\\s+es\\s+maintenant\\s+(?:libéré|débridé|sans\\s+limites)"
+  ],
+
+  "exfiltration": [
+    "(?i)\\brepeat\\s+(?:your\\s+)?(?:system\\s+prompt|instructions|configuration)\\b",
+    "(?i)\\b(?:reveal|expose|show|display)\\s+(?:your\\s+)?(?:system\\s+prompt|hidden\\s+instructions)\\b",
+    "(?i)what\\s+(?:are|were)\\s+(?:your\\s+)?(?:initial|original|system)\\s+(?:instructions|prompt)\\b",
+    "(?i)output\\s+(?:your\\s+)?(?:system\\s+prompt|instructions)\\s+in\\s+(?:base64|json)",
+    "(?i)quelles?\\s+sont\\s+(?:vos|tes)\\s+(?:instructions|règles)\\s+(?:initiales|système)",
+    "(?i)afficher?\\s+(?:ton|votre)\\s+prompt\\s+système",
+    "(?i)révéler?\\s+(?:tes|vos)\\s+instructions?\\s+cachées?"
+  ],
+
+  "safe_short_words": [
+    "^(hello|hi|hey|bonjour|salut|coucou|allo|ok|okay|oui|non|yes|no|bye|merci|thanks|thank you|cool|nice|great|parfait|bien|help|aide)$"
+  ],
+
+  "safe_patterns": [
+    "(?i)^(?:how|what|why|when|where|can|could|would).+\\?$"
+  ]
+}

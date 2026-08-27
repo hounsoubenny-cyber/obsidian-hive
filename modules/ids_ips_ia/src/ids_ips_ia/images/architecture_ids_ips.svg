@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568"/>
+    </marker>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f1729"/>
+      <stop offset="100%" stop-color="#1a2438"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bgGrad)"/>
+
+  <text x="600" y="45" text-anchor="middle" font-size="26" font-weight="700" fill="#ffffff">ShieldAI — Pipeline IDS/IPS</text>
+  <text x="600" y="70" text-anchor="middle" font-size="14" fill="#8b98b5">De la capture réseau à la décision automatisée</text>
+
+  <!-- Ligne 1 : Capture -->
+  <g>
+    <rect x="60" y="110" width="220" height="80" rx="10" fill="#1e2a45" stroke="#3d5a99" stroke-width="1.5"/>
+    <text x="170" y="140" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">📡 Capture réseau</text>
+    <text x="170" y="162" text-anchor="middle" font-size="12" fill="#a9b8d4">AF_PACKET (Linux natif)</text>
+    <text x="170" y="178" text-anchor="middle" font-size="12" fill="#a9b8d4">Ring buffer + batching</text>
+  </g>
+
+  <line x1="280" y1="150" x2="340" y2="150" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect x="340" y="110" width="220" height="80" rx="10" fill="#1e2a45" stroke="#3d5a99" stroke-width="1.5"/>
+    <text x="450" y="140" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">⚙️ Extraction features</text>
+    <text x="450" y="162" text-anchor="middle" font-size="12" fill="#a9b8d4">Cython (accélération 5-8x)</text>
+    <text x="450" y="178" text-anchor="middle" font-size="12" fill="#a9b8d4">Niveau paquet + séquence</text>
+  </g>
+
+  <line x1="560" y1="150" x2="620" y2="150" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect x="620" y="110" width="220" height="80" rx="10" fill="#1e2a45" stroke="#c9962f" stroke-width="1.5"/>
+    <text x="730" y="140" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">🦈 Suricata (EVE)</text>
+    <text x="730" y="162" text-anchor="middle" font-size="12" fill="#e0c98f">Corrélation signatures</text>
+    <text x="730" y="178" text-anchor="middle" font-size="12" fill="#e0c98f">connues + comportement</text>
+  </g>
+
+  <line x1="450" y1="190" x2="450" y2="230" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Ligne 2 : deux moteurs -->
+  <g>
+    <rect x="180" y="240" width="280" height="150" rx="10" fill="#182338" stroke="#4a9d6e" stroke-width="1.5"/>
+    <text x="320" y="270" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">🔹 Moteur Paquet</text>
+    <text x="320" y="296" text-anchor="middle" font-size="12" fill="#9fd4b3">Autoencoder Dense</text>
+    <text x="320" y="316" text-anchor="middle" font-size="12" fill="#9fd4b3">Isolation Forest</text>
+    <text x="320" y="336" text-anchor="middle" font-size="12" fill="#9fd4b3">Local Outlier Factor</text>
+    <text x="320" y="362" text-anchor="middle" font-size="11" fill="#6f8a7c" font-style="italic">Anomalie sur un paquet isolé</text>
+  </g>
+
+  <g>
+    <rect x="500" y="240" width="280" height="150" rx="10" fill="#182338" stroke="#4a9d6e" stroke-width="1.5"/>
+    <text x="640" y="270" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">🔹 Moteur Séquence</text>
+    <text x="640" y="296" text-anchor="middle" font-size="12" fill="#9fd4b3">LSTM + Cross-Attention</text>
+    <text x="640" y="316" text-anchor="middle" font-size="12" fill="#9fd4b3">CNN (skip connections U-Net)</text>
+    <text x="640" y="336" text-anchor="middle" font-size="12" fill="#9fd4b3">Isolation Forest + LOF</text>
+    <text x="640" y="362" text-anchor="middle" font-size="11" fill="#6f8a7c" font-style="italic">Patterns temporels, beaconing</text>
+  </g>
+
+  <line x1="730" y1="190" x2="730" y2="320" stroke="#4a5568" stroke-width="2" stroke-dasharray="4,3"/>
+  <line x1="730" y1="320" x2="780" y2="320" stroke="#4a5568" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <line x1="320" y1="390" x2="450" y2="450" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="390" x2="510" y2="450" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Ligne 3 : fusion + scoring -->
+  <g>
+    <rect x="330" y="460" width="340" height="110" rx="10" fill="#2b2140" stroke="#8f5fd6" stroke-width="1.5"/>
+    <text x="500" y="490" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">🧮 Scoring contextuel</text>
+    <text x="500" y="514" text-anchor="middle" font-size="12" fill="#cbb5ef">Port · Géolocalisation · Historique</text>
+    <text x="500" y="534" text-anchor="middle" font-size="12" fill="#cbb5ef">Corrélation d'événements · Decay temporel</text>
+    <text x="500" y="554" text-anchor="middle" font-size="11" fill="#8a76ad" font-style="italic">Score de dangerosité (0–300)</text>
+  </g>
+
+  <line x1="500" y1="570" x2="500" y2="610" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Ligne 4 : décision -->
+  <g>
+    <rect x="80" y="620" width="840" height="110" rx="10" fill="#1a1f2e" stroke="#5a6478" stroke-width="1.5"/>
+    <text x="500" y="648" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">🚨 Réaction automatique (nftables)</text>
+
+    <rect x="110" y="665" width="170" height="45" rx="8" fill="#1e3a2a" stroke="#4a9d6e"/>
+    <text x="195" y="693" text-anchor="middle" font-size="12" fill="#a9e3c2">🟢 Surveillance</text>
+
+    <rect x="310" y="665" width="170" height="45" rx="8" fill="#3a3418" stroke="#c9a92f"/>
+    <text x="395" y="693" text-anchor="middle" font-size="12" fill="#eddb8f">🟡 Rate limiting</text>
+
+    <rect x="510" y="665" width="170" height="45" rx="8" fill="#3a2418" stroke="#d97a3d"/>
+    <text x="595" y="693" text-anchor="middle" font-size="12" fill="#f3bd94">🔴 Blocage 24h</text>
+
+    <rect x="710" y="665" width="170" height="45" rx="8" fill="#3a1818" stroke="#d63d3d"/>
+    <text x="795" y="693" text-anchor="middle" font-size="12" fill="#f39494">⛔ Blocage permanent</text>
+  </g>
+
+  <text x="600" y="775" text-anchor="middle" font-size="12" fill="#5a6478">🔁 Un système de refit périodique réévalue et n'améliore les modèles que si les performances progressent réellement</text>
+</svg>

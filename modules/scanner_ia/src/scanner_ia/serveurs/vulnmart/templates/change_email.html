@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Changer d'email — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 style="text-align:center;margin-top:40px;">Changer d'email <span class="vuln-tag">CSRF</span></h2>
+  {% if message %}<div class="alert info">{{ message }}</div>{% endif %}
+  {% if user %}
+  <form class="panel" method="POST">
+    <label>Nouvel email</label>
+    <input type="email" name="email" value="{{ user['email'] }}">
+    <button class="btn" style="margin-top:20px;width:100%;" type="submit">Mettre à jour</button>
+  </form>
+  <p style="text-align:center;font-size:.8rem;">Aucun jeton CSRF requis — un formulaire hébergé ailleurs peut soumettre ceci à votre place.</p>
+  {% else %}
+  <p style="text-align:center;">Connectez-vous d'abord.</p>
+  {% endif %}
+</div>
+{% endblock %}

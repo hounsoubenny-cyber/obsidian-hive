@@ -1,0 +1,735 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  ShieldAI V2 — Sandbox Base Image
+#  Environnement d'exécution isolé avec système crédible (honeypot layer)
+#  Langages : Python, Node.js, PHP, Ruby, Perl, Java, Go, Rust, Lua, R, C/C++
+# ═══════════════════════════════════════════════════════════════════════════
+
+FROM debian:bookworm-slim
+
+LABEL org.shieldai.version="2.0"
+LABEL org.shieldai.module="sandbox-base"
+LABEL org.shieldai.description="Isolated execution environment with full deception layer"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV PATH=/usr/local/go/bin:/root/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+# ───────────────────────────────────────────────────────────────────────────
+# 1. OUTILS SYSTÈME DE BASE (groupés pour réduire les couches)
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl wget ca-certificates gnupg apt-transport-https \
+    build-essential gcc g++ cmake make \
+    git unzip zip vim-tiny jq tree \
+    openssl sudo procps lsof psmisc \
+    net-tools iproute2 netcat-openbsd iputils-ping \
+    file binutils xxd \
+    libseccomp-dev libcap2-bin \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 2. PYTHON 3.11 + pip + pipenv + poetry
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 python3-pip python3.11-venv python3.11-dev \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && pip install --no-cache-dir --break-system-packages --timeout 300 pipenv poetry \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 3. NODE.JS 20 + npm + yarn + pnpm
+# ───────────────────────────────────────────────────────────────────────────
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g yarn pnpm \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 4. PHP 8.2 + composer
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-cli php8.2-common php8.2-curl php8.2-mbstring \
+    php8.2-xml php8.2-zip php8.2-bcmath \
+    && curl -sS --max-time 300 https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer \
+    && chmod +x /usr/local/bin/composer \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 5. RUBY 3 + gem + bundler
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ruby ruby-dev ruby-bundler \
+    && gem install bundler --no-document \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 6. PERL 5 + cpanminus
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    perl cpanminus \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 7. JAVA 21 JDK + maven + gradle (CORRIGÉ : openjdk-21-jdk au lieu de openjdk-21-jdk-headless)
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-21-jdk maven \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+
+# ───────────────────────────────────────────────────────────────────────────
+# 8. GO 1.22
+# ───────────────────────────────────────────────────────────────────────────
+RUN curl -OL --max-time 300 https://go.dev/dl/go1.22.4.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz \
+    && rm go1.22.4.linux-amd64.tar.gz
+
+ENV GOPATH=/home/sandbox/go
+
+# ───────────────────────────────────────────────────────────────────────────
+# 9. RUST + cargo
+# ───────────────────────────────────────────────────────────────────────────
+RUN curl --proto '=https' --tlsv1.2 -sSf --max-time 300 https://sh.rustup.rs \
+    | sh -s -- -y --default-toolchain stable --no-modify-path
+
+ENV PATH=/root/.cargo/bin:$PATH
+
+# ───────────────────────────────────────────────────────────────────────────
+# 10. LUA 5.4 + luarocks
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    lua5.4 luarocks \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 11. R + Rscript
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    r-base \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 12. POWERSHELL CORE
+# ───────────────────────────────────────────────────────────────────────────
+RUN wget -q --timeout=300 https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y powershell \
+    && rm packages-microsoft-prod.deb \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 13. UTILISATEURS — système multi-comptes crédible (groupés en une seule couche)
+# ───────────────────────────────────────────────────────────────────────────
+RUN useradd -m -s /bin/bash -u 1000 -c "DevOps Engineer" devops \
+    && echo "devops:$(openssl rand -hex 20)" | chpasswd \
+    && usermod -aG sudo devops \
+    && useradd -m -s /bin/bash -u 1001 -c "Deploy User" deploy \
+    && echo "deploy:$(openssl rand -hex 20)" | chpasswd \
+    && useradd -m -s /usr/sbin/nologin -u 1002 -c "Web Application Service" appservice \
+    && useradd -m -s /usr/sbin/nologin -u 1003 -c "Database Service" dbadmin \
+    && useradd -m -s /usr/sbin/nologin -u 1004 -c "Monitoring Agent" monitor \
+    && useradd -m -s /bin/bash -u 1500 -c "Sandbox Execution User" sandbox \
+    && echo "sandbox:$(openssl rand -hex 20)" | chpasswd
+
+# ───────────────────────────────────────────────────────────────────────────
+# 14. /etc — fichiers système crédibles (groupés pour réduire les RUN)
+# ───────────────────────────────────────────────────────────────────────────
+RUN cat > /etc/passwd << 'PASSWDEOF'
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+systemd-network:x:998:998:systemd Network Management:/:/usr/sbin/nologin
+systemd-resolve:x:997:997:systemd Resolver:/:/usr/sbin/nologin
+messagebus:x:100:107::/nonexistent:/usr/sbin/nologin
+sshd:x:101:65534::/run/sshd:/usr/sbin/nologin
+mysql:x:102:102:MySQL Server:/var/lib/mysql:/usr/sbin/nologin
+redis:x:103:103:Redis Server:/var/lib/redis:/usr/sbin/nologin
+nginx:x:104:104:nginx user:/var/cache/nginx:/usr/sbin/nologin
+devops:x:1000:1000:DevOps Engineer,,,:/home/devops:/bin/bash
+deploy:x:1001:1001:Deploy User,,,:/home/deploy:/bin/bash
+appservice:x:1002:1002:Web Application Service:/home/appservice:/usr/sbin/nologin
+dbadmin:x:1003:1003:Database Service:/home/dbadmin:/usr/sbin/nologin
+monitor:x:1004:1004:Monitoring Agent:/home/monitor:/usr/sbin/nologin
+sandbox:x:1500:1500:Sandbox Execution User:/home/sandbox:/bin/bash
+PASSWDEOF
+
+RUN cat > /etc/shadow << 'SHADOWEOF'
+root:!:19800:0:99999:7:::
+daemon:*:19800:0:99999:7:::
+bin:*:19800:0:99999:7:::
+sys:*:19800:0:99999:7:::
+sync:*:19800:0:99999:7:::
+games:*:19800:0:99999:7:::
+man:*:19800:0:99999:7:::
+lp:*:19800:0:99999:7:::
+mail:*:19800:0:99999:7:::
+news:*:19800:0:99999:7:::
+uucp:*:19800:0:99999:7:::
+proxy:*:19800:0:99999:7:::
+www-data:*:19800:0:99999:7:::
+backup:*:19800:0:99999:7:::
+nobody:*:19800:0:99999:7:::
+sshd:!:19800:0:99999:7:::
+mysql:!:19800:0:99999:7:::
+redis:!:19800:0:99999:7:::
+nginx:!:19800:0:99999:7:::
+devops:$6$rounds=656000$xK9mNpQr2vL8wZ1s$fakehashaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.:19800:0:99999:7:::
+deploy:$6$rounds=656000$tR3hJkP5nM7qX9bY$fakehashbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.:19800:0:99999:7:::
+appservice:!:19800:0:99999:7:::
+dbadmin:!:19800:0:99999:7:::
+monitor:!:19800:0:99999:7:::
+sandbox:$6$rounds=656000$uV4gLcS6oN8rY2aQ$fakehashccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.:19800:0:99999:7:::
+SHADOWEOF
+
+RUN chmod 640 /etc/shadow && \
+    cat > /etc/group << 'GROUPEOF'
+root:x:0:
+daemon:x:1:
+bin:x:2:
+sys:x:3:
+adm:x:4:devops,deploy
+tty:x:5:
+disk:x:6:
+lp:x:7:
+mail:x:8:
+news:x:9:
+uucp:x:10:
+man:x:12:
+proxy:x:13:
+kmem:x:15:
+dialout:x:20:devops
+fax:x:21:
+voice:x:22:
+cdrom:x:24:devops
+floppy:x:25:
+tape:x:26:
+sudo:x:27:devops
+audio:x:29:
+dip:x:30:devops
+www-data:x:33:appservice,nginx
+backup:x:34:
+operator:x:37:
+list:x:38:
+irc:x:39:
+src:x:40:
+shadow:x:42:
+utmp:x:43:
+video:x:44:devops
+plugdev:x:46:devops
+staff:x:50:
+games:x:60:
+users:x:100:devops,deploy
+nogroup:x:65534:
+mysql:x:102:
+redis:x:103:
+nginx:x:104:
+docker:x:999:devops
+devops:x:1000:
+deploy:x:1001:
+appservice:x:1002:
+dbadmin:x:1003:
+monitor:x:1004:
+sandbox:x:1500:
+GROUPEOF
+
+RUN echo "prod-web-01" > /etc/hostname && \
+    cat > /etc/hosts << 'HOSTSEOF'
+127.0.0.1       localhost
+127.0.1.1       prod-web-01
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+
+# Infrastructure interne
+10.0.1.10       prod-web-01   prod-web-01.internal
+10.0.1.11       prod-web-02   prod-web-02.internal
+10.0.1.1        gateway       internal-gateway
+
+# Base de données
+10.0.2.10       db-primary    db-primary.internal   mysql.internal
+10.0.2.11       db-replica    db-replica.internal
+10.0.2.20       pg-primary    postgres.internal
+
+# Cache
+10.0.3.10       cache-01      redis.internal
+10.0.3.11       cache-02
+
+# Services
+10.0.4.10       monitoring    grafana.internal     prometheus.internal
+10.0.4.20       ci-server     jenkins.internal
+10.0.4.30       registry      docker-registry.internal
+10.0.5.10       bastion       bastion.internal
+HOSTSEOF
+
+RUN cat > /etc/os-release << 'OSEOF'
+PRETTY_NAME="Ubuntu 22.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.4 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+OSEOF
+
+RUN mkdir -p /etc/ssh /etc/sudoers.d && \
+    cat > /etc/sudoers.d/devops << 'SUDOEOF'
+devops ALL=(ALL:ALL) ALL
+deploy ALL=(www-data) NOPASSWD: /usr/bin/systemctl restart gunicorn
+SUDOEOF
+RUN chmod 440 /etc/sudoers.d/devops
+
+RUN cat > /etc/ssh/sshd_config << 'SSHDEOF'
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+X11Forwarding no
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+AllowUsers devops deploy
+MaxAuthTries 3
+LoginGraceTime 30
+SSHDEOF
+
+RUN cat > /etc/crontab << 'CRONEOF'
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Système
+17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly
+25 6    * * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+
+# Application
+*/5 * * * *     root    /usr/local/bin/healthcheck.sh >> /var/log/healthcheck.log 2>&1
+0   2 * * *     root    /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+0   3 * * 0     root    /usr/local/bin/cleanup_logs.sh
+30  1 * * *     deploy  cd /var/www/app && python3 manage.py clearsessions
+CRONEOF
+
+# ───────────────────────────────────────────────────────────────────────────
+# 15. HOME DIRECTORIES — crédibles et piégés (groupés)
+# ───────────────────────────────────────────────────────────────────────────
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh && \
+    cat > /root/.ssh/authorized_keys << 'AUTHEOF'
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey== root@prod-bastion-01
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEd25519KeyFakeEd25519KeyFakeEd25519Key devops@workstation
+AUTHEOF
+RUN chmod 600 /root/.ssh/authorized_keys && \
+    cat > /root/.ssh/id_rsa << 'RSAEOF'
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONEYPOT_KEY_SHIELDAI_CANARY AAAAB
+3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake
+KeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey
+FakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake
+CANARY_TOKEN_ROOT_SSH_SHIELDAI_MONITORING_ACTIVE
+-----END OPENSSH PRIVATE KEY-----
+RSAEOF
+RUN chmod 600 /root/.ssh/id_rsa && \
+    cat > /root/.ssh/id_rsa.pub << 'PUBEOF'
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey== root@prod-web-01
+PUBEOF
+RUN cat > /root/.ssh/known_hosts << 'KNOWNEOF'
+10.0.2.10 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey1FakeKnownHostKey1FakeKnownHostKey1==
+10.0.5.10 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKnownHostKey2FakeKnownHostKey2==
+db-primary.internal ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey3==
+KNOWNEOF
+RUN cat > /root/.bash_history << 'HISTEOF'
+apt update && apt upgrade -y
+systemctl status nginx
+systemctl status mysql
+docker ps -a
+docker compose -f /opt/app/docker-compose.yml up -d
+tail -f /var/log/nginx/access.log
+tail -f /var/log/nginx/error.log
+cd /var/www/app
+git pull origin main
+python3 manage.py migrate
+python3 manage.py collectstatic --noinput
+systemctl restart gunicorn
+systemctl restart nginx
+df -h
+free -m
+netstat -tlnp
+ufw status verbose
+cat /etc/passwd
+ls -la /home
+ssh devops@10.0.1.10
+ssh deploy@10.0.2.10
+mysql -u root -p
+journalctl -u nginx -n 100 --no-pager
+crontab -l
+ls /var/backups/
+cat /var/log/backup.log
+HISTEOF
+
+# ── /home/devops ───────────────────────────────────────────────────────────
+RUN mkdir -p /home/devops/.ssh /home/devops/.config /home/devops/projects /home/devops/scripts \
+    && chmod 700 /home/devops/.ssh && \
+    cat > /home/devops/.ssh/config << 'SSHCFGEOF'
+Host db-primary
+    HostName 10.0.2.10
+    User dbadmin
+    IdentityFile ~/.ssh/id_rsa
+    StrictHostKeyChecking no
+    ServerAliveInterval 60
+
+Host db-replica
+    HostName 10.0.2.11
+    User dbadmin
+    IdentityFile ~/.ssh/id_rsa
+
+Host bastion
+    HostName 10.0.5.10
+    User devops
+    Port 2222
+    IdentityFile ~/.ssh/id_rsa_bastion
+    ForwardAgent yes
+
+Host ci-server
+    HostName 10.0.4.20
+    User jenkins
+    IdentityFile ~/.ssh/id_rsa_ci
+
+Host *.internal
+    User devops
+    IdentityFile ~/.ssh/id_rsa
+    StrictHostKeyChecking no
+SSHCFGEOF
+RUN chmod 600 /home/devops/.ssh/config && \
+    cat > /home/devops/.ssh/id_rsa << 'DEVRSAKEY'
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAA FAKE_DEVOPS_KEY_SHIELDAI_CANARY_TOKEN AAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+CANARY_DEVOPS_SSH_PRIVATE_KEY_SHIELDAI_MONITOR_ACTIVE_DO_NOT_EXFILTRATE
+-----END OPENSSH PRIVATE KEY-----
+DEVRSAKEY
+RUN chmod 600 /home/devops/.ssh/id_rsa && \
+    cat > /home/devops/.bash_history << 'DEVHISTEOF'
+ssh bastion
+docker compose up -d
+docker compose logs -f app
+kubectl get pods -n production
+kubectl logs -f deployment/app -n production
+ansible-playbook -i inventory/prod site.yml
+terraform plan -out=tfplan
+terraform apply tfplan
+git log --oneline -20
+git diff HEAD~1
+vim /etc/nginx/sites-available/app.conf
+nginx -t
+systemctl reload nginx
+ls -la /var/www/
+pip install -r requirements.txt
+python3 scripts/backup_db.py
+python3 scripts/deploy.py --env=prod
+cat .env.prod
+cat scripts/deploy.py
+ls ~/.ssh/
+DEVHISTEOF
+RUN cat > /home/devops/.env.prod << 'ENVEOF'
+# ============================================================
+# Production Environment Configuration — STRICTLY CONFIDENTIAL
+# Last updated: 2024-03-10
+# ============================================================
+
+APP_ENV=production
+APP_NAME=InternalApp
+APP_URL=https://app.internal
+APP_SECRET_KEY=sk-prod-CANARY-SHIELDAI-a7f3k9m2p5q8r1t4
+
+# Database
+DATABASE_URL=postgresql://appuser:CANARY-DB-PASS-SHIELDAI@db-primary:5432/appdb_prod
+DATABASE_REPLICA_URL=postgresql://appuser:CANARY-DB-PASS-SHIELDAI@db-replica:5432/appdb_prod
+DB_POOL_SIZE=20
+
+# Cache
+REDIS_URL=redis://:CANARY-REDIS-PASS-SHIELDAI@cache-01:6379/0
+REDIS_CACHE_TTL=3600
+
+# AWS
+AWS_ACCESS_KEY_ID=AKIACANARYSHIELDAI001
+AWS_SECRET_ACCESS_KEY=CANARY/AWS/SECRET/SHIELDAI/MONITOR/ACTIVE/KEY
+AWS_DEFAULT_REGION=eu-west-1
+AWS_S3_BUCKET=prod-app-assets-internal
+
+# Paiement
+STRIPE_PUBLISHABLE_KEY=pk_live_CANARY_SHIELDAI_MONITOR
+STRIPE_SECRET_KEY=sk_live_CANARY_SHIELDAI_MONITOR_ACTIVE
+STRIPE_WEBHOOK_SECRET=whsec_CANARY_SHIELDAI_WEBHOOK
+
+# Email
+SENDGRID_API_KEY=SG.CANARY.SHIELDAI.MONITOR.KEY.FAKE.DO.NOT.USE
+SMTP_HOST=smtp.internal
+SMTP_USER=noreply@app.internal
+SMTP_PASS=CANARY-SMTP-PASS-SHIELDAI
+
+# Auth
+JWT_SECRET=CANARY-JWT-SECRET-SHIELDAI-MONITORING-ACTIVE-32chars
+JWT_EXPIRE=3600
+SESSION_SECRET=CANARY-SESSION-SECRET-SHIELDAI
+
+# Monitoring
+GRAFANA_API_KEY=CANARY-GRAFANA-KEY-SHIELDAI
+DATADOG_API_KEY=CANARY-DATADOG-KEY-SHIELDAI
+SENTRY_DSN=https://CANARY@sentry.internal/shieldai
+
+# Interne
+INTERNAL_API_TOKEN=CANARY-INTERNAL-TOKEN-SHIELDAI-MONITOR
+ADMIN_PANEL_TOKEN=CANARY-ADMIN-TOKEN-SHIELDAI
+ENVEOF
+RUN chmod 600 /home/devops/.env.prod && \
+    mkdir -p /home/devops/scripts && \
+    cat > /home/devops/scripts/deploy.py << 'DEPLOYEOF'
+#!/usr/bin/env python3
+"""Script de déploiement automatisé — prod-web-01"""
+import os, subprocess, sys
+
+ENV_FILE = os.path.expanduser("~/.env.prod")
+APP_DIR  = "/var/www/app"
+SERVICE  = "gunicorn"
+
+def load_env():
+    with open(ENV_FILE) as f:
+        for line in f:
+            if "=" in line and not line.startswith("#"):
+                k, v = line.strip().split("=", 1)
+                os.environ[k] = v
+
+def deploy():
+    load_env()
+    print(f"[deploy] Pulling latest from main...")
+    subprocess.run(["git", "-C", APP_DIR, "pull", "origin", "main"], check=True)
+    print(f"[deploy] Installing dependencies...")
+    subprocess.run(["pip", "install", "-r", f"{APP_DIR}/requirements.txt"], check=True)
+    print(f"[deploy] Running migrations...")
+    subprocess.run(["python3", f"{APP_DIR}/manage.py", "migrate"], check=True)
+    print(f"[deploy] Restarting {SERVICE}...")
+    subprocess.run(["systemctl", "restart", SERVICE], check=True)
+    print("[deploy] Done.")
+
+if __name__ == "__main__":
+    deploy()
+DEPLOYEOF
+RUN chmod 700 /home/devops/scripts/deploy.py && \
+    chown -R devops:devops /home/devops
+
+# ── /home/deploy ───────────────────────────────────────────────────────────
+RUN mkdir -p /home/deploy/.ssh && chmod 700 /home/deploy/.ssh && \
+    cat > /home/deploy/.ssh/id_rsa << 'DEPRSAKEY'
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAA FAKE_DEPLOY_KEY_CANARY_SHIELDAI_MONITOR AAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+CANARY_DEPLOY_SSH_KEY_SHIELDAI_MONITORING_ACTIVE
+-----END OPENSSH PRIVATE KEY-----
+DEPRSAKEY
+RUN chmod 600 /home/deploy/.ssh/id_rsa && \
+    cat > /home/deploy/.bash_history << 'DEPHISTEOF'
+ls /var/www/app
+cd /var/www/app && git status
+git pull origin main
+python3 -m pytest tests/ -v
+systemctl status gunicorn
+tail -n 100 /var/log/app/error.log
+cat /var/www/app/.env
+DEPHISTEOF
+RUN cat > /home/deploy/.gitconfig << 'GITEOF'
+[user]
+    name = Deploy Bot
+    email = deploy@app.internal
+[core]
+    editor = vim
+[push]
+    default = simple
+GITEOF
+RUN chown -R deploy:deploy /home/deploy
+
+# ───────────────────────────────────────────────────────────────────────────
+# 16. /var — structure applicative crédible (groupé)
+# ───────────────────────────────────────────────────────────────────────────
+RUN mkdir -p /var/www/app/{public,static,media,templates,logs} \
+             /var/www/app/config \
+             /var/log/{nginx,app,mysql,redis,supervisor,deploy} \
+             /var/backups/db /var/backups/app
+
+RUN cat > /var/www/app/.env << 'APPENVEOF'
+# Application .env — CANARY ShieldAI
+APP_ENV=production
+SECRET_KEY=CANARY-APP-SECRET-SHIELDAI-WEBAPP-MONITOR
+DATABASE_URL=postgresql://appuser:CANARY-DB-SHIELDAI@db-primary/appdb
+REDIS_URL=redis://:CANARY-REDIS-SHIELDAI@cache-01:6379/0
+API_KEY=CANARY-API-KEY-SHIELDAI-WEBAPP
+ADMIN_PASSWORD=CANARY-ADMIN-PASS-SHIELDAI
+APPENVEOF
+RUN chmod 640 /var/www/app/.env && \
+    chown root:www-data /var/www/app/.env && \
+    cat > /var/log/app/access.log << 'ACCESSEOF'
+2024-03-15 08:12:03 INFO  [prod-web-01] GET /api/v1/users 200 42ms 10.0.0.5
+2024-03-15 08:12:45 INFO  [prod-web-01] POST /api/v1/auth/login 200 118ms 10.0.0.5
+2024-03-15 08:13:01 INFO  [prod-web-01] GET /api/v1/dashboard 200 87ms 10.0.0.8
+2024-03-15 09:04:22 WARN  [prod-web-01] GET /api/v1/admin 403 11ms 10.0.1.55
+2024-03-15 09:04:23 WARN  [prod-web-01] POST /api/v1/admin/login 401 9ms 10.0.1.55
+2024-03-15 09:16:01 ERROR [prod-web-01] POST /api/v1/upload 500 231ms 10.0.0.12
+2024-03-15 10:33:14 INFO  [prod-web-01] GET /api/v1/products 200 56ms 10.0.0.9
+2024-03-15 11:45:00 INFO  [prod-web-01] POST /api/v1/orders 201 145ms 10.0.0.7
+ACCESSEOF
+RUN cat > /var/log/nginx/access.log << 'NGINXEOF'
+10.0.0.5 - - [15/Mar/2024:08:12:03 +0000] "GET /api/v1/users HTTP/1.1" 200 1423 "-" "Mozilla/5.0"
+10.0.0.5 - - [15/Mar/2024:08:12:45 +0000] "POST /api/v1/auth/login HTTP/1.1" 200 512 "-" "Mozilla/5.0"
+10.0.1.55 - - [15/Mar/2024:09:04:22 +0000] "GET /api/v1/admin HTTP/1.1" 403 189 "-" "curl/7.88.1"
+10.0.0.12 - - [15/Mar/2024:09:16:01 +0000] "POST /api/v1/upload HTTP/1.1" 500 340 "-" "python-requests/2.31.0"
+NGINXEOF
+RUN touch /var/backups/db/appdb_2024-03-14.sql.gz \
+          /var/backups/db/appdb_2024-03-13.sql.gz \
+          /var/backups/app/app_2024-03-14.tar.gz
+
+# ───────────────────────────────────────────────────────────────────────────
+# 17. /opt — services tiers crédibles
+# ───────────────────────────────────────────────────────────────────────────
+RUN mkdir -p /opt/app /opt/monitoring/agent /opt/scripts && \
+    cat > /opt/scripts/healthcheck.sh << 'HEALTHEOF'
+#!/bin/bash
+# Healthcheck script — prod-web-01
+curl -sf http://127.0.0.1:8000/health || systemctl restart gunicorn
+HEALTHEOF
+RUN chmod 755 /opt/scripts/healthcheck.sh && \
+    cat > /opt/monitoring/agent/config.yml << 'MONEOF'
+# Monitoring Agent Configuration — CANARY ShieldAI
+api_key: CANARY-MONITORING-API-KEY-SHIELDAI
+endpoint: https://monitoring.internal/ingest
+host: prod-web-01
+tags:
+  env: production
+  team: backend
+  region: eu-west-1
+MONEOF
+
+# ───────────────────────────────────────────────────────────────────────────
+# 18. /etc — configs services supplémentaires (groupé)
+# ───────────────────────────────────────────────────────────────────────────
+RUN mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/conf.d \
+             /etc/mysql/conf.d /etc/redis /etc/ssl/private && \
+    cat > /etc/nginx/sites-available/app.conf << 'NGINXCFG'
+upstream app_backend {
+    server 127.0.0.1:8000;
+    server 127.0.0.1:8001 backup;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name app.internal prod-web-01;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name app.internal prod-web-01;
+
+    ssl_certificate     /etc/ssl/certs/app.crt;
+    ssl_certificate_key /etc/ssl/private/app.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    root /var/www/app/public;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://app_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 60s;
+    }
+
+    location /admin/ {
+        proxy_pass http://app_backend;
+        allow 10.0.0.0/8;
+        deny all;
+    }
+
+    location /static/ {
+        alias /var/www/app/static/;
+        expires 30d;
+    }
+}
+NGINXCFG
+RUN echo 'admin:$2y$10$FakeHashFakeHashFakeHashFakeHashFakeHashFakeHashFa' > /etc/nginx/.htpasswd && \
+    echo 'deploy:$2y$10$AnotherFakeHashAnotherFakeHashAnotherFakeHashAno' >> /etc/nginx/.htpasswd && \
+    touch /etc/ssl/certs/app.crt /etc/ssl/private/app.key && \
+    chmod 600 /etc/ssl/private/app.key && \
+    cat > /etc/mysql/conf.d/app.cnf << 'MYSQLEOF'
+[mysqld]
+bind-address = 0.0.0.0
+max_connections = 500
+innodb_buffer_pool_size = 1G
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 2
+MYSQLEOF
+RUN cat > /etc/redis/redis.conf << 'REDISEOF'
+bind 127.0.0.1
+port 6379
+requirepass CANARY-REDIS-CONF-PASS-SHIELDAI
+maxmemory 512mb
+maxmemory-policy allkeys-lru
+save 900 1
+save 300 10
+logfile /var/log/redis/redis-server.log
+REDISEOF
+RUN cat > /etc/environment << 'ENVGEOF'
+PATH="/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+LANG="C.UTF-8"
+APP_ENV="production"
+ENVGEOF
+
+# ───────────────────────────────────────────────────────────────────────────
+# 19. RÉPERTOIRE SANDBOX — espace de travail réel
+# ───────────────────────────────────────────────────────────────────────────
+RUN mkdir -p /sandbox/{work,input,output,logs,tmp} \
+    && chown -R sandbox:sandbox /sandbox \
+    && chmod 750 /sandbox/work
+
+# ───────────────────────────────────────────────────────────────────────────
+# 20. NETTOYAGE FINAL (déjà fait dans chaque RUN, mais on s'assure)
+# ───────────────────────────────────────────────────────────────────────────
+RUN apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# ───────────────────────────────────────────────────────────────────────────
+# 21. WORKDIR + USER
+# ───────────────────────────────────────────────────────────────────────────
+WORKDIR /sandbox/work
+USER sandbox

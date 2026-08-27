@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Photo de profil — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 style="text-align:center;margin-top:40px;">Photo de profil <span class="vuln-tag">Upload non restreint</span></h2>
+  {% if message %}<div class="alert info">{{ message }}</div>{% endif %}
+  <form class="panel" method="POST" enctype="multipart/form-data">
+    <label>Fichier</label>
+    <input type="file" name="avatar">
+    <button class="btn" style="margin-top:20px;" type="submit">Envoyer</button>
+  </form>
+  <p style="text-align:center;font-size:.85rem;">Aucune vérification de type, taille, ou nom de fichier.</p>
+</div>
+{% endblock %}

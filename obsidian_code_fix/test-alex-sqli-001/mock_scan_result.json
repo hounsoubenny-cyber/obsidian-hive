@@ -1,0 +1,13 @@
+{
+  "target_url": "http://localhost:5000/login",
+  "vulnerability_type": "SQL Injection",
+  "severity_raw": "critical",
+  "endpoint": "/login",
+  "http_method": "POST",
+  "vulnerable_parameter": "username",
+  "payload_used": "admin' OR '1'='1",
+  "evidence": "La réponse a renvoyé un status 200 avec un user_id valide en utilisant le payload d'injection classique OR 1=1, alors qu'aucun utilisateur 'admin' avec ce mot de passe n'existe réellement en base.",
+  "confidence_score": 0.94,
+  "response_time_anomaly": false,
+  "additional_notes": "Le paramètre 'password' semble également concaténé de la même façon dans la requête, probablement vulnérable aussi."
+}

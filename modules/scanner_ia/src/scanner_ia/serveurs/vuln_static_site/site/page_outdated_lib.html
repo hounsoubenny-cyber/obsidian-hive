@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Widgets</title>
+    <!-- ⚠️ VULNÉRABLE : jQuery 1.12.4 - failles XSS connues (CVE-2020-11022, CVE-2020-11023) -->
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <!-- ⚠️ VULNÉRABLE : Angular 1.5.8 - CVE connues sur sandbox bypass -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+</head>
+<body>
+    <h1>Page de widgets (dépendances obsolètes)</h1>
+    <div id="app">{{ 1 + 1 }}</div>
+    <script>
+        $(document).ready(function() {
+            var params = new URLSearchParams(window.location.search);
+            // ⚠️ VULNÉRABLE : jQuery.html() avec entrée utilisateur non filtrée
+            $("#app").html(params.get("msg"));
+        });
+    </script>
+    <p><a href="index.html">Retour</a></p>
+</body>
+</html>

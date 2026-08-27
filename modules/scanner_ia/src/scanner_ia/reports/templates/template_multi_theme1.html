@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldAI — Rapport {{ summary.scan_id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* [Tout le CSS du fichier démo est inclus ici de manière identique] */
+        :root { --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); --font-main: 'Space Grotesk', sans-serif; --font-mono: 'JetBrains Mono', monospace; }
+        body.theme-cyber { --bg: #03050b; --card: rgba(12, 20, 35, 0.8); --accent: #00f2ff; --text: #e2e8f0; --border: #00f2ff33; --glow: #00f2ff22; --risk-ring-bg: rgba(255,255,255,0.05); }
+        body.theme-forest { --bg: #05100a; --card: rgba(10, 30, 20, 0.8); --accent: #10b981; --text: #ecfdf5; --border: #10b98133; --glow: #10b98122; --risk-ring-bg: rgba(255,255,255,0.05); }
+        body.theme-royal { --bg: #09061a; --card: rgba(20, 15, 45, 0.8); --accent: #8b5cf6; --text: #f5f3ff; --border: #8b5cf633; --glow: #8b5cf622; --risk-ring-bg: rgba(255,255,255,0.05); }
+        body.theme-sunset { --bg: #1a0a0f; --card: rgba(45, 15, 20, 0.8); --accent: #f43f5e; --text: #fff1f2; --border: #f43f5e33; --glow: #f43f5e22; --risk-ring-bg: rgba(255,255,255,0.05); }
+        body.theme-aurora { --bg: #020c1b; --card: rgba(5, 25, 45, 0.8); --accent: #38bdf8; --text: #f0f9ff; --border: #38bdf833; --glow: #38bdf822; --risk-ring-bg: rgba(255,255,255,0.05); }
+        body.theme-light { --bg: #f8fafc; --card: #ffffff; --accent: #2563eb; --text: #0f172a; --border: #e2e8f0; --glow: #2563eb11; --risk-ring-bg: rgba(0,0,0,0.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-main); background: var(--bg); color: var(--text); transition: background 0.5s ease; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; position: relative; }
+        .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; backdrop-filter: blur(12px); transition: var(--transition); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+        .logo-area { display: flex; align-items: center; gap: 1rem; }
+        .logo-icon { width: 48px; height: 48px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 0 20px var(--glow); color: #000; }
+        .hero-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .risk-box { text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .risk-ring { width: 160px; height: 160px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--risk-color) var(--risk-deg), var(--risk-ring-bg) 0deg); position: relative; margin-bottom: 1rem; }
+        .risk-ring::after { content: ''; position: absolute; inset: 12px; background: var(--bg); border-radius: 50%; transition: background 0.5s ease; }
+        .risk-value { position: relative; z-index: 2; font-size: 3rem; font-weight: 800; color: var(--risk-color); }
+        .metrics-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem; }
+        .metric { border-left: 2px solid var(--accent); padding-left: 1rem; }
+        .metric-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .metric-value { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .chart-container { height: 260px; position: relative; }
+        .vuln-item { border-left: 4px solid var(--v-color); margin-bottom: 1rem; }
+        .severity-badge { font-size: 0.7rem; font-weight: 700; padding: 4px 12px; border-radius: 6px; }
+        .payload-box { background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid var(--border); }
+        .flags { display: flex; gap: 0.5rem; }
+        .flag { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text); opacity: 0.4; border: 1px solid var(--border); }
+        .flag.active { opacity: 1; background: var(--accent); color: #000; font-weight: 700; border-color: transparent; }
+        .theme-dock { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 0.8rem; border-radius: 50px; display: flex; gap: 1rem; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); z-index: 1000; }
+        .theme-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; background: #1e293b; overflow: hidden; padding: 8px; }
+        .theme-btn.active { border-color: var(--accent); box-shadow: 0 0 15px var(--glow); background: #334155; }
+    </style>
+</head>
+<body class="theme-cyber">
+
+<div class="container">
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">🛡️</div>
+            <div>
+                <h1>ShieldAI <span>ScannerIA</span></h1>
+                <p>SCAN_ID: {{ summary.scan_id }} // {{ summary.date }}</p>
+            </div>
+        </div>
+        <div class="glass-card" style="color: var(--accent);">STATUS: {{ summary.status }}</div>
+    </header>
+
+    <div class="hero-grid">
+        <div class="glass-card risk-box">
+            <div class="risk-ring" style="--risk-color: {{ summary.risk_color }}; --risk-deg: {{ (summary.risk_score * 3.6)|int }}deg;">
+                <div class="risk-value">{{ summary.risk_score }}</div>
+            </div>
+            <h3>Risque {{ summary.risk_label }}</h3>
+        </div>
+
+        <div class="glass-card">
+            <p>CIBLE ANALYSÉE</p>
+            <h2>{{ summary.url }}</h2>
+            <div class="metrics-bar">
+                <div class="metric"><p class="metric-label">Vulnérabilités</p><p class="metric-value">{{ summary.total_vulns }}</p></div>
+                <div class="metric"><p class="metric-label">Temps</p><p class="metric-value">{{ summary.duration }}</p></div>
+                <div class="metric"><p class="metric-label">IA Confidence</p><p class="metric-value">{{ summary.ai_confidence }}%</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="glass-card"><div class="chart-container"><canvas id="barChart"></canvas></div></div>
+        <div class="glass-card"><div class="chart-container"><canvas id="radarChart"></canvas></div></div>
+    </div>
+
+    <div id="findings">
+        {% for v in vulnerabilities %}
+        <div class="glass-card vuln-item" style="--v-color: {{ v.color }};">
+            <div style="display: flex; justify-content: space-between;">
+                <h4>{{ v.name }}</h4>
+                <div class="severity-badge" style="background: {{ v.color }}20; color: {{ v.color }};">{{ v.severity }}</div>
+            </div>
+            <div class="payload-box">payload: {{ v.payload }}</div>
+            <div class="flags">
+                <div class="flag {{ 'active' if v.signals.status }}">🔁 STATUS</div>
+                <div class="flag {{ 'active' if v.signals.delay }}">⏱️ DELAY</div>
+                <div class="flag {{ 'active' if v.signals.body }}">📦 BODY</div>
+                <div class="flag {{ 'active' if v.signals.headers }}">📨 HEADERS</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="theme-dock">
+    <button class="theme-btn active" data-theme="cyber"><svg viewBox="0 0 24 24" fill="none" stroke="#00f2ff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></button>
+    <button class="theme-btn" data-theme="forest"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22v-5M9 7l3-3 3 3M8 10l4-4 4 4M7 13l5-5 5 5"/></svg></button>
+    <button class="theme-btn" data-theme="royal"><svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/></svg></button>
+    <button class="theme-btn" data-theme="sunset"><svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="theme-btn" data-theme="aurora"><svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1-8.313-12.454z"/></svg></button>
+    <button class="theme-btn" data-theme="light"><svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></button>
+</div>
+
+<script>
+    let charts = {};
+    const initCharts = () => {
+        const textColor = getComputedStyle(document.body).getPropertyValue('--text').trim();
+        Chart.defaults.color = textColor;
+        charts.bar = new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: { labels: ['Critique', 'Elevé', 'Moyen', 'Faible'], datasets: [{ data: [{{ summary.critique }}, {{ summary.high }}, {{ summary.med }}, {{ summary.low }}], backgroundColor: ['#f43f5e', '#fb923c', '#fbbf24', '#10b981'], borderRadius: 6 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
+        });
+        charts.radar = new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: { labels: ['Injection', 'XSS', 'Auth', 'Crypto', 'Logic'], datasets: [{ label: 'IA', data: {{ ml_scores | tojson }}, backgroundColor: 'rgba(56, 189, 248, 0.2)', borderColor: '#38bdf8' }] },
+            options: { maintainAspectRatio: false, scales: { r: { angleLines: { color: 'rgba(255,255,255,0.05)' }, grid: { color: 'rgba(255,255,255,0.05)' }, pointLabels: { color: textColor }, ticks: { display: false } } } }
+        });
+    };
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.body.className = 'theme-' + btn.dataset.theme;
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const newColor = getComputedStyle(document.body).getPropertyValue('--text').trim();
+            charts.bar.options.scales.y.ticks.color = newColor; charts.bar.options.scales.x.ticks.color = newColor;
+            charts.radar.options.scales.r.pointLabels.color = newColor;
+            charts.bar.update(); charts.radar.update();
+        });
+    });
+    window.onload = initCharts;
+</script>
+</body>
+</html>

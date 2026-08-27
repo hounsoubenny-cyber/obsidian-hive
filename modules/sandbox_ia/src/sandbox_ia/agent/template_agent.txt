@@ -1,0 +1,1174 @@
+================./tools.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Tools CrewAI pour l'agent Sandbox ShieldAI.
+Basé sur le vrai code : SandboxOrchestrator, ContainerManager, SandboxConfig
+Auteur: HOUNSOU Samuel
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import json
+import asyncio
+import time
+from datetime import datetime
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+
+from sandbox_ia.core.orchestrator import SandboxOrchestrator, SandboxConfig, SandboxReport
+from sandbox_ia.core.container_manager import ContainerManager
+from sandbox_ia.executor.detect_language import get_supported_languages, detect_language
+from sandbox_ia.configs.orchestrator_config import (
+    DEFAULT_SANDBOX_IMAGE, DEFAULT_EXECUTION_TIMEOUT, DOCKER_DEFAULTS
+)
+from sandbox_ia.configs.behavior_scorer_config import ALERT_THRESHOLD
+from modules_utils.loop_utils import _run_async
+
+_orchestrator: SandboxOrchestrator | None = None
+_last_report: SandboxReport | None = None
+
+
+def get_orchestrator() -> SandboxOrchestrator:
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = SandboxOrchestrator()
+    return _orchestrator
+
+
+def set_orchestrator_instance(instance: SandboxOrchestrator):
+    global _orchestrator
+    _orchestrator = instance
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS INTERNES
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _report_to_dict(report: SandboxReport) -> dict:
+    """Convertit un SandboxReport en dict JSON-serialisable."""
+    alerts = []
+    for a in report.alerts:
+        alerts.append({
+            "timestamp": a.timestamp.isoformat(),
+            "threat_score": a.threat_score,
+            "threat_level": a.threat_level,
+            "pattern_detected": a.pattern_detected,
+            "canary_triggered": a.canary_triggered,
+            "session_duration": round(a.session_duration, 3),
+            "mitre": a.mitre,
+            "description": a.description,
+        })
+
+    exec_result = None
+    if report.exec_result:
+        exec_result = {
+            "success": report.exec_result.success,
+            "exit_code": report.exec_result.exit_code,
+            "language": report.exec_result.language,
+            "command": report.exec_result.command,
+            "duration": round(report.exec_result.duration, 3),
+            "timeout_passed": report.exec_result.timeout_passed,
+            "stdout": (report.exec_result.stdout or "")[:500],
+            "stderr": (report.exec_result.stderr or "")[:500],
+        }
+
+    return {
+        "session_id": report.session_id,
+        "final_score": report.final_score,
+        "final_level": report.final_level,
+        "alerts_count": len(report.alerts),
+        "alerts": alerts[:10],
+        "session_duration": round(report.session_duration, 3),
+        "killed": report.killed,
+        "timestamp": report.timestamp.isoformat(),
+        "exec_result": exec_result,
+        "stats": report.stats,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INPUT SCHEMAS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AnalyzeCodeInput(BaseModel):
+    code: str = Field(
+        description=(
+            "Le code source à analyser dans le sandbox. "
+            "Peut être dans n'importe quel langage supporté : "
+            "python, bash, javascript, php, ruby, go, rust, java, c, cpp, perl, lua, r, powershell."
+        )
+    )
+    language: str | None = Field(
+        default=None,
+        description=(
+            "Langage du code. Si None, détection automatique. "
+            "Valeurs : 'python', 'bash', 'javascript', 'php', 'ruby', 'go', "
+            "'rust', 'java', 'c', 'cpp', 'perl', 'lua', 'r', 'powershell'."
+        )
+    )
+    exec_timeout: float = Field(
+        default=30.0,
+        description="Timeout d'exécution en secondes. Défaut: 30.0"
+    )
+    mem_limit: str = Field(
+        default="256m",
+        description="Limite mémoire Docker. Format: '256m', '512m', '1g'. Défaut: '256m'"
+    )
+    alert_threshold: int = Field(
+        default=60,
+        description=(
+            "Score de menace déclenchant une alerte (0-100). "
+            "Si atteint → container tué automatiquement. Défaut: 60"
+        )
+    )
+    enable_strace: bool = Field(
+        default=True,
+        description="Active le traceur syscall strace. Défaut: True"
+    )
+    enable_fs_monitor: bool = Field(
+        default=True,
+        description="Active la surveillance filesystem via inotify. Défaut: True"
+    )
+    network_disabled: bool = Field(
+        default=True,
+        description="Désactive le réseau dans le container. Défaut: True"
+    )
+    image_name: str = Field(
+        default="shieldai-sandbox:v2-ligth",
+        description="Image Docker à utiliser. Défaut: 'shieldai-sandbox:v2-ligth'"
+    )
+
+
+class GetContainerStatusInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class KillContainerInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class GetLastReportInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class GetSandboxConfigInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class QuickAnalyzeInput(BaseModel):
+    code: str = Field(
+        description="Code à analyser rapidement avec la config par défaut."
+    )
+    language: str | None = Field(
+        default=None,
+        description="Langage du code. None = détection auto."
+    )
+
+
+class GetSupportedLanguagesInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class EstimateRiskInput(BaseModel):
+    code: str = Field(
+        description="Code source à analyser statiquement (sans exécution)."
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 1 — ANALYZE CODE (principal)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AnalyzeCode(BaseTool):
+    name: str = "analyze_code"
+    description: str = """
+Analyse comportementale complète d'un code source dans un container Docker isolé.
+Lance le code dans un sandbox ShieldAI et surveille son comportement en temps réel :
+syscalls strace, accès filesystem, patterns d'attaque MITRE ATT&CK.
+
+RETOUR (dict JSON) :
+{
+    "session_id": str,              // Identifiant de session
+    "final_score": int,             // Score de menace final (0-100)
+    "final_level": str,             // Niveau: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+    "alerts_count": int,            // Nombre d'alertes déclenchées
+    "alerts": [                     // Détails des alertes (max 10)
+        {
+            "threat_score": int,
+            "threat_level": str,
+            "pattern_detected": str,    // Pattern MITRE ATT&CK détecté
+            "canary_triggered": bool,   // Honeypot déclenché
+            "mitre": str,               // Code MITRE (ex: "T1055")
+            "description": str          // Description de l'attaque
+        }
+    ],
+    "session_duration": float,      // Durée en secondes
+    "killed": bool,                 // True si container tué (score CRITICAL)
+    "exec_result": {
+        "success": bool,
+        "exit_code": int,
+        "language": str,
+        "command": str,
+        "duration": float,
+        "timeout_passed": bool,
+        "stdout": str,              // Sortie tronquée à 500 chars
+        "stderr": str
+    }
+}
+
+Utilise cet outil quand l'orchestrateur doit analyser un fichier ou script suspect.
+"""
+    args_schema: type[BaseModel] = AnalyzeCodeInput
+    description_updated: bool = True
+
+    def _run(
+        self,
+        code: str,
+        language: str | None = None,
+        exec_timeout: float = 30.0,
+        mem_limit: str = "256m",
+        alert_threshold: int = 60,
+        enable_strace: bool = True,
+        enable_fs_monitor: bool = True,
+        network_disabled: bool = True,
+        image_name: str = "shieldai-sandbox:v2-ligth",
+    ) -> dict:
+        return _run_async(
+            self._arun,
+            **dict(
+                code=code,
+                language=language,
+                exec_timeout=exec_timeout,
+                mem_limit=mem_limit,
+                alert_threshold=alert_threshold,
+                enable_strace=enable_strace,
+                enable_fs_monitor=enable_fs_monitor,
+                network_disabled=network_disabled,
+                image_name=image_name
+            )
+        )
+
+    async def _arun(
+        self,
+        code: str,
+        language: str | None = None,
+        exec_timeout: float = 30.0,
+        mem_limit: str = "256m",
+        alert_threshold: int = 60,
+        enable_strace: bool = True,
+        enable_fs_monitor: bool = True,
+        network_disabled: bool = True,
+        image_name: str = "shieldai-sandbox:v2-ligth",
+    ) -> dict:
+        global _last_report
+        config = SandboxConfig(
+            image_name=image_name,
+            network_disabled=network_disabled,
+            mem_limit=mem_limit,
+            exec_timeout=exec_timeout,
+            alert_threshold=alert_threshold,
+            enable_strace=enable_strace,
+            enable_fs_monitor=enable_fs_monitor,
+            user="sandbox",
+            exec_user="sandbox",
+        )
+        orchestrator = get_orchestrator()
+        report = await orchestrator.analyze(code=code, language=language, config=config)
+        _last_report = report
+        return _report_to_dict(report)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 2 — QUICK ANALYZE (config minimale, rapide)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class QuickAnalyze(BaseTool):
+    name: str = "quick_analyze"
+    description: str = """
+Analyse rapide d'un code avec la configuration par défaut ShieldAI.
+Plus rapide que analyze_code — timeout 30s, mémoire 256m, seuil d'alerte 60.
+Idéal pour une première analyse avant une analyse approfondie.
+
+RETOUR : même structure que analyze_code.
+
+Utilise cet outil pour un triage rapide avant de décider si une analyse
+approfondie est nécessaire.
+"""
+    args_schema: type[BaseModel] = QuickAnalyzeInput
+    description_updated: bool = True
+
+    def _run(self, code: str, language: str | None = None) -> dict:
+        return _run_async(
+            self._arun,
+            **dict(
+                code=code,
+                language=language,
+            )
+        )
+
+    async def _arun(self, code: str, language: str | None = None) -> dict:
+        global _last_report
+        config = SandboxConfig(
+            exec_timeout=30.0,
+            mem_limit="256m",
+            alert_threshold=60,
+            enable_strace=True,
+            enable_fs_monitor=True,
+            user="sandbox",
+            exec_user="sandbox",
+        )
+        orchestrator = get_orchestrator()
+        report = await orchestrator.analyze(code=code, language=language, config=config)
+        _last_report = report
+        return _report_to_dict(report)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 3 — GET CONTAINER STATUS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GetContainerStatus(BaseTool):
+    name: str = "get_container_status"
+    description: str = """
+Retourne l'état courant du container Docker sandbox.
+
+RETOUR (dict JSON) :
+{
+    "status": str,          // "running" | "exited" | "paused" | "not_start" | "dead"
+    "pid": int | null,      // PID du container sur l'hôte
+    "healthy": bool,        // True si le container répond aux commandes
+    "container_name": str | null,
+    "image_name": str | null,
+    "timestamp": str
+}
+
+Utilise cet outil pour vérifier si un container est actif avant une analyse,
+ou pour monitorer l'état après un kill.
+"""
+    args_schema: type[BaseModel] = GetContainerStatusInput
+    description_updated: bool = True
+
+    def _run(self, *args, **kwargs) -> dict:
+        orchestrator = get_orchestrator()
+        manager: ContainerManager = orchestrator.manager
+        status = manager.get_status()
+        pid = manager.get_pid()
+        healthy = manager.health_check() if status == "running" else False
+        return {
+            "status": status,
+            "pid": pid,
+            "healthy": healthy,
+            "container_name": manager.container.name if manager.container else None,
+            "image_name": manager.image_name,
+            "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S"),
+        }
+
+    async def _arun(self, *args, **kwargs) -> dict:
+        return self._run()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 4 — KILL CONTAINER
+# ─────────────────────────────────────────────────────────────────────────────
+
+class KillContainer(BaseTool):
+    name: str = "kill_container"
+    description: str = """
+Tue immédiatement le container sandbox via SIGKILL.
+ACTION CRITIQUE — à utiliser si le code analysé semble particulièrement dangereux
+ou si le score de menace dépasse le seuil critique.
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error" | "no_container",
+    "message": str,
+    "timestamp": str
+}
+
+Ne pas utiliser en dehors d'une situation d'urgence — préférer laisser
+l'orchestrateur gérer le cycle de vie du container automatiquement.
+"""
+    args_schema: type[BaseModel] = KillContainerInput
+    description_updated: bool = True
+
+    def _run(self, *args, **kwargs) -> dict:
+        orchestrator = get_orchestrator()
+        manager: ContainerManager = orchestrator.manager
+        if not manager.container:
+            return {
+                "status": "no_container",
+                "message": "Aucun container actif à tuer.",
+                "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S"),
+            }
+        try:
+            success = manager.kill()
+            return {
+                "status": "success" if success else "error",
+                "message": "Container tué via SIGKILL" if success else "Échec du kill",
+                "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S"),
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S"),
+            }
+
+    async def _arun(self, *args, **kwargs) -> dict:
+        return self._run()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 5 — GET LAST REPORT
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GetLastReport(BaseTool):
+    name: str = "get_last_report"
+    description: str = """
+Retourne le rapport de la dernière analyse sandbox effectuée.
+Utile pour accéder aux détails d'une analyse sans la relancer.
+
+RETOUR (dict JSON) : même structure que analyze_code.
+{"error": "Aucune analyse disponible"} si aucune analyse n'a été faite.
+
+Utilise cet outil quand l'orchestrateur a besoin de consulter la dernière
+analyse pour prendre une décision (bloquer une IP, alerter un admin, etc.).
+"""
+    args_schema: type[BaseModel] = GetLastReportInput
+    description_updated: bool = True
+
+    def _run(self, *args, **kwargs) -> dict:
+        global _last_report
+        if _last_report is None:
+            return {"error": "Aucune analyse disponible. Lance d'abord analyze_code ou quick_analyze."}
+        return _report_to_dict(_last_report)
+
+    async def _arun(self, *args, **kwargs) -> dict:
+        return self._run()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 6 — GET SUPPORTED LANGUAGES
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GetSupportedLanguages(BaseTool):
+    name: str = "get_supported_languages"
+    description: str = """
+Retourne la liste des langages supportés par le sandbox ShieldAI.
+
+RETOUR (dict JSON) :
+{
+    "languages": list[str],     // Liste des 14 langages
+    "count": int
+}
+
+Utilise cet outil avant analyze_code si le langage d'un fichier est inconnu
+ou si tu dois vérifier qu'un langage est bien supporté.
+"""
+    args_schema: type[BaseModel] = GetSupportedLanguagesInput
+    description_updated: bool = True
+
+    def _run(self, *args, **kwargs) -> dict:
+        langs = get_supported_languages()
+        return {"languages": langs, "count": len(langs)}
+
+    async def _arun(self, *args, **kwargs) -> dict:
+        return self._run()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 7 — ESTIMATE RISK (analyse statique, sans exécution)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class EstimateRisk(BaseTool):
+    name: str = "estimate_risk"
+    description: str = """
+Analyse statique rapide d'un code pour estimer son niveau de risque
+SANS l'exécuter dans le sandbox. Basé sur des patterns textuels suspects.
+Beaucoup plus rapide que analyze_code mais moins précis.
+
+RETOUR (dict JSON) :
+{
+    "risk_level": str,          // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+    "risk_score": int,          // Score estimé (0-100)
+    "flags": list[str],         // Patterns suspects détectés
+    "recommend_sandbox": bool,  // True si une analyse sandbox est recommandée
+    "language_detected": str | null
+}
+
+Utilise cet outil en pré-filtrage pour décider si le code mérite une
+analyse sandbox complète (qui prend plusieurs secondes).
+"""
+    args_schema: type[BaseModel] = EstimateRiskInput
+    description_updated: bool = True
+
+    # Patterns suspects par catégorie
+    _PATTERNS = {
+        # Credential harvesting
+        "/etc/shadow": ("Lecture /etc/shadow", 40),
+        "/etc/passwd": ("Lecture /etc/passwd", 20),
+        ".ssh/id_rsa": ("Accès clé SSH privée", 45),
+        ".ssh/id_ed25519": ("Accès clé SSH privée", 45),
+
+        # Network / C2
+        "socket.connect": ("Connexion réseau", 25),
+        "requests.get": ("Requête HTTP sortante", 15),
+        "urllib.request": ("Requête HTTP sortante", 15),
+        "subprocess.Popen": ("Exécution de sous-processus", 30),
+        "os.system": ("Exécution commande système", 25),
+        "eval(": ("Eval dynamique (obfuscation possible)", 30),
+        "exec(": ("Exec dynamique", 30),
+        "__import__": ("Import dynamique", 20),
+
+        # Persistence
+        "/etc/crontab": ("Modification crontab", 35),
+        "/etc/rc.local": ("Persistence rc.local", 35),
+        ".bashrc": ("Modification .bashrc", 25),
+        "ld.so.preload": ("Injection LD_PRELOAD", 50),
+
+        # Fileless
+        "memfd_create": ("Fileless execution", 60),
+        "/dev/shm": ("Utilisation /dev/shm", 30),
+        "ctypes": ("Ctypes (shellcode possible)", 25),
+        "mmap": ("Mmap mémoire", 15),
+
+        # Reverse shell indicators
+        "bash -i": ("Pattern reverse shell", 70),
+        "/dev/tcp": ("Redirection TCP bash", 70),
+        "nc -e": ("Netcat reverse shell", 70),
+        "base64.b64decode": ("Décodage base64 (payload possible)", 20),
+
+        # Container escape
+        "/var/run/docker.sock": ("Accès socket Docker (escape)", 65),
+        "pivot_root": ("Tentative pivot_root", 60),
+
+        # Crypto mining
+        "stratum+": ("Pool minage crypto", 55),
+        "xmrig": ("Miner XMRig", 65),
+    }
+
+    def _run(self, code: str) -> dict:
+        language = detect_language("", code)
+        flags = []
+        score = 0
+        for pattern, (label, points) in self._PATTERNS.items():
+            if pattern.lower() in code.lower():
+                flags.append(f"{label} (+{points})")
+                score += points
+
+        score = min(score, 100)
+        if score >= 80:
+            level = "CRITICAL"
+        elif score >= 60:
+            level = "HIGH"
+        elif score >= 30:
+            level = "MEDIUM"
+        else:
+            level = "LOW"
+
+        return {
+            "risk_level": level,
+            "risk_score": score,
+            "flags": flags,
+            "recommend_sandbox": score >= 20,
+            "language_detected": language,
+        }
+
+    async def _arun(self, code: str) -> dict:
+        return self._run(code)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOOL 8 — GET SANDBOX CONFIG
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GetSandboxConfig(BaseTool):
+    name: str = "get_sandbox_config"
+    description: str = """
+Retourne la configuration par défaut du sandbox ShieldAI.
+Utile pour comprendre les paramètres actuels avant de lancer une analyse.
+
+RETOUR (dict JSON) :
+{
+    "image_name": str,
+    "mem_limit": str,
+    "cpu_quota": int,
+    "pids_limit": int,
+    "exec_timeout": float,
+    "alert_threshold": int,
+    "enable_strace": bool,
+    "enable_fs_monitor": bool,
+    "network_disabled": bool,
+    "supported_languages": list[str]
+}
+"""
+    args_schema: type[BaseModel] = GetSandboxConfigInput
+    description_updated: bool = True
+
+    def _run(self, *args, **kwargs) -> dict:
+        return {
+            "image_name": DEFAULT_SANDBOX_IMAGE,
+            "mem_limit": DOCKER_DEFAULTS["mem_limit"],
+            "cpu_quota": DOCKER_DEFAULTS["cpu_quota"],
+            "pids_limit": DOCKER_DEFAULTS["pids_limit"],
+            "exec_timeout": DEFAULT_EXECUTION_TIMEOUT,
+            "alert_threshold": ALERT_THRESHOLD,
+            "enable_strace": True,
+            "enable_fs_monitor": True,
+            "network_disabled": DOCKER_DEFAULTS["network_disabled"],
+            "supported_languages": get_supported_languages(),
+        }
+
+    async def _arun(self, *args, **kwargs) -> dict:
+        return self._run()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LISTE DE TOUS LES TOOLS
+# ─────────────────────────────────────────────────────────────────────────────
+
+ALL_SANDBOX_TOOLS = [
+    AnalyzeCode(),
+    QuickAnalyze(),
+    GetContainerStatus(),
+    KillContainer(),
+    GetLastReport(),
+    GetSupportedLanguages(),
+    EstimateRisk(),
+    GetSandboxConfig(),
+]============================
+================./config.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Configuration de l'agent Sandbox ShieldAI.
+Auteur: HOUNSOU Samuel
+Date: Juin 2026
+"""
+
+import os
+
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+OUTPUT_LOG_FILE = os.path.join(BASEDIR, "agent_logs")
+os.makedirs(OUTPUT_LOG_FILE, exist_ok=True)
+OUTPUT_LOG_FILE = os.path.join(OUTPUT_LOG_FILE, "sandbox_logs.log")
+EXPLAIN_MD_PATH = os.path.join(BASEDIR, "knowledge", "explain.md")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PERSONAS
+# ─────────────────────────────────────────────────────────────────────────────
+
+AGENT_PERSONAS = {
+
+    "analyst": {
+        "goal": (
+            "Analyser le comportement de code suspect dans un environnement isolé. "
+            "Tu examines les syscalls capturés par strace, les accès filesystem via inotify, "
+            "et les patterns MITRE ATT&CK détectés pour produire un verdict factuel. "
+            "Tu identifies les TTPs (Tactics, Techniques, Procedures) et fournis "
+            "une recommandation actionnables à l'orchestrateur.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Réponds exclusivement en JSON valide, sans texte avant ou après.\n"
+            "{\n"
+            '  "tool_name": "nom_de_l_outil_utilisé",\n'
+            '  "tool_result": "résultat brut retourné par l_outil",\n'
+            '  "analysis": "ton analyse comportementale détaillée",\n'
+            '  "threat_level": "LOW|MEDIUM|HIGH|CRITICAL",\n'
+            '  "mitre_ttps": ["T1055", "T1041"],\n'
+            '  "recommendation": "action recommandée à l_orchestrateur"\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es un expert en analyse comportementale de malware. "
+            "Tu utilises le sandbox ShieldAI pour faire tourner des échantillons suspects "
+            "dans un container Docker isolé, puis tu analyses les traces strace et filesystem "
+            "pour identifier les patterns d'attaque. Tu connais parfaitement le framework "
+            "MITRE ATT&CK et tu sais mapper chaque comportement à une technique spécifique. "
+            "Tu travailles dans Obsidian Hive — la plateforme de cybersécurité africaine.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, threat_level, mitre_ttps, recommendation."
+        )
+    },
+
+    "hunter": {
+        "goal": (
+            "Débusquer le code malveillant avec une précision chirurgicale. "
+            "Tu utilises estimate_risk pour un pré-filtrage rapide, puis analyze_code "
+            "pour l'analyse complète. Tu cherches les patterns de fileless execution, "
+            "reverse shells, credential harvesting et container escape.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...",\n'
+            '  "analysis": "...", "threat_level": "LOW|MEDIUM|HIGH|CRITICAL",\n'
+            '  "mitre_ttps": [], "recommendation": "..."\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es le traqueur de ShieldAI. Spécialisé dans la détection de malware, "
+            "tu sais reconnaître les indicateurs de compromission les plus discrets : "
+            "un memfd_create suivi d'un execve, un /dev/tcp dans un script bash, "
+            "un ld.so.preload modifié. Tu utilises d'abord estimate_risk pour le triage, "
+            "puis analyze_code pour la confirmation. Tu opères dans la Sandbox de Obsidian Hive.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, threat_level, mitre_ttps, recommendation."
+        )
+    },
+
+    "forensic": {
+        "goal": (
+            "Produire une analyse forensique complète d'un sample malveillant. "
+            "Tu documentes chaque TTP avec son code MITRE, tu analyses la séquence "
+            "d'attaque kill chain complète, et tu identifies les artifacts laissés "
+            "sur le système (fichiers créés, connexions tentées, processus lancés).\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...",\n'
+            '  "analysis": "rapport forensique complet...",\n'
+            '  "threat_level": "...", "mitre_ttps": [],\n'
+            '  "kill_chain": "reconnaissance|exploitation|persistence|exfiltration",\n'
+            '  "artifacts": ["fichier créé", "connexion tentée"],\n'
+            '  "recommendation": "..."\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es le laboratoire forensique de Obsidian Hive. "
+            "Tu analyses les samples avec la rigueur d'un rapport judiciaire : "
+            "chaque syscall documenté, chaque accès filesystem tracé, chaque pattern "
+            "d'attaque mappé au framework MITRE ATT&CK. Tes rapports servent à enrichir "
+            "la base de signatures et à former les autres modules de détection. "
+            "Tu es le dernier rempart avant l'alerte critique.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, threat_level, "
+            "mitre_ttps, kill_chain, artifacts, recommendation."
+        )
+    },
+
+    "triage": {
+        "goal": (
+            "Triage rapide de code suspect. Tu utilises estimate_risk en premier "
+            "pour décider si une analyse sandbox complète est nécessaire. "
+            "Tu optimises le temps — pas de sandbox pour du code clairement bénin.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...",\n'
+            '  "analysis": "...", "threat_level": "...",\n'
+            '  "sandbox_needed": true,\n'
+            '  "recommendation": "..."\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es l'agent de triage de Obsidian Hive. "
+            "Tu reçois des centaines de fichiers par jour et tu dois décider vite : "
+            "bénin, suspect, ou critique. Tu utilises l'analyse statique en premier "
+            "(estimate_risk) pour filtrer le bruit, puis tu envoies au sandbox uniquement "
+            "ce qui mérite une analyse complète. Tu optimises le ratio signal/bruit "
+            "pour l'équipe de réponse à incident.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, threat_level, "
+            "sandbox_needed, recommendation."
+        )
+    }
+}============================
+================./agent.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Agent CrewAI pour le Sandbox ShieldAI.
+
+Création et configuration de l'agent Sandbox.
+Tasks disponibles :
+- task_analyze_code         : analyse comportementale complète
+- task_triage_code          : triage rapide (statique + sandbox si nécessaire)
+- task_forensic_report      : rapport forensique complet
+- task_analyze_file         : analyse depuis un chemin de fichier
+- task_monitor_container    : monitoring de l'état du container
+
+Auteur: HOUNSOU Samuel
+Date: Juin 2026
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from crewai import Agent, Crew, Task, LLM, Process, Memory
+from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
+
+from sandbox_ia.agent.tools import ALL_SANDBOX_TOOLS, set_orchestrator_instance
+from sandbox_ia.agent.config import OUTPUT_LOG_FILE, AGENT_PERSONAS, EXPLAIN_MD_PATH
+from sandbox_ia.core.orchestrator import SandboxOrchestrator
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AGENT PRINCIPAL
+# ─────────────────────────────────────────────────────────────────────────────
+
+def create_sandbox_agent(
+    persona: str,
+    llm: LLM | str,
+    tools: list = ALL_SANDBOX_TOOLS,
+    orchestrator: SandboxOrchestrator | None = None,
+    verbose: bool = True,
+    memory: Memory | None = None,
+    embedder: dict | None = None,
+) -> Agent:
+    """
+    Crée et retourne l'agent Sandbox ShieldAI.
+
+    Args:
+        persona (str): Persona de l'agent.
+            'analyst'  → analyse comportementale + MITRE ATT&CK
+            'hunter'   → détection agressive, triage + sandbox
+            'forensic' → rapport forensique complet
+            'triage'   → filtrage rapide, sandbox si nécessaire
+        llm (LLM): Instance du modèle de langage.
+        tools (list): Outils disponibles. Défaut: ALL_SANDBOX_TOOLS.
+        orchestrator (SandboxOrchestrator | None): Instance existante à réutiliser.
+            Si None, une nouvelle instance est créée automatiquement.
+        verbose (bool): Mode verbeux.
+        memory (Memory | None): Mémoire de l'agent.
+        embedder (dict | None): Configuration de l'embedder.
+
+    Returns:
+        Agent: Agent CrewAI configuré pour l'analyse sandbox.
+
+    Example:
+        >>> from crewai import LLM
+        >>> llm = LLM(model="groq/llama-3.3-70b-versatile", temperature=0.1)
+        >>> agent = create_sandbox_agent("analyst", llm)
+    """
+    if orchestrator is not None:
+        set_orchestrator_instance(orchestrator)
+
+    agent_persona = AGENT_PERSONAS.get(persona, AGENT_PERSONAS["analyst"])
+    return Agent(
+        role="Sandbox Security Analyst",
+        goal=agent_persona["goal"],
+        backstory=agent_persona["backstory"],
+        tools=tools,
+        llm=llm,
+        verbose=verbose,
+        allow_delegation=False,
+        memory=memory,
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TASKS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def task_analyze_code(
+    agent: Agent,
+    code: str,
+    language: str | None = None,
+    context: str | None = None,
+) -> Task:
+    """
+    Task pour l'analyse comportementale complète d'un code.
+
+    Args:
+        agent: Agent CrewAI sandbox.
+        code: Code source à analyser.
+        language: Langage (None = détection auto).
+        context: Contexte supplémentaire (ex: "extrait d'un email phishing").
+
+    Returns:
+        Task configurée pour l'analyse sandbox.
+    """
+    desc = "Analyse comportementale du code suivant dans le sandbox ShieldAI"
+    if language:
+        desc += f" (langage: {language})"
+    if context:
+        desc += f". Contexte: {context}"
+    desc += f":\n\n```\n{code[:300]}{'...' if len(code) > 300 else ''}\n```"
+
+    return Task(
+        description=desc,
+        expected_output=(
+            "Un rapport JSON avec: "
+            "final_score (0-100), final_level (LOW/MEDIUM/HIGH/CRITICAL), "
+            "alerts_count, liste des alertes avec patterns MITRE ATT&CK détectés, "
+            "exec_result (sortie du code, exit_code), "
+            "et une recommandation (bloquer / surveiller / autoriser)."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in ["analyze_code", "get_last_report"]],
+    )
+
+
+def task_triage_code(
+    agent: Agent,
+    code: str,
+    language: str | None = None,
+) -> Task:
+    """
+    Task de triage rapide : analyse statique d'abord, sandbox si nécessaire.
+
+    Args:
+        agent: Agent CrewAI sandbox.
+        code: Code source à trier.
+        language: Langage (None = détection auto).
+
+    Returns:
+        Task de triage avec décision sandbox ou non.
+    """
+    desc = (
+        f"Triage rapide du code suivant. "
+        f"Commence par estimate_risk pour l'analyse statique. "
+        f"Si le score statique >= 20 ou si des patterns critiques sont détectés, "
+        f"lance quick_analyze pour confirmer dans le sandbox.\n\n"
+        f"```\n{code[:300]}{'...' if len(code) > 300 else ''}\n```"
+    )
+    if language:
+        desc += f"\nLangage: {language}"
+
+    return Task(
+        description=desc,
+        expected_output=(
+            "Un rapport JSON avec: "
+            "risk_level depuis l'analyse statique, "
+            "sandbox_triggered (bool), "
+            "final_score si sandbox lancé, "
+            "flags suspects détectés, "
+            "verdict final (bénin / suspect / malveillant), "
+            "et recommandation."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "estimate_risk", "quick_analyze", "get_last_report"
+        ]],
+    )
+
+
+def task_forensic_report(
+    agent: Agent,
+    code: str,
+    language: str | None = None,
+    incident_context: str | None = None,
+) -> Task:
+    """
+    Task pour produire un rapport forensique complet.
+
+    Args:
+        agent: Agent CrewAI sandbox.
+        code: Code source à analyser.
+        language: Langage (None = détection auto).
+        incident_context: Contexte de l'incident (ex: "trouvé sur serveur compromis").
+
+    Returns:
+        Task de rapport forensique.
+    """
+    desc = (
+        f"Produis un rapport forensique complet pour le code suivant. "
+        f"Lance analyze_code avec strace et fs_monitor activés. "
+        f"Documente chaque TTP MITRE ATT&CK détecté, la séquence kill chain "
+        f"et les artifacts laissés sur le système.\n\n"
+        f"```\n{code[:300]}{'...' if len(code) > 300 else ''}\n```"
+    )
+    if language:
+        desc += f"\nLangage: {language}"
+    if incident_context:
+        desc += f"\nContexte incident: {incident_context}"
+
+    return Task(
+        description=desc,
+        expected_output=(
+            "Un rapport forensique JSON complet avec: "
+            "final_score, final_level, "
+            "liste détaillée de chaque alerte avec MITRE TTP, "
+            "kill chain reconstruite (étapes de l'attaque dans l'ordre), "
+            "artifacts détectés (fichiers créés, connexions tentées, processus), "
+            "exec_result (output du code), "
+            "et recommandations de remédiation."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "analyze_code", "get_last_report", "estimate_risk"
+        ]],
+    )
+
+
+def task_analyze_file(
+    agent: Agent,
+    file_path: str,
+    context: str | None = None,
+) -> Task:
+    """
+    Task pour analyser un fichier de code depuis son chemin.
+
+    Args:
+        agent: Agent CrewAI sandbox.
+        file_path: Chemin absolu vers le fichier à analyser.
+        context: Contexte de découverte du fichier.
+
+    Returns:
+        Task d'analyse de fichier.
+    """
+    desc = (
+        f"Lis et analyse le fichier suspect: {file_path}. "
+        f"Détecte d'abord le langage depuis l'extension, "
+        f"puis lance analyze_code avec le contenu du fichier."
+    )
+    if context:
+        desc += f"\nContexte: {context}"
+
+    return Task(
+        description=desc,
+        expected_output=(
+            "Un rapport JSON avec: "
+            "file_path analysé, language_detected, "
+            "final_score, final_level, alerts_count, "
+            "patterns suspects détectés, "
+            "et verdict final avec recommandation."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_supported_languages", "analyze_code",
+            "estimate_risk", "get_last_report"
+        ]],
+    )
+
+
+def task_monitor_container(agent: Agent) -> Task:
+    """
+    Task pour monitorer l'état du container sandbox.
+
+    Returns:
+        Task de monitoring.
+    """
+    return Task(
+        description=(
+            "Vérifie l'état du container sandbox ShieldAI. "
+            "Retourne le status, le PID, et si le container est en bonne santé."
+        ),
+        expected_output=(
+            "Un rapport JSON avec: "
+            "status (running/exited/not_start), pid, healthy (bool), "
+            "container_name, image_name, et timestamp."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name == "get_container_status"],
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CREW
+# ─────────────────────────────────────────────────────────────────────────────
+
+def create_sandbox_crew(
+    agent: Agent,
+    tasks: list[Task],
+    verbose: bool = True,
+    planning: bool = False,
+    memory: bool | Memory = False,
+    embedder: dict | None = None,
+) -> Crew:
+    """
+    Crée un Crew Sandbox avec l'agent et les tâches définies.
+
+    Args:
+        agent: Agent CrewAI sandbox.
+        tasks: Liste des tâches à exécuter.
+        verbose: Mode verbeux.
+        planning: Active la planification automatique.
+            Note: désactivé par défaut car le sandbox a des timeouts longs.
+        memory: Active la mémoire (False par défaut pour le sandbox).
+        embedder: Configuration de l'embedder.
+
+    Returns:
+        Crew CrewAI configuré.
+    """
+    knowledge_sources = []
+    if os.path.exists(EXPLAIN_MD_PATH):
+        knowledge_sources.append(
+            StringKnowledgeSource(content=open(EXPLAIN_MD_PATH).read())
+        )
+
+    return Crew(
+        name="sandbox_crew",
+        agents=[agent],
+        tasks=tasks,
+        process=Process.sequential,
+        verbose=verbose,
+        planning=planning,
+        output_log_file=OUTPUT_LOG_FILE,
+        memory=memory,
+        **({"knowledge_sources": knowledge_sources} if knowledge_sources else {}),
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FONCTIONS RAPIDES
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def quick_sandbox_analyze(code: str, llm: LLM, language: str | None = None) -> dict:
+    """
+    Analyse rapide via l'agent sandbox.
+
+    Args:
+        code: Code à analyser.
+        llm: Instance LLM.
+        language: Langage (None = détection auto).
+
+    Returns:
+        Résultat de l'analyse.
+    """
+    agent = create_sandbox_agent("analyst", llm)
+    task = task_analyze_code(agent, code, language)
+    crew = create_sandbox_crew(agent, [task])
+    return await crew.kickoff_async()
+
+
+async def quick_triage(code: str, llm: LLM) -> dict:
+    """
+    Triage rapide : statique d'abord, sandbox si nécessaire.
+
+    Args:
+        code: Code à trier.
+        llm: Instance LLM.
+
+    Returns:
+        Résultat du triage.
+    """
+    agent = create_sandbox_agent("triage", llm)
+    task = task_triage_code(agent, code)
+    crew = create_sandbox_crew(agent, [task])
+    return await crew.kickoff_async()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN DE TEST
+# ─────────────────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    print("🔧 Test de l'agent Sandbox ShieldAI")
+    print("=" * 60)
+
+    try:
+        llm = LLM(
+            model="groq/llama-3.3-70b-versatile",
+            temperature=0.1,
+        )
+    except Exception as e:
+        print(f"Erreur chargement LLM: {e}")
+        llm = None
+
+    if llm:
+        agent = create_sandbox_agent("analyst", llm, verbose=True)
+
+        print(f"\n📦 Outils disponibles ({len(agent.tools)}):")
+        for tool in agent.tools:
+            print(f"   - {tool.name}: {tool.description[:60]}...")
+
+        print("\n📋 Tasks disponibles:")
+        print("   - task_analyze_code(agent, code, language, context)")
+        print("   - task_triage_code(agent, code, language)")
+        print("   - task_forensic_report(agent, code, language, incident_context)")
+        print("   - task_analyze_file(agent, file_path, context)")
+        print("   - task_monitor_container(agent)")
+        print("\n✅ Agent Sandbox prêt !")============================

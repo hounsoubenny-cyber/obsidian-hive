@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport de Sécurité - {{ project_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 shadow-lg">
+    <h1 class="text-4xl font-bold">Rapport de Sécurité</h1>
+    <p class="text-lg">Projet : <span class="font-semibold">{{ project_name }}</span></p>
+    <p>Date du scan : <span class="font-semibold">{{ scan_date }}</span></p>
+  </header>
+
+  <main class="p-6 space-y-8">
+
+    <!-- DASHBOARD GLOBAL -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Vue d'ensemble</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-red-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-red-600">{{ stats.critique }}</p>
+          <p>Critiques</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-yellow-600">{{ stats.majeure }}</p>
+          <p>Majeures</p>
+        </div>
+        <div class="bg-blue-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-blue-600">{{ stats.mineure }}</p>
+          <p>Mineures</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-xl shadow">
+          <p class="text-3xl font-bold text-green-600">{{ stats.score }}</p>
+          <p>Score Sécurité /100</p>
+        </div>
+      </div>
+      <canvas id="severityChart" class="mt-6"></canvas>
+    </section>
+
+    <!-- INFORMATIONS GÉNÉRALES -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Informations Générales</h2>
+      <ul class="space-y-2">
+        <li><span class="font-semibold">Domaine :</span> {{ infos.domaine }}</li>
+        <li><span class="font-semibold">Adresse IP :</span> {{ infos.ip }}</li>
+        <li><span class="font-semibold">Système d'exploitation :</span> {{ infos.os }}</li>
+        <li><span class="font-semibold">Serveur Web :</span> {{ infos.server }}</li>
+        <li><span class="font-semibold">Technologie CMS :</span> {{ infos.cms }}</li>
+      </ul>
+    </section>
+
+    <!-- VULNÉRABILITÉS -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Vulnérabilités Détectées</h2>
+      
+      {% for vuln in vulnerabilities %}
+      <div class="border-l-4 pl-4 mb-4 
+        {% if vuln.severity == 'Critique' %} border-red-500 
+        {% elif vuln.severity == 'Majeure' %} border-yellow-500 
+        {% else %} border-blue-500 {% endif %}">
+        
+        <h3 class="text-xl font-semibold 
+          {% if vuln.severity == 'Critique' %} text-red-600 
+          {% elif vuln.severity == 'Majeure' %} text-yellow-600 
+          {% else %} text-blue-600 {% endif %}">
+          {{ vuln.title }}
+        </h3>
+        
+        <p><span class="font-semibold">Gravité :</span> {{ vuln.severity }}</p>
+        <p><span class="font-semibold">Description :</span> {{ vuln.description }}</p>
+        <p><span class="font-semibold">Preuve :</span> {{ vuln.proof }}</p>
+        <p><span class="font-semibold">Remédiation :</span> {{ vuln.remediation }}</p>
+      </div>
+      {% endfor %}
+    </section>
+
+    <!-- RECOMMANDATIONS -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Plan de Remédiation</h2>
+      <ol class="list-decimal ml-6 space-y-2">
+        {% for reco in recommendations %}
+          <li>{{ reco }}</li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <!-- ANNEXES -->
+    <section class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-2xl font-bold mb-4">Annexes Techniques</h2>
+      {% for annexe in annexes %}
+      <pre class="bg-gray-900 text-green-400 p-4 rounded-xl overflow-x-auto">
+{{ annexe }}
+      </pre>
+      {% endfor %}
+    </section>
+
+  </main>
+
+  <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+    Rapport généré automatiquement - Confidentiel 🔒
+  </footer>
+
+  <script>
+    const ctx = document.getElementById('severityChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Critique', 'Majeure', 'Mineure'],
+        datasets: [{
+          data: [{{ stats.critique }}, {{ stats.majeure }}, {{ stats.mineure }}],
+          backgroundColor: ['#dc2626', '#facc15', '#3b82f6'],
+        }]
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+find . -name "*.py" | sort | while read f; do
+    echo "=========================================="
+    echo "FILE: $f"
+    echo "=========================================="
+    cat "$f"
+    echo ""
+done > tous_les_fichiers.txt

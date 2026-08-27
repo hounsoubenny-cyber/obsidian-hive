@@ -1,0 +1,1438 @@
+================./tools.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Tools CrewAI pour l'agent IDS/IPS ShieldAI.
+Basé sur le vrai code : AnomalyDetector, AnomalyScorer, React
+Auteur: HOUNSOU Samuel
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import json
+import asyncio
+import time
+from datetime import datetime
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+
+from ids_ips_ia.detection.detection_module import AnomalyDetector
+from ids_ips_ia.main_ids_ips import IDS_IPS
+
+_detector: AnomalyDetector = None
+_IDS_IPS: IDS_IPS = None
+
+def get_detector() -> AnomalyDetector:
+    global _detector
+    if _detector is None:
+        raise RuntimeError("AnomalyDetector non initialisé. Appelle set_detector_instance() au démarrage.")
+    return _detector
+
+def set_detector_instance(instance: AnomalyDetector):
+    global _IDS_IPS
+    _IDS_IPS = instance
+
+def get_ids_ids() -> IDS_IPS:
+    global _detector
+    if _detector is None:
+        raise RuntimeError("AnomalyDetector non initialisé. Appelle set_detector_instance() au démarrage.")
+    return _detector
+
+def set_ids_ips_instance(instance: IDS_IPS):
+    global _IDS_IPS
+    _IDS_IPS = instance
+    
+# ============================================================================
+# INPUT SCHEMAS
+# ============================================================================
+
+class GetBlockedIpsInput(BaseModel):
+    limit: int = Field(
+        default=50,
+        description="Nombre maximum d'IPs à retourner (défaut: 50)"
+    )
+
+
+class GetStatsInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class GetWhitelistInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+class GetIpInfoInput(BaseModel):
+    ip: str = Field(
+        description="L'adresse IP à inspecter. Exemple: '192.168.1.45'"
+    )
+
+
+class BlockIpInput(BaseModel):
+    ip: str = Field(
+        description="L'adresse IP à bloquer. Exemple: '192.168.1.45'"
+    )
+    rule: str = Field(
+        default="drop",
+        description="Règle NFTables: 'drop' (blocage total) | 'rate_limit' (limite connexions) | 'rate_limit_data' (limite bande passante)"
+    )
+    input: bool = Field(
+        default=True,
+        description="True = bloquer trafic entrant (attaquant externe), False = bloquer trafic sortant (insider threat)"
+    )
+    timeout: int = Field(
+        default=3600,
+        description="Durée du blocage en secondes (défaut: 3600 = 1h). 0 = utilise le timeout NFT par défaut."
+    )
+    unit: str = Field(
+        default="s",
+        description="Unité du timeout: 's' (secondes) | 'm' (minutes) | 'h' (heures)"
+    )
+
+
+class UnlockIpInput(BaseModel):
+    ip: str = Field(
+        description="L'adresse IP à débloquer."
+    )
+    rule: str = Field(
+        default="drop",
+        description="Règle utilisée lors du blocage: 'drop' | 'rate_limit' | 'rate_limit_data'"
+    )
+    input: bool = Field(
+        default=True,
+        description="True = trafic entrant, False = trafic sortant"
+    )
+
+
+class ManageWhitelistInput(BaseModel):
+    ip: str = Field(
+        description="L'adresse IP à ajouter ou retirer de la whitelist."
+    )
+    add: bool = Field(
+        default=True,
+        description="True = ajouter à la whitelist, False = retirer de la whitelist"
+    )
+
+
+class ChangeModeInput(BaseModel):
+    mode: str = Field(
+        description="Mode de fonctionnement: 'ids' (détection seule) | 'ips' (détection + blocage automatique)"
+    )
+
+
+class GeolocateIpInput(BaseModel):
+    ip: str = Field(
+        description="L'adresse IP à géolocaliser."
+    )
+
+
+class ClearSetsInput(BaseModel):
+    placeholder: str = Field(default="", description="Paramètre factice")
+
+
+# ============================================================================
+# TOOL 1: GET BLOCKED IPS
+# ============================================================================
+
+class GetBlockedIps(BaseTool):
+    name: str = "get_blocked_ips"
+    description: str = """
+Retourne la liste des IPs actuellement bloquées avec leurs données complètes.
+
+Utilise quand: tu veux auditer les IPs bloquées, vérifier si une IP est déjà bloquée,
+ou avoir un aperçu des menaces actives.
+
+RETOUR (dict JSON) :
+{
+    "total": int,
+    "blocked": {
+        "ip_address": {
+            "ip": str,
+            "rule": str,            // "drop" | "rate_limit" | "rate_limit_data"
+            "set_name": str,        // Nom du set NFTables
+            "duration": int|null,   // Durée en secondes
+            "input": bool           // True = entrant, False = sortant
+        }
+    }
+}
+
+Ne pas utiliser pour: obtenir le score ou l'historique d'anomalies d'une IP (utilise get_ip_info).
+"""
+    args_schema: type[BaseModel] = GetBlockedIpsInput
+
+    def _run(self, limit: int = 50):
+        detector = get_detector()
+        blocked = detector.React.blocked
+        items = list(blocked.items())[:limit]
+        return {
+            "total": len(blocked),
+            "blocked": dict(items)
+        }
+
+    async def _arun(self, limit: int = 50):
+        return self._run(limit)
+
+
+# ============================================================================
+# TOOL 2: GET IP INFO
+# ============================================================================
+
+class GetIpInfo(BaseTool):
+    name: str = "get_ip_info"
+    description: str = """
+Retourne toutes les informations connues sur une IP spécifique.
+Score d'anomalie, historique des blocages, géolocalisation, décision actuelle.
+
+Utilise quand: tu analyses une IP suspecte spécifique avant de décider d'une action.
+
+RETOUR (dict JSON) :
+{
+    "ip": str,
+    "score": float,                 // Score de dangerosité (0-300)
+    "anomaly_count": int,           // Nombre d'anomalies détectées
+    "blocked_count": int,           // Nombre de fois bloquée
+    "geoloc": str,                  // Code pays (ex: "RU", "CN")
+    "last_update": str,             // Dernière mise à jour
+    "fisrt_seen": str,              // Première détection
+    "resolution": str|null,         // Nom de domaine résolu
+    "input": bool,                  // Direction du trafic
+    "port": int|null,               // Port destination
+    "decision": {
+        "level": str,               // "log_only" | "rate_limit" | "block_temp" | "block_perm"
+        "action": str,
+        "duration": int|null,
+        "score": float
+    }
+}
+
+ou {"found": false, "ip": str} si IP inconnue.
+"""
+    args_schema: type[BaseModel] = GetIpInfoInput
+
+    def _run(self, ip: str):
+        detector = get_detector()
+        ip_data = detector.AnomalyScorer.ip_data.get(ip)
+        if ip_data is None:
+            return {"found": False, "ip": ip}
+        return {"found": True, **ip_data}
+
+    async def _arun(self, ip: str):
+        return self._run(ip)
+
+
+# ============================================================================
+# TOOL 3: GET ALL IPS SCORES
+# ============================================================================
+
+class GetAllIpsScores(BaseTool):
+    name: str = "get_all_ips_scores"
+    description: str = """
+Retourne le scoring complet de toutes les IPs surveillées.
+Équivalent de la liste principale du dashboard IDS.
+
+Utilise quand: tu veux un aperçu global de toutes les menaces détectées,
+ou identifier les IPs avec les scores les plus élevés.
+
+RETOUR (dict JSON) :
+{
+    "total": int,
+    "ips": {
+        "ip_address": { ...données complètes par IP... }
+    }
+}
+"""
+    args_schema: type[BaseModel] = GetStatsInput
+
+    def _run(self, *args, **kwargs):
+        detector = get_detector()
+        data = detector.AnomalyScorer.get_list_blocked_ip()
+        return {
+            "total": len(data),
+            "ips": data
+        }
+
+    async def _arun(self, *args, **kwargs):
+        return self._run()
+
+
+# ============================================================================
+# TOOL 4: GET WHITELIST
+# ============================================================================
+
+class GetWhitelist(BaseTool):
+    name: str = "get_whitelist"
+    description: str = """
+Retourne la liste des IPs en whitelist (jamais bloquées par l'IPS).
+
+Utilise quand: tu veux vérifier si une IP est protégée avant de la bloquer,
+ou auditer les IPs de confiance.
+
+RETOUR (dict JSON) :
+{
+    "total": int,
+    "whitelist": list[str]      // Liste des IPs/CIDRs whitelistées
+}
+"""
+    args_schema: type[BaseModel] = GetWhitelistInput
+
+    def _run(self, *args, **kwargs):
+        detector = get_detector()
+        whitelist = detector.React.whitelist
+        return {
+            "total": len(whitelist),
+            "whitelist": whitelist
+        }
+
+    async def _arun(self, *args, **kwargs):
+        return self._run()
+
+
+# ============================================================================
+# TOOL 5: GET MODE
+# ============================================================================
+
+class GetMode(BaseTool):
+    name: str = "get_mode"
+    description: str = """
+Retourne le mode de fonctionnement actuel de l'IDS/IPS.
+
+RETOUR (dict JSON) :
+{
+    "mode": "ids" | "ips",
+    "description": str      // Explication du mode actif
+}
+
+ids = détection seule, aucun blocage automatique.
+ips = détection + blocage automatique selon les scores.
+"""
+    args_schema: type[BaseModel] = GetStatsInput
+
+    def _run(self, *args, **kwargs):
+        detector = get_detector()
+        mode = detector.mode
+        return {
+            "mode": mode,
+            "description": (
+                "Mode IDS : surveillance uniquement, aucun blocage automatique."
+                if mode == "ids" else
+                "Mode IPS : détection + blocage automatique selon les scores de dangerosité."
+            )
+        }
+
+    async def _arun(self, *args, **kwargs):
+        return self._run()
+
+
+# ============================================================================
+# TOOL 6: BLOCK IP
+# ============================================================================
+
+class BlockIp(BaseTool):
+    name: str = "block_ip"
+    description: str = """
+Bloque une adresse IP via NFTables. Action effective immédiatement.
+
+IMPORTANT: Vérifie d'abord avec get_whitelist que l'IP n'est pas whitelistée.
+Utilise get_ip_info pour évaluer le score avant de bloquer.
+
+Règles disponibles:
+- "drop": blocage total (score >= 180)
+- "rate_limit": limite les connexions (score 125-180)
+- "rate_limit_data": limite la bande passante (score 75-125)
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error" | "whitelisted" | "invalid_ip",
+    "ip": str,
+    "message": str,
+    "timestamp": str
+}
+
+Ne pas utiliser pour: les IPs en whitelist ou les IPs locales.
+"""
+    args_schema: type[BaseModel] = BlockIpInput
+
+    def _run(
+        self, ip: str, rule: str = "drop",
+        input: bool = True, timeout: int = 3600, unit: str = "s"
+    ):
+        detector = get_detector()
+
+        # Vérification whitelist
+        if ip in detector.React.whitelist:
+            return {
+                "status": "whitelisted",
+                "ip": ip,
+                "message": f"IP {ip} est en whitelist — blocage refusé",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+        # Validation IP
+        if detector.React.get_ip_type(ip) == "error":
+            return {
+                "status": "invalid_ip",
+                "ip": ip,
+                "message": f"IP {ip} invalide",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+        try:
+            success = detector.React.block(
+                ip=ip,
+                rule=rule,
+                input=input,
+                timeout=timeout if timeout > 0 else None,
+                unit=unit
+            )
+            return {
+                "status": "success" if success else "error",
+                "ip": ip,
+                "message": f"IP {ip} {'bloquée' if success else 'blocage échoué'} (règle: {rule}, direction: {'entrant' if input else 'sortant'})",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "ip": ip,
+                "message": str(e),
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+    async def _arun(self, ip: str, rule: str = "drop", input: bool = True, timeout: int = 3600, unit: str = "s"):
+        return self._run(ip, rule, input, timeout, unit)
+
+
+# ============================================================================
+# TOOL 7: UNLOCK IP
+# ============================================================================
+
+class UnlockIp(BaseTool):
+    name: str = "unlock_ip"
+    description: str = """
+Débloque une IP et supprime son score d'anomalie (reset complet).
+
+Utilise quand: faux positif confirmé, demande admin, ou IP réhabilitée.
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error" | "not_found",
+    "ip": str,
+    "message": str,
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = UnlockIpInput
+
+    def _run(self, ip: str, rule: str = "drop", input: bool = True):
+        detector = get_detector()
+        try:
+            success = detector.React.unlock(ip=ip, rule=rule, input=input)
+            already_unlocked = not success and ip not in detector.React.blocked
+            # Reset du score dans AnomalyScorer comme dans l'API /unlock
+            if success or already_unlocked:
+                if ip in detector.AnomalyScorer.ip_data:
+                    detector.AnomalyScorer.ip_data.pop(ip)
+
+            return {
+                "status": "success" if success else "error",
+                "ip": ip,
+                "message": f"IP {ip} {'débloquée et score réinitialisé' if success else 'déblocage échoué (soit IP inconnue, soit non bloqué)'}",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "ip": ip,
+                "message": str(e),
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+    async def _arun(self, ip: str, rule: str = "drop", input: bool = True):
+        return self._run(ip, rule, input)
+
+
+# ============================================================================
+# TOOL 8: MANAGE WHITELIST
+# ============================================================================
+
+class ManageWhitelist(BaseTool):
+    name: str = "manage_whitelist"
+    description: str = """
+Ajoute ou retire une IP de la whitelist NFTables.
+
+Utilise quand: 
+- add=True : IP interne critique (serveur, passerelle) à ne jamais bloquer
+- add=False : IP whitelistée devenue suspecte à surveiller
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error",
+    "ip": str,
+    "action": "added" | "removed",
+    "message": str,
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = ManageWhitelistInput
+
+    def _run(self, ip: str, add: bool = True):
+        detector = get_detector()
+        try:
+            if add:
+                success = detector.React.add_to_whitelist(ip)
+                action = "added"
+                msg = f"IP {ip} ajoutée à la whitelist"
+            else:
+                success = detector.React.remove_from_whitelist(ip)
+                action = "removed"
+                msg = f"IP {ip} retirée de la whitelist"
+
+            return {
+                "status": "success" if success else "error",
+                "ip": ip,
+                "action": action,
+                "message": msg if success else f"Opération échouée sur {ip}",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "ip": ip,
+                "action": "added" if add else "removed",
+                "message": str(e),
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+    async def _arun(self, ip: str, add: bool = True):
+        return self._run(ip, add)
+
+
+# ============================================================================
+# TOOL 9: CHANGE MODE
+# ============================================================================
+
+class ChangeMode(BaseTool):
+    name: str = "change_mode"
+    description: str = """
+Change le mode de fonctionnement de l'IDS/IPS à chaud, sans redémarrage.
+
+Utilise quand:
+- Passer en "ips" : activer le blocage automatique (réponse active)
+- Passer en "ids" : désactiver le blocage automatique (surveillance seule)
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error",
+    "mode": str,                // Nouveau mode actif
+    "message": str,
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = ChangeModeInput
+
+    def _run(self, mode: str):
+        mode = mode.lower().strip()
+        if mode not in ("ids", "ips"):
+            return {
+                "status": "error",
+                "mode": mode,
+                "message": "Mode invalide. Valeurs acceptées: 'ids' | 'ips'",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+        success = get_ids_ids().change_mode(mode)
+        return {
+            "status": "success" if success else "error",
+            "mode": mode,
+            "message": f"Mode changé vers '{mode}'" if success else f"Échec changement vers '{mode}'",
+            "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+        }
+
+    async def _arun(self, mode: str):
+        return self._run(mode)
+
+
+# ============================================================================
+# TOOL 10: GEOLOCATE IP
+# ============================================================================
+
+class GeolocateIp(BaseTool):
+    name: str = "geolocate_ip"
+    description: str = """
+Géolocalise une adresse IP et indique si elle est suspecte (pays à risque).
+
+Utilise quand: tu veux évaluer le contexte géographique d'une IP avant de décider
+d'une action, ou enrichir une alerte.
+
+RETOUR (dict JSON) :
+{
+    "ip": str,
+    "country_code": str,        // Code ISO pays (ex: "RU", "CN", "FR")
+    "is_suspicious": bool,      // True si pays à risque (RU, CN, KP, IR)
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = GeolocateIpInput
+
+    def _run(self, ip: str):
+        detector = get_detector()
+        country = detector.AnomalyScorer.GeoLocator.locate(ip)
+        is_suspicious = detector.AnomalyScorer.GeoLocator.is_suspicious(ip)
+        return {
+            "ip": ip,
+            "country_code": country,
+            "is_suspicious": is_suspicious,
+            "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+        }
+
+    async def _arun(self, ip: str):
+        return self._run(ip)
+
+
+# ============================================================================
+# TOOL 11: CLEAR NFT SETS
+# ============================================================================
+
+class ClearNftSets(BaseTool):
+    name: str = "clear_nft_sets"
+    description: str = """
+Vide tous les sets NFTables — débloque toutes les IPs bloquées d'un coup.
+ACTION CRITIQUE — utilise uniquement sur demande explicite de l'admin
+ou en cas de faux positifs massifs.
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error",
+    "message": str,
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = ClearSetsInput
+
+    def _run(self, *args, **kwargs):
+        detector = get_detector()
+        try:
+            success = detector.React.clear_sets()
+            return {
+                "status": "success" if success else "error",
+                "message": "Tous les sets NFTables vidés" if success else "Échec vidage des sets",
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+            }
+
+    async def _arun(self, *args, **kwargs):
+        return self._run()
+
+
+# ============================================================================
+# TOOL 12: REDIRECT TO HONEYPOT (placeholder)
+# ============================================================================
+
+class RedirectToHoneypot(BaseTool):
+    name: str = "redirect_to_honeypot"
+    description: str = """
+Redirige une IP suspecte vers le honeypot au lieu de la bloquer.
+L'attaquant croit cibler le vrai système — on collecte ses actions.
+
+Utilise quand: l'IP est suspecte mais pas encore confirmée comme malveillante,
+ou quand on veut analyser les techniques d'un attaquant (APT, nouvelle méthode).
+
+RETOUR (dict JSON) :
+{
+    "status": "success" | "honeypot_unavailable" | "error",
+    "ip": str,
+    "message": str,
+    "timestamp": str
+}
+"""
+    args_schema: type[BaseModel] = GeolocateIpInput  # même schema — juste ip
+
+    def _run(self, ip: str):
+        # Le module honeypot n'est pas encore buildé
+        # Quand je build le honeypot, je vais implémentes la logique ici
+        return {
+            "status": "honeypot_unavailable",
+            "ip": ip,
+            "message": "Module honeypot pas encore disponible. Utilise block_ip en fallback.",
+            "timestamp": datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
+        }
+
+    async def _arun(self, ip: str):
+        return self._run(ip)
+
+
+# ============================================================================
+# ALL TOOLS
+# ============================================================================
+
+ALL_IDS_TOOLS = [
+    GetBlockedIps(),
+    GetIpInfo(),
+    GetAllIpsScores(),
+    GetWhitelist(),
+    GetMode(),
+    BlockIp(),
+    UnlockIp(),
+    ManageWhitelist(),
+    ChangeMode(),
+    GeolocateIp(),
+    ClearNftSets(),
+    RedirectToHoneypot(),
+]============================
+================./config.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Configuration de l'agent IDS/IPS ShieldAI.
+Auteur: HOUNSOU Samuel
+Date: Juin 2026
+"""
+
+import os
+
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+OUTPUT_LOG_FILE = os.path.join(BASEDIR, "agent_logs")
+os.makedirs(OUTPUT_LOG_FILE, exist_ok=True)
+OUTPUT_LOG_FILE = os.path.join(OUTPUT_LOG_FILE, "ids_ips_logs.log")
+EXPLAIN_MD_PATH = os.path.join(BASEDIR, "knowledge", "explain.md")
+
+# ============================================================================
+# PERSONAS
+# ============================================================================
+
+AGENT_PERSONAS = {
+
+    "guardian": {
+        "goal": (
+            "Surveiller en permanence l'état du réseau, identifier les menaces actives "
+            "et produire des rapports clairs pour l'orchestrateur ShieldAI. "
+            "Tu détectes, tu analyses, tu rapportes — sans agir directement sauf ordre explicite.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Réponds exclusivement en JSON valide, sans texte avant ou après.\n"
+            "{\n"
+            '  "tool_name": "nom_de_l_outil_utilisé",\n'
+            '  "tool_result": "résultat brut retourné par l_outil",\n'
+            '  "analysis": "ton analyse en langage naturel",\n'
+            '  "threat_level": "none|low|medium|high|critical",\n'
+            '  "recommendation": "action recommandée à l_orchestrateur"\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es le gardien silencieux du réseau ShieldAI. "
+            "Tu surveilles en temps réel les flux entrants et sortants, "
+            "tu analyses les scores d'anomalie (0-300) produits par le pipeline ML "
+            "(IsolationForest + LOF + OneClassSVM + Suricata), "
+            "et tu identifies les patterns suspects — beaconing C2, insider threats, scans de ports. "
+            "Tu ne bloques pas toi-même : tu fournis à l'orchestrateur des rapports factuels "
+            "avec des recommandations actionnables. "
+            "Ton format de sortie est toujours JSON structuré.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, threat_level, recommendation."
+        )
+    },
+
+    "analyst": {
+        "goal": (
+            "Investiguer en profondeur une IP ou un incident suspect. "
+            "Croiser toutes les données disponibles — score ML, géolocalisation, "
+            "historique de blocage, direction du trafic — pour produire "
+            "un verdict clair et une recommandation justifiée.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Réponds exclusivement en JSON valide.\n"
+            "{\n"
+            '  "tool_name": "nom_de_l_outil_utilisé",\n'
+            '  "tool_result": "résultat brut",\n'
+            '  "analysis": "analyse croisée détaillée",\n'
+            '  "verdict": "malicious|suspicious|benign",\n'
+            '  "confidence": 0.95,\n'
+            '  "recommendation": "block|monitor|whitelist|ignore"\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es un analyste forensique réseau au sein de ShieldAI. "
+            "Quand une IP est signalée suspecte, tu mènes l'investigation complète : "
+            "score de dangerosité, nombre d'anomalies, pays d'origine, "
+            "historique de blocage, direction du trafic (insider ou externe). "
+            "Tu sais interpréter les scores du pipeline ML ShieldAI — "
+            "un score > 180 indique un blocage temporaire nécessaire, "
+            "> 230 un blocage permanent. "
+            "Tu croises les données pour éviter les faux positifs "
+            "et tu fournis un verdict factuel avec un niveau de confiance.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, analysis, verdict, confidence, recommendation."
+        )
+    },
+
+    "responder": {
+        "goal": (
+            "Répondre rapidement aux menaces confirmées. "
+            "Bloquer les IPs malveillantes, débloquer les faux positifs, "
+            "gérer la whitelist et changer le mode IDS/IPS selon les directives "
+            "de l'orchestrateur ShieldAI. Chaque action doit être justifiée.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Réponds exclusivement en JSON valide.\n"
+            "{\n"
+            '  "tool_name": "nom_de_l_outil_utilisé",\n'
+            '  "tool_result": "résultat brut",\n'
+            '  "action_taken": "description de l_action effectuée",\n'
+            '  "status": "success|error|skipped",\n'
+            '  "justification": "pourquoi cette action"\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es le bras armé de ShieldAI. "
+            "Quand l'orchestrateur ou l'analyste confirme une menace, "
+            "c'est toi qui agis : tu bloques via NFTables (drop, rate_limit, rate_limit_data), "
+            "tu débloque les faux positifs, tu gères la whitelist des IPs de confiance, "
+            "et tu bascules le système en mode IPS quand la situation l'exige. "
+            "Tu ne bloques jamais sans vérifier la whitelist d'abord. "
+            "Tu adaptes la règle NFTables au score : "
+            "drop pour les menaces critiques (> 180), "
+            "rate_limit pour les suspects (125-180), "
+            "rate_limit_data pour les légèrement suspects (75-125). "
+            "Chaque action est loggée et justifiée.\n\n"
+            "🔧 JSON requis : tool_name, tool_result, action_taken, status, justification."
+        )
+    }
+}============================
+================./agent.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Agent CrewAI pour l'IDS/IPS ShieldAI.
+
+Création et configuration de l'agent IDS/IPS ShieldAI.
+Tasks disponibles :
+- task_investigate_ip       : investigation complète d'une IP
+- task_threat_report        : rapport des menaces actives
+- task_block_ip             : blocage d'une IP avec justification
+- task_manage_whitelist     : gestion de la whitelist
+- task_change_mode          : changement de mode IDS/IPS
+- task_full_audit           : audit complet du système
+
+Auteur: HOUNSOU Samuel
+Date: Juin 2026
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from crewai import Agent, Crew, Task, LLM, Process, Memory
+from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
+from ids_ips_ia.agent.tools import ALL_IDS_TOOLS
+from ids_ips_ia.agent.config import (
+    OUTPUT_LOG_FILE, AGENT_PERSONAS,
+    EXPLAIN_MD_PATH
+)
+
+
+# ============================================================================
+# AGENT PRINCIPAL
+# ============================================================================
+
+def create_ids_agent(
+    persona: str,
+    llm: LLM | str,
+    tools: list = ALL_IDS_TOOLS,
+    verbose: bool = True,
+    memory: Memory = None,
+    embedder: dict = None,
+) -> Agent:
+    """
+    Crée et retourne l'agent IDS/IPS ShieldAI.
+
+    Args:
+        persona (str): Persona de l'agent ('guardian' | 'analyst' | 'responder')
+        llm (LLM): Instance du modèle de langage
+        tools (list): Liste des outils disponibles (défaut: ALL_IDS_TOOLS)
+        verbose (bool): Mode verbeux
+
+    Returns:
+        Agent: Agent CrewAI configuré pour la détection d'intrusions
+
+    Example:
+        >>> from crewai import LLM
+        >>> llm = LLM(model="groq/llama-3.3-70b-versatile")
+        >>> agent = create_ids_agent("guardian", llm)
+    """
+    agent_persona = AGENT_PERSONAS.get(persona, AGENT_PERSONAS["guardian"])
+    return Agent(
+        role="IDS/IPS Specialist",
+        goal=agent_persona["goal"],
+        backstory=agent_persona["backstory"],
+        tools= tools,
+        llm=llm,
+        verbose=verbose,
+        allow_delegation=False,
+        memory=memory,
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ============================================================================
+# TASKS
+# ============================================================================
+
+def task_investigate_ip(agent: Agent, ip: str) -> Task:
+    """
+    Task pour investiguer une IP suspecte.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        ip (str): Adresse IP à investiguer
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Investigue l'IP suivante et fournis une analyse complète: {ip}",
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- ip: adresse analysée "
+            "- score: score de dangerosité (0-300) "
+            "- country_code: pays d'origine "
+            "- is_suspicious_country: bool "
+            "- anomaly_count: nombre d'anomalies détectées "
+            "- blocked_count: nombre de fois bloquée "
+            "- current_decision: décision actuelle (level + action) "
+            "- is_blocked: bool — IP actuellement bloquée "
+            "- is_whitelisted: bool "
+            "- recommendation: 'block' | 'monitor' | 'whitelist' | 'ignore' "
+            "- justification: explication de la recommandation"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_ip_info", "get_blocked_ips", "get_whitelist", "geolocate_ip"
+        ]],
+    )
+
+
+def task_threat_report(agent: Agent, limit: int = 20) -> Task:
+    """
+    Task pour générer un rapport des menaces actives.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        limit (int): Nombre d'IPs à inclure dans le rapport
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Génère un rapport complet des menaces actives détectées par l'IDS/IPS (limite: {limit} IPs).",
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- mode: mode actuel (ids/ips) "
+            "- total_ips_monitored: nombre total d'IPs surveillées "
+            "- total_blocked: nombre d'IPs bloquées "
+            "- top_threats: liste des IPs avec les scores les plus élevés "
+            "- blocked_ips: liste des IPs actuellement bloquées "
+            "- geographic_summary: répartition géographique des menaces "
+            "- recommendations: actions suggérées à l'orchestrateur"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_all_ips_scores", "get_blocked_ips", "get_mode"
+        ]],
+    )
+
+
+def task_block_ip(agent: Agent, ip: str, reason: str = None) -> Task:
+    """
+    Task pour bloquer une IP avec justification.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        ip (str): IP à bloquer
+        reason (str): Raison du blocage (optionnel)
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    desc = f"Analyse et bloque l'IP {ip} si nécessaire."
+    if reason:
+        desc += f" Raison fournie: {reason}"
+
+    return Task(
+        description=desc,
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- ip: adresse ciblée "
+            "- action_taken: action effectuée ('blocked' | 'already_blocked' | 'whitelisted' | 'insufficient_score') "
+            "- rule_applied: règle NFTables utilisée (drop/rate_limit/rate_limit_data) "
+            "- score: score de dangerosité "
+            "- justification: pourquoi cette action "
+            "- status: 'success' | 'error'"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_ip_info", "get_whitelist", "geolocate_ip", "block_ip"
+        ]],
+    )
+
+
+def task_unlock_ip(agent: Agent, ip: str) -> Task:
+    """
+    Task pour débloquer une IP.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        ip (str): IP à débloquer
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Débloque l'IP {ip} et réinitialise son score d'anomalie.",
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- ip: adresse débloquée "
+            "- status: 'success' | 'error' | 'not_blocked' "
+            "- score_reset: bool "
+            "- message: confirmation ou erreur"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_ip_info", "get_blocked_ips", "unlock_ip"
+        ]],
+    )
+
+
+def task_manage_whitelist(agent: Agent, ip: str, add: bool = True) -> Task:
+    """
+    Task pour gérer la whitelist.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        ip (str): IP à ajouter ou retirer
+        add (bool): True = ajouter, False = retirer
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    action = "ajouter à" if add else "retirer de"
+    return Task(
+        description=f"{'Ajouter' if add else 'Retirer'} l'IP {ip} {'à' if add else 'de'} la whitelist IDS/IPS.",
+        expected_output=(
+            "Un rapport JSON avec: "
+            f"- ip: adresse ciblée "
+            f"- action: 'added' | 'removed' "
+            f"- status: 'success' | 'error' "
+            f"- whitelist_total: nombre d'IPs en whitelist après l'opération "
+            f"- message: confirmation"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_whitelist", "manage_whitelist"
+        ]],
+    )
+
+
+def task_change_mode(agent: Agent, mode: str) -> Task:
+    """
+    Task pour changer le mode IDS/IPS.
+
+    Args:
+        agent (Agent): Agent CrewAI
+        mode (str): 'ids' ou 'ips'
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Change le mode de fonctionnement de l'IDS/IPS vers: {mode}",
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- previous_mode: mode avant changement "
+            "- new_mode: mode après changement "
+            "- status: 'success' | 'error' "
+            "- impact: description des implications du changement de mode"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_mode", "change_mode"
+        ]],
+    )
+
+
+def task_full_audit(agent: Agent) -> Task:
+    """
+    Task pour un audit complet du système IDS/IPS.
+
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description="Effectue un audit complet de l'état du système IDS/IPS.",
+        expected_output=(
+            "Un rapport JSON complet avec: "
+            "- mode: mode actuel "
+            "- total_ips_monitored: IPs surveillées "
+            "- total_blocked: IPs bloquées "
+            "- whitelist_size: taille de la whitelist "
+            "- top_5_threats: 5 IPs les plus dangereuses avec scores "
+            "- geographic_distribution: pays d'origine des menaces "
+            "- insider_threats: IPs suspectes en trafic sortant "
+            "- recommendations: liste d'actions prioritaires pour l'orchestrateur"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in [
+            "get_all_ips_scores", "get_blocked_ips",
+            "get_whitelist", "get_mode"
+        ]],
+    )
+
+
+# ============================================================================
+# CREW
+# ============================================================================
+
+def create_ids_crew(
+    agent: Agent,
+    tasks: list[Task],
+    verbose: bool = True,
+    planning: bool = True,
+    memory: bool | Memory = False,
+    embedder: dict = None,
+) -> Crew:
+    """
+    Crée un Crew IDS avec l'agent et les tâches définies.
+
+    Args:
+        agent (Agent): Agent CrewAI IDS
+        tasks (list[Task]): Liste des tâches à exécuter
+        verbose (bool): Mode verbeux
+        planning (bool): Active la planification automatique
+        memory (bool|Memory): Active la mémoire
+
+    Returns:
+        Crew: Crew CrewAI configuré
+    """
+    knowledge_sources = []
+    if os.path.exists(EXPLAIN_MD_PATH):
+        knowledge_sources.append(
+            StringKnowledgeSource(content=open(EXPLAIN_MD_PATH).read())
+        )
+
+    return Crew(
+        name="ids_ips_crew",
+        agents=[agent],
+        tasks=tasks,
+        process=Process.sequential,
+        verbose=verbose,
+        planning=planning,
+        output_log_file=OUTPUT_LOG_FILE,
+        memory=memory,
+        **({"knowledge_sources": knowledge_sources} if knowledge_sources else {}),
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ============================================================================
+# FONCTIONS RAPIDES
+# ============================================================================
+
+async def quick_investigate(ip: str, llm: LLM) -> dict:
+    """Investigation rapide d'une IP."""
+    agent = create_ids_agent("analyst", llm)
+    task = task_investigate_ip(agent, ip)
+    crew = create_ids_crew(agent, [task])
+    return await crew.kickoff_async()
+
+
+async def quick_threat_report(llm: LLM) -> dict:
+    """Rapport rapide des menaces actives."""
+    agent = create_ids_agent("guardian", llm)
+    task = task_threat_report(agent)
+    crew = create_ids_crew(agent, [task])
+    return await crew.kickoff_async()
+
+
+async def quick_block(ip: str, llm: LLM, reason: str = None) -> dict:
+    """Blocage rapide d'une IP."""
+    agent = create_ids_agent("responder", llm)
+    task = task_block_ip(agent, ip, reason)
+    crew = create_ids_crew(agent, [task])
+    return await crew.kickoff_async()
+
+
+# ============================================================================
+# MAIN DE TEST
+# ============================================================================
+
+if __name__ == "__main__":
+    print("🔧 Test de l'agent IDS/IPS")
+    print("=" * 60)
+
+    try:
+        llm = LLM(
+            model="groq/llama-3.3-70b-versatile",
+            temperature=0.1,
+        )
+    except Exception as e:
+        print(f"Erreur chargement LLM: {e}")
+        llm = None
+
+    if llm:
+        agent = create_ids_agent("guardian", llm, verbose=True)
+
+        print(f"\n📦 Outils disponibles ({len(agent.tools)}):")
+        for tool in agent.tools:
+            print(f"   - {tool.name}: {tool.description[:60]}...")
+
+        print("\n📋 Tasks disponibles:")
+        print("   - task_investigate_ip(agent, ip)")
+        print("   - task_threat_report(agent)")
+        print("   - task_block_ip(agent, ip)")
+        print("   - task_unlock_ip(agent, ip)")
+        print("   - task_manage_whitelist(agent, ip, add)")
+        print("   - task_change_mode(agent, mode)")
+        print("   - task_full_audit(agent)")
+        print("\n✅ Agent IDS prêt !")============================
+================./test_agent_memory.py============
+import os
+from crewai import Agent, Task, Crew, Process, LLM
+from crewai.tools import tool
+
+os.environ["CHROMA_HUGGINGFACE_API_KEY"] = "na"
+# os.environ["OPENAI_API_KEY"] = "sk-000000000000000000000000000000000000000000000000"
+
+
+local_model_path = "/home/hounsousamuel/PROJETS/DEJA_SUR_GIT/Nexus_projet_hackaton/conversation_app/chat_nexus/EMBEDDING"
+# Définition du modèle Groq
+groq_llm = LLM(
+    model="groq/llama-3.3-70b-versatile",
+    temperature=0.1, # On reste précis pour la cyber
+    api_key="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"
+)
+
+# 2. Création d'un outil factice (Tool)
+@tool("intel_database")
+def threat_intel_search(query: str):
+    """Recherche des informations sur des menaces dans une base de données locale."""
+    # Simulation d'une base de données
+    database = {
+        "mirai": "Malware IoT utilisant des identifiants par défaut.",
+        "pegasus": "Spyware mobile avancé ciblant iOS et Android.",
+        "shield-v1": "Signature détectée dans le projet ShieldAI - Statut: CRITIQUE."
+    }
+    return database.get(query.lower(), "Menace inconnue dans la base locale.")
+
+# 3. Définition de l'Agent avec Mémoire
+cyber_agent = Agent(
+    role="Analyste Senior ShieldAI",
+    goal="Identifier les menaces et les mémoriser pour les rapports futurs.",
+    backstory="Tu es un expert en cyber-intelligence. Tu as une excellente mémoire technique.",
+    tools=[threat_intel_search],
+    llm=groq_llm,
+    memory=True, # On active la mémoire sur l'agent
+    verbose=True,
+    embedder={
+        "provider": "huggingface",
+        "config": {
+            "model": local_model_path 
+        }
+    }
+)
+
+# 4. Définition des Tâches (Task)
+# Tâche 1 : Découvrir une information
+task_discovery = Task(
+    description="Recherche des infos sur 'shield-v1' dans la base intel et note son statut.",
+    expected_output="Le statut de shield-v1.",
+    agent=cyber_agent
+)
+
+# Tâche 2 : Vérifier la mémoire (on ne lui donne plus l'outil !)
+task_recall = Task(
+    description="Sans utiliser d'outils, quel était le nom de la menace analysée précédemment et son statut ?",
+    expected_output="Rappel précis de la menace et de son statut.",
+    agent=cyber_agent
+)
+
+# 5. Création du Crew (Le système qui gère la mémoire unifiée)
+shield_crew = Crew(
+    agents=[cyber_agent],
+    tasks=[task_discovery, task_recall],
+    process=Process.sequential,
+    memory=True, # Active le système de RAG (Short-term/Long-term)
+    verbose=True,
+    embedder={
+        "provider": "huggingface",
+        "config": {
+            "model": local_model_path 
+        }
+    },
+    manager_llm=groq_llm
+)
+
+# Lancement du test
+print("🚀 Démarrage du test de mémoire ShieldAI...")
+result = shield_crew.kickoff()
+
+print("\n\n" + "="*50)
+print("VERDICT FINAL :")
+print(result)
+print("="*50)============================
+================./test.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun 11 16:49:15 2026
+
+@author: hounsousamuel
+"""
+
+import asyncio
+import random
+import time
+from typing import List
+from fastapi import FastAPI, WebSocket
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+import uvicorn
+
+app = FastAPI(title="ShieldAI - Threat Monitor")
+
+# --- MODÈLE DE DONNÉES ---
+class LogEntry(BaseModel):
+    timestamp: str
+    source_ip: str
+    event_type: str
+    severity: str
+    score: float
+
+# --- BASE DE DONNÉES EN MÉMOIRE ---
+logs_db: List[LogEntry] = []
+
+# --- GÉNÉRATEUR DE LOGS (SIMULATION AGENT) ---
+async def log_generator():
+    event_types = ["SSH Login", "SQL Injection Attempt", "Port Scan", "Buffer Overflow", "File Access"]
+    ips = ["192.168.1.10", "45.12.33.1", "10.0.0.5", "172.16.0.20"]
+    
+    while True:
+        severity = random.choices(["LOW", "MEDIUM", "HIGH", "CRITICAL"], weights=[50, 30, 15, 5])[0]
+        score = random.uniform(0.1, 0.9) if severity != "CRITICAL" else random.uniform(0.9, 1.0)
+        
+        new_log = LogEntry(
+            timestamp=time.strftime("%H:%M:%S"),
+            source_ip=random.choice(ips),
+            event_type=random.choice(event_types),
+            severity=severity,
+            score=round(score, 2)
+        )
+        logs_db.append(new_log)
+        if len(logs_db) > 50: logs_db.pop(0)
+        await asyncio.sleep(2)
+
+# --- ROUTES ---
+@app.get("/")
+async def get_dashboard():
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <title>ShieldAI Monitor</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body class="bg-slate-900 text-white font-sans">
+        <nav class="p-6 border-b border-slate-800 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-cyan-400">🛡️ SHIELDAI <span class="text-white font-light">Monitor</span></h1>
+            <div id="status" class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs border border-green-500">SYSTEM ACTIVE</div>
+        </nav>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+            <!-- Stats -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <p class="text-slate-400 text-sm">Menaces Détectées</p>
+                <p id="threat-count" class="text-4xl font-black mt-2">0</p>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <p class="text-slate-400 text-sm">Score de Risque Moyen</p>
+                <p id="avg-score" class="text-4xl font-black mt-2 text-yellow-400">0.0</p>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                <canvas id="miniChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-700/50 text-slate-300 text-xs uppercase">
+                        <tr>
+                            <th class="p-4">Time</th>
+                            <th class="p-4">Source IP</th>
+                            <th class="p-4">Event</th>
+                            <th class="p-4">Severity</th>
+                            <th class="p-4">AI Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table" class="text-sm">
+                        <!-- Logs injectés ici -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            const ws = new WebSocket("ws://localhost:8000/ws");
+            let logsCount = 0;
+            let totalScore = 0;
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const table = document.getElementById('log-table');
+                
+                logsCount++;
+                totalScore += data.score;
+
+                // Mise à jour Stats
+                document.getElementById('threat-count').innerText = logsCount;
+                document.getElementById('avg-score').innerText = (totalScore / logsCount).toFixed(2);
+
+                // Insertion Ligne
+                const color = data.severity === 'CRITICAL' ? 'text-red-500 font-bold' : 
+                              data.severity === 'HIGH' ? 'text-orange-400' : 'text-slate-300';
+                
+                const row = `<tr class="border-b border-slate-700 hover:bg-slate-700/30 transition">
+                    <td class="p-4 text-slate-500">${data.timestamp}</td>
+                    <td class="p-4 font-mono text-cyan-300">${data.source_ip}</td>
+                    <td class="p-4">${data.event_type}</td>
+                    <td class="p-4"><span class="${color}">${data.severity}</span></td>
+                    <td class="p-4 font-bold text-cyan-500">${data.score}</td>
+                </tr>`;
+                
+                table.insertAdjacentHTML('afterbegin', row);
+            };
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    last_idx = 0
+    while True:
+        if len(logs_db) > last_idx:
+            for i in range(last_idx, len(logs_db)):
+                await websocket.send_json(logs_db[i].dict())
+            last_idx = len(logs_db)
+        await asyncio.sleep(1)
+
+# --- DÉMARRAGE ---
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.create_task(log_generator())
+    uvicorn.run(app, host="0.0.0.0", port=8000)============================

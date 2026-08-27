@@ -1,0 +1,121 @@
+TOTAL : 12
+====================================================================================================
+DATE           : 22/06/2026 à 11:26:27
+EXPÉDITEUR     : support@paypal-securite.tk
+SUJET          : URGENT: Vérification requise
+DÉCISION       : PHISHING
+CONFIANCE      : 0.92
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 1
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.66s
+====================================================================================================
+DATE           : 22/06/2026 à 11:26:27
+EXPÉDITEUR     : newsletter@lemonde.fr
+SUJET          : Le Monde - Newsletter du jour
+DÉCISION       : SAFE
+CONFIANCE      : 0.911
+SOURCE         : bert_haut_confiance
+URLs totales   : 0  |  URLs phishing : 0
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.08s
+====================================================================================================
+DATE           : 22/06/2026 à 11:26:28
+EXPÉDITEUR     : support@paypal-securite.tk
+SUJET          : URGENT: Vérification requise
+DÉCISION       : PHISHING
+CONFIANCE      : 0.92
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 1
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.58s
+====================================================================================================
+DATE           : 22/06/2026 à 11:26:28
+EXPÉDITEUR     : newsletter@lemonde.fr
+SUJET          : Le Monde - Newsletter du jour
+DÉCISION       : SAFE
+CONFIANCE      : 0.911
+SOURCE         : bert_haut_confiance
+URLs totales   : 0  |  URLs phishing : 0
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.08s
+====================================================================================================
+DATE           : 22/08/2026 à 21:40:45
+EXPÉDITEUR     : "CloudDrive Security Team" <no-reply@clouddrive-support-team.net>
+SUJET          : ⚠️ Stockage plein - Action requise
+DÉCISION       : PHISHING
+CONFIANCE      : 0.9
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 1
+SPF            : fail  |  DKIM : absent
+DURÉE          : 36.4s
+====================================================================================================
+DATE           : 22/08/2026 à 21:40:45
+EXPÉDITEUR     : ShopEase <orders@shopease-store.com>
+SUJET          : Votre commande #SE-88213 a été expédiée
+DÉCISION       : SUSPICIOUS
+CONFIANCE      : 0.899
+SOURCE         : bert_haut_confiance && passive_faible
+URLs totales   : 0  |  URLs phishing : 0
+SPF            : pass  |  DKIM : present
+DURÉE          : 0.52s
+====================================================================================================
+DATE           : 22/08/2026 à 21:40:46
+EXPÉDITEUR     : 
+SUJET          : 
+DÉCISION       : SUSPICIOUS
+CONFIANCE      : 0.805
+SOURCE         : bert_haut_confiance && passive_faible
+URLs totales   : 0  |  URLs phishing : 0
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.52s
+====================================================================================================
+DATE           : 22/08/2026 à 21:40:59
+EXPÉDITEUR     : 
+SUJET          : 
+DÉCISION       : SUSPICIOUS
+CONFIANCE      : 0.989
+SOURCE         : bert_haut_confiance && passive_faible
+URLs totales   : 1  |  URLs phishing : 0
+SPF            : absent  |  DKIM : absent
+DURÉE          : 13.37s
+====================================================================================================
+DATE           : 22/08/2026 à 22:02:52
+EXPÉDITEUR     : ShopEase <orders@shopease-store.com>
+SUJET          : Votre commande #SE-88213 a été expédiée
+DÉCISION       : SUSPICIOUS
+CONFIANCE      : 0.899
+SOURCE         : bert_haut_confiance && passive_faible
+URLs totales   : 0  |  URLs phishing : 0
+SPF            : pass  |  DKIM : present
+DURÉE          : 0.2s
+====================================================================================================
+DATE           : 22/08/2026 à 22:02:52
+EXPÉDITEUR     : "CloudDrive Security Team" <no-reply@clouddrive-support-team.net>
+SUJET          : ⚠️ Stockage plein - Action requise
+DÉCISION       : PHISHING
+CONFIANCE      : 0.9
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 1
+SPF            : fail  |  DKIM : absent
+DURÉE          : 0.13s
+====================================================================================================
+DATE           : 22/08/2026 à 22:05:37
+EXPÉDITEUR     : 
+SUJET          : 
+DÉCISION       : PHISHING
+CONFIANCE      : 0.98
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 0
+SPF            : absent  |  DKIM : absent
+DURÉE          : 0.17s
+====================================================================================================
+DATE           : 23/08/2026 à 14:21:31
+EXPÉDITEUR     : "CloudDrive Security Team" <no-reply@clouddrive-support-team.net>
+SUJET          : ⚠️ Stockage plein - Action requise
+DÉCISION       : PHISHING
+CONFIANCE      : 0.9
+SOURCE         : url_critique
+URLs totales   : 1  |  URLs phishing : 1
+SPF            : fail  |  DKIM : absent
+DURÉE          : 0.37s

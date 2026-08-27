@@ -1,0 +1,1048 @@
+{
+    "metadata": {
+        "target_ip": "172.17.0.2",
+        "generated_at": "2026-08-02T19:48:04.232919+00:00",
+        "status": "Terminé",
+        "simulator_version": "2.0.0"
+    },
+    "executive_summary": {
+        "compromised": true,
+        "root_access": false,
+        "credentials_harvested_count": 132,
+        "lateral_movement_hosts_count": 0,
+        "persistence_installed_count": 4,
+        "criticality_level": "ÉLEVÉ"
+    },
+    "mitre_attack_matrix": {
+        "Reconnaissance": {
+            "NetworkServiceDiscover": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        },
+        "InitialAccess": {
+            "SshBruteForce": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "FtpBruteForce": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "HttpBruteForce": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        },
+        "Execution": {
+            "CommandExecution": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "PythonExecution": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "ReverseShell": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        },
+        "PrivilegeEscalation": {
+            "SudoExploit": {
+                "status": "ÉCHEC",
+                "errors": []
+            },
+            "SUIDBinary": {
+                "status": "ÉCHEC",
+                "errors": []
+            }
+        },
+        "CredentialAccess": {
+            "PasswordFileDump": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "BashHistoryRead": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "SSHKeyTheft": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        },
+        "Exfiltration": {
+            "ExfiltrationHTTP": {
+                "status": "ÉCHEC",
+                "errors": []
+            }
+        },
+        "DefenseEvasion": {
+            "LogCleaner": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "Timestomp": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        },
+        "Persistence": {
+            "SshKeyBackdoor": {
+                "status": "SUCCÈS",
+                "errors": []
+            },
+            "CronBackdoor": {
+                "status": "SUCCÈS",
+                "errors": []
+            }
+        }
+    },
+    "compromised_data": {
+        "ports_discovered": [],
+        "credentials": [
+            {
+                "service": "ssh",
+                "port": "22",
+                "username": "root",
+                "password": "toor"
+            },
+            {
+                "service": "ssh",
+                "port": "22",
+                "username": "testuser",
+                "password": "password"
+            },
+            {
+                "service": "ssh",
+                "port": "22",
+                "username": "admin",
+                "password": "admin123"
+            },
+            {
+                "service": "ftp",
+                "port": "21",
+                "username": "root",
+                "password": "toor"
+            },
+            {
+                "service": "ftp",
+                "port": "21",
+                "username": "testuser",
+                "password": "password"
+            },
+            {
+                "service": "ftp",
+                "port": "21",
+                "username": "admin",
+                "password": "admin123"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/login"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/console"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/api"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/backup"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/portal"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/panel"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/api"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/panel"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/uploads"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/.git"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/robots.txt"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/console"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/test"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/backup"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config.php"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/login"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/manager"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/dashboard"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/files"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/dev"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/.env"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/portal"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/login"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/console"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/api"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/backup"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/portal"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/panel"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/api"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/panel"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/uploads"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/.git"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/robots.txt"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/console"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/test"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/admin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/backup"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config.php"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/login"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/manager"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/dashboard"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/files"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/dev"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/.env"
+            },
+            {
+                "service": "http",
+                "port": "8080",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/portal"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/login"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/console"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/api"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/backup"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/portal"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/panel"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/api"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/panel"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/uploads"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/.git"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/robots.txt"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/console"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/test"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/backup"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config.php"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/login"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/config"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/manager"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/dashboard"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/files"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/dev"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/.env"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8080/portal"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/login"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/console"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/api"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/backup"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/portal"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/panel"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/api"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/panel"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/uploads"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/wp-admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/.git"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/robots.txt"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/console"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/test"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/admin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/backup"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config.php"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/login"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/config"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/manager"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/dashboard"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/files"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/dev"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/phpmyadmin"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/.env"
+            },
+            {
+                "service": "http",
+                "port": "8081",
+                "username": "[Chemin Découvert]",
+                "password": "http://172.17.0.2:8081/portal"
+            },
+            {
+                "service": "bash_history_leak (mysql/mariadb password)",
+                "port": "local",
+                "username": "bash_history",
+                "password": "mysqldump -u root -p appdb > backup.sql"
+            },
+            {
+                "service": "bash_history_leak (mysql/mariadb password)",
+                "port": "local",
+                "username": "bash_history",
+                "password": "ansible-playbook -i inventory/prod site.yml"
+            }
+        ],
+        "system_hashes": [
+            {
+                "user": "root",
+                "algo": "yescrypt",
+                "hash": "$y$j9T$arHP2mnh0xTPZedG4enEY.$fd3Lg04TR.dWR2e/XK90A.Woc9BeNF..."
+            },
+            {
+                "user": "sandbox",
+                "algo": "yescrypt",
+                "hash": "$y$j9T$xsF9Lzo7.V9K/gIpNr/mo1$.a.Bc3rlgUvmPCnl03GZ4cN335VPZf..."
+            },
+            {
+                "user": "devops",
+                "algo": "SHA-512",
+                "hash": "$6$rounds=656000$xK9mNpQr2vL8wZ1s$fakehashaaaaaaaaaaaaaaaaaa..."
+            },
+            {
+                "user": "deploy",
+                "algo": "SHA-512",
+                "hash": "$6$rounds=656000$tR3hJkP5nM7qX9bY$fakehashbbbbbbbbbbbbbbbbbb..."
+            }
+        ],
+        "stolen_ssh_keys": [
+            {
+                "name": "id_rsa",
+                "source": "root",
+                "type": "OpenSSH",
+                "usable": false
+            },
+            {
+                "name": "id_rsa",
+                "source": "root",
+                "type": "OpenSSH",
+                "usable": false
+            },
+            {
+                "name": "id_rsa",
+                "source": "root",
+                "type": "OpenSSH",
+                "usable": false
+            }
+        ],
+        "known_hosts_discovered": [
+            {
+                "host": "10.0.2.10",
+                "port": 22
+            },
+            {
+                "host": "10.0.5.10",
+                "port": 22
+            },
+            {
+                "host": "db-primary.internal",
+                "port": 22
+            },
+            {
+                "host": "10.0.2.10",
+                "port": 22
+            },
+            {
+                "host": "10.0.5.10",
+                "port": 22
+            },
+            {
+                "host": "db-primary.internal",
+                "port": 22
+            }
+        ],
+        "lateral_hosts_compromised": [],
+        "exfiltrated_payloads_count": 0,
+        "created_files_on_target": [
+            "/root/.ssh/authorized_keys",
+            "/opt/backdoor.sh"
+        ]
+    },
+    "technical_timeline": [
+        {
+            "tactic": "Reconnaissance",
+            "technique": "NetworkServiceDiscover",
+            "success": true
+        },
+        {
+            "tactic": "InitialAccess",
+            "technique": "SshBruteForce",
+            "success": true
+        },
+        {
+            "tactic": "InitialAccess",
+            "technique": "FtpBruteForce",
+            "success": true
+        },
+        {
+            "tactic": "InitialAccess",
+            "technique": "HttpBruteForce",
+            "success": true
+        },
+        {
+            "tactic": "Execution",
+            "technique": "CommandExecution",
+            "success": true
+        },
+        {
+            "tactic": "Execution",
+            "technique": "PythonExecution",
+            "success": true
+        },
+        {
+            "tactic": "Execution",
+            "technique": "ReverseShell",
+            "success": true
+        },
+        {
+            "tactic": "PrivilegeEscalation",
+            "technique": "SudoExploit",
+            "success": false
+        },
+        {
+            "tactic": "PrivilegeEscalation",
+            "technique": "SUIDBinary",
+            "success": false
+        },
+        {
+            "tactic": "CredentialAccess",
+            "technique": "PasswordFileDump",
+            "success": true
+        },
+        {
+            "tactic": "CredentialAccess",
+            "technique": "BashHistoryRead",
+            "success": true
+        },
+        {
+            "tactic": "CredentialAccess",
+            "technique": "SSHKeyTheft",
+            "success": true
+        },
+        {
+            "tactic": "Exfiltration",
+            "technique": "ExfiltrationHTTP",
+            "success": false
+        },
+        {
+            "tactic": "DefenseEvasion",
+            "technique": "LogCleaner",
+            "success": true
+        },
+        {
+            "tactic": "DefenseEvasion",
+            "technique": "Timestomp",
+            "success": true
+        },
+        {
+            "tactic": "Persistence",
+            "technique": "SshKeyBackdoor",
+            "success": true
+        },
+        {
+            "tactic": "Persistence",
+            "technique": "CronBackdoor",
+            "success": true
+        }
+    ],
+    "remediation_plan": [
+        {
+            "vulnerability": "Utilisation d'identifiants de services par défaut ou trop simples",
+            "impact": "Permet un accès initial rapide à distance ou l'authentification sur des services critiques.",
+            "mitigation": "Implémenter une politique stricte de robustesse pour les mots de passe et désactiver l'authentification par mot de passe SSH au profit des clés publiques."
+        },
+        {
+            "vulnerability": "Mécanismes de persistance active installés (tâches Cron / configurations Startup / clés SSH autorisées)",
+            "impact": "Maintien d'un accès distant furtif et persistant pour l'attaquant, même après redémarrage.",
+            "mitigation": "Vérifier régulièrement l'intégrité de `/etc/cron*`, inspecter les fichiers `~/.ssh/authorized_keys` de tous les utilisateurs et désactiver les scripts de démarrage suspects."
+        }
+    ]
+}

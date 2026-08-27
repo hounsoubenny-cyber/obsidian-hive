@@ -1,0 +1,171 @@
+# =============================================================================
+# Obsidian Hive — .gitignore
+# =============================================================================
+
+# --- Secrets & config sensible ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.instance_id
+**/secrets/
+**/credentials/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+
+# Outils qualité / tests
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+
+# --- Nuitka (binaires compilés ServerAsset) ---
+*.build/
+*.dist/
+*.onefile-build/
+tool_engine
+tool_engine.exe
+
+# --- Dossiers miroirs / backups auto-générés ---
+**/resum/
+**/backup/
+
+# --- ML / IA (modèles, datasets, checkpoints, cache) ---
+*.pkl
+*.pt
+*.onnx
+*.h5
+*.back
+*.zst
+*.zstd
+*.joblib
+*.db
+*.sqlite
+*.sqlite3
+modules/sandbox_ia/src/sandbox_ia/ml_model/output/
+modules/sandbox_ia/src/sandbox_ia/core/test_quarantine/
+.sha256
+.sha256_*
+**/checkpoints*/
+**/datasets/
+**/embeddings/
+**/*_cache/
+**/mail_encoder_cache/
+**/ml_model_zip/
+**/MODEL_BERT/
+**/model_similarity/
+**/test_similarity/
+**/know_params_dir/
+**/courbe/
+MODEL_SHARED/
+capture.pkl
+capture_backup.pkl
+*.faiss
+*.index
+*.pcap
+*.pcapng
+
+# --- Bases de données locales ---
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# --- Logs ---
+*.log
+**/logs/
+**/log/
+**/agent_logs/
+**/llama_server_logs/
+
+# --- var/ (fichiers d'état runtime génériques) ---
+**/var/
+
+# --- Frontend (React/TypeScript) ---
+node_modules/
+**/frontend/build/
+**/FRONT_END_REACT/build/
+.next/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Rapports générés (scanner, sandbox, simulateur) ---
+**/scanner_reports/*
+!**/scanner_reports/.gitkeep
+**/reports/generated/
+**/result_scan/HTML/*
+**/result_scan/JSON/*
+**/result_scan/LLM_REPORT/*
+**/result_scan/PDF/*
+**/sim_report/audit_*/
+
+# --- Suricata / nftables runtime (spécifique IDS/IPS) ---
+**/reaction/data/nft/*
+!**/reaction/data/nft/.gitkeep
+
+# --- Config générée par instance/asset (runtime, pas du code) ---
+assets_config/net/sh_as-*/
+assets_config/web/sh_as-*/
+server_asset_etat/
+
+# --- Tests bas niveau (captures PCAP de test) ---
+**/TEST/PCAP/
+
+# --- IDE / éditeurs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.spyderproject
+.spyproject
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Divers ---
+*.bak
+*.tmp
+*.orig
+.ipynb_checkpoints/
+.git_back/
+./all_code.txt
+./all_files.txt
+./files_without_modules.txt
+./modules/CLE_API.txt
+modules/CLE_API.txt
+*CLE_API*
+

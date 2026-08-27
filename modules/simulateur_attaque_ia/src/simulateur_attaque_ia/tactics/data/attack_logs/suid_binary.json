@@ -1,0 +1,642 @@
+[
+    {
+        "timestamp": "Thu Jun 18 18:26:51 2026",
+        "message": "Début SUID Exploit à : Thu Jun 18 18:26:51 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:51 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:51 2026",
+        "message": "Début Command Line Execution à : Thu Jun 18 18:26:51 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:51 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:51 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Début Command Line Execution à : Thu Jun 18 18:26:54 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:14 2026",
+        "message": "Début SUID Exploit à : Wed Jul  1 08:47:14 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:14 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:14 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 08:47:14 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:14 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:14 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 08:47:17 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:54 2026",
+        "message": "Début SUID Exploit à : Wed Jul  1 09:11:54 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:54 2026",
+        "message": "Username: testuser, Password: password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:54 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 09:11:54 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:54 2026",
+        "message": "Username: testuser, Password: password, commandes: 1"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:54 2026",
+        "message": "✅ SUCCESS: testuser:password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 09:11:56 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Username: testuser, Password: password, commandes: 2"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "✅ SUCCESS: testuser:password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:11:56 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:48 2026",
+        "message": "Début SUID Exploit à : Sun Aug  2 14:51:48 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:48 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:48 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 14:51:48 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:48 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:48 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 14:51:53 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:53 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:44 2026",
+        "message": "Début SUID Exploit à : Sun Aug  2 19:51:44 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:44 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:44 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 19:51:44 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:44 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:44 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 19:51:47 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:47 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:56 2026",
+        "message": "Début SUID Exploit à : Sun Aug  2 20:47:56 2026, pour ip : 172.17.0.2 et port 22"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:56 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:56 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 20:47:56 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:56 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:57 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 20:47:58 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:46 2026",
+        "message": "Début SUID Exploit à : Tue Aug  4 15:17:46 2026, pour ip : 172.24.0.2 et port 22"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:46 2026",
+        "message": "Username: admin, Password: admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:46 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 15:17:46 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:46 2026",
+        "message": "Username: admin, Password: admin123, commandes: 1"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:46 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 15:17:49 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Username: admin, Password: admin123, commandes: 2"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:49 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:25 2026",
+        "message": "Début SUID Exploit à : Mon Aug 24 11:57:25 2026, pour ip : 172.24.0.3 et port 22"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:25 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:25 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 11:57:25 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:25 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:25 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 11:57:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:24 2026",
+        "message": "Début SUID Exploit à : Mon Aug 24 15:34:24 2026, pour ip : 172.24.0.3 et port 22"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:24 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:24 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 15:34:24 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:24 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:24 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 15:34:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:28 2026",
+        "message": "Début SUID Exploit à : Mon Aug 24 16:49:28 2026, pour ip : 172.24.0.4 et port 22"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:28 2026",
+        "message": "Username: root, Password: toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:28 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 16:49:28 2026, pour ip : 172.24.0.4 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:28 2026",
+        "message": "Username: root, Password: toor, commandes: 1"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:28 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Fin Command Line Execution, 1/1 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Binaires SUID trouvés : 16"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : sudo (/usr/bin/sudo)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "  ⚠️ Binaire dangereux trouvé : pkexec (/usr/bin/pkexec)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Exploitation de 2 binaires dangereux..."
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 16:49:32 2026, pour ip : 172.24.0.4 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Username: root, Password: toor, commandes: 2"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Fin Command Line Execution, 1/2 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Aucune commande d'exploitation n'a réussi"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Fin SUID Exploit, 0 exploit(s) tenté(s)"
+    }
+]

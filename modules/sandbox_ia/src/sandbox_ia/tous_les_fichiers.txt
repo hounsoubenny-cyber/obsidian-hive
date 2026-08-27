@@ -1,0 +1,3243 @@
+================./core/__init__.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 27 14:06:39 2026
+
+@author: hounsousamuel
+"""
+
+============================
+================./core/fs_monitor.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May  9 07:25:06 2026
+
+@author: hounsousamuel
+
+Module de surveillance du filesystem pour le Sandbox ShieldAI V2.
+Surveille en temps réel le filesystem du container Docker depuis l'hôte
+via watchdog/inotify, détecte les accès aux fichiers honeypot (canary tokens)
+et émet des événements structurés vers le behavior_scorer.
+
+Architecture :
+    FSMonitor
+        └── SandboxFSHandler (FileSystemEventHandler)
+                └── SandBoxQueue → behavior_scorer
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import time
+import asyncio
+import queue
+from dataclasses import dataclass
+from datetime import datetime
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler, FileSystemEvent
+from watchdog.events import (
+    EVENT_TYPE_CLOSED, EVENT_TYPE_DELETED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED,
+    EVENT_TYPE_CREATED, EVENT_TYPE_OPENED
+)
+
+from sandbox_ia.sandbox_utils.logger import get_logger
+logger = get_logger()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONSTANTES — Chemins surveillés
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Fichiers honeypot — contiennent des canary tokens marqués CANARY+SHIELDAI
+# Tout accès à ces fichiers déclenche une alerte CRITIQUE (score +40)
+CANARY_PATHS = [
+    "/home/devops/.env.prod",
+    "/home/devops/.ssh/id_rsa",
+    "/home/deploy/.ssh/id_rsa",
+    "/root/.ssh/id_rsa",
+    "/var/www/app/.env",
+    "/opt/monitoring/agent/config.yml",
+    "/etc/shadow",
+]
+
+# Chemins suspects — typiquement fouillés par du code malveillant
+# Tout accès déclenche une alerte MOYENNE (score +15)
+SUSPICIOUS_PATHS = [
+    "/etc/passwd",
+    "/etc/hosts",
+    "/etc/crontab",
+    "/etc/nginx",
+    "/etc/mysql",
+    "/etc/redis",
+    "/home/devops/.bash_history",
+    "/home/devops/scripts/",
+    "/var/log/",
+    "/var/backups/",
+    "/var/www/",
+    "/root/",
+]
+
+# Extensions suspectes — si le code crée des fichiers avec ces extensions
+# Indique une tentative de persistence ou d'exfiltration (score +10)
+SUSPICIOUS_EXTENSIONS = [
+    ".sh", ".pl", ".rb",     # scripts de persistence
+    ".elf", ".so",           # binaires Linux compilés
+    ".b64", ".enc",          # données encodées/chiffrées (exfiltration)
+]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DATACLASS — Représentation d'un événement filesystem
+# ─────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class FSEvent:
+    """
+    Représente un événement filesystem détecté dans le container sandbox.
+
+    Chaque accès, modification, création ou suppression de fichier dans
+    le container génère un FSEvent qui circule dans la SandBoxQueue vers
+    le behavior_scorer pour mise à jour du threat score.
+
+    Attributes
+    ----------
+    timestamp_date : datetime
+        Date et heure UTC de l'événement (pour les rapports).
+    timestamp_time : float
+        Timestamp Unix précis de l'événement (pour les calculs de délai).
+    event_type : str
+        Type d'événement watchdog parmi : "created", "modified",
+        "deleted", "opened", "moved", "closed".
+    path : str
+        Chemin normalisé du fichier, sans le préfixe fs_root.
+        Exemple : "/etc/passwd" au lieu de "/var/lib/docker/.../etc/passwd"
+    src_path : str
+        Chemin source brut retourné par watchdog (avec le préfixe fs_root).
+    dest_path : str
+        Chemin destination, uniquement rempli pour les événements "moved".
+        Chaîne vide pour tous les autres types d'événements.
+    is_directory : bool
+        True si l'événement concerne un répertoire, False pour un fichier.
+        Le threat_score est divisé par 2 pour les répertoires.
+    is_canary : bool
+        True si le fichier accédé est un fichier honeypot contenant
+        des canary tokens. Déclenche une alerte critique.
+    is_suspicious : bool
+        True si le chemin correspond à un chemin système sensible.
+        Déclenche une alerte moyenne.
+    threat_score : int
+        Score de menace de 0 à 100 calculé par _classify().
+        Canary : +40, Suspicious : +15, Extension suspecte : +10.
+        Divisé par 2 si is_directory.
+    """
+    timestamp_date: datetime
+    timestamp_time: float
+    event_type: str
+    path: str
+    src_path: str
+    dest_path: str
+    is_directory: bool
+    is_canary: bool
+    is_suspicious: bool
+    threat_score: int
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SANDBOXQUEUE — File d'attente unifiée sync/async
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SandBoxQueue:
+    """
+    Wrapper unifié autour de asyncio.Queue et queue.Queue.
+
+    Permet à SandboxFSHandler (qui tourne dans le thread watchdog)
+    de mettre des FSEvents dans une queue sans se soucier de son type.
+    Les méthodes put/get délèguent directement aux versions nowait,
+    ce qui garantit la compatibilité thread-safe avec asyncio.Queue
+    (put_nowait et get_nowait sont des méthodes synchrones sur les deux types).
+
+    Attributes
+    ----------
+    _queue : asyncio.Queue | queue.Queue
+        La queue sous-jacente.
+    _is_async_queue : bool
+        True si la queue est une asyncio.Queue, False sinon.
+    """
+
+    def __init__(self, q: queue.Queue | asyncio.Queue):
+        """
+        Initialise le wrapper avec une queue existante.
+
+        Parameters
+        ----------
+        q : queue.Queue | asyncio.Queue
+            Queue à wrapper. Les deux types sont supportés.
+        """
+        self._queue = q
+        self._is_async_queue = isinstance(self._queue, asyncio.Queue)
+
+    def get(self, *args, **kwargs):
+        """
+        Récupère un élément de la queue sans bloquer.
+
+        Délègue à get_nowait() — retourne None si la queue est vide
+        au lieu de lever une exception, pour simplifier la consommation
+        depuis un thread watchdog.
+
+        Returns
+        -------
+        FSEvent | None
+            Le prochain événement, ou None si la queue est vide.
+        """
+        try:
+            return self.get_nowait()
+        except:
+            return None
+
+    def get_nowait(self):
+        """
+        Récupère immédiatement un élément sans bloquer.
+
+        Lève queue.Empty ou asyncio.QueueEmpty si la queue est vide.
+
+        Returns
+        -------
+        FSEvent
+            Le prochain événement filesystem.
+
+        Raises
+        ------
+        queue.Empty | asyncio.QueueEmpty
+            Si la queue est vide.
+        """
+        return self._queue.get_nowait()
+
+    def put(self, item):
+        """
+        Ajoute un élément dans la queue sans bloquer.
+
+        Délègue à put_nowait() — silencieux si la queue est pleine
+        pour éviter de bloquer le thread watchdog.
+
+        Parameters
+        ----------
+        item : FSEvent
+            L'événement filesystem à ajouter.
+        """
+        try:
+            return self.put_nowait(item)
+        except:
+            return
+
+    def put_nowait(self, item):
+        """
+        Ajoute immédiatement un élément sans bloquer.
+
+        Méthode principale utilisée par SandboxFSHandler depuis le thread
+        watchdog. asyncio.Queue.put_nowait() est une méthode synchrone —
+        elle est donc thread-safe et appelable depuis n'importe quel thread
+        sans avoir besoin de run_coroutine_threadsafe.
+
+        Parameters
+        ----------
+        item : FSEvent
+            L'événement filesystem à ajouter.
+
+        Raises
+        ------
+        queue.Full | asyncio.QueueFull
+            Si la queue est pleine.
+        """
+        return self._queue.put_nowait(item)
+
+    def __len__(self) -> int:
+        """
+        Retourne le nombre d'éléments actuellement dans la queue.
+
+        Returns
+        -------
+        int
+            Taille courante de la queue.
+        """
+        return self._queue.qsize()
+
+    def task_done(self):
+        """
+        Signale qu'un élément récupéré a été traité.
+
+        À appeler après chaque get() dans le behavior_scorer pour
+        permettre à join() de débloquer quand tous les events sont traités.
+        """
+        self._queue.task_done()
+
+    async def join(self, timeout: int = 30):
+        """
+        Attend que tous les éléments de la queue soient traités.
+
+        Bloque jusqu'à ce que task_done() ait été appelé pour chaque
+        élément mis dans la queue, ou jusqu'au timeout.
+
+        Parameters
+        ----------
+        timeout : int, optional
+            Nombre de secondes maximum à attendre. 30 par défaut.
+            Si le timeout est atteint, retourne silencieusement.
+        """
+        if self._is_async_queue:
+            task = asyncio.create_task(self._queue.join())
+        else:
+            task = asyncio.create_task(
+                asyncio.to_thread(self._queue.join)
+            )
+        try:
+            await asyncio.wait_for(task, timeout=timeout)
+        except:
+            return
+
+    def empty(self) -> bool:
+        """
+        Vérifie si la queue est vide.
+
+        Returns
+        -------
+        bool
+            True si la queue ne contient aucun élément.
+        """
+        return self._queue.empty()
+
+    def full(self) -> bool:
+        """
+        Vérifie si la queue est pleine.
+
+        Returns
+        -------
+        bool
+            True si la queue a atteint sa capacité maximale.
+        """
+        return self._queue.full()
+
+    @property
+    def maxsize(self) -> int:
+        """
+        Retourne la capacité maximale de la queue.
+
+        Returns
+        -------
+        int
+            Taille maximale. 0 signifie illimitée.
+        """
+        return self._queue.maxsize
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HANDLER — Traitement des événements watchdog
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SandboxFSHandler(FileSystemEventHandler):
+    """
+    Handler watchdog pour la surveillance du filesystem du container.
+
+    Hérite de FileSystemEventHandler et surcharge les callbacks on_*
+    pour intercepter tous les événements filesystem du container sandbox.
+    Chaque événement est normalisé, classifié et transformé en FSEvent
+    avant d'être mis dans la SandBoxQueue vers le behavior_scorer.
+
+    Ce handler tourne dans le thread interne de watchdog/Observer —
+    il ne doit donc jamais faire d'opérations bloquantes longues.
+
+    Attributes
+    ----------
+    fs_root : str
+        Chemin vers le filesystem mergé du container sur l'hôte.
+        Obtenu via ContainerManager.get_fs_root().
+        Exemple : "/var/lib/docker/overlay2/abc123.../merged"
+    event_queue : SandBoxQueue
+        Queue vers laquelle les FSEvents sont envoyés pour traitement
+        par le behavior_scorer.
+    """
+
+    def __init__(self, fs_root: str, event_queue: SandBoxQueue):
+        """
+        Initialise le handler avec le filesystem root et la queue.
+
+        Parameters
+        ----------
+        fs_root : str
+            Chemin absolu du filesystem mergé du container.
+            Le slash final est retiré pour faciliter les opérations
+            de normalisation des chemins.
+        event_queue : SandBoxQueue
+            Queue de destination pour les FSEvents produits.
+        """
+        super().__init__()
+        self.fs_root = fs_root.rstrip("/")
+        self.event_queue = event_queue
+
+    def _normalize_path(self, raw_path: str) -> str:
+        """
+        Normalise un chemin brut watchdog en chemin interne au container.
+
+        Retire le préfixe fs_root du chemin pour obtenir le chemin
+        tel qu'il serait vu depuis l'intérieur du container.
+
+        Exemple :
+            fs_root  = "/var/lib/docker/overlay2/abc.../merged"
+            raw_path = "/var/lib/docker/overlay2/abc.../merged/etc/passwd"
+            résultat = "/etc/passwd"
+
+        Le rstrip("/") sur fs_root est crucial : sans lui, le replace
+        laisserait un slash résiduel ou ne fonctionnerait pas si le
+        chemin ne se termine pas exactement par fs_root.
+
+        Parameters
+        ----------
+        raw_path : str
+            Chemin brut retourné par watchdog, incluant le préfixe fs_root.
+
+        Returns
+        -------
+        str
+            Chemin normalisé depuis la racine du container.
+            Retourne "/" si le résultat est vide (événement sur fs_root lui-même).
+        """
+        return raw_path.replace(self.fs_root, "") or "/"
+
+    def _classify(
+        self,
+        path: str,
+        is_directory: bool = False,
+        n_max: int = 2,
+        is_normalized: bool = False
+    ) -> tuple[bool, bool, int]:
+        """
+        Classifie un chemin et calcule son threat score.
+
+        Vérifie le chemin contre les listes CANARY_PATHS et SUSPICIOUS_PATHS,
+        ainsi que l'extension du fichier contre SUSPICIOUS_EXTENSIONS.
+        Limite le nombre de matches via n_max pour éviter le sur-scoring
+        sur des chemins qui correspondraient à de nombreux patterns.
+
+        Scoring :
+            - Chaque match canary    : +40 points
+            - Chaque match suspicious : +15 points
+            - Extension suspecte     : +10 points
+            - Score final plafonné à 100
+            - Divisé par 2 (division entière) si is_directory
+
+        Parameters
+        ----------
+        path : str
+            Chemin à classifier. Peut être brut ou normalisé selon is_normalized.
+        is_directory : bool, optional
+            True si le chemin est un répertoire. Le score final est divisé
+            par 2 car un accès à un dossier est moins précis qu'un accès
+            à un fichier spécifique. False par défaut.
+        n_max : int, optional
+            Nombre maximum de matches autorisés par liste (canary/suspicious).
+            Évite le sur-scoring si un chemin matche plusieurs patterns.
+            2 par défaut.
+        is_normalized : bool, optional
+            True si le chemin est déjà normalisé (sans préfixe fs_root).
+            False par défaut → _normalize_path() est appelé automatiquement.
+
+        Returns
+        -------
+        tuple[bool, bool, int]
+            - bool : is_canary — True si un canary path a été matché
+            - bool : is_suspicious — True si un suspicious path a été matché
+            - int  : threat_score — Score entre 0 et 100
+        """
+        score = 0
+        is_canary = False
+        is_suspicious = False
+
+        if not is_normalized:
+            path = self._normalize_path(path)
+
+        find_count = 0
+        for canary in CANARY_PATHS:
+            if canary in path:
+                is_canary = True
+                score += 40
+                find_count += 1
+                if find_count >= n_max:
+                    break
+
+        find_count = 0
+        for suspicious in SUSPICIOUS_PATHS:
+            if suspicious in path:
+                is_suspicious = True
+                score += 15
+                find_count += 1
+                if find_count >= n_max:
+                    break
+
+        ext = os.path.splitext(path)[1].lower()
+        if ext in SUSPICIOUS_EXTENSIONS:
+            score += 10
+
+        return is_canary, is_suspicious, min(score, 100) if not is_directory else min(score, 100) // 2
+
+    def _build_event(
+        self,
+        src_path: str,
+        dest_path: str,
+        path: str,
+        threat_score: int,
+        is_directory: bool,
+        is_canary: bool,
+        is_suspicious: bool,
+        timestamp_date: datetime,
+        timestamp_time: float,
+        event_type: str
+    ) -> FSEvent:
+        """
+        Construit un FSEvent structuré depuis les données classifiées.
+
+        Centralise la construction du dataclass FSEvent pour garantir
+        que tous les champs sont correctement remplis.
+
+        Parameters
+        ----------
+        src_path : str
+            Chemin source brut (avec préfixe fs_root).
+        dest_path : str
+            Chemin destination (uniquement pour les événements "moved").
+        path : str
+            Chemin normalisé (sans préfixe fs_root).
+        threat_score : int
+            Score de menace calculé par _classify().
+        is_directory : bool
+            True si l'événement concerne un répertoire.
+        is_canary : bool
+            True si un fichier honeypot a été accédé.
+        is_suspicious : bool
+            True si un chemin sensible a été accédé.
+        timestamp_date : datetime
+            Horodatage UTC de l'événement.
+        timestamp_time : float
+            Timestamp Unix de l'événement.
+        event_type : str
+            Type d'événement watchdog.
+
+        Returns
+        -------
+        FSEvent
+            Événement filesystem structuré prêt pour la queue.
+        """
+        return FSEvent(
+            src_path=src_path,
+            dest_path=dest_path,
+            threat_score=threat_score,
+            is_canary=is_canary,
+            is_directory=is_directory,
+            is_suspicious=is_suspicious,
+            timestamp_date=timestamp_date,
+            timestamp_time=timestamp_time,
+            path=path,
+            event_type=event_type
+        )
+
+    def _handle(
+        self,
+        watchdog_event: FileSystemEvent,
+        event_type: str,
+        add_to_queue: bool = True
+    ) -> tuple[FSEvent, bool]:
+        """
+        Méthode centrale de traitement des événements watchdog.
+
+        Appelée par tous les callbacks on_* — regroupe la normalisation,
+        la classification, la construction et l'envoi en queue en une
+        seule pipeline cohérente.
+
+        Gère la conversion bytes → str sur src_path et dest_path car
+        watchdog peut retourner des bytes ou des str selon l'OS et
+        la version de la bibliothèque.
+
+        Parameters
+        ----------
+        watchdog_event : FileSystemEvent
+            Événement brut retourné par watchdog.
+        event_type : str
+            Type d'événement. Utilise watchdog_event.event_type si vide.
+        add_to_queue : bool, optional
+            Si True, le FSEvent est mis dans event_queue via put_nowait.
+            Si False, l'événement est construit mais pas envoyé — utile
+            pour les tests ou l'analyse sans surveillance active.
+            True par défaut.
+
+        Returns
+        -------
+        tuple[FSEvent, bool]
+            - FSEvent : l'événement construit
+            - bool    : True si mis en queue avec succès, False sinon
+                        (queue pleine ou add_to_queue=False)
+        """
+        src_path = (
+            watchdog_event.src_path
+            if isinstance(watchdog_event.src_path, str)
+            else watchdog_event.src_path.decode()
+        )
+        dest_path = (
+            watchdog_event.dest_path
+            if isinstance(watchdog_event.dest_path, str)
+            else watchdog_event.dest_path.decode()
+        )
+        path = self._normalize_path(src_path)
+        event_type = event_type or watchdog_event.event_type
+        is_directory = watchdog_event.is_directory
+
+        is_canary, is_suspicious, threat_score = self._classify(
+            path, is_directory=is_directory, is_normalized=True, n_max=3
+        )
+
+        timestamp_date = datetime.utcnow()
+        timestamp_time = time.time()
+
+        sd_event = self._build_event(
+            src_path=src_path,
+            dest_path=dest_path,
+            threat_score=threat_score,
+            is_canary=is_canary,
+            is_directory=is_directory,
+            is_suspicious=is_suspicious,
+            timestamp_date=timestamp_date,
+            timestamp_time=timestamp_time,
+            path=path,
+            event_type=event_type
+        )
+
+        if add_to_queue:
+            try:
+                self.event_queue.put_nowait(sd_event)
+                return sd_event, True
+            except:
+                return sd_event, False
+
+        return sd_event, True
+
+    def on_created(self, event: FileSystemEvent):
+        """
+        Callback déclenché quand un fichier ou répertoire est créé.
+
+        Indique qu'un nouveau fichier a été créé dans le container.
+        Particulièrement intéressant pour détecter :
+        - Création de scripts de persistence (.sh, .py...)
+        - Création de fichiers de staging pour exfiltration
+        - Création de répertoires cachés (/tmp/.hidden/)
+
+        Parameters
+        ----------
+        event : FileSystemEvent
+            Événement watchdog de type FileCreatedEvent ou DirCreatedEvent.
+        """
+        self._handle(event, event.event_type)
+
+    def on_modified(self, event: FileSystemEvent):
+        """
+        Callback déclenché quand un fichier ou répertoire est modifié.
+
+        Indique qu'un fichier existant a été modifié dans le container.
+        Particulièrement intéressant pour détecter :
+        - Modification de fichiers système (/etc/crontab → persistence)
+        - Modification de fichiers de config (injection de backdoor)
+
+        Parameters
+        ----------
+        event : FileSystemEvent
+            Événement watchdog de type FileModifiedEvent ou DirModifiedEvent.
+        """
+        self._handle(event, event.event_type)
+
+    def on_deleted(self, event: FileSystemEvent):
+        """
+        Callback déclenché quand un fichier ou répertoire est supprimé.
+
+        Indique qu'un fichier a été supprimé dans le container.
+        Particulièrement intéressant pour détecter :
+        - Suppression de logs pour couvrir les traces
+        - Suppression de fichiers système critiques
+
+        Parameters
+        ----------
+        event : FileSystemEvent
+            Événement watchdog de type FileDeletedEvent ou DirDeletedEvent.
+        """
+        self._handle(event, event.event_type)
+
+    def on_opened(self, event: FileSystemEvent):
+        """
+        Callback déclenché quand un fichier est ouvert en lecture.
+
+        Linux uniquement — utilise inotify IN_OPEN sous le capot.
+        C'est le callback le plus important pour ShieldAI car il détecte
+        les lectures de fichiers canary avant même que le code ait pu
+        exfiltrer le contenu.
+
+        Particulièrement intéressant pour détecter :
+        - Lecture de /etc/shadow (credential harvesting)
+        - Lecture de clés SSH (exfiltration)
+        - Lecture de fichiers .env (credential harvesting)
+
+        Parameters
+        ----------
+        event : FileSystemEvent
+            Événement watchdog de type FileOpenedEvent.
+        """
+        self._handle(event, event.event_type)
+
+    def on_moved(self, event: FileSystemEvent):
+        """
+        Callback déclenché quand un fichier ou répertoire est déplacé.
+
+        Seul callback où dest_path est rempli dans le FSEvent.
+        Particulièrement intéressant pour détecter :
+        - Renommage de binaires malveillants pour éviter la détection
+        - Déplacement de fichiers exfiltrés vers /tmp/
+
+        Parameters
+        ----------
+        event : FileSystemEvent
+            Événement watchdog de type FileMovedEvent ou DirMovedEvent.
+            Contient src_path (origine) et dest_path (destination).
+        """
+        self._handle(event, event.event_type)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FSMONITOR — Orchestrateur de la surveillance
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FSMonitor:
+    """
+    Orchestrateur principal de la surveillance filesystem du container.
+
+    Lance et gère un Observer watchdog qui surveille récursivement
+    le filesystem du container depuis l'hôte. Expose des méthodes
+    sync et async pour s'intégrer proprement dans l'orchestrateur
+    du sandbox.
+
+    L'Observer tourne dans son propre thread daemon — il s'arrête
+    automatiquement si le process principal se termine.
+
+    Attributes
+    ----------
+    fs_root : str
+        Chemin vers le filesystem mergé du container sur l'hôte.
+    event_queue : asyncio.Queue
+        Queue de destination pour les FSEvents produits par le handler.
+    observer : Observer
+        Thread Observer watchdog interne.
+    handler : SandboxFSHandler
+        Handler de traitement des événements filesystem.
+    """
+
+    def __init__(self, fs_root: str, event_queue: asyncio.Queue):
+        """
+        Initialise le moniteur avec le filesystem root et la queue.
+
+        Parameters
+        ----------
+        fs_root : str
+            Chemin absolu du filesystem mergé du container.
+            Obtenu via ContainerManager.get_fs_root().
+        event_queue : asyncio.Queue
+            Queue asyncio vers laquelle les FSEvents seront envoyés.
+            Consommée par le behavior_scorer dans l'event loop principal.
+        """
+        self.fs_root = fs_root.rstrip("/")
+        self.event_queue = event_queue
+        self.observer = Observer()
+        self.handler = SandboxFSHandler(fs_root, event_queue)
+
+    @property
+    def name(self) -> str:
+        """
+        Retourne le nom du thread Observer.
+
+        Returns
+        -------
+        str
+            Nom du thread watchdog.
+        """
+        return self.observer.name
+
+    @property
+    def native_id(self):
+        """
+        Retourne l'identifiant natif du thread Observer.
+
+        Returns
+        -------
+        int | None
+            ID natif du thread, ou None si pas encore démarré.
+        """
+        return self.observer.native_id
+
+    def is_alive(self) -> bool:
+        """
+        Vérifie si le thread Observer est actif.
+
+        Returns
+        -------
+        bool
+            True si l'Observer tourne, False sinon.
+        """
+        return self.observer.is_alive()
+
+    def isDaemon(self) -> bool:
+        """
+        Vérifie si le thread Observer est en mode daemon.
+
+        Un thread daemon s'arrête automatiquement quand le process
+        principal se termine, sans bloquer la fin du programme.
+
+        Returns
+        -------
+        bool
+            True si l'Observer est un thread daemon.
+        """
+        return self.observer.isDaemon()
+
+    def start(self) -> bool:
+        """
+        Démarre la surveillance filesystem (version synchrone).
+
+        Configure et lance l'Observer watchdog sur le filesystem du container.
+        La surveillance est récursive — tous les sous-répertoires sont inclus.
+        Le thread Observer est configuré en mode daemon pour ne pas bloquer
+        la fin du programme.
+
+        Returns
+        -------
+        bool
+            True si le démarrage a réussi.
+        """
+        self.observer.schedule(
+            event_handler=self.handler,
+            path=self.fs_root,
+            recursive=True,
+        )
+        self.observer.daemon = True
+        self.observer.name = "ShieldAI SandBox File System scheduler"
+        self.observer.start()
+        logger.print(f"👁️  FSMonitor démarré sur {self.fs_root}")
+        return True
+
+    def stop(self, timeout: int | None = 30) -> bool:
+        """
+        Arrête la surveillance filesystem (version synchrone).
+
+        Envoie le signal d'arrêt à l'Observer et attend qu'il termine
+        proprement via join(). Le timeout évite un blocage infini si
+        l'Observer ne répond plus.
+
+        Parameters
+        ----------
+        timeout : int | None, optional
+            Secondes maximum à attendre pour l'arrêt propre. 30 par défaut.
+            None = attendre indéfiniment.
+
+        Returns
+        -------
+        bool
+            True si l'arrêt a réussi.
+        """
+        self.observer.stop()
+        self.observer.join(timeout=timeout)
+        logger.print("🛑 FSMonitor arrêté")
+        return True
+
+    async def start_async(self) -> bool:
+        """
+        Démarre la surveillance filesystem (version asynchrone).
+
+        Délègue start() à un thread via asyncio.to_thread pour ne pas
+        bloquer l'event loop pendant l'initialisation de l'Observer.
+
+        Returns
+        -------
+        bool
+            True si le démarrage a réussi.
+        """
+        return await asyncio.to_thread(self.start)
+
+    async def stop_async(self, timeout: int | None = 30) -> bool:
+        """
+        Arrête la surveillance filesystem (version asynchrone).
+
+        Délègue stop() à un thread via asyncio.to_thread pour ne pas
+        bloquer l'event loop pendant l'attente du join() de l'Observer.
+
+        Parameters
+        ----------
+        timeout : int | None, optional
+            Secondes maximum à attendre pour l'arrêt propre. 30 par défaut.
+
+        Returns
+        -------
+        bool
+            True si l'arrêt a réussi.
+        """
+        return await asyncio.to_thread(self.stop, timeout)============================
+================./core/container_manager.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 28 15:58:13 2026
+
+@author: hounsousamuel
+
+Module de gestion des containers Docker pour le Sandbox ShieldAI V2.
+Ce module fournit une interface complète pour créer, gérer, surveiller
+et détruire des containers Docker isolés destinés à l'exécution sécurisée
+de code suspect.
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import time
+import socket
+import docker
+import base64
+import asyncio
+import subprocess
+from datetime import datetime
+from sandbox_ia.sandbox_utils.logger import get_logger
+logger = get_logger()
+Container = docker.models.containers.Container
+
+
+class ContainerManager:
+    """
+    Classe principale de gestion des containers Docker pour le Sandbox ShieldAI.
+
+    Fournit une interface complète pour :
+    - Créer et gérer des images Docker
+    - Lancer, surveiller et détruire des containers isolés
+    - Exécuter des commandes dans les containers
+    - Copier des fichiers vers/depuis les containers
+    - Attacher des traceurs système (strace) pour la surveillance
+    - Gérer les timeouts et les arrêts d'urgence
+
+    Attributes
+    ----------
+    client : docker.DockerClient
+        Client Docker connecté au daemon local.
+    image_name : str | None
+        Nom de l'image utilisée par le container courant.
+    container : docker.models.containers.Container | None
+        Container Docker courant géré par cette instance.
+    """
+
+    def __init__(self):
+        self.client = docker.from_env()
+        self.image_name = None
+        self.container: docker.models.containers.Container = None
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # GESTION DES IMAGES
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def create_image(self, dockerfile_path: str, tag: str) -> bool:
+        """
+        Construit une image Docker depuis un Dockerfile.
+
+        Parcourt le répertoire spécifié à la recherche d'un Dockerfile,
+        puis lance le build Docker avec le tag fourni. Les logs de build
+        sont affichés en temps réel via le logger.
+
+        Parameters
+        ----------
+        dockerfile_path : str
+            Chemin vers le répertoire contenant le Dockerfile.
+            Exemple : "/opt/shieldai/sandbox/docker/"
+        tag : str
+            Tag à donner à l'image construite.
+            Exemple : "shieldai-sandbox-base:v2"
+
+        Returns
+        -------
+        bool
+            True si le build a réussi, False sinon.
+        """
+        try:
+            logger.print(f"🔨 Build de l'image '{tag}' depuis '{dockerfile_path}'...")
+            image, build_logs = self.client.images.build(
+                path=dockerfile_path,
+                tag=tag,
+                rm=True,       # supprimer les containers intermédiaires après build
+                forcerm=True,  # supprimer même en cas d'échec
+            )
+            # Afficher les logs de build en temps réel
+            for log in build_logs:
+                if "stream" in log:
+                    line = log["stream"].strip()
+                    if line:
+                        logger.print(f"   🐳 {line}", verify=False)
+                elif "error" in log:
+                    logger.print(f"   ❌ {log['error']}", verify=False)
+
+            logger.print(f"✅ Image '{tag}' construite avec succès ! ID: {image.short_id}")
+            return True
+
+        except docker.errors.BuildError as e:
+            logger.print(f"❌ Erreur de build: {e}")
+            for log in e.build_log:
+                if "stream" in log:
+                    logger.print(f"   {log['stream'].strip()}", verify=False)
+            return False
+
+        except docker.errors.APIError as e:
+            logger.print(f"❌ Erreur API Docker lors du build: {e}")
+            return False
+
+        except Exception as e:
+            logger.print(f"❌ Erreur inattendue lors du build: {e}")
+            return False
+
+    def list_images(self) -> list:
+        """
+        Liste toutes les images Docker disponibles sur le système.
+
+        Affiche les images via le logger avec leurs tags respectifs.
+        Les images sans tag (images intermédiaires) sont ignorées
+        dans l'affichage mais incluses dans le retour.
+
+        Returns
+        -------
+        list
+            Liste d'objets Image Docker. Peut être vide si aucune
+            image n'est disponible.
+        """
+        images = self.client.images.list()
+        logger.print("📋 IMAGES DOCKER DISPONIBLES:")
+        for img in images:
+            if img.tags:
+                logger.print(f"   🐳 {img.tags}")
+        return images
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # CONFIGURATION ET LANCEMENT
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def get_kwargs_for_container(
+        self,
+        network_disabled: bool = True,
+        mem_limit: str = "256m",
+        cpu_quota: int = 50000,
+        cpu_period: int = 100000,
+        pids_limit: int = 64,
+        read_only: bool = False,
+        user: str = "sandbox",
+        workdir: str = "/sandbox/work",
+        extra_env: dict | None = None,
+    ) -> dict:
+        """
+        Génère un dictionnaire de configuration sécurisée pour le lancement
+        d'un container sandbox.
+
+        Applique les contraintes de sécurité recommandées pour l'isolation :
+        - Réseau désactivé par défaut
+        - Limites CPU et RAM strictes
+        - Nombre de process limité (anti fork-bomb)
+        - Drop de toutes les capabilities Linux sauf SYS_PTRACE (pour strace)
+        - Pas de privilèges supplémentaires
+
+        Parameters
+        ----------
+        network_disabled : bool, optional
+            Désactive complètement le réseau du container. True par défaut.
+        mem_limit : str, optional
+            Limite mémoire RAM. Format Docker : "256m", "1g". "256m" par défaut.
+        cpu_quota : int, optional
+            Quota CPU en microsecondes par période. 50000 = 50% d'un core.
+            50000 par défaut.
+        cpu_period : int, optional
+            Période CPU en microsecondes. 100000 par défaut (100ms).
+        pids_limit : int, optional
+            Nombre maximum de processus simultanés. 64 par défaut.
+            Protège contre les fork bombs.
+        read_only : bool, optional
+            Rend le filesystem du container en lecture seule. False par défaut.
+            Mettre True pour une isolation maximale (certains langages ont besoin
+            d'écrire des fichiers temporaires).
+        user : str, optional
+            Utilisateur sous lequel tourner dans le container. "sandbox" par défaut.
+        workdir : str, optional
+            Répertoire de travail initial. "/sandbox/work" par défaut.
+        extra_env : dict | None, optional
+            Variables d'environnement supplémentaires à injecter. None par défaut.
+
+        Returns
+        -------
+        dict
+            Dictionnaire de configuration prêt à être passé en **kwargs
+            à client.containers.run().
+        """
+        environment = {
+            "SANDBOX_ID": "shieldai",
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONUNBUFFERED": "1",
+            "HOME": f"/home/{user}",
+            "TERM": "xterm-256color",
+        }
+        if extra_env:
+            environment.update(extra_env)
+
+        return {
+            # Comportement
+            "detach": True,
+            "command": "sleep infinity",   # le container attend les exec_run
+            # Réseau
+            "network_disabled": network_disabled,
+            # Ressources
+            "mem_limit": mem_limit,
+            "memswap_limit": mem_limit,    # swap = mem_limit → pas de swap
+            "cpu_quota": cpu_quota,
+            "cpu_period": cpu_period,
+            "pids_limit": pids_limit,
+            # Filesystem
+            "read_only": read_only,
+            # Sécurité
+            "cap_drop": ["ALL"],           # drop toutes les capabilities
+            "cap_add": ["SYS_PTRACE"],     # re-add uniquement pour strace
+            "security_opt": ["no-new-privileges"],
+            # Utilisateur et workdir
+            "user": user,  #"1500:1500"
+            "working_dir": workdir,
+            # Environnement
+            "environment": environment,
+            # Nettoyage auto désactivé → on gère nous-mêmes
+            "auto_remove": False,
+        }
+
+    def connect(self, name_img: str, name: str, **kwargs) -> Container:
+        """
+        Lance un container Docker ou réutilise un container existant.
+
+        Tente d'abord de récupérer un container portant le nom fourni.
+        Si il existe mais est arrêté ou en pause, il est redémarré.
+        Si il n'existe pas, un nouveau container est créé depuis l'image spécifiée.
+
+        En cas d'absence de configuration dans kwargs, les valeurs par défaut
+        sécurisées de get_kwargs_for_container() sont appliquées partiellement
+        (uniquement detach et command pour ne pas forcer de config non voulue).
+
+        Parameters
+        ----------
+        name_img : str
+            Nom de l'image Docker à utiliser.
+            Exemple : "shieldai-sandbox-base:v2"
+        name : str | None
+            Nom à donner au container. Si None, un nom horodaté est généré
+            automatiquement au format "container_YYYYMMDD_HHMMSS".
+        **kwargs : dict
+            Arguments supplémentaires passés directement à containers.run().
+            Permettent de surcharger toute configuration Docker standard.
+
+        Returns
+        -------
+        Container
+            L'objet Container Docker prêt à l'emploi, en état "running".
+
+        Raises
+        ------
+        docker.errors.ImageNotFound
+            Si l'image spécifiée n'existe pas localement.
+        docker.errors.APIError
+            En cas d'erreur de communication avec le daemon Docker.
+        """
+        if name is None:
+            name = f"container_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.image_name = name_img
+
+        # Tenter de récupérer un container existant
+        try:
+            self.container = self.client.containers.get(name)
+            self.container.reload()
+
+            if self.container.status.lower() == "paused":
+                self.container.unpause()
+            elif self.container.status.lower() != "running":
+                self.container.start()
+
+            logger.print(f"✅ Container existant réutilisé: {name}")
+            logger.print(f"📊 Status: {self.container.status}")
+
+        except docker.errors.NotFound:
+            # Pas de container existant → on en crée un nouveau
+            if "command" not in kwargs:
+                kwargs["command"] = "sleep infinity"
+            if "detach" not in kwargs:
+                kwargs["detach"] = True
+
+            logger.print(f"📦 Création nouveau container depuis: {name_img}")
+            logger.print(f"⚙️  Configuration: {kwargs}")
+
+            try:
+                self.container = self.client.containers.run(
+                    image=name_img,
+                    name=name,
+                    **kwargs
+                )
+                logger.print(f"✅ Nouveau container créé: {name}")
+
+            except docker.errors.ImageNotFound:
+                logger.print(f"❌ Image non trouvée: {name_img}")
+                logger.print("📋 Images disponibles :")
+                self.list_images()
+                raise
+
+            except docker.errors.APIError as e:
+                logger.print(f"❌ Erreur API Docker: {e}")
+                raise
+
+        # Attendre que le container soit vraiment "running"
+        timeout = 10
+        start = time.time()
+        while time.time() - start < timeout:
+            self.container.reload()
+            if self.container.status == "running":
+                break
+            time.sleep(0.3)
+
+        logger.print(f"📊 Status final: {self.container.status}")
+        return self.container
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ÉTAT ET MONITORING
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def get_status(self) -> str:
+        """
+        Retourne l'état courant du container.
+
+        Effectue un reload depuis le daemon Docker avant de retourner
+        le status pour garantir une valeur fraîche et non cachée.
+
+        Returns
+        -------
+        str
+            État du container parmi : "running", "exited", "paused",
+            "restarting", "dead", "created", ou "not_start" si aucun
+            container n'est attaché à cette instance.
+        """
+        if not self.container:
+            return "not_start"
+        self.container.reload()
+        return self.container.status
+
+    def get_pid(self) -> int | None:
+        """
+        Retourne le PID du process principal du container sur l'hôte.
+
+        Ce PID est celui visible depuis le namespace de l'hôte (pas le PID
+        interne au container). C'est ce PID qu'on passe à strace pour
+        attacher le traceur depuis l'extérieur du container.
+
+        Returns
+        -------
+        int | None
+            PID du process principal, ou None si aucun container actif.
+        """
+        if not self.container:
+            return None
+        self.container.reload()
+        return self.container.attrs["State"]["Pid"]
+
+    def get_fs_root(self) -> str | None:
+        """
+        Retourne le chemin vers le filesystem du container sur l'hôte.
+
+        Docker utilise le driver overlay2 pour stocker les layers des
+        containers. Le répertoire "merged" est la vue unifiée du filesystem
+        du container, accessible depuis l'hôte. C'est ce chemin qu'on
+        fournit à inotifywait pour surveiller les accès fichiers du container
+        depuis l'extérieur.
+
+        Exemple de chemin retourné :
+        /var/lib/docker/overlay2/abc123.../merged
+
+        Returns
+        -------
+        str | None
+            Chemin absolu vers le filesystem mergé, ou None si aucun
+            container actif ou si le driver n'est pas overlay2.
+        """
+        if not self.container:
+            return None
+        self.container.reload()
+        try:
+            return self.container.attrs["GraphDriver"]["Data"]["MergedDir"]
+        except KeyError:
+            logger.print("⚠️ MergedDir non disponible (driver non overlay2 ?)")
+            return None
+
+    def get_stats(self) -> dict:
+        """
+        Retourne les statistiques temps réel du container.
+
+        Récupère un snapshot unique des métriques Docker : utilisation CPU,
+        mémoire RAM, I/O réseau et disque. Utile pour le resource_monitor
+        afin de détecter des comportements anormaux (spike CPU, explosion RAM).
+
+        Returns
+        -------
+        dict
+            Dictionnaire de statistiques Docker contenant notamment :
+            - cpu_stats / precpu_stats : métriques CPU
+            - memory_stats : usage mémoire
+            - networks : I/O réseau par interface
+            - blkio_stats : I/O disque
+            Retourne un dict vide en cas d'erreur, None si pas de container.
+        """
+        try:
+            if not self.container:
+                return None
+            return dict(self.container.stats(stream=False))
+        except:
+            return {}
+
+    def get_logs(self, tail: str | int = "all") -> tuple[str | None, str | None]:
+        """
+        Récupère les logs stdout et stderr du container.
+
+        Retourne les sorties du process principal du container depuis son
+        démarrage (ou depuis la ligne `tail`). Utile pour le débogage et
+        pour récupérer les sorties d'un programme exécuté.
+
+        Parameters
+        ----------
+        tail : str | int, optional
+            Nombre de lignes à retourner depuis la fin, ou "all" pour tout.
+            "all" par défaut.
+
+        Returns
+        -------
+        tuple[str | None, str | None]
+            Tuple (stdout, stderr) décodé en UTF-8.
+            Retourne (None, None) si aucun container actif ou en cas d'erreur.
+        """
+        try:
+            if not self.container:
+                return None, None
+            stdout = bytes(
+                self.container.logs(stream=False, stdout=True, stderr=False, timestamps=True, tail=tail)
+            ).decode("utf-8", errors="ignore")
+            stderr = bytes(
+                self.container.logs(stream=False, stdout=False, stderr=True, timestamps=True, tail=tail)
+            ).decode("utf-8", errors="ignore")
+            return stdout, stderr
+        except:
+            return None, None
+
+    def health_check(self) -> bool:
+        """
+        Vérifie que le container est opérationnel et répond aux commandes.
+
+        Effectue deux vérifications :
+        1. Le status Docker est bien "running"
+        2. Une commande echo simple retourne exit code 0
+
+        Returns
+        -------
+        bool
+            True si le container est en bonne santé, False sinon.
+        """
+        if not self.container:
+            return False
+        try:
+            status = self.get_status()
+            if status.lower() != "running":
+                return False
+            code, _, _ = self.exec_command("echo 'SHIELD SANDBOX'")
+            return code == 0
+        except:
+            return False
+
+    async def health_check_async(self) -> bool:
+        """
+        Version asynchrone de health_check().
+
+        Délègue l'appel bloquant à un thread via asyncio.to_thread
+        pour ne pas bloquer l'event loop pendant la vérification.
+
+        Returns
+        -------
+        bool
+            True si le container est en bonne santé, False sinon.
+        """
+        return await asyncio.to_thread(self.health_check)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # CONTRÔLE DU CYCLE DE VIE
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def pause(self) -> bool:
+        """
+        Met le container en pause via cgroups freezer.
+
+        Le process est gelé : il ne consomme plus de CPU mais la RAM
+        est préservée. Utile pour effectuer une analyse forensique de
+        l'état du container sans le modifier.
+
+        Returns
+        -------
+        bool
+            True si la pause a réussi, False sinon.
+        """
+        try:
+            if not self.container:
+                return False
+            self.container.pause()
+            logger.print(f"⏸️  Container {self.container.name} mis en pause")
+            return True
+        except Exception as e:
+            logger.print(f"⚠️ Erreur pause: {e}")
+            return False
+
+    def unpause(self) -> bool:
+        """
+        Reprend l'exécution d'un container en pause.
+
+        Relève le freeze cgroups et permet au process de reprendre
+        son exécution exactement là où il s'était arrêté.
+
+        Returns
+        -------
+        bool
+            True si la reprise a réussi, False sinon.
+        """
+        try:
+            if not self.container:
+                return False
+            self.container.unpause()
+            logger.print(f"▶️  Container {self.container.name} repris")
+            return True
+        except Exception as e:
+            logger.print(f"⚠️ Erreur unpause: {e}")
+            return False
+
+    def update(self, **kwargs) -> bool:
+        """
+        Met à jour dynamiquement les ressources allouées au container.
+
+        Permet de modifier à chaud certaines contraintes de ressources
+        sans redémarrer le container. Attention : les paramètres réseau,
+        seccomp et capabilities ne sont pas modifiables à chaud.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Paramètres Docker à mettre à jour. Principaux supportés :
+            - mem_limit (str) : nouvelle limite mémoire ex: "512m"
+            - cpu_quota (int) : nouveau quota CPU
+            - pids_limit (int) : nouveau max de processus
+
+        Returns
+        -------
+        bool
+            True si la mise à jour a réussi, False sinon.
+        """
+        try:
+            if not self.container:
+                return False
+            self.container.update(**kwargs)
+            logger.print(f"🔧 Container mis à jour: {kwargs}")
+            return True
+        except Exception as e:
+            logger.print(f"⚠️ Erreur update: {e}")
+            return False
+
+    def kill(self) -> bool:
+        """
+        Tue immédiatement le container via SIGKILL.
+
+        Envoie un signal SIGKILL au process principal du container,
+        provoquant un arrêt immédiat sans délai de grâce. À utiliser
+        quand le container est suspect ou que le timeout est dépassé.
+        Ne supprime pas le container — utiliser stop() pour supprimer.
+
+        Returns
+        -------
+        bool
+            True si le kill a réussi, False sinon.
+        """
+        if self.container:
+            logger.print(f"🛑 SIGKILL → container {self.container.name}...")
+            try:
+                self.container.kill(signal="SIGKILL")
+                logger.print("✅ Container tué")
+                return True
+            except Exception as e:
+                logger.print(f"⚠️ Erreur kill: {e}")
+                return False
+        return False
+
+    def stop(self) -> None:
+        """
+        Arrête proprement le container et le supprime.
+
+        Envoie d'abord SIGTERM (arrêt gracieux), attend quelques secondes,
+        puis supprime définitivement le container. Contrairement à kill(),
+        cette méthode nettoie complètement le container après l'arrêt.
+
+        Returns
+        -------
+        None
+        """
+        if self.container:
+            logger.print(f"🛑 Arrêt container {self.container.name}...")
+            try:
+                self.container.stop(timeout=5)
+                self.container.remove(force=True)
+                logger.print("✅ Container arrêté et supprimé")
+            except Exception as e:
+                logger.print(f"⚠️ Erreur stop: {e}")
+
+    def wait_for_exit(self, timeout: int = 30) -> tuple[bool, int | None, dict | None]:
+        """
+        Attend la fin naturelle du container.
+
+        Bloque jusqu'à ce que le container s'arrête de lui-même ou
+        que le timeout soit atteint. Retourne l'exit code du process
+        principal du container.
+
+        Parameters
+        ----------
+        timeout : int, optional
+            Nombre de secondes maximum à attendre. 30 par défaut.
+
+        Returns
+        -------
+        tuple[bool, int | None, dict | None]
+            - bool   : True si le container s'est arrêté normalement
+            - int    : Exit code du process (0 = succès, autre = erreur)
+            - dict   : Résultat brut Docker {"StatusCode": 0, "Error": None}
+            En cas d'erreur/timeout : (False, None, None)
+        """
+        if not self.container:
+            return False, None, None
+        try:
+            result = self.container.wait(timeout=timeout)
+            return True, result["StatusCode"], result
+        except Exception as e:
+            logger.print(f"⚠️ wait_for_exit: {e}")
+            return False, None, None
+
+    async def wait_for_exit_async(self, timeout: int = 30) -> tuple[bool, int | None, dict | None]:
+        """
+        Version asynchrone de wait_for_exit().
+
+        Délègue l'attente bloquante à un thread pour ne pas bloquer
+        l'event loop. Permet d'attendre la fin du container en parallèle
+        d'autres coroutines (surveillance, scoring...).
+
+        Parameters
+        ----------
+        timeout : int, optional
+            Nombre de secondes maximum à attendre. 30 par défaut.
+
+        Returns
+        -------
+        tuple[bool, int | None, dict | None]
+            Voir wait_for_exit().
+        """
+        return await asyncio.to_thread(self.wait_for_exit, timeout)
+
+    async def enforce_timeout_async(
+        self, wait_timeout: int = 30, enforce_timeout: int = 40
+    ) -> tuple[bool, int | None, dict | None]:
+        """
+        Attend la fin du container et le tue automatiquement si timeout dépassé.
+
+        Wrapper autour de wait_for_exit_async() avec un double timeout :
+        - wait_timeout : timeout passé à container.wait() (niveau Docker)
+        - enforce_timeout : timeout asyncio global (niveau Python)
+        Si l'un ou l'autre est dépassé, le container est tué via SIGKILL.
+
+        Parameters
+        ----------
+        wait_timeout : int, optional
+            Timeout Docker en secondes. 30 par défaut.
+        enforce_timeout : int, optional
+            Timeout asyncio global en secondes. Doit être > wait_timeout.
+            40 par défaut.
+
+        Returns
+        -------
+        tuple[bool, int | None, dict | None]
+            Résultat de wait_for_exit(), ou (False, None, None) si tué.
+        """
+        try:
+            result = await asyncio.wait_for(
+                self.wait_for_exit_async(wait_timeout),
+                timeout=enforce_timeout
+            )
+            return result
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.print(f"⏰ Timeout dépassé ({enforce_timeout}s) → kill forcé, erreur : {str(e)}")
+            self.kill()
+            return False, None, None
+
+    def enforce_timeout(
+        self, wait_timeout: int = 30, enforce_timeout: int = 40
+    ) -> tuple[bool, int | None, dict | None]:
+        """
+        Version synchrone de enforce_timeout_async().
+
+        À utiliser uniquement hors d'un event loop asyncio existant.
+        Si tu es déjà dans un contexte async, utilise enforce_timeout_async().
+
+        Parameters
+        ----------
+        wait_timeout : int, optional
+            Timeout Docker en secondes. 30 par défaut.
+        enforce_timeout : int, optional
+            Timeout asyncio global en secondes. 40 par défaut.
+
+        Returns
+        -------
+        tuple[bool, int | None, dict | None]
+            Voir enforce_timeout_async().
+        """
+        return asyncio.run(self.enforce_timeout_async(wait_timeout, enforce_timeout))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # EXÉCUTION DE COMMANDES
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _exec_command(
+        self,
+        cmd: str,
+        container: Container,
+        user: str = "root",
+        workdir: str | None = None
+    ) -> tuple[int, str, str]:
+        """
+        Méthode interne d'exécution de commande dans un container.
+
+        Exécute une commande shell dans le container via l'API Docker exec.
+        stdout et stderr sont capturés séparément grâce à demux=True.
+        Si stdout ou stderr est None (process sans output), une chaîne vide
+        est retournée pour éviter les erreurs de décodage.
+
+        Parameters
+        ----------
+        cmd : str
+            Commande shell à exécuter. Peut être une string ou une liste.
+            Exemple : "python3 /sandbox/work/code.py"
+        container : Container
+            Container Docker cible. Doit être en état "running".
+        user : str, optional
+            Utilisateur sous lequel exécuter la commande. "root" par défaut.
+        workdir : str | None, optional
+            Répertoire de travail pour la commande. None = workdir du container.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            - int : Exit code (0 = succès, autre = erreur)
+            - str : Stdout décodé en UTF-8
+            - str : Stderr décodé en UTF-8
+
+        Raises
+        ------
+        ValueError
+            Si le container fourni est None ou invalide.
+        """
+        if not container:
+            raise ValueError("Container invalide !")
+
+        try:
+            exit_code, (stdout, stderr) = (
+                container.exec_run(cmd, stdout=True, stderr=True, user=user, demux=True, workdir=workdir)
+                if workdir else
+                container.exec_run(cmd, stdout=True, stderr=True, user=user, demux=True)
+            )
+            stdout = (stdout or b"").decode("utf-8", errors="ignore")
+            stderr = (stderr or b"").decode("utf-8", errors="ignore")
+            logger.print()
+            logger.print("💻 Commande :", cmd[:200], verify=False)
+            logger.print("📤 Code retour :", exit_code)
+            logger.print()
+            return exit_code, stdout, stderr
+
+        except Exception as e:
+            logger.print(f"❌ Erreur exécution commande: {e}")
+            return 1, "", ""
+
+    def exec_command(
+        self, cmd: str, user: str = "root", workdir: str | None = None
+    ) -> tuple[int, str, str]:
+        """
+        Exécute une commande dans le container courant (version synchrone).
+
+        Wrapper public autour de _exec_command() utilisant le container
+        courant de l'instance.
+
+        Parameters
+        ----------
+        cmd : str
+            Commande à exécuter.
+        user : str, optional
+            Utilisateur d'exécution. "root" par défaut.
+        workdir : str | None, optional
+            Répertoire de travail. None par défaut.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            (exit_code, stdout, stderr)
+        """
+        return self._exec_command(cmd, self.container, user=user, workdir=workdir)
+
+    async def _exec_command_async(
+        self,
+        cmd: str,
+        container: Container,
+        user: str = "root",
+        workdir: str | None = None,
+        timeout: int | None = 120
+    ) -> tuple[int, str, str]:
+        """
+        Version asynchrone de _exec_command().
+
+        Délègue l'appel bloquant à un thread via asyncio.to_thread, permettant
+        d'exécuter des commandes dans le container sans bloquer l'event loop.
+        Un timeout asyncio est appliqué pour éviter les blocages infinis.
+
+        Parameters
+        ----------
+        cmd : str
+            Commande à exécuter.
+        container : Container
+            Container Docker cible.
+        user : str, optional
+            Utilisateur d'exécution. "root" par défaut.
+        workdir : str | None, optional
+            Répertoire de travail. None par défaut.
+        timeout : int | None, optional
+            Timeout en secondes. None = pas de timeout. 120 par défaut.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            (exit_code, stdout, stderr), ou (1, "", "Timeout atteint") si timeout.
+        """
+        try:
+            task = asyncio.create_task(
+                asyncio.to_thread(
+                    self._exec_command,
+                    cmd, container, user, workdir
+                )
+            )
+            if timeout:
+                task = asyncio.wait_for(task, timeout=timeout)
+            return await task
+
+        except asyncio.TimeoutError:
+            logger.print(f"⏰ Timeout ({timeout}s) atteint pour la commande")
+            return 1, "", "Timeout atteint"
+
+        except Exception as e:
+            logger.print(f"❌ Erreur async exec: {e}")
+            return 1, "", ""
+
+    async def exec_command_async(
+        self, cmd: str, user: str = "root", workdir: str | None = None, timeout: int | None = 120
+    ) -> tuple[int, str, str]:
+        """
+        Exécute une commande dans le container courant (version asynchrone).
+
+        Wrapper public autour de _exec_command_async() utilisant le container
+        courant de l'instance.
+
+        Parameters
+        ----------
+        cmd : str
+            Commande à exécuter.
+        user : str, optional
+            Utilisateur d'exécution. "root" par défaut.
+        workdir : str | None, optional
+            Répertoire de travail. None par défaut.
+        timeout : int | None, optional
+            Timeout en secondes. 120 par défaut.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            (exit_code, stdout, stderr)
+        """
+        return await self._exec_command_async(
+            cmd, self.container, user=user, workdir=workdir, timeout=timeout
+        )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # COPIE DE FICHIERS
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def copy_in(
+        self,
+        content: str,
+        dest_path: str,
+        container: Container | None = None,
+        use_subprocess: bool = True
+    ) -> tuple[int, str, str]:
+        """
+        Copie du contenu texte dans un fichier à l'intérieur du container.
+
+        Deux stratégies disponibles :
+        - subprocess (défaut) : pipe stdin via docker exec -i → propre,
+          gère les caractères spéciaux et guillemets sans échappement.
+        - base64 : encode le contenu en base64 et le décode dans le container
+          via exec_run → fallback si subprocess n'est pas disponible.
+
+        Le répertoire parent du fichier de destination est créé automatiquement
+        si il n'existe pas.
+
+        Parameters
+        ----------
+        content : str
+            Contenu texte à écrire dans le fichier.
+        dest_path : str
+            Chemin absolu de destination dans le container.
+            Exemple : "/sandbox/work/code.py"
+        container : Container | None, optional
+            Container cible. Si None, utilise self.container.
+        use_subprocess : bool, optional
+            True = méthode subprocess (recommandée). False = méthode base64.
+            True par défaut.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            (returncode, stdout, stderr)
+
+        Raises
+        ------
+        ValueError
+            Si aucun container valide n'est disponible.
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+
+        container_id = container.id
+        dirname = os.path.dirname(dest_path)
+        if dirname:
+            self._exec_command(f"mkdir -p {dirname}", container)
+
+        if use_subprocess:
+            result = subprocess.run(
+                f"""docker exec -i {container_id} bash -c "cat > {dest_path}" """,
+                text=True,
+                capture_output=True,
+                input=content, 
+                shell=True
+            )
+            returncode, stdout, stderr = result.returncode, result.stdout, result.stderr
+        else:
+            encoded = base64.b64encode(content.encode()).decode()
+            cmd = f"""bash -c "echo '{encoded}' | base64 -d > {dest_path}" """
+            returncode, stdout, stderr = self._exec_command(cmd=cmd, container=container)
+
+        logger.print(f"📁 copy_in → {dest_path} | code: {returncode}")
+        return returncode, stdout, stderr
+
+    def copy_out(
+        self,
+        src_path: str,
+        container: Container | None = None
+    ) -> tuple[int, str, str]:
+        """
+        Lit le contenu d'un fichier depuis le container.
+
+        Exécute un `cat` sur le fichier cible et retourne son contenu
+        via stdout. Simple et efficace pour des fichiers texte.
+
+        Parameters
+        ----------
+        src_path : str
+            Chemin absolu du fichier à lire dans le container.
+            Exemple : "/sandbox/work/output.txt"
+        container : Container | None, optional
+            Container source. Si None, utilise self.container.
+
+        Returns
+        -------
+        tuple[int, str, str]
+            (exit_code, contenu_fichier, stderr)
+            Le contenu du fichier est dans le second élément du tuple.
+
+        Raises
+        ------
+        ValueError
+            Si aucun container valide n'est disponible.
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+
+        return self._exec_command(f"cat {src_path}", container)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # SURVEILLANCE — TRACEUR STRACE
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def attach_tracer(
+        self, pid: int | None = None, in_file: bool = True
+    ) -> tuple[subprocess.Popen | None, str | None]:
+        """
+        Attache strace au process principal du container (version synchrone).
+
+        Lance strace depuis l'hôte en s'attachant au PID du container.
+        strace intercepte tous les appels système effectués par le process
+        et ses enfants (-f pour suivre les forks). Le traceur tourne
+        en dehors du container → invisible et non tuable depuis l'intérieur.
+
+        Flags strace utilisés :
+        - -p <pid> : attacher au process existant
+        - -f       : suivre les forks et threads enfants
+        - -e trace=all : capturer tous les syscalls
+        - -T       : afficher le temps passé dans chaque syscall
+        - -tt      : timestamp précis (microsecondes)
+        - -o <file>: écrire dans un fichier (si in_file=True)
+
+        Parameters
+        ----------
+        pid : int | None, optional
+            PID hôte du container. Si None, récupéré via get_pid().
+        in_file : bool, optional
+            Si True, strace écrit dans un fichier log dédié.
+            Si False, stdout/stderr du process sont utilisés.
+            True par défaut.
+
+        Returns
+        -------
+        tuple[subprocess.Popen | None, str | None]
+            - Popen : process strace actif (lire via process.stdout/stderr)
+            - str   : chemin du fichier log, ou None si in_file=False
+            Retourne (None, None) en cas d'échec.
+        """
+        pid = pid or self.get_pid()
+        if not pid:
+            return None, None
+
+        try:
+            cmd = [
+                "strace",
+                "-p", str(pid),
+                "-f",
+                "-e", "trace=all",
+                "-T",
+                "-tt",
+            ]
+            file = None
+            if in_file:
+                file = f"/tmp/strace-shieldai_sandbox-{self.container.id[:12]}.log"
+                cmd.extend(["-o", file])
+
+            process = subprocess.Popen(
+                cmd,
+                shell=False,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+            )
+            logger.print(f"🔍 strace attaché au PID {pid} | log: {file}")
+            return process, file
+
+        except Exception as e:
+            logger.print(f"❌ Erreur attach_tracer: {e}")
+            return None, None
+
+    async def attach_tracer_async(
+        self, pid: int | None = None, in_file: bool = True
+    ) -> tuple[asyncio.subprocess.Process | None, str | None]:
+        """
+        Attache strace au process principal du container (version asynchrone).
+
+        Version async de attach_tracer() utilisant asyncio.create_subprocess_exec.
+        Permet de lire la sortie de strace ligne par ligne sans bloquer l'event loop :
+
+            async for line in process.stdout:
+                syscall = parse_syscall(line.decode())
+                await behavior_scorer.add_event(syscall)
+
+        C'est la version recommandée pour l'orchestrateur async du sandbox.
+
+        Parameters
+        ----------
+        pid : int | None, optional
+            PID hôte du container. Si None, récupéré via get_pid().
+        in_file : bool, optional
+            Si True, strace écrit dans un fichier log dédié. True par défaut.
+
+        Returns
+        -------
+        tuple[asyncio.subprocess.Process | None, str | None]
+            - Process asyncio : lire via async for line in process.stdout
+            - str : chemin du fichier log, ou None si in_file=False
+            Retourne (None, None) en cas d'échec.
+        """
+        pid = pid or self.get_pid()
+        if not pid:
+            return None, None
+
+        try:
+            cmd = [
+                "strace",
+                "-p", str(pid),
+                "-f",
+                "-e", "trace=all",
+                "-T",
+                "-tt",
+            ]
+            file = None
+            if in_file:
+                file = f"/tmp/strace-shieldai_sandbox-{self.container.id[:12]}.log"
+                cmd.extend(["-o", file])
+
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stderr=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE
+            )
+            logger.print(f"🔍 strace async attaché au PID {pid} | log: {file}")
+            return process, file
+
+        except Exception as e:
+            logger.print(f"❌ Erreur attach_tracer_async: {e}")
+            return None, None
+
+    def get_file_reader_process(self, file: str) -> subprocess.Popen | None:
+        """
+        Lance un processus tail -F pour lire un fichier en temps réel (synchrone).
+
+        Utile pour lire le fichier de log de strace en continu via
+        `for line in process.stdout`. tail -F continue même si le fichier
+        est recréé (rotation de logs).
+
+        Parameters
+        ----------
+        file : str
+            Chemin absolu du fichier à surveiller.
+
+        Returns
+        -------
+        subprocess.Popen | None
+            Process tail actif, ou None si le fichier est invalide.
+        """
+        if not file:
+            return None
+        tail = subprocess.Popen(
+            ["tail", "-n", "0", "-F", file],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return tail
+
+    async def get_file_reader_process_async(self, file: str) -> asyncio.subprocess.Process | None:
+        """
+        Lance un processus tail -F pour lire un fichier en temps réel (asynchrone).
+
+        Version async de get_file_reader_process(). Permet de lire le fichier
+        strace ligne par ligne sans bloquer l'event loop :
+
+            process = await manager.get_file_reader_process_async(log_file)
+            async for line in process.stdout:
+                await handle_strace_line(line.decode())
+
+        Parameters
+        ----------
+        file : str
+            Chemin absolu du fichier à surveiller.
+
+        Returns
+        -------
+        asyncio.subprocess.Process | None
+            Process tail asyncio actif, ou None si le fichier est invalide.
+        """
+        if not file:
+            return None
+        tail = await asyncio.create_subprocess_exec(
+            "tail", "-n", "0", "-F", file,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        return tail
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # RÉSEAU ET IP
+    # ─────────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_ip_type(ip: str) -> str:
+        """
+        Détermine le type d'une adresse IP.
+
+        Tente de parser l'IP avec inet_pton pour IPv4 puis IPv6.
+        Accepte les adresses avec préfixe CIDR (ex: "192.168.1.1/24").
+
+        Parameters
+        ----------
+        ip : str
+            Adresse IP à analyser. Peut inclure un préfixe CIDR.
+
+        Returns
+        -------
+        str
+            "ip4" si IPv4 valide, "ip6" si IPv6 valide, "error" sinon.
+        """
+        try:
+            ip = ip.split('/')[0].strip()
+            for family, label in [(socket.AF_INET, "ip4"), (socket.AF_INET6, "ip6")]:
+                try:
+                    socket.inet_pton(family, ip)
+                    return label
+                except:
+                    pass
+        except:
+            return "error"
+        return "error"
+
+    def is_valid_ip(self, ip_string: str) -> bool:
+        """
+        Vérifie si une chaîne est une adresse IP valide (IPv4 ou IPv6).
+
+        Parameters
+        ----------
+        ip_string : str
+            Chaîne à vérifier.
+
+        Returns
+        -------
+        bool
+            True si l'IP est valide, False sinon.
+        """
+        return self.get_ip_type(ip_string) != "error"
+
+    def _search_key(self, dic: dict, key: str):
+        """
+        Recherche récursivement une clé dans un dictionnaire imbriqué.
+
+        Parcourt le dictionnaire en profondeur jusqu'à trouver la première
+        occurrence de la clé (insensible à la casse). Utile pour naviguer
+        dans les structures attrs Docker qui peuvent varier selon la version.
+
+        Parameters
+        ----------
+        dic : dict
+            Dictionnaire à parcourir.
+        key : str
+            Clé à rechercher (insensible à la casse).
+
+        Returns
+        -------
+        any
+            Valeur associée à la clé, ou None si non trouvée.
+        """
+        for k, v in dic.items():
+            if str(k).lower() == str(key).lower():
+                return v
+            if isinstance(v, dict) and v:
+                result = self._search_key(v, key)
+                if result is not None:
+                    return result
+        return None
+
+    def get_ip(self, network: str = "bridge") -> str:
+        """
+        Récupère l'adresse IP du container sur un réseau donné.
+
+        Tente d'abord de lire l'IP depuis le réseau spécifié dans les attrs
+        Docker. En cas d'échec (réseau custom, structure différente), effectue
+        une recherche récursive dans les NetworkSettings.
+
+        Parameters
+        ----------
+        network : str, optional
+            Nom du réseau Docker. "bridge" par défaut.
+
+        Returns
+        -------
+        str
+            Adresse IP du container sur le réseau spécifié.
+
+        Raises
+        ------
+        ValueError
+            Si aucun container actif, ou si aucune IP valide n'est trouvée.
+        """
+        if not self.container:
+            raise ValueError("Container pas démarré !")
+
+        self.container.reload()
+        logger.print("🌐 Clés NetworkSettings :", list(self.container.attrs['NetworkSettings'].keys()))
+
+        try:
+            ip = self.container.attrs['NetworkSettings']['Networks'][network]['IPAddress']
+        except (KeyError, TypeError):
+            dic = self.container.attrs['NetworkSettings']
+            ip = self._search_key(dic, "IPAddress")
+
+        if not self.is_valid_ip(str(ip)):
+            ip = ''
+
+        if not ip:
+            raise ValueError("Container n'a pas d'IP (réseau pas prêt ?)")
+        return ip
+
+    def container_list(self) -> list:
+        """
+        Retourne la liste de tous les containers Docker sur le système.
+
+        Inclut les containers arrêtés (all=True).
+
+        Returns
+        -------
+        list
+            Liste d'objets Container Docker.
+        """
+        return self.client.containers.list(all=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEST RAPIDE
+# ─────────────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    cont_manager = ContainerManager()
+    print(cont_manager.list_images())
+    print(cont_manager.container_list())
+    print(dir(cont_manager))
+    print(dir(ContainerManager))============================
+================./core/detect_language.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May  9 12:20:39 2026
+
+@author: hounsousamuel
+
+Module de détection de langage pour le Sandbox ShieldAI V2.
+Identifie le langage de programmation d'un fichier de code source
+via trois stratégies successives : extension, shebang, analyse de contenu.
+Fournit également les commandes d'exécution pour chaque langage supporté.
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from sandbox_ia.sandbox_utils.logger import get_logger
+logger = get_logger()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONSTANTES
+# ─────────────────────────────────────────────────────────────────────────────
+
+LANGUAGE_MAP = {
+    ".py":   "python",
+    ".js":   "javascript",
+    ".php":  "php",
+    ".rb":   "ruby",
+    ".pl":   "perl",
+    ".java": "java",
+    ".go":   "go",
+    ".rs":   "rust",
+    ".lua":  "lua",
+    ".sh":   "bash",
+    ".ps1":  "powershell",
+    ".r":    "r",
+    ".R":    "r",
+    ".c":    "c",
+    ".cpp":  "cpp",
+}
+"""
+dict[str, str] : Mapping extension de fichier → langage.
+Les extensions sont en minuscule sauf .R (convention R language).
+Utilisé comme première stratégie de détection — la plus fiable.
+"""
+
+SHEBANG_MAP = {
+    "python":     "python",
+    "node":       "javascript",
+    "php":        "php",
+    "ruby":       "ruby",
+    "perl":       "perl",
+    "bash":       "bash",
+    "sh":         "bash",
+    "pwsh":       "powershell",
+    "lua":        "lua",
+    "Rscript":    "r",
+}
+"""
+dict[str, str] : Mapping mot-clé shebang → langage.
+Utilisé comme deuxième stratégie — analyse la première ligne du fichier.
+Exemple : "#!/usr/bin/env python3" → "python3" → "python"
+"""
+
+CONTENT_PATTERNS = {
+    "python":     ["import ", "def ", "print(", "if __name__"],
+    "javascript": ["const ", "let ", "var ", "console.log", "require("],
+    "php":        ["<?php", "echo ", "$_"],
+    "go":         ["package main", "func main()", "import ("],
+    "java":       ["public class", "public static void main"],
+    "rust":       ["fn main()", "let mut", "println!("],
+    "ruby":       ["puts ", "require '", "def "],
+    "bash":       ["#!/bin/bash", "echo ", "fi", "then"],
+    "r":          ["library(", "<-", "data.frame("],
+    "lua":        ["local ", "require(", "print("],
+}
+"""
+dict[str, list[str]] : Patterns caractéristiques par langage.
+Utilisé comme troisième stratégie — comptage de patterns dans le contenu.
+Le langage avec le plus de patterns trouvés gagne.
+Perl et PowerShell sont absents — peu de patterns uniques fiables.
+"""
+
+LANGUAGES = [
+    "python",
+    "javascript",
+    "php",
+    "ruby",
+    "perl",
+    "java",
+    "go",
+    "rust",
+    "lua",
+    "r",
+    "powershell",
+    "c",
+    "cpp",
+    "bash",
+]
+"""
+list[str] : Liste des 14 langages supportés par le sandbox.
+Utilisée pour valider qu'un langage est bien pris en charge
+avant de chercher sa commande d'exécution.
+"""
+
+LANGUAGE_RUNNERS = {
+    "python":     lambda x: (x if x.endswith(".py")   else x + ".py",   f"python3 {x if x.endswith('.py') else x + '.py'}"),
+    "javascript": lambda x: (x if x.endswith(".js")   else x + ".js",   f"node {x if x.endswith('.js') else x + '.js'}"),
+    "php":        lambda x: (x if x.endswith(".php")  else x + ".php",  f"php {x if x.endswith('.php') else x + '.php'}"),
+    "ruby":       lambda x: (x if x.endswith(".rb")   else x + ".rb",   f"ruby {x if x.endswith('.rb') else x + '.rb'}"),
+    "perl":       lambda x: (x if x.endswith(".pl")   else x + ".pl",   f"perl {x if x.endswith('.pl') else x + '.pl'}"),
+    "java":       lambda x: (x if x.endswith(".java") else x + ".java", f"javac {x if x.endswith('.java') else x + '.java'} && java {x.replace('.java', '')}"),
+    "go":         lambda x: (x if x.endswith(".go")   else x + ".go",   f"go run {x if x.endswith('.go') else x + '.go'}"),
+    "rust":       lambda x: (x if x.endswith(".rs")   else x + ".rs",   f"rustc {x if x.endswith('.rs') else x + '.rs'} -o /tmp/rust_out && /tmp/rust_out"),
+    "lua":        lambda x: (x if x.endswith(".lua")  else x + ".lua",  f"lua5.4 {x if x.endswith('.lua') else x + '.lua'}"),
+    "r":          lambda x: (x if x.endswith(".r") or x.endswith(".R") else x + ".r", f"Rscript {x if x.endswith('.r') or x.endswith('.R') else x + '.r'}"),
+    "powershell": lambda x: (x if x.endswith(".ps1")  else x + ".ps1",  f"pwsh -File {x if x.endswith('.ps1') else x + '.ps1'}"),
+    "c":          lambda x: (x if x.endswith(".c")    else x + ".c",    f"gcc {x if x.endswith('.c') else x + '.c'} -o /tmp/c_out && /tmp/c_out"),
+    "cpp":        lambda x: (x if x.endswith(".cpp")  else x + ".cpp",  f"g++ {x if x.endswith('.cpp') else x + '.cpp'} -o /tmp/cpp_out && /tmp/cpp_out"),
+    "bash":       lambda x: (x if x.endswith(".sh")   else x + ".sh",   f"bash {x if x.endswith('.sh') else x + '.sh'}"),
+}
+"""
+dict[str, Callable] : Mapping langage → lambda de génération de commande.
+
+Chaque lambda prend un nom de fichier (str) et retourne un tuple :
+    (fichier_avec_extension, commande_d_execution)
+
+Si le fichier n'a pas la bonne extension, elle est ajoutée automatiquement.
+Les langages compilés (java, rust, c, cpp) enchaînent compilation + exécution
+via && dans la commande.
+
+Exemple :
+    LANGUAGE_RUNNERS["python"]("code")
+    → ("code.py", "python3 code.py")
+
+    LANGUAGE_RUNNERS["c"]("prog.c")
+    → ("prog.c", "gcc prog.c -o /tmp/c_out && /tmp/c_out")
+"""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FONCTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def detect_language(filename: str, content: str) -> str:
+    """
+    Détecte le langage de programmation d'un fichier de code source.
+
+    Applique trois stratégies successives dans l'ordre de fiabilité :
+
+    1. **Extension** : compare l'extension du fichier avec LANGUAGE_MAP.
+       C'est la méthode la plus fiable — si un fichier s'appelle "code.py",
+       c'est du Python.
+
+    2. **Shebang** : analyse la première ligne du fichier.
+       Si elle commence par "#!", on cherche un mot-clé connu dans SHEBANG_MAP.
+       Exemple : "#!/usr/bin/env python3" → "python3" → "python"
+
+    3. **Analyse de contenu** : compte les patterns caractéristiques de chaque
+       langage dans CONTENT_PATTERNS. Le langage avec le plus de matches gagne.
+       Si aucun pattern ne matche (score = 0), None est retourné.
+
+    Parameters
+    ----------
+    filename : str
+        Nom ou chemin du fichier. Peut être une chaîne vide ou None si
+        le fichier n'a pas de nom connu — dans ce cas l'extension est ignorée.
+    content : str
+        Contenu complet du fichier source à analyser.
+
+    Returns
+    -------
+    str
+        Nom du langage détecté parmi les valeurs de LANGUAGES.
+        "bash" par défaut si aucune stratégie n'a abouti.
+    """
+    # Stratégie 1 — Extension
+    ext = None
+    if filename:
+        ext = os.path.splitext(filename)[1].strip().lower()
+    if ext and LANGUAGE_MAP.get(ext):
+        logger.print(f"🔍 Langage détecté par extension '{ext}': {LANGUAGE_MAP[ext]}")
+        return LANGUAGE_MAP[ext]
+
+    # Stratégie 2 — Shebang (première ligne)
+    first_line = content.split("\n")[0] if content else ""
+    for keyword, language in SHEBANG_MAP.items():
+        if keyword in first_line:
+            logger.print(f"🔍 Langage détecté par shebang '{keyword}': {language}")
+            return language
+
+    # Stratégie 3 — Analyse de contenu (comptage de patterns)
+    language_pattern_count = {
+        lang: sum(pattern in content for pattern in patterns)
+        for lang, patterns in CONTENT_PATTERNS.items()
+    }
+
+    most_probable = sorted(
+        language_pattern_count,
+        key=lambda lang: language_pattern_count[lang],
+        reverse=True
+    )
+
+    best = most_probable[0] if most_probable else None
+    if best and language_pattern_count[best] > 0:
+        logger.print(f"🔍 Langage détecté par contenu ({language_pattern_count[best]} patterns): {best}")
+        return best
+
+    # Fallback — aucune stratégie n'a abouti, None
+    return None
+
+
+def get_supported_languages() -> list[str]:
+    """
+    Retourne la liste des langages supportés par le sandbox.
+
+    Returns
+    -------
+    list[str]
+        Liste des 14 langages supportés.
+    """
+    return LANGUAGES
+
+
+def get_language_cmd(file: str, language: str) -> tuple[str | None, str | None, str | None]:
+    """
+    Retourne l'extension, le nom de fichier complété et la commande d'exécution
+    pour un fichier et un langage donnés.
+
+    Utilise LANGUAGE_RUNNERS pour générer automatiquement le nom de fichier
+    avec la bonne extension si elle est manquante, ainsi que la commande
+    shell complète pour exécuter le fichier dans le container sandbox.
+
+    Parameters
+    ----------
+    file : str
+        Nom ou chemin du fichier à exécuter.
+        Exemple : "code", "code.py", "/sandbox/work/script.js"
+    language : str
+        Langage de programmation du fichier.
+        Doit être une valeur présente dans LANGUAGES.
+
+    Returns
+    -------
+    tuple[str | None, str | None, str | None]
+        - str : Extension du fichier complété (ex: ".py")
+        - str : Nom du fichier avec extension garantie (ex: "code.py")
+        - str : Commande shell d'exécution complète (ex: "python3 code.py")
+        Retourne (None, None, None) si file est vide ou langage non supporté.
+
+    Examples
+    --------
+    >>> get_language_cmd("code", "python")
+    ('.py', 'code.py', 'python3 code.py')
+
+    >>> get_language_cmd("prog", "c")
+    ('.c', 'prog.c', 'gcc prog.c -o /tmp/c_out && /tmp/c_out')
+
+    >>> get_language_cmd("script.rs", "rust")
+    ('.rs', 'script.rs', 'rustc script.rs -o /tmp/rust_out && /tmp/rust_out')
+    """
+    if not file:
+        return None, None, None
+
+    if language not in LANGUAGES:
+        logger.print(f"❌ Langage non supporté: {language}")
+        return None, None, None
+
+    file_completed, cmd = LANGUAGE_RUNNERS[language](file)
+    ext = os.path.splitext(file_completed)[1].strip().lower()
+
+    logger.print(f"⚙️  [{language}] fichier: {file_completed} | cmd: {cmd}")
+    return ext, file_completed, cmd
+
+if __name__ == "__main__":
+    
+    # Test stratégie 1 — extension
+    print("=== Test extension ===")
+    print(detect_language("code.py", ""))           # → python
+    print(detect_language("script.js", ""))         # → javascript
+    print(detect_language("programme.R", ""))       # → r
+
+    # Test stratégie 2 — shebang
+    print("\n=== Test shebang ===")
+    print(detect_language("", "#!/usr/bin/env python3\nprint('hello')"))   # → python
+    print(detect_language("", "#!/bin/bash\necho hello"))                   # → bash
+    print(detect_language("", "#!/usr/bin/perl\nprint 'hello'"))            # → perl
+
+    # Test stratégie 3 — contenu
+    print("\n=== Test contenu ===")
+    print(detect_language("", "package main\nfunc main() {\nimport (\n"))  # → go
+    print(detect_language("", "public class Main {\npublic static void main")) # → java
+    print(detect_language("", "fn main() {\nlet mut x = 5;\nprintln!(x)")) # → rust
+
+    # Test fallback
+    print("\n=== Test fallback ===")
+    print(detect_language("", ""))                  # → bash
+    print(detect_language("", "zzz qqq xxx"))       # → bash
+
+    # Test get_language_cmd
+    print("\n=== Test get_language_cmd ===")
+    print(get_language_cmd("code", "python"))       # → (.py, code.py, python3 code.py)
+    print(get_language_cmd("prog", "c"))            # → (.c, prog.c, gcc prog.c ...)
+    print(get_language_cmd("", "python"))           # → (None, None, None)
+    print(get_language_cmd("code", "cobol"))        # → (None, None, None)============================
+================./core/executor.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May  9 12:40:39 2026
+
+@author: hounsousamuel
+
+Module d'exécution de code pour le Sandbox ShieldAI V2.
+Orchestre la copie du code dans le container Docker et son exécution
+isolée, puis retourne un résultat structuré (ExecResult) contenant
+toutes les informations sur l'exécution.
+
+Pipeline :
+    code + langage
+        → détection langage (si absent)
+        → génération commande via LANGUAGE_RUNNERS
+        → copy_in() dans le container
+        → exec_command_async() dans le container
+        → ExecResult structuré
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import time
+import asyncio
+from datetime import datetime
+from dataclasses import dataclass
+from sandbox_ia.core.container_manager import ContainerManager
+from sandbox_ia.core.detect_language import detect_language, get_language_cmd, get_supported_languages
+from sandbox_ia.sandbox_utils.logger import get_logger
+
+logger = get_logger()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DATACLASS — Résultat structuré d'une exécution
+# ─────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class ExecResult:
+    """
+    Résultat structuré d'une exécution de code dans le sandbox.
+
+    Retourné par Executor.execute() et Executor.execute_async() après
+    chaque exécution, qu'elle soit réussie ou échouée. Contient toutes
+    les informations nécessaires pour le behavior_scorer et le rapport final.
+
+    Attributes
+    ----------
+    success : bool
+        True si l'exécution s'est terminée avec exit_code == 0.
+        False dans tous les autres cas (erreur, timeout, copy échoué...).
+    exit_code : int | None
+        Code de retour du process exécuté.
+        0 = succès, autre = erreur. None si l'exécution n'a pas démarré.
+    stdout : str
+        Sortie standard du programme exécuté, décodée en UTF-8.
+    stderr : str
+        Sortie d'erreur du programme exécuté, décodée en UTF-8.
+        Contient aussi les messages d'erreur internes (copy échoué, etc.)
+    language : str
+        Langage détecté ou fourni pour cette exécution.
+    filename : str
+        Nom de base du fichier fourni par l'appelant.
+        Exemple : "sandbox", "script", "malware_sample"
+    code_filename : str | None
+        Chemin vers un fichier source local à lire, si fourni.
+        None si le code a été passé directement comme string.
+    command : str
+        Commande shell complète exécutée dans le container.
+        Exemple : "python3 /sandbox/work/sandbox.py"
+        None si l'exécution n'a pas pu démarrer.
+    duration : float
+        Durée totale de l'exécution en secondes (perf_counter).
+        Inclut la compilation pour les langages compilés.
+        0.0 si l'exécution n'a pas démarré.
+    timestamp : datetime
+        Horodatage UTC de fin d'exécution.
+    timeout_passed : bool
+        True si le timeout a été atteint pendant l'exécution.
+        Détecté via le message "timeout atteint" dans stderr.
+    """
+    success: bool
+    exit_code: int | None
+    stdout: str
+    stderr: str
+    language: str
+    filename: str
+    code_filename: str | None
+    command: str
+    duration: float
+    timestamp: datetime
+    timeout_passed: bool
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EXECUTOR
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Executor:
+    """
+    Exécuteur de code isolé dans le container sandbox ShieldAI.
+
+    Coordonne toute la pipeline d'exécution : détection du langage,
+    copie du code dans le container, exécution isolée et retour du
+    résultat structuré. S'appuie sur ContainerManager pour toutes
+    les interactions avec Docker.
+
+    Attributes
+    ----------
+    manager : ContainerManager
+        Instance du manager Docker déjà connectée à un container actif.
+    workdir : str
+        Répertoire de travail dans le container où le code est copié
+        et exécuté. "/sandbox/work" par défaut.
+    """
+
+    def __init__(self, container_manager: ContainerManager):
+        """
+        Initialise l'exécuteur avec un ContainerManager actif.
+
+        Parameters
+        ----------
+        container_manager : ContainerManager
+            Manager Docker déjà connecté à un container via connect().
+            Le container doit être en état "running" avant d'appeler execute().
+        """
+        self.manager = container_manager
+        self.workdir = "/sandbox/work"
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # MÉTHODES INTERNES
+    # ─────────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _build_result(
+        success: bool,
+        exit_code: int | None,
+        stdout: str,
+        stderr: str,
+        language: str,
+        filename: str,
+        code_filename: str | None,
+        command: str,
+        duration: float,
+        timestamp: datetime,
+        timeout_passed: bool = False,
+    ) -> ExecResult:
+        """
+        Construit un ExecResult structuré depuis les données d'exécution.
+
+        Méthode statique centralisée pour garantir que tous les champs
+        du dataclass sont toujours correctement remplis, y compris dans
+        les cas d'erreur précoce (avant l'exécution réelle).
+
+        Parameters
+        ----------
+        success : bool
+            True si exit_code == 0.
+        exit_code : int | None
+            Code de retour du process. None si pas démarré.
+        stdout : str
+            Sortie standard décodée.
+        stderr : str
+            Sortie d'erreur décodée.
+        language : str
+            Langage utilisé pour l'exécution.
+        filename : str
+            Nom de base du fichier.
+        code_filename : str | None
+            Chemin source local si applicable.
+        command : str
+            Commande shell exécutée. None si pas démarrée.
+        duration : float
+            Durée en secondes. 0.0 si pas démarrée.
+        timestamp : datetime
+            Horodatage UTC.
+        timeout_passed : bool, optional
+            True si timeout atteint. False par défaut.
+
+        Returns
+        -------
+        ExecResult
+            Résultat structuré complet.
+        """
+        return ExecResult(
+            success=success,
+            exit_code=exit_code,
+            stdout=stdout,
+            stderr=stderr,
+            language=language,
+            filename=filename,
+            command=command,
+            duration=duration,
+            timestamp=timestamp,
+            code_filename=code_filename,
+            timeout_passed=timeout_passed
+        )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # EXÉCUTION PRINCIPALE
+    # ─────────────────────────────────────────────────────────────────────────
+
+    async def execute_async(
+        self,
+        code: str | None,
+        language: str | None,
+        code_filename: str | None = None,
+        filename: str | None = "sandbox",
+        timeout: float | None = 30.0,
+        use_subprocess_for_copy: bool = True,
+        user: str = "1500:1500",
+    ) -> ExecResult:
+        """
+        Exécute du code dans le container sandbox (version asynchrone).
+
+        Pipeline complète :
+        1. Validation — vérifie que le code ou le fichier est fourni
+        2. Health check — vérifie que le container est opérationnel
+        3. Lecture fichier — si code_filename fourni, lit le fichier local
+        4. Détection langage — via detect_language() si non fourni
+        5. Génération commande — via get_language_cmd()
+        6. Création workdir — mkdir -p dans le container
+        7. Copy in — copie le code dans le container
+        8. Exécution — exec_command_async() avec timeout
+        9. Retour ExecResult — structuré avec durée, exit_code, outputs
+
+        Parameters
+        ----------
+        code : str | None
+            Code source à exécuter. Peut être None si code_filename est fourni.
+        language : str | None
+            Langage de programmation. Si None, détecté automatiquement
+            via detect_language() depuis le nom de fichier et le contenu.
+        code_filename : str | None, optional
+            Chemin vers un fichier source local à lire et exécuter.
+            Utilisé si code est None. None par défaut.
+        filename : str | None, optional
+            Nom de base à donner au fichier dans le container.
+            L'extension correcte est ajoutée automatiquement.
+            "sandbox" par défaut.
+        timeout : float | None, optional
+            Timeout d'exécution en secondes. 30.0 par défaut.
+            2 secondes supplémentaires sont ajoutées pour la compilation
+            des langages compilés (Java, Rust, C, C++).
+            None = pas de timeout.
+        use_subprocess_for_copy : bool, optional
+            True = copie via subprocess docker exec -i (recommandé).
+            False = copie via base64 encode/decode.
+            True par défaut.
+        user : str, optional
+            Utilisateur sous lequel exécuter le code dans le container.
+            "1500:1500" par défaut (UID:GID de l'utilisateur sandbox).
+            Plus sûr que "sandbox" car ne dépend pas de /etc/passwd.
+
+        Returns
+        -------
+        ExecResult
+            Résultat structuré complet de l'exécution.
+            success=False si une étape de la pipeline a échoué.
+        """
+        ts = datetime.utcnow()
+
+        # ── Validation ────────────────────────────────────────────────────────
+        if not code and not code_filename:
+            logger.print("❌ Executor: code et fichier absents")
+            return self._build_result(
+                success=False, exit_code=1,
+                stderr="Code et Fichier absent !",
+                stdout="", duration=0.0, timestamp=ts,
+                filename=filename, command=None,
+                language=language, code_filename=code_filename
+            )
+
+        # ── Health check ──────────────────────────────────────────────────────
+        if not self.manager.health_check():
+            logger.print("❌ Executor: container non opérationnel")
+            return self._build_result(
+                success=False, exit_code=1,
+                stderr="Container non lancé !",
+                stdout="", duration=0.0, timestamp=ts,
+                filename=filename, command=None,
+                language=language, code_filename=code_filename
+            )
+
+        # ── Lecture fichier local ─────────────────────────────────────────────
+        try:
+            code = code or open(code_filename, "r").read()
+        except Exception as e:
+            logger.print(f"❌ Executor: impossible de lire {code_filename}: {e}")
+            return self._build_result(
+                success=False, exit_code=1,
+                stderr=f"Impossible de lire {code_filename}: {e}",
+                stdout="", duration=0.0, timestamp=ts,
+                filename=filename, command=None,
+                language=language, code_filename=code_filename
+            )
+
+        # ── Détection langage ─────────────────────────────────────────────────
+        language = language or detect_language(code_filename or "", code)
+        logger.print(f"🔍 Executor: langage → {language}")
+
+        if language.lower() not in [l.lower() for l in get_supported_languages()]:
+            logger.print(f"❌ Executor: langage non supporté → {language}")
+            return self._build_result(
+                success=False, exit_code=1,
+                stderr=f"Langage non supporté: {language}",
+                stdout="", duration=0.0, timestamp=ts,
+                filename=filename, command=None,
+                language=language, code_filename=code_filename
+            )
+
+        # ── Génération commande ───────────────────────────────────────────────
+        _, filename_completed, command = get_language_cmd(file=filename, language=language)
+        dest_path = os.path.join(self.workdir, filename_completed)
+        _, _, command = get_language_cmd(file=dest_path, language=language)
+        logger.print(f"⚙️  Executor: commande → {command}")
+
+        # ── Création workdir ──────────────────────────────────────────────────
+        self.manager.exec_command(f"mkdir -p {self.workdir}")
+
+        # ── Copy in ───────────────────────────────────────────────────────────
+        logger.print(f"📁 Executor: copy_in → {dest_path}")
+        copy_returncode, copy_stdout, copy_stderr = self.manager.copy_in(
+            content=code,
+            dest_path=dest_path,
+            use_subprocess=use_subprocess_for_copy,
+            container=self.manager.container,
+        )
+        if copy_returncode != 0:
+            logger.print(f"❌ Executor: copy_in échoué (code {copy_returncode})")
+            logger.print(f"   stderr: {copy_stderr[:200]}")
+            return self._build_result(
+                success=False, exit_code=1,
+                stderr=f"Copy échoué: {copy_stderr[:200]}",
+                stdout=copy_stdout[:200], duration=0.0, timestamp=ts,
+                filename=filename, command=command,
+                language=language, code_filename=code_filename
+            )
+        logger.print("✅ Executor: copy_in réussi")
+
+        # ── Exécution ─────────────────────────────────────────────────────────
+        logger.print(f"🚀 Executor: exécution ({language}) timeout={timeout}s")
+        st = time.perf_counter()
+
+        cmd_returncode, cmd_stdout, cmd_stderr = await self.manager.exec_command_async(
+            cmd=command,
+            user=user,
+            workdir=self.workdir,
+            timeout=timeout + 2 if timeout else None,
+        )
+        duration = time.perf_counter() - st
+        success = cmd_returncode == 0
+        timeout_passed = cmd_stderr.lower() == "timeout atteint"
+
+        # ── Affichage résultat ────────────────────────────────────────────────
+        icon = "✅" if success else "❌"
+        logger.print(f"{icon} Executor: exit_code={cmd_returncode} | duration={duration:.2f}s | timeout={timeout_passed}")
+        if cmd_stdout:
+            logger.print(f"📤 stdout: {cmd_stdout[:300]}")
+        if cmd_stderr:
+            logger.print(f"⚠️  stderr: {cmd_stderr[:300]}")
+
+        return self._build_result(
+            success=success,
+            exit_code=cmd_returncode,
+            stderr=cmd_stderr,
+            stdout=cmd_stdout,
+            duration=duration,
+            timestamp=datetime.utcnow(),
+            filename=filename,
+            command=command,
+            language=language,
+            code_filename=code_filename,
+            timeout_passed=timeout_passed
+        )
+
+    def execute(self, *args, **kwargs) -> ExecResult:
+        """
+        Exécute du code dans le container sandbox (version synchrone).
+
+        Wrapper synchrone autour de execute_async() via asyncio.run().
+        À utiliser uniquement hors d'un event loop asyncio existant.
+        Si tu es dans un contexte async, utilise execute_async() directement.
+
+        Parameters
+        ----------
+        *args : any
+            Positional arguments passés à execute_async().
+        **kwargs : any
+            Keyword arguments passés à execute_async().
+
+        Returns
+        -------
+        ExecResult
+            Voir execute_async().
+        """
+        return asyncio.run(self.execute_async(*args, **kwargs))============================
+================./sandbox_utils/signal_manager.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Mar 21 08:34:38 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys, signal
+
+def signal_manager(func, *args, **kwargs): 
+    def function(sig, frame):
+        func(sig, frame, *args, **kwargs)
+        # os.kill(os.getpid(), 9)
+        # os._exit(1)
+        sys.exit(1)
+        
+    signal.signal(signal.SIGINT, function)
+    signal.signal(signal.SIGTERM, function)
+    signal.signal(signal.SIGQUIT, function)
+============================
+================./sandbox_utils/warnings_manager.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar 18 07:21:13 2026
+
+@author: hounsousamuel
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# ============================================
+# SUPPRESSION TOTALE DE TOUS LES WARNINGS
+# ============================================
+
+import os
+import sys
+import warnings
+import logging
+
+def suppres_warnings():
+    # Configuration pour supprimer TOUS les avertissements
+    os.environ["PYTHONWARNINGS"] = "ignore"
+    
+    # Supprimer tous les warnings Python
+    warnings.filterwarnings("ignore")
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=ResourceWarning)
+    warnings.filterwarnings("ignore", category=ImportWarning)
+    warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
+    
+    # Supprimer les warnings spécifiques à scikit-learn
+    warnings.filterwarnings("ignore", module="sklearn")
+    warnings.filterwarnings("ignore", message=".*F-score is ill-defined.*")
+    warnings.filterwarnings("ignore", message=".*Jaccard is ill-defined.*")
+    warnings.filterwarnings("ignore", message=".*ConvergenceWarning.*")
+    warnings.filterwarnings("ignore", message=".*UndefinedMetricWarning.*")
+    warnings.filterwarnings("ignore", message=".*Stochastic Optimizer.*")
+    warnings.filterwarnings("ignore", message=".*Maximum iterations.*")
+    warnings.filterwarnings("ignore", message=".*Label .* is present in all training examples.*")
+    
+    # Supprimer les warnings de PyTorch
+    os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
+    os.environ["TORCH_DISTRIBUTED_DEBUG"] = "OFF"
+    os.environ["TORCH_SHOW_CPP_STACKTRACES"] = "0"
+    warnings.filterwarnings("ignore", module="torch")
+    
+    # Supprimer les warnings de TensorFlow
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+    os.environ["TF_CPP_VLOG_LEVEL"] = "0"
+    
+    # Supprimer les warnings de XGBoost
+    os.environ["XGBOOST_LOG_LEVEL"] = "error"
+    os.environ["XGBOOST_SILENT"] = "1"
+    
+    # Supprimer les warnings de LightGBM
+    os.environ["LIGHTGBM_LOG_LEVEL"] = "error"
+    os.environ["LIGHTGBM_SILENT"] = "1"
+    
+    # Supprimer les warnings de Joblib
+    os.environ["JOBLIB_LOG_LEVEL"] = "ERROR"
+    os.environ["JOBLIB_MULTIPROCESSING"] = "0"
+    
+    # Supprimer les warnings de NumPy
+    os.environ["NUMPY_EXPERIMENTAL_ARRAY_FUNCTION"] = "0"
+    warnings.filterwarnings("ignore", message=".*numpy.dtype size changed.*")
+    warnings.filterwarnings("ignore", message=".*numpy.ufunc size changed.*")
+    
+    # Supprimer les warnings de Pandas
+    os.environ["PANDAS_WARNINGS"] = "ignore"
+    warnings.filterwarnings("ignore", module="pandas")
+    warnings.filterwarnings("ignore", message=".*DataFrame is highly fragmented.*")
+    
+    # Supprimer les warnings de Matplotlib
+    os.environ["MPLBACKEND"] = "Agg"
+    warnings.filterwarnings("ignore", module="matplotlib")
+    logging.getLogger("matplotlib").setLevel(logging.ERROR)
+    logging.getLogger("matplotlib.font_manager").disabled = True
+    
+    # Supprimer les warnings d'Optuna
+    warnings.filterwarnings("ignore", module="optuna")
+    os.environ["OPTUNA_LOG_LEVEL"] = "ERROR"
+    
+    # Supprimer les logs de toutes les bibliothèques
+    for logger_name in [
+        "sklearn", "matplotlib", "optuna", "joblib", "numpy", "pandas",
+        "urllib3", "requests", "PIL", "tensorflow", "xgboost", "lightgbm",
+        "torch", "torchvision", "transformers", "datasets", "huggingface",
+        "numexpr", "boto3", "botocore", "s3transfer", "s3fs", "fsspec",
+        "asyncio", "aiohttp", "chardet", "charset_normalizer", "idna",
+        "certifi", "urllib3.connectionpool", "PIL.PngImagePlugin", "PIL.TiffImagePlugin"
+    ]:
+        logging.getLogger(logger_name).setLevel(logging.ERROR)
+        logging.getLogger(logger_name).disabled = True
+        logger = logging.getLogger(logger_name)
+        logger.handlers = []
+        logger.propagate = False
+    
+    # Désactiver complètement le système de logging
+    logging.basicConfig(level=logging.ERROR)
+    logging.getLogger().setLevel(logging.ERROR)
+    logging.getLogger().disabled = False  # Ne pas désactiver complètement pour garder tes logs
+    
+    # Supprimer les warnings système
+    sys.stderr = open(os.devnull, 'w') if not sys.stdout.isatty() else sys.stderr
+    sys.warnoptions = []
+    warnings.simplefilter("ignore")
+    ============================
+================./sandbox_utils/utils.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 23 09:02:41 2026
+
+@author: hounsousamuel
+"""
+
+import os, sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+from urllib.parse import urljoin, urlparse, urldefrag, urlunparse
+
+HEADERS =  {
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'fr-FR,fr;q=0.5',
+    'Accept-Encoding': 'gzip, deflate',
+    'Connection': 'keep-alive',
+}
+
+def clean_url(url:str, preference:str = "https://") -> str:
+    if url is None:
+        return ""
+    url = url.strip().strip("'\",;").strip()
+    if not url.startswith(('http://', 'https://')):
+        if url.startswith(':/'):
+            url = preference + url
+        else:
+            url = preference + url
+            
+    return url
+
+def normalize_link(base_url:str, url:str):
+    """
+    Méthode de normalisation des liens.
+
+    Parameters
+    ----------
+    base_url : str
+        Url de base.
+    url : str
+        Url a ajoutéz.
+
+    Returns
+    -------
+    None | str
+        None si échec et str si succès.
+
+    """
+    if not base_url or url is None:
+        return None
+    
+    url = url.strip()
+    base_url = base_url.strip()    
+    if base_url.startswith("#"):
+        return None
+    
+    if url.startswith("#"):
+        return urldefrag(base_url)[0]
+
+    if url.startswith("http"):
+        return url
+    
+    if any(x.startswith(('javascript:', 'data:', 'mailto:', 'blob:', 'tel:')) for x in (url, base_url)):
+        return None
+    
+    url_parse = urlparse(url)
+    base_url_parse = urlparse(urldefrag(base_url)[0])
+    
+    if url_parse.scheme and url_parse.netloc:
+        return url
+    
+    if url.startswith("//"):
+        return base_url_parse.scheme + ':' + url
+    
+    if not base_url_parse.scheme and base_url_parse.netloc:
+        return None
+    
+    
+    final_url = urljoin(urlunparse(base_url_parse), urlunparse(url_parse))
+    return urldefrag(final_url)[0]============================
+================./sandbox_utils/logger.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 15 08:37:54 2026
+
+@author: hounsousamuel
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+from loguru import logger
+# Mots-clés qui déclenchent un niveau WARNING ou supérieur
+_ERROR_KEYWORDS = ('error', "erreur", 'fail', 'critical', 'fatal')
+_WARNING_KEYWORDS = ('warning', 'warn', '⚠️', 'deprecated')
+
+BASEDIR = os.path.dirname(os.path.abspath(__file__))
+LOGDIR = os.path.abspath(os.path.join(BASEDIR, "..", "logs"))
+os.makedirs(LOGDIR, exist_ok=True)
+
+def setup_loguru(log_dir: str = "logs"):
+    """Configure loguru pour tout le projet."""
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Supprimer le handler par défaut
+    logger.remove()
+    
+    # Handler console (couleurs automatiques)
+    logger.add(
+        sys.stdout,
+        format="<green>{time:HH:mm:ss.SSS}</green> | <level>{level: <5}</level> | <cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>",
+        level="INFO",
+        colorize=True
+    )
+    
+    # Handler fichier avec rotation automatique
+    logger.add(
+        os.path.join(log_dir, "ids_ips_{time:YYYY-MM-DD}.log"),
+        rotation="100 MB",
+        retention="30 days",
+        compression="zip",
+        level="DEBUG",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {thread.name} | {name}:{function}:{line} | {message}"
+    )
+    
+    # Handler erreurs séparé
+    logger.add(
+        os.path.join(log_dir, "errors_{time:YYYY-MM-DD}.log"),
+        rotation="50 MB",
+        retention="90 days",
+        level="ERROR",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {thread.name} | {message}"
+    )
+    
+    return logger
+
+class Logger:
+    def __init__(self, logdir=LOGDIR):
+        self.logger = setup_loguru(logdir)
+    
+
+    def print(self, *args, **kwargs):
+        """
+        Remplacement intelligent de print().
+        
+        - Détecte "error" ou "exception" → logger.error()
+        - Détecte "warning" → logger.warning()
+        - Sinon → logger.info()
+        
+        Peut être utilisé comme monkey-patch ou appelé directement.
+        """
+        message = ' '.join(str(arg) for arg in args)
+    
+        # Déterminer le niveau
+        verify = kwargs.get("verify", True)
+        msg_lower = message.lower()
+        if verify:
+            if any(kw in msg_lower for kw in _ERROR_KEYWORDS):
+                self.logger.error(message)
+            elif any(kw in msg_lower for kw in _WARNING_KEYWORDS):
+                self.logger.warning(message)
+            else:
+                self.logger.info(message)
+        else:
+            self.logger.info(message)
+            
+            
+# Exporter le logger configuré
+LOGGER = None
+
+def get_logger():
+    """Retourne le logger global (après initialisation)."""
+    global LOGGER
+    if LOGGER is None:
+        LOGGER = Logger(LOGDIR)
+    return LOGGER
+
+# get_logger().print("hello")============================

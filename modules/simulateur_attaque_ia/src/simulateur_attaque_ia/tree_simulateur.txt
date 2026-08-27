@@ -1,0 +1,472 @@
+.
+├── api
+│   ├── api.py
+│   ├── dashbord_orchestrator_router.py
+│   ├── deps.py
+│   ├── endpoints.py
+│   ├── __init__.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   └── sim_models.cpython-311.pyc
+│   │   └── sim_models.py
+│   ├── __pycache__
+│   │   ├── api.cpython-311.pyc
+│   │   ├── dashbord_orchestrator_router.cpython-311.pyc
+│   │   ├── deps.cpython-311.pyc
+│   │   ├── endpoints.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── main.cpython-311.pyc
+│   │   └── run_api.cpython-311.pyc
+│   ├── reports
+│   ├── routers
+│   │   ├── auth_router.py
+│   │   ├── clone_router.py
+│   │   ├── containers_router.py
+│   │   ├── images_router.py
+│   │   ├── __init__.py
+│   │   ├── network_router.py
+│   │   ├── __pycache__
+│   │   │   ├── auth_router.cpython-311.pyc
+│   │   │   ├── clone_router.cpython-311.pyc
+│   │   │   ├── containers_router.cpython-311.pyc
+│   │   │   ├── images_router.cpython-311.pyc
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── network_router.cpython-311.pyc
+│   │   │   ├── router.cpython-311.pyc
+│   │   │   ├── router_no_auth.cpython-311.pyc
+│   │   │   ├── services_router.cpython-311.pyc
+│   │   │   ├── sim_router.cpython-311.pyc
+│   │   │   └── ws_router.cpython-311.pyc
+│   │   ├── router_no_auth.py
+│   │   ├── router.py
+│   │   ├── services_router.py
+│   │   ├── sim_router.py
+│   │   └── ws_router.py
+│   ├── run_api.py
+│   └── simapi.txt
+├── configs
+│   ├── config.py
+│   ├── __pycache__
+│   │   ├── config.cpython-311.pyc
+│   │   └── utils.cpython-311.pyc
+│   ├── sim_report
+│   │   ├── audit_172_17_0_2_20260802_195216.json
+│   │   ├── audit_172_17_0_2_20260802_195216.md
+│   │   ├── audit_172_17_0_2_20260802_204804.json
+│   │   ├── audit_172_17_0_2_20260802_204804.md
+│   │   ├── audit_172_17_0_2_20260802_205007.json
+│   │   └── audit_172_17_0_2_20260802_205007.md
+│   ├── utils.py
+│   └── var
+│       └── cache
+├── core
+│   ├── cloner.py
+│   ├── containers_manager.py
+│   ├── dockerfile
+│   │   └── Dockerfile
+│   ├── docker_manager.py
+│   ├── fake_services_scripts.py
+│   ├── __pycache__
+│   │   ├── cloner.cpython-311.pyc
+│   │   ├── containers_manager.cpython-311.pyc
+│   │   ├── docker_manager.cpython-311.pyc
+│   │   ├── fake_services_scripts.cpython-311.pyc
+│   │   ├── services_manager_config.cpython-311.pyc
+│   │   ├── services_manager.cpython-311.pyc
+│   │   └── services_validator.cpython-311.pyc
+│   ├── services
+│   ├── services_manager_config.py
+│   ├── services_manager.py
+│   └── services_validator.py
+├── orchestrator
+│   ├── actions.py
+│   ├── aide.txt
+│   ├── auto_orchestrator.py
+│   ├── dashbord_orchestrator_api.py
+│   ├── data
+│   │   ├── checkpoint
+│   │   │   ├── auto_orchestrator_checkpoint_graphe_checkpoint.db
+│   │   │   └── test_orchestrator_checkpoints_graphe_checkpoint.db
+│   │   └── config
+│   │       ├── configs
+│   │       │   ├── simatk-4fc6558705a3986e9335.json
+│   │       │   ├── simatk-519be4bdcec573c9244f.json
+│   │       │   ├── simatk-8ad2cac79a5ab5728425.json
+│   │       │   └── simatk-eea0b05a883d56f7faf5.json
+│   │       └── default_config.json5
+│   ├── graph_nodes_backup.py
+│   ├── graph_nodes.py
+│   ├── interactive_terminal_orchestrator_backup.py
+│   ├── interactive_terminal_orchestrator.py
+│   ├── interactive_web_orchestrator_backup.py
+│   ├── interactive_web_orchestrator.py
+│   ├── llm_manager.py
+│   ├── manager.py
+│   ├── managers
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── simulation_manager.cpython-311.pyc
+│   │   │   ├── utils.cpython-311.pyc
+│   │   │   └── ws_manager.cpython-311.pyc
+│   │   ├── simulation_manager.py
+│   │   ├── utils.py
+│   │   └── ws_manager.py
+│   ├── old.py
+│   ├── orchestrator_env.py
+│   ├── prompts.py
+│   ├── __pycache__
+│   │   ├── actions.cpython-311.pyc
+│   │   ├── auto_orchestrator.cpython-311.pyc
+│   │   ├── graph_nodes.cpython-311.pyc
+│   │   ├── interactive_web_orchestrator.cpython-311.pyc
+│   │   ├── llm_manager.cpython-311.pyc
+│   │   ├── orchestrator_env.cpython-311.pyc
+│   │   └── prompts.cpython-311.pyc
+│   ├── test_auto_orchestrator2.py
+│   ├── test_auto_orchestrator.py
+│   ├── test_db.py
+│   └── test_terminal_orchestrator.py
+├── pytest_tests
+│   ├── conftest.py
+│   ├── __pycache__
+│   │   ├── conftest.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_auth.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_clone.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_containers.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_images_services.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_network.cpython-311-pytest-9.0.1.pyc
+│   │   ├── test_simulation_auto.cpython-311-pytest-9.0.1.pyc
+│   │   └── test_simulation_interactive.cpython-311-pytest-9.0.1.pyc
+│   ├── pytest.ini
+│   ├── test_auth.py
+│   ├── test_clone.py
+│   ├── test_containers.py
+│   ├── test_images_services.py
+│   ├── test_network.py
+│   ├── test_simulation_auto.py
+│   └── test_simulation_interactive.py
+├── schema.md
+├── sim
+│   ├── api
+│   │   ├── api.py
+│   │   ├── deps.py
+│   │   ├── __init__.py
+│   │   ├── models
+│   │   │   ├── __init__.py
+│   │   │   └── sim_models.py
+│   │   ├── routers
+│   │   │   ├── auth_router.py
+│   │   │   ├── clone_router.py
+│   │   │   ├── images_router.py
+│   │   │   ├── __init__.py
+│   │   │   ├── router_no_auth.py
+│   │   │   ├── router.py
+│   │   │   ├── services_router.py
+│   │   │   ├── sim_router.py
+│   │   │   └── ws_router.py
+│   │   └── run_api.py
+│   ├── configs
+│   │   ├── config.py
+│   │   └── utils.py
+│   ├── core
+│   │   ├── cloner.py
+│   │   ├── docker_manager.py
+│   │   ├── services_manager_config.py
+│   │   └── services_manager.py
+│   ├── llm_manager_new.py
+│   ├── orchestrator
+│   │   ├── actions.py
+│   │   ├── auto_orchestrator.py
+│   │   ├── graph_nodes.py
+│   │   ├── interactive_terminal_orchestrator_backup.py
+│   │   ├── interactive_terminal_orchestrator.py
+│   │   ├── interactive_web_orchestrator.py
+│   │   ├── llm_manager.py
+│   │   ├── managers
+│   │   │   ├── __init__.py
+│   │   │   ├── simulation_manager.py
+│   │   │   └── ws_manager.py
+│   │   ├── orchestrator_env.py
+│   │   ├── prompts.py
+│   │   └── __pycache__
+│   │       ├── actions.cpython-311.pyc
+│   │       ├── auto_orchestrator.cpython-311.pyc
+│   │       ├── graph_nodes.cpython-311.pyc
+│   │       ├── interactive_web_orchestrator.cpython-311.pyc
+│   │       ├── llm_manager.cpython-311.pyc
+│   │       ├── orchestrator_env.cpython-311.pyc
+│   │       └── prompts.cpython-311.pyc
+│   └── simulateur_utils
+│       ├── cryto_utils.py
+│       ├── env_utils.py
+│       ├── ids_utils.py
+│       ├── jwt_utils.py
+│       ├── limiter.py
+│       ├── logger.py
+│       ├── signal_manager.py
+│       ├── utils.py
+│       └── warnings_manager.py
+├── sim_report
+│   ├── audit_172_24_0_10_20260803_213953
+│   │   ├── report.json
+│   │   └── report.md
+│   ├── audit_172_24_0_11_20260804_043733
+│   │   ├── report.json
+│   │   └── report.md
+│   ├── audit_172_24_0_12_20260804_043800
+│   │   ├── report.json
+│   │   └── report.md
+│   └── audit_172_24_0_9_20260803_213925
+│       ├── report.json
+│       └── report.md
+├── simulateur.txt
+├── simulateur_utils
+│   ├── cryto_utils.py
+│   ├── env_utils.py
+│   ├── ids_utils.py
+│   ├── jwt_utils.py
+│   ├── limiter.py
+│   ├── logger.py
+│   ├── __pycache__
+│   │   ├── cryto_utils.cpython-311.pyc
+│   │   ├── env_utils.cpython-311.pyc
+│   │   ├── ids_utils.cpython-311.pyc
+│   │   ├── jwt_utils.cpython-311.pyc
+│   │   ├── limiter.cpython-311.pyc
+│   │   ├── logger.cpython-311.pyc
+│   │   ├── signal_manager.cpython-311.pyc
+│   │   └── utils.cpython-311.pyc
+│   ├── signal_manager.py
+│   ├── utils.py
+│   └── warnings_manager.py
+├── tactics
+│   ├── base.py
+│   ├── c2
+│   │   ├── c2_data
+│   │   │   ├── bash_history_read__172-17-0-2__20260524_110653_579274.json
+│   │   │   ├── bash_history_read__172-17-0-2__20260524_111022_055233.json
+│   │   │   ├── bash_history_read__172-17-0-2__20260524_111203_627442.json
+│   │   │   ├── bash_history_read__172-17-0-2__20260524_111528_679454.json
+│   │   │   ├── bash_history_read__172-17-0-2__20260524_112049_792169.json
+│   │   │   ├── bash_history_read__172-24-0-2__20260804_133146_248273.json
+│   │   │   ├── bash_history_read__172-24-0-2__20260804_151909_385725.json
+│   │   │   ├── password_file_dump__172-17-0-2__20260524_110653_577528.json
+│   │   │   ├── password_file_dump__172-17-0-2__20260524_111022_053548.json
+│   │   │   ├── password_file_dump__172-17-0-2__20260524_111203_625764.json
+│   │   │   ├── password_file_dump__172-17-0-2__20260524_111528_678083.json
+│   │   │   ├── password_file_dump__172-17-0-2__20260524_112049_790732.json
+│   │   │   ├── password_file_dump__172-24-0-2__20260804_133146_246655.json
+│   │   │   ├── password_file_dump__172-24-0-2__20260804_151909_380510.json
+│   │   │   ├── ssh_key_theft__172-17-0-2__20260524_110653_580100.json
+│   │   │   ├── ssh_key_theft__172-17-0-2__20260524_111022_056098.json
+│   │   │   ├── ssh_key_theft__172-17-0-2__20260524_111203_628274.json
+│   │   │   ├── ssh_key_theft__172-17-0-2__20260524_111528_680435.json
+│   │   │   ├── ssh_key_theft__172-17-0-2__20260524_112049_792741.json
+│   │   │   ├── ssh_key_theft__172-24-0-2__20260804_133146_249272.json
+│   │   │   └── ssh_key_theft__172-24-0-2__20260804_151909_386581.json
+│   │   ├── c2_server.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   └── c2_server.cpython-311.pyc
+│   │   └── test.py
+│   ├── credential_access
+│   │   ├── bash_history_read.py
+│   │   ├── data
+│   │   │   ├── bash_history_read_helper.py
+│   │   │   ├── password_file_dump_helper.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── bash_history_read_helper.cpython-311.pyc
+│   │   │   │   ├── password_file_dump_helper.cpython-311.pyc
+│   │   │   │   └── ssh_key_theft_helper.cpython-311.pyc
+│   │   │   └── ssh_key_theft_helper.py
+│   │   ├── __init__.py
+│   │   ├── password_file_dump.py
+│   │   ├── __pycache__
+│   │   │   ├── bash_history_read.cpython-311.pyc
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── password_file_dump.cpython-311.pyc
+│   │   │   └── ssh_key_theft.cpython-311.pyc
+│   │   └── ssh_key_theft.py
+│   ├── data
+│   │   └── attack_logs
+│   │       ├── AutoAttackOrchestrator.json
+│   │       ├── AutoAttackOrchestrator.pkl
+│   │       ├── bash_history_read.json
+│   │       ├── bash_history_read.pkl
+│   │       ├── command_execution.json
+│   │       ├── command_execution.pkl
+│   │       ├── cron_backdoor.json
+│   │       ├── cron_backdoor.pkl
+│   │       ├── exfiltration_http.json
+│   │       ├── exfiltration_http.pkl
+│   │       ├── ftp_brute_force.json
+│   │       ├── ftp_brute_force.pkl
+│   │       ├── http_brute_force.json
+│   │       ├── http_brute_force.pkl
+│   │       ├── log_cleaner.json
+│   │       ├── log_cleaner.pkl
+│   │       ├── password_file_dump.json
+│   │       ├── password_file_dump.pkl
+│   │       ├── port_scan_banner_grab.json
+│   │       ├── port_scan_banner_grab.pkl
+│   │       ├── python_execution.json
+│   │       ├── python_execution.pkl
+│   │       ├── reverse_shell.json
+│   │       ├── reverse_shell.pkl
+│   │       ├── ssh_brute_force.json
+│   │       ├── ssh_brute_force.pkl
+│   │       ├── ssh_key_backdoor.json
+│   │       ├── ssh_key_backdoor.pkl
+│   │       ├── ssh_key_theft.json
+│   │       ├── ssh_key_theft.pkl
+│   │       ├── sudo_exploit.json
+│   │       ├── sudo_exploit.pkl
+│   │       ├── suid_binary.json
+│   │       ├── suid_binary.pkl
+│   │       ├── timestomp.json
+│   │       └── timestomp.pkl
+│   ├── defense_evasion
+│   │   ├── __init__.py
+│   │   ├── log_cleaner.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── log_cleaner.cpython-311.pyc
+│   │   │   └── timestomp.cpython-311.pyc
+│   │   └── timestomp.py
+│   ├── execution
+│   │   ├── command_execution.py
+│   │   ├── data
+│   │   │   ├── command_execution
+│   │   │   │   ├── default_cmd.py
+│   │   │   │   └── __pycache__
+│   │   │   │       └── default_cmd.cpython-311.pyc
+│   │   │   ├── python_execution
+│   │   │   │   ├── default_cmd.py
+│   │   │   │   └── __pycache__
+│   │   │   │       └── default_cmd.cpython-311.pyc
+│   │   │   └── reverse_shell
+│   │   │       ├── attaquant.py
+│   │   │       ├── __pycache__
+│   │   │       │   ├── attaquant.cpython-311.pyc
+│   │   │       │   └── victime.cpython-311.pyc
+│   │   │       ├── sam.txt
+│   │   │       └── victime.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── command_execution.cpython-311.pyc
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── python_execution.cpython-311.pyc
+│   │   │   └── reverse_shell.cpython-311.pyc
+│   │   ├── python_execution.py
+│   │   └── reverse_shell.py
+│   ├── exfiltration
+│   │   ├── exfiltration_http.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   │       ├── exfiltration_http.cpython-311.pyc
+│   │       └── __init__.cpython-311.pyc
+│   ├── initial_access
+│   │   ├── data
+│   │   │   ├── ftp_brute_force
+│   │   │   │   ├── passwords.py
+│   │   │   │   └── __pycache__
+│   │   │   │       └── passwords.cpython-311.pyc
+│   │   │   ├── http_brute_force
+│   │   │   │   ├── http_helper.py
+│   │   │   │   └── __pycache__
+│   │   │   │       └── http_helper.cpython-311.pyc
+│   │   │   ├── __pycache__
+│   │   │   │   └── http_helper.cpython-311.pyc
+│   │   │   └── ssh_brute_force
+│   │   │       ├── passwords.py
+│   │   │       └── __pycache__
+│   │   │           └── passwords.cpython-311.pyc
+│   │   ├── ftp_brute_force.py
+│   │   ├── http_brute_force.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── ftp_brute_force.cpython-311.pyc
+│   │   │   ├── http_brute_force.cpython-311.pyc
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── ssh_brute_force.cpython-311.pyc
+│   │   │   └── ssh_key_brute_force.cpython-311.pyc
+│   │   ├── ssh_brute_force.py
+│   │   └── ssh_key_brute_force.py
+│   ├── lateral_movement
+│   │   ├── data
+│   │   │   ├── __pycache__
+│   │   │   │   └── ssh_lateral_movement_helper.cpython-311.pyc
+│   │   │   └── ssh_lateral_movement_helper.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   └── ssh_lateral_movement.cpython-311.pyc
+│   │   └── ssh_lateral_movement.py
+│   ├── mittres.py
+│   ├── persistence
+│   │   ├── cron_backdoor.py
+│   │   ├── data
+│   │   │   ├── backdoor_helper.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── backdoor_helper.cpython-311.pyc
+│   │   │   │   └── startup_helper.cpython-311.pyc
+│   │   │   └── startup_helper.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── cron_backdoor.cpython-311.pyc
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── ssh_key_backdoor.cpython-311.pyc
+│   │   │   └── startup_script.cpython-311.pyc
+│   │   ├── ssh_key_backdoor.py
+│   │   └── startup_script.py
+│   ├── privilege_escalation
+│   │   ├── data
+│   │   │   ├── __pycache__
+│   │   │   │   ├── sudo_exploit_helper.cpython-311.pyc
+│   │   │   │   └── suid_binary_helper.cpython-311.pyc
+│   │   │   ├── sudo_exploit_helper.py
+│   │   │   └── suid_binary_helper.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-311.pyc
+│   │   │   ├── sudo_exploit.cpython-311.pyc
+│   │   │   └── suid_binary.cpython-311.pyc
+│   │   ├── sudo_exploit.py
+│   │   └── suid_binary.py
+│   ├── __pycache__
+│   │   ├── base.cpython-311.pyc
+│   │   └── mittres.cpython-311.pyc
+│   ├── reconnaissance
+│   │   ├── __init__.py
+│   │   ├── port_scan_and_banner_grab.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-311.pyc
+│   │       └── port_scan_and_banner_grab.cpython-311.pyc
+│   ├── schema.md
+│   └── tests
+│       ├── environment.py
+│       ├── environment.py.backup
+│       ├── fake_ssh.py
+│       ├── __pycache__
+│       │   └── environment.cpython-311.pyc
+│       ├── sam.py
+│       ├── test_agents.py
+│       ├── test_runner1.py
+│       └── test_runner.py
+├── tests
+│   ├── test_all_routes.py
+│   ├── test_interactive_web.py
+│   └── test_interactive_web_pytest.py
+├── tree_simulateur.txt
+├── t.txt
+└── var
+    └── cache
+        ├── 3f
+        │   └── 1d
+        │       └── dd5d8f9ba10b10382a5a046f642d.val
+        └── cache.db
+
+99 directories, 371 files

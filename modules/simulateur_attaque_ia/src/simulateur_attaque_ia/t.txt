@@ -1,0 +1,195 @@
+---
+
+## 📝 CONTEXTE DU PROJET
+Tu dois construire l'interface utilisateur (frontend) de **ShieldAI**, une application moderne d'audit de sécurité et de simulation d'attaque basée sur le framework MITRE ATT&CK. L'application permet de cloner un système d'exploitation, de capturer et restaurer ses services réseau dans des conteneurs isolés, puis de lancer des campagnes d'attaque automatisées ou interactives (pas-à-pas) assistées par Intelligence Artificielle.
+
+Le backend expose une API REST complète sous FastAPI et un protocole WebSocket bidirectionnel pour le streaming d'événements temps réel.
+
+---
+
+## ⚙️ 1. CONFIGURATION DYNAMIQUE DU BACKEND
+L'application doit impérativement lire sa configuration réseau depuis un fichier statique situé dans `/public/config.json`. **Ne câble jamais les URLs en dur**.
+Le fichier `/public/config.json` aura la structure suivante :
+```json
+{
+  "API_URL": "http://127.0.0.1:8080/api",
+  "WS_URL": "ws://127.0.0.1:8080/api/ws"
+}
+```
+Au démarrage, l'application doit charger ce fichier et configurer son client HTTP et ses connexions WebSocket en conséquence.
+
+---
+
+## 🎨 2. THÈMES ET DESIGN
+L'interface doit être ultra-moderne, épurée et immersive (inspiration "Operations Center" ou "Cyber-terminal"). Elle doit proposer un sélecteur de thèmes dans la barre de navigation :
+1.  **Dark Cyber (Défaut)** : Fond très sombre, accents vert néon (`#00ff66`) et cyan (`#00d4ff`).
+2.  **Nord** : Palette pastel, tons bleutés froids et reposants.
+3.  **Synthwave / Retro** : Tons violets, fuchsia et orange chaud.
+4.  **Light Minimalist** : Un thème clair propre pour les environnements de bureau classiques.
+
+---
+
+## 🔒 3. AUTHENTIFICATION & SÉCURITÉ
+L'accès à l'application est protégé par un JWT (JSON Web Token).
+*   **Composant Login** : Formulaire propre (Username/Password). Requête vers `POST /api/auth/login`.
+*   **Stockage** : Stocker le token dans le `localStorage` et l'utilisateur dans l'état de l'application.
+*   **Intercepteurs** : Ajouter automatiquement le header `Authorization: Bearer <token>` à toutes les requêtes REST (sauf `/auth/login`).
+*   **Rafraîchissement** : Configurer un intervalle ou intercepter les erreurs 401 pour appeler `POST /api/auth/login` de façon transparente.
+
+---
+
+## 🧭 4. CARTOGRAPHIE COMPLÈTE DES ROUTES DU BACKEND
+
+Tu dois implémenter les vues et composants en utilisant exactement les endpoints réels suivants du backend :
+
+### A. Authentification (`auth_router.py`)
+*   `POST /api/auth/login` : Authentification de l'administrateur.
+    *   Payload : `{"username": "...", "password": "..."}`
+    *   Réponse : `{"success": true, "token": "...", "message": "..."}`
+
+### B. Images Docker (`images_router.py`)
+*   `GET /api/images/list` : Récupère la liste des images Docker disponibles localement sur le host.
+    *   Réponse : `{"images": ["tag1", "tag2", ...]}`
+
+### C. Gestion des Conteneurs (`containers_router.py`)
+*   `GET /api/containers/list` : Récupère tous les conteneurs Docker (actifs et arrêtés).
+    *   Query params optionnels : `running` (boolean), `label` (string).
+*   `GET /api/containers/list_my_own` : Récupère uniquement les conteneurs créés par l'utilisateur (filtré sur le label `simatk.owner=user`).
+*   `POST /api/containers/create` : Crée et démarre un nouveau conteneur Docker ou en réutilise un existant.
+    *   Payload :
+        ```json
+        {
+          "image": "string (obligatoire)",
+          "name": "string (optionnel)",
+          "network": "string (défaut 'bridge')",
+          "cap_add": ["NET_RAW", "NET_ADMIN", ... (optionnel)],
+          "labels": {"clé": "valeur" (optionnel)},
+          "environment": {"clé": "valeur" (optionnel)},
+          "ports": {"port_hôte": "port_conteneur" (optionnel)},
+          "command": "string (défaut 'sleep infinity')"
+        }
+        ```
+*   `POST /api/containers/{name}/stop` : Arrête et détruit un conteneur spécifique.
+*   `POST /api/containers/{name}/exec` : Exécute une commande shell à l'intérieur d'un conteneur actif et renvoie les flux de sortie.
+    *   Payload : `{"command": "string ou list"}`
+    *   Réponse : `{"success": true, "container": "...", "command": "...", "exit_code": 0, "stdout": "...", "stderr": "..."}`
+*   `GET /api/containers/cache` : Liste les conteneurs actuellement enregistrés dans le gestionnaire de cache en mémoire.
+
+### D. Gestion du Réseau (`network_router.py`)
+*   `GET /api/network/list` : Liste les réseaux Docker disponibles.
+    *   Query params optionnels : `only_simatk` (boolean).
+*   `POST /api/network/create` : Crée un nouveau réseau virtuel.
+    *   Payload : `{"name": "...", "driver": "bridge", "subnet": "...", "internal": true/false, "labels": {...}}`
+*   `GET /api/network/{network_name}/containers` : Liste les conteneurs actuellement rattachés à un réseau spécifique (avec récupération de leur adresse IP).
+*   `POST /api/network/{network_name}/remove` : Supprime un réseau.
+    *   Query params optionnels : `force` (boolean - si true, arrête et détruit d'abord les conteneurs connectés).
+*   `POST /api/network/remove_all` : Supprime globalement tous les réseaux marqués du label `simatk`.
+*   `POST /api/network/{network_name}/connect` : Connecte un conteneur à un réseau existant.
+    *   Payload : `{"container_name": "string (obligatoire)"}`
+*   `POST /api/network/{network_name}/disconnect` : Déconnecte un conteneur d'un réseau.
+    *   Payload : `{"container_name": "string (obligatoire)", "force": boolean}`
+*   `POST /api/network/move` : Déplace un conteneur d'un réseau vers un autre.
+    *   Payload : `{"container_name": "...", "source_network": "...", "destination_network": "...", "force": boolean}`
+
+### E. Clonage de Système (`clone_router.py`)
+*   `POST /api/clone/start` : Démarre une tâche de copie asynchrone et d'importation du système d'exploitation du host.
+    *   Payload : `{"src": "...", "dest": "...", "archive_path": "...", "remove_back_up": true/false, "container_name": "...", "network_caps": true/false, "authorize_network": true/false}`
+*   `GET /api/clone/{clone_id}/status` : Vérifie l'avancement de la tâche.
+    *   Réponse : `{"clone_id": "...", "status": "running|completed|failed|stopped|not_found", "image": "...", "services": {...}, "error": "..."}`
+*   `POST /api/clone/{clone_id}/stop` : Annule et arrête une tâche de clonage en cours d'exécution.
+
+### F. Énumération des Services (`services_router.py`)
+*   `GET /api/services/capture` : Analyse le système hôte pour en extraire l'arbre des processus actifs et les ports d'écoute associés.
+*   `POST /api/services/validate` : Valide la conformité structurelle d'un dictionnaire de services réseau avant injection.
+    *   Payload : `{"services": {...}}`
+    *   Réponse : `{"valid": true/false, "errors": [...], "warnings": [...]}`
+
+### G. Gestion des Simulations (`sim_router.py`)
+*   `POST /api/sim/start` : Démarre une nouvelle campagne d'attaque.
+    *   Payload :
+        ```json
+        {
+          "image": "string (obligatoire)",
+          "mode": "auto|interactive",
+          "services": {"clé_pid": {"name": "...", "ports": [...]}, ... (optionnel)},
+          "use_llm": boolean,
+          "container_name": "string (optionnel)",
+          "authorize_network": boolean,
+          "network_caps": boolean,
+          "default_services": {"http": [80, 8080], "ssh": [22], "ftp": [21] (optionnel)},
+          "only_listening": boolean,
+          "use_default_excludes": boolean,
+          "capture_excluded_names": ["list", ... (optionnel)],
+          "capture_excluded_ports": ["list", ... (optionnel)],
+          "capture_excluded_pids": ["list", ... (optionnel)],
+          "auto_capture": boolean
+        }
+        ```
+*   `POST /api/sim/{session_id}/stop` : Force l'arrêt et le nettoyage d'une simulation en cours.
+*   `GET /api/sim/{session_id}/status` : État d'avancement d'une session.
+*   `GET /api/sim/list` : Liste des simulations en mémoire.
+*   `GET /api/sim/{session_id}/report` : Récupère le rapport consolidé d'une simulation terminée (renvoie une erreur 404 si la simulation est toujours en cours de traitement).
+*   `GET /api/sim/{session_id}/actions` : Actions disponibles en mode interactif.
+*   `GET /api/sim/history` : Liste l'historique persistent stocké dans le cache.
+*   `GET /api/sim/history/{sim_id}` : Détails d'une entrée d'historique archivée.
+
+---
+
+## 💻 6. DESIGN ET INTERACTIVITÉ DE CHAQUE COMPOSANT VISUEL
+
+### Onglet A : Topologie Réseau & Containers (Le Node Graph)
+*   **Composant Graphique (React Flow)** :
+    *   Affiche une vue nodale des réseaux disponibles.
+    *   Les conteneurs sont représentés par des nœuds enfants regroupés à l'intérieur des zones réseau correspondantes.
+    *   Les liens d'appartenance affichent simplement le nom du réseau et l'adresse IP associée au conteneur (pas d'édition d'IP ou d'alias lors de la connexion, car le backend gère l'adressage Docker automatiquement).
+*   **Barre Latérale de Contrôle Réseau** :
+    *   **Clic sur un conteneur** :
+        *   Affiche son statut, ses labels, sa taille.
+        *   Propose un **Terminal Web interactif** : Envoie des commandes shell vers `POST /api/containers/{name}/exec` et affiche le retour de manière asynchrone dans un terminal noir rétro.
+        *   Permet d'arrêter le conteneur (`POST /containers/{name}/stop`).
+    *   **Clic sur un réseau** :
+        *   Bouton pour connecter un conteneur existant au réseau. Le formulaire demande uniquement de choisir un conteneur dans une liste déroulante (`POST /network/{name}/connect`).
+        *   Bouton pour déconnecter un conteneur du réseau (`POST /network/{name}/disconnect`).
+        *   Bouton pour supprimer le réseau (`POST /network/{name}/remove`).
+
+### Onglet B : Clonage & Services
+*   **Contrôle de Clonage** :
+    *   Formulaire d'options pour appeler `POST /api/clone/start`.
+    *   Dès réception du `clone_id`, affiche un statut dynamique rafraîchi par polling vers `/clone/{clone_id}/status` (Statuts gérés : `running` avec indicateur de chargement, `completed` avec l'image générée, `failed` avec affichage de l'erreur en rouge, `stopped`).
+*   **Validateur de Services** :
+    *   Éditeur de code JSON interactif pour modifier le dictionnaire de processus.
+    *   Bouton pour tester les services via `POST /api/services/validate`. Affiche de manière structurée les listes `errors` (bloquantes) et `warnings` (alertes).
+
+### Onglet C : Simulations — Centre d'Opérations (Mode Auto & Interactif)
+*   **Initialisation** : Permet de configurer l'attaque (formulaire `StartSimRequest`) puis d'appeler `POST /api/sim/start`.
+*   **WebSocket Stream Listener (`/ws/{session_id}?token=xxx`)** :
+    *   À l'ouverture du WS, le backend renvoie l'événement `connected` et rejoue l'historique de la session (entre les marqueurs `replay_start` et `replay_end`).
+    *   **Mode Auto** : L'interface est en lecture seule, elle affiche une console de log qui défile automatiquement au fur et à mesure que les événements `step_start`, `step_progress`, `step_success` et `step_result` arrivent.
+    *   **Mode Interactif (Bidirectionnel)** :
+        *   Le serveur émet un message de type `sim_ready` (contenant les actions disponibles et l'état de compromission actuel `state_summary`).
+        *   Le frontend présente les actions sous forme de **boîte à outils** interactive.
+        *   Lorsque l'utilisateur choisit une action (ex : `initial_access`), une boîte de dialogue s'ouvre pour lui permettre de configurer ses paramètres (par exemple, personnaliser les dictionnaires d'utilisateurs et mots de passe).
+        *   Lors de la validation, le frontend envoie sur le canal WS :
+            ```json
+            {
+              "type": "execute_action",
+              "action": "reconnaissance",
+              "params": { ... }
+            }
+            ```
+        *   Des boutons d'assistance IA permettent d'envoyer les messages `request_llm_suggest` ou `request_llm_review` sur le WS et d'afficher la réponse de l'assistant dans un panneau dédié.
+
+### Onglet D : Historique & Rapports
+*   Affiche l'historique récupéré depuis `GET /api/sim/history`.
+*   Au clic sur un audit terminé, affiche le rapport final (`GET /api/sim/{session_id}/report`).
+*   **MITRE ATT&CK Matrix interactive** : Représente visuellement la matrice MITRE. Colorie les techniques exécutées avec succès (Vert) ou ayant échoué (Rouge). Affiche les métadonnées et erreurs au survol.
+*   **Plan de Remédiation** : Présente les failles de sécurité découvertes, leur niveau de criticité, et les recommandations de correction de manière structurée.
+
+---
+
+## ⚡ DIRECTIVES COMPORTEMENTALES POUR L'IA (SYSTEM INSTRUCTIONS)
+1.  **TypeScript Strict** : Tous les modèles d'API REST et d'événements WS doivent être typés de façon stricte en TypeScript. Définis des interfaces pour chaque type de message WS.
+2.  **Gestion des états fermés** : Prévois toujours une reconnexion automatique du WebSocket en cas de coupure réseau, et affiche un indicateur visuel de perte de connexion en haut de l'écran.
+3.  **UI fluide** : Utilise des transitions Tailwind fluides, des squelettes de chargement (`skeletons`) lors de l'attente des données REST, et anime les terminaux avec un effet d'écriture ou de défilement automatique vers le bas lors de l'arrivée de nouveaux logs.
+
+Génère maintenant l'application complète sur la base de ces spécifications réelles !

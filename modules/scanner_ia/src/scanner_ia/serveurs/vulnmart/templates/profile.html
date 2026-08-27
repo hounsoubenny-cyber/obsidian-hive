@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Profil {{ profile_user['username'] }} — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="section">
+    <h2>Profil de {{ profile_user['username'] }} <span class="vuln-tag">IDOR: accessible sans auth ni contrôle</span></h2>
+    <table>
+      <tr><th>Champ</th><th>Valeur</th></tr>
+      <tr><td>Email</td><td>{{ profile_user['email'] }}</td></tr>
+      <tr><td>Rôle</td><td>{{ profile_user['role'] }}</td></tr>
+      <tr><td>SSN</td><td class="mono">{{ profile_user['ssn'] }}</td></tr>
+      <tr><td>Carte bancaire</td><td class="mono">{{ profile_user['credit_card'] }}</td></tr>
+      <tr><td>Hash mot de passe ({{ profile_user['hash_algo'] }})</td><td class="mono">{{ profile_user['password_hash'] }}</td></tr>
+    </table>
+
+    <h2 style="margin-top:32px;">Commandes</h2>
+    <table>
+      <tr><th>#</th><th>Produit</th><th>Qté</th><th>Adresse</th><th>Carte</th><th>Statut</th></tr>
+      {% for o in orders %}
+      <tr>
+        <td>{{ o['id'] }}</td><td>{{ o['product_id'] }}</td><td>{{ o['quantity'] }}</td>
+        <td>{{ o['shipping_address'] }}</td><td class="mono">**** {{ o['card_last4'] }}</td><td>{{ o['status'] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p style="font-size:.85rem;margin-top:16px;">Essayez : <code>/profile/admin</code>, <code>/profile/alice</code>, <code>/api/user/1</code></p>
+  </div>
+</div>
+{% endblock %}

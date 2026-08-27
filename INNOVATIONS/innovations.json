@@ -1,0 +1,106 @@
+implementation_roadmap = {
+    # ============================================
+    # PHASE 1 - CORE (Semaines 1-4)
+    # ============================================
+    "phase_1_core": {
+        "semaine_1": [
+            "Fetcher + Parser + Crawler (base)",
+        ],
+        "semaine_2": [
+            "13_intelligent_caching",      # ⭐⭐ Facile, 2j
+            "17_cvss_auto_scoring",        # ⭐⭐ Facile, 2j
+            "37_slack_notifications"       # ⭐ Facile, 1j
+        ],
+        "semaine_3": [
+            "3_behavioral_timing",         # ⭐⭐ Facile, 2j
+            "22_secret_scanning",          # ⭐⭐ Facile, 2j
+            "24_jwt_vulnerability"         # ⭐⭐ Facile, 2j
+        ],
+        "semaine_4": [
+            "4_attack_chain_detection",    # ⭐⭐ Moyen, 4j
+            "21_subdomain_takeover"        # ⭐⭐ Facile, 3j
+        ]
+    },
+
+    # ============================================
+    # PHASE 2 - ADVANCED (Semaines 5-8)
+    # ============================================
+    "phase_2_advanced": {
+        "semaine_5": [
+            "2_visual_diffing_xss",        # ⭐⭐ Facile, 3j
+            "27_ssti_detection"            # ⭐⭐ Moyen, 3j
+        ],
+        "semaine_6": [
+            "1_ml_context_fuzzing",        # ⭐⭐⭐ Moyen, 2 sem (début)
+        ],
+        "semaine_7": [
+            "1_ml_context_fuzzing",        # (suite)
+        ],
+        "semaine_8": [
+            "5_smart_graph_crawling",      # ⭐⭐⭐ Moyen, 1 sem
+        ]
+    },
+
+    # ============================================
+    # PHASE 3 - PRO (Semaines 9-12)
+    # ============================================
+    "phase_3_pro": {
+        "semaine_9": [
+            "14_exploit_poc_generation",   # ⭐⭐⭐ Moyen, 1 sem
+        ],
+        "semaine_10": [
+            "8_api_fuzzing_graphql",       # ⭐⭐⭐ Moyen, 1 sem
+        ],
+        "semaine_11": [
+            "12_adaptive_rate_limiting",   # ⭐⭐ Moyen, 4j
+            "16_interactive_reports"       # ⭐⭐ Facile, 4j
+        ],
+        "semaine_12": [
+            "15_remediation_suggestions",  # ⭐⭐⭐ Moyen, 4j
+            "35_ci_cd_integration"         # ⭐⭐ Facile, 3j
+        ]
+    },
+
+    # ============================================
+    # PHASE 4 - EXPERT (Semaines 13+)
+    # ============================================
+    "phase_4_expert": {
+        "optionnel": [
+            "6_dynamic_waf_bypass",        # ⭐⭐⭐⭐ Difficile, 3-4 sem
+            "10_business_logic_fuzzing",   # ⭐⭐⭐⭐ Difficile, 2-3 sem
+            "30_http_request_smuggling",   # ⭐⭐⭐⭐ Difficile, 1-2 sem
+            "11_distributed_scanning",     # ⭐⭐⭐ Moyen, 1 sem
+            "32_false_positive_ml_filter", # ⭐⭐⭐ Moyen, 1 sem
+        ]
+    }
+}
+
+
+# innovations_scanner.json
+{
+  "total_innovations": 38,
+  "categories": {
+    "Detection": 15,
+    "ML/AI": 4,
+    "Performance": 3,
+    "Reporting": 4,
+    "Evasion": 3,
+    "Integration": 4,
+    "Analysis": 1,
+    "Crawling": 1,
+    "Verification": 1,
+    "Specialized": 2
+  },
+  "difficulty_breakdown": {
+    "facile": 14,
+    "moyen": 17,
+    "difficile": 7
+  },
+  "tier_breakdown": {
+    "S": 6,
+    "A": 8,
+    "B": 7,
+    "C": 15,
+    "D": 2
+  }
+}

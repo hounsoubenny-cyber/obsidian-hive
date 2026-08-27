@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}VulnMart{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">Vuln<span>Mart</span></a>
+    <div class="nav">
+      <a href="{{ url_for('search') }}">Recherche</a>
+      <a href="{{ url_for('comments') }}">Avis clients</a>
+      <a href="{{ url_for('ping') }}">Outils réseau</a>
+      <a href="{{ url_for('fetch_image') }}">Import image</a>
+      {% if user %}
+        <a href="{{ url_for('profile', username=user['username']) }}">{{ user['username'] }}</a>
+        <a href="{{ url_for('logout') }}">Déconnexion</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Connexion</a>
+      {% endif %}
+      <span class="badge">TEST TARGET</span>
+    </div>
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <div class="footer">
+    <span>VulnMart — cible de test pour scanner de sécurité. Ne pas exposer publiquement.</span>
+    <span class="mono">v0.9.1-vuln</span>
+  </div>
+</body>
+</html>

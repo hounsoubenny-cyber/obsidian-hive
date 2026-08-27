@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Accueil interne</title>
+    <!--
+        Serveur interne : 10.0.4.22
+        Version backend : Django 3.1.2 (vulnérable CVE-2021-33203)
+        Chemin admin réel : /internal/sys-admin-42/
+        Contact DevOps : devops-team@internal.example.com
+    -->
+</head>
+<body>
+    <h1>Bienvenue</h1>
+    <p>Cette page contient des informations sensibles cachées dans le code source.</p>
+
+    <!-- Stack trace laissée par erreur en dev -->
+    <!--
+    Traceback (most recent call last):
+      File "/var/www/app/views.py", line 142, in get_user
+        conn = psycopg2.connect(host="db-prod-01.internal", user="app_admin", password="Adm1n_2026_Prod!")
+      django.db.utils.OperationalError
+    -->
+
+    <p><a href="index.html">Retour</a></p>
+</body>
+</html>

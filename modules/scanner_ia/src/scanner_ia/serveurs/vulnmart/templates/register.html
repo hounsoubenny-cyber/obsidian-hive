@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Inscription — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 style="text-align:center;margin-top:40px;">Créer un compte</h2>
+  <form class="panel" method="POST">
+    <label>Nom d'utilisateur</label>
+    <input type="text" name="username">
+    <label>Email</label>
+    <input type="email" name="email">
+    <label>Mot de passe</label>
+    <input type="password" name="password">
+    <button class="btn" style="margin-top:20px;width:100%;" type="submit">S'inscrire</button>
+  </form>
+</div>
+{% endblock %}

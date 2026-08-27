@@ -1,0 +1,623 @@
+{
+  "metadata": {
+    "version": "2.1.0",
+    "created": "2026-03-11",
+    "author": "Samuel - ShieldAI",
+    "description": "Poids optimisés avec mapping complet et priorités",
+    "weight_format": "[indicators, status_code, delay, headers, body_size]"
+  },
+  "weight_components": {
+    "indicators": {
+      "description": "Patterns/keywords dans réponse (erreurs, outputs, reflected payloads)",
+      "importance": "Très élevée pour la plupart des vulns"
+    },
+    "status_code": {
+      "description": "Status HTTP (200, 302, 403, 500, etc.)",
+      "importance": "Critique pour auth, permissions, errors"
+    },
+    "delay": {
+      "description": "Temps de réponse (pour SQLi time-based, DoS, race conditions)",
+      "importance": "Critique seulement pour attaques time-based"
+    },
+    "headers": {
+      "description": "Headers HTTP (CORS, Set-Cookie, CSP, etc.)",
+      "importance": "Critique pour CORS, cookies, crypto"
+    },
+    "body_size": {
+      "description": "Taille de la réponse",
+      "importance": "Généralement faible sauf exceptions"
+    }
+  },
+  "severity_mapping": {
+    "critique": [
+      {
+        "name": "SQLi",
+        "priority": 1,
+        "description": "Injection SQL - Accès base de données"
+      },
+      {
+        "name": "CMDi",
+        "priority": 2,
+        "description": "Command Injection - RCE système"
+      },
+      {
+        "name": "InsecDeser",
+        "priority": 3,
+        "description": "Désérialisation - RCE"
+      },
+      {
+        "name": "InsecUpload",
+        "priority": 4,
+        "description": "File Upload - Shell upload"
+      },
+      {
+        "name": "BufOvr",
+        "priority": 5,
+        "description": "Buffer Overflow - Crash/RCE"
+      },
+      {
+        "name": "CredsExpose",
+        "priority": 6,
+        "description": "Credentials Exposure - Mots de passe exposés"
+      },
+      {
+        "name": "BrokenAuth",
+        "priority": 7,
+        "description": "Broken Authentication - Bypass login"
+      }
+    ],
+    "élevé": [
+      {
+        "name": "XSS",
+        "priority": 8,
+        "description": "Cross-Site Scripting - Exécution JS"
+      },
+      {
+        "name": "DirTrav",
+        "priority": 9,
+        "description": "Directory Traversal - Lecture fichiers"
+      },
+      {
+        "name": "XXE",
+        "priority": 10,
+        "description": "XML External Entity - Lecture fichiers/SSRF"
+      },
+      {
+        "name": "NoSQLi",
+        "priority": 11,
+        "description": "NoSQL Injection - Bypass auth"
+      },
+      {
+        "name": "LDAPi",
+        "priority": 12,
+        "description": "LDAP Injection - Bypass auth"
+      },
+      {
+        "name": "InsecPerm",
+        "priority": 13,
+        "description": "Insecure Permissions - IDOR"
+      },
+      {
+        "name": "SessFix",
+        "priority": 14,
+        "description": "Session Fixation - Hijack session"
+      },
+      {
+        "name": "SSRF",
+        "priority": 15,
+        "description": "Server-Side Request Forgery"
+      },
+      {
+        "name": "SSTI",
+        "priority": 16,
+        "description": "Server-Side Template Injection"
+      },
+      {
+        "name": "Prototype_Pollution",
+        "priority": 17,
+        "description": "Prototype Pollution"
+      },
+      {
+        "name": "HTTP_Request_Smuggling",
+        "priority": 18,
+        "description": "HTTP Request Smuggling"
+      },
+      {
+        "name": "XPATH_Injection",
+        "priority": 19,
+        "description": "XPath Injection"
+      }
+    ],
+    "moyen": [
+      {
+        "name": "GraphQLi",
+        "priority": 20,
+        "description": "GraphQL Injection - Introspection"
+      },
+      {
+        "name": "CORS",
+        "priority": 21,
+        "description": "CORS Misconfiguration - Cross-origin"
+      },
+      {
+        "name": "CSRF",
+        "priority": 22,
+        "description": "Cross-Site Request Forgery"
+      },
+      {
+        "name": "RateLimit",
+        "priority": 23,
+        "description": "Rate Limiting Issues - DoS"
+      },
+      {
+        "name": "InfoDisc",
+        "priority": 24,
+        "description": "Information Disclosure - Data leak"
+      },
+      {
+        "name": "RaceCondition",
+        "priority": 25,
+        "description": "Race Conditions - TOCTOU"
+      },
+      {
+        "name": "InsecCrypto",
+        "priority": 26,
+        "description": "Insecure Cryptography - Weak algos"
+      },
+      {
+        "name": "OpenRedirect",
+        "priority": 27,
+        "description": "Open Redirect"
+      },
+      {
+        "name": "JWT",
+        "priority": 28,
+        "description": "JWT Vulnerabilities"
+      },
+      {
+        "name": "CRLF_Injection",
+        "priority": 29,
+        "description": "CRLF Injection"
+      }
+    ],
+    "faible": []
+  },
+  "vulnerability_weights": {
+    "SQLi": {
+      "name_abbr": "SQLi",
+      "name_full": "sql_injection",
+      "weights": [
+        0.55,
+        0.15,
+        0.25,
+        0.03,
+        0.02
+      ],
+      "explanation": "Erreurs SQL critiques, status 500 fréquent, time-based avec SLEEP",
+      "key_factor": "Messages d'erreur SQL + timing attacks"
+    },
+    "CMDi": {
+      "name_abbr": "CMDi",
+      "name_full": "command_injection",
+      "weights": [
+        0.75,
+        0.12,
+        0.08,
+        0.03,
+        0.02
+      ],
+      "explanation": "Output système très distinctif (uid=, gid=, passwd), status code peu informatif",
+      "key_factor": "Sortie commande visible (uid=, dir, etc.)"
+    },
+    "InsecDeser": {
+      "name_abbr": "InsecDeser",
+      "name_full": "insecure_deserialization",
+      "weights": [
+        0.65,
+        0.22,
+        0.08,
+        0.03,
+        0.02
+      ],
+      "explanation": "RCE output visible, errors 500 fréquents",
+      "key_factor": "Command execution output"
+    },
+    "InsecUpload": {
+      "name_abbr": "InsecUpload",
+      "name_full": "insecure_file_upload",
+      "weights": [
+        0.55,
+        0.3,
+        0.05,
+        0.08,
+        0.02
+      ],
+      "explanation": "Fichier accessible (200), URLs fichiers, Content-Type headers",
+      "key_factor": "Status 200 + fichier accessible"
+    },
+    "BufOvr": {
+      "name_abbr": "BufOvr",
+      "name_full": "buffer_overflow",
+      "weights": [
+        0.45,
+        0.42,
+        0.08,
+        0.03,
+        0.02
+      ],
+      "explanation": "Crashes (500), segfaults distinctifs, status très important",
+      "key_factor": "Status 500 + memory errors"
+    },
+    "CredsExpose": {
+      "name_abbr": "CredsExpose",
+      "name_full": "exposed_credentials",
+      "weights": [
+        0.8,
+        0.12,
+        0.03,
+        0.03,
+        0.02
+      ],
+      "explanation": "Credentials en clair dans body — indicateurs sont TRÈS discriminants (DB_PASSWORD=, aws_secret_access_key)",
+      "key_factor": "Patterns credentials (password=, api_key=)"
+    },
+    "BrokenAuth": {
+      "name_abbr": "BrokenAuth",
+      "name_full": "broken_authentication",
+      "weights": [
+        0.4,
+        0.3,
+        0.05,
+        0.22,
+        0.03
+      ],
+      "explanation": "Redirects (302) critiques, Set-Cookie headers, messages auth",
+      "key_factor": "302 + Set-Cookie + dashboard accessible"
+    },
+    "XSS": {
+      "name_abbr": "XSS",
+      "name_full": "cross-site_scripting",
+      "weights": [
+        0.7,
+        0.1,
+        0.0,
+        0.18,
+        0.02
+      ],
+      "explanation": "Payload reflété dans HTML est LE signal fort — boosted indicators",
+      "key_factor": "Reflection du payload dans HTML"
+    },
+    "DirTrav": {
+      "name_abbr": "DirTrav",
+      "name_full": "directory_traversal",
+      "weights": [
+        0.78,
+        0.1,
+        0.03,
+        0.07,
+        0.02
+      ],
+      "explanation": "Contenu fichier très discriminant (root:x:0:0:), indicators boostés",
+      "key_factor": "Contenu fichier système dans réponse"
+    },
+    "XXE": {
+      "name_abbr": "XXE",
+      "name_full": "xml_external_entity",
+      "weights": [
+        0.65,
+        0.15,
+        0.1,
+        0.08,
+        0.02
+      ],
+      "explanation": "File content ou SSRF visible, possibles requêtes externes time-based",
+      "key_factor": "Fichiers exposés ou callbacks externes"
+    },
+    "NoSQLi": {
+      "name_abbr": "NoSQLi",
+      "name_full": "nosql_injection",
+      "weights": [
+        0.6,
+        0.28,
+        0.07,
+        0.03,
+        0.02
+      ],
+      "explanation": "Erreurs MongoDB très distinctives, status errors fréquents",
+      "key_factor": "Messages erreur MongoDB/NoSQL"
+    },
+    "LDAPi": {
+      "name_abbr": "LDAPi",
+      "name_full": "ldap_injection",
+      "weights": [
+        0.65,
+        0.22,
+        0.08,
+        0.03,
+        0.02
+      ],
+      "explanation": "Syntaxe LDAP errors très distinctives",
+      "key_factor": "Erreurs filtre LDAP"
+    },
+    "InsecPerm": {
+      "name_abbr": "InsecPerm",
+      "name_full": "insecure_permissions",
+      "weights": [
+        0.3,
+        0.55,
+        0.05,
+        0.08,
+        0.02
+      ],
+      "explanation": "Status 200 au lieu de 403 est LE signal — très boosted status_code",
+      "key_factor": "200 OK pour ressource non autorisée"
+    },
+    "IDOR": {
+      "name_abbr": "IDOR",
+      "name_full": "insecure_direct_object_reference",
+      "weights": [
+        0.35,
+        0.55,
+        0.03,
+        0.05,
+        0.02
+      ],
+      "explanation": "Status code 200 au lieu de 403/404 est le signal le plus fort, indicateurs de données d'autres utilisateurs",
+      "key_factor": "Accès à des ressources normalement protégées (200 OK au lieu de 403)"
+    },
+    "SessFix": {
+      "name_abbr": "SessFix",
+      "name_full": "session_fixation",
+      "weights": [
+        0.45,
+        0.2,
+        0.05,
+        0.28,
+        0.02
+      ],
+      "explanation": "Session IDs reflétés dans Set-Cookie, headers très importants",
+      "key_factor": "Session ID predictable/fixé"
+    },
+    "SSRF": {
+      "name_abbr": "SSRF",
+      "name_full": "server_side_request_forgery",
+      "weights": [
+        0.5,
+        0.12,
+        0.18,
+        0.15,
+        0.05
+      ],
+      "explanation": "Contenu interne ou metadata visible, délais si timeout, headers Cloud",
+      "key_factor": "Réponse contenant des données internes ou callback OOB"
+    },
+    "SSTI": {
+      "name_abbr": "SSTI",
+      "name_full": "server_side_template_injection",
+      "weights": [
+        0.7,
+        0.12,
+        0.05,
+        0.1,
+        0.03
+      ],
+      "explanation": "Résultat de calcul (49 pour 7*7) ou erreur template très distinctif",
+      "key_factor": "Exécution de code ou erreur template"
+    },
+    "Prototype_Pollution": {
+      "name_abbr": "Prototype_Pollution",
+      "name_full": "prototype_pollution",
+      "weights": [
+        0.5,
+        0.2,
+        0.05,
+        0.18,
+        0.07
+      ],
+      "explanation": "Changement de comportement, nouvelles propriétés dans réponse",
+      "key_factor": "Présence de __proto__ dans la réponse"
+    },
+    "HTTP_Request_Smuggling": {
+      "name_abbr": "HTTP_Request_Smuggling",
+      "name_full": "http_request_smuggling",
+      "weights": [
+        0.25,
+        0.28,
+        0.12,
+        0.32,
+        0.03
+      ],
+      "explanation": "Headers conflictuels, réponses désynchronisées, headers très importants",
+      "key_factor": "Désynchronisation détectée"
+    },
+    "XPATH_Injection": {
+      "name_abbr": "XPATH_Injection",
+      "name_full": "xpath_injection",
+      "weights": [
+        0.6,
+        0.2,
+        0.08,
+        0.08,
+        0.04
+      ],
+      "explanation": "Erreurs XPath très distinctives, données extraites",
+      "key_factor": "Messages d'erreur XPath"
+    },
+    "GraphQLi": {
+      "name_abbr": "GraphQLi",
+      "name_full": "graphql_injection",
+      "weights": [
+        0.65,
+        0.18,
+        0.05,
+        0.1,
+        0.02
+      ],
+      "explanation": "Introspection dans réponse très distinctive (__schema, queryType)",
+      "key_factor": "__schema, __typename dans réponse"
+    },
+    "CORS": {
+      "name_abbr": "CORS",
+      "name_full": "cors_misconfiguration",
+      "weights": [
+        0.15,
+        0.05,
+        0.0,
+        0.78,
+        0.02
+      ],
+      "explanation": "Headers CORS sont LE signal unique — fortement boosted headers",
+      "key_factor": "Access-Control-Allow-Origin reflété"
+    },
+    "CSRF": {
+      "name_abbr": "CSRF",
+      "name_full": "cross-site_request_forgery",
+      "weights": [
+        0.35,
+        0.38,
+        0.1,
+        0.15,
+        0.02
+      ],
+      "explanation": "Action effectuée visible (302 redirect), indicateurs dans body",
+      "key_factor": "Status redirect + action confirmée"
+    },
+    "RateLimit": {
+      "name_abbr": "RateLimit",
+      "name_full": "rate_limiting_issues",
+      "weights": [
+        0.25,
+        0.45,
+        0.25,
+        0.03,
+        0.02
+      ],
+      "explanation": "Status 429/503 critique, délais augmentent, messages rate limit",
+      "key_factor": "429 Too Many Requests + délais"
+    },
+    "InfoDisc": {
+      "name_abbr": "InfoDisc",
+      "name_full": "information_disclosure",
+      "weights": [
+        0.8,
+        0.12,
+        0.03,
+        0.03,
+        0.02
+      ],
+      "explanation": "Données sensibles très discriminantes (DB_PASSWORD=, api_key=) — fortement boosted",
+      "key_factor": "Keywords sensibles (password=, api_key=)"
+    },
+    "InsecCrypto": {
+      "name_abbr": "InsecCrypto",
+      "name_full": "insecure_crypto",
+      "weights": [
+        0.45,
+        0.15,
+        0.05,
+        0.32,
+        0.03
+      ],
+      "explanation": "Algos faibles visibles, headers sécurité (HSTS, CSP) très importants",
+      "key_factor": "Weak cipher detected + headers"
+    },
+    "OpenRedirect": {
+      "name_abbr": "OpenRedirect",
+      "name_full": "open_redirect",
+      "weights": [
+        0.1,
+        0.7,
+        0.05,
+        0.13,
+        0.02
+      ],
+      "explanation": "Location header est LE signal — status 302/301 très boosted",
+      "key_factor": "Redirection vers domaine externe"
+    },
+    "JWT": {
+      "name_abbr": "JWT",
+      "name_full": "jwt_vulnerabilities",
+      "weights": [
+        0.45,
+        0.3,
+        0.05,
+        0.18,
+        0.02
+      ],
+      "explanation": "Token accepté sans signature, informations dans le payload, headers auth",
+      "key_factor": "Acceptation de token avec alg=none"
+    },
+    "CRLF_Injection": {
+      "name_abbr": "CRLF_Injection",
+      "name_full": "http_header_injection",
+      "weights": [
+        0.25,
+        0.2,
+        0.05,
+        0.48,
+        0.02
+      ],
+      "explanation": "Headers injectés sont LE signal — fortement boosted headers",
+      "key_factor": "Headers supplémentaires dans la réponse"
+    },
+    "RaceCondition": {
+      "name_abbr": "RaceCondition",
+      "name_full": "race_conditions",
+      "weights": [
+        0.45,
+        0.2,
+        0.28,
+        0.05,
+        0.02
+      ],
+      "explanation": "Timing windows, états incohérents — delay important",
+      "key_factor": "Incohérence après requêtes concurrentes"
+    }
+  },
+  "aliases": {
+    "commandinjection": "CMDi",
+    "directorytrav": "DirTrav",
+    "pathtrav": "DirTrav",
+    "lfi": "DirTrav",
+    "nosql": "NoSQLi",
+    "ldap": "LDAPi",
+    "graphql": "GraphQLi",
+    "rate": "RateLimit",
+    "infodisclosure": "InfoDisc",
+    "credentials": "CredsExpose",
+    "upload": "InsecUpload",
+    "auth": "BrokenAuth",
+    "permission": "InsecPerm",
+    "idor": "InsecPerm",
+    "session": "SessFix",
+    "race": "RaceCondition",
+    "deserialization": "InsecDeser",
+    "buffer": "BufOvr",
+    "crypto": "InsecCrypto",
+    "certificate": "InsecCrypto",
+    "smuggling": "HTTP_Request_Smuggling",
+    "crlf": "CRLF_Injection",
+    "xpath": "XPATH_Injection",
+    "redirect": "OpenRedirect",
+    "jwt": "JWT",
+    "insecure_direct_object_reference": "IDOR"
+  },
+  "scoring_algorithm": {
+    "description": "Comment calculer le score final de détection",
+    "steps": [
+      "1. Récupérer weights pour la vulnérabilité",
+      "2. Calculer score composants (indicators, status, delay, headers, body)",
+      "3. Score total = sum(weight[i] * component_score[i])",
+      "4. Normaliser entre 0-100: normalize(score, c=50)",
+      "5. Calculer confiance: sigmoid(normalized/100, center=0.5, k=8)",
+      "6. Décision: confiance >= 0.8 → vulnérabilité détectée"
+    ],
+    "formulas": {
+      "normalize": "score / (1 + abs(score - c))",
+      "sigmoid": "1 / (1 + exp(-k * (x - center)))"
+    }
+  },
+  "usage_example": {
+    "python_code": "# Charger weights\nwith open('weights_v2.json') as f:\n    config = json.load(f)\n\n# Récupérer weights pour XSS\nvuln_type = 'xss'\nweights = config['vulnerability_weights'][vuln_type]['weights']\n# weights = [0.60, 0.15, 0.00, 0.20, 0.05]\n\n# Calculer score\ncomponent_scores = [0.8, 0.5, 0.0, 0.3, 0.1]  # Exemple\ntotal_score = sum(w * s for w, s in zip(weights, component_scores))\n# total_score = 0.60*0.8 + 0.15*0.5 + 0.00*0.0 + 0.20*0.3 + 0.05*0.1 = 0.61\n\n# Normaliser et décider\nnormalized = normalize(total_score, c=0.5)\nconfidence = sigmoid(normalized)\nif confidence >= 0.8:\n    print(f'Vulnérabilité {vuln_type} détectée avec confiance {confidence:.2%}')"
+  }
+}

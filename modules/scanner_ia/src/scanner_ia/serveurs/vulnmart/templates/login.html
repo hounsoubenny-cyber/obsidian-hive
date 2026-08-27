@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Connexion — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 style="text-align:center;margin-top:40px;">Connexion <span class="vuln-tag">SQLi possible ici</span></h2>
+  {% if error %}<div class="alert error">{{ error|safe }}</div>{% endif %}
+  <form class="panel" method="POST">
+    <label>Nom d'utilisateur</label>
+    <input type="text" name="username" placeholder="ex: admin">
+    <label>Mot de passe</label>
+    <input type="password" name="password" placeholder="••••••••">
+    <button class="btn" style="margin-top:20px;width:100%;" type="submit">Se connecter</button>
+  </form>
+  <p style="text-align:center;font-size:.85rem;">Pas de compte ? <a href="{{ url_for('register') }}">S'inscrire</a></p>
+</div>
+{% endblock %}

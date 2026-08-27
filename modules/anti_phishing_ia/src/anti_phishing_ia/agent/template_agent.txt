@@ -1,0 +1,2220 @@
+================./test_agent_claude.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 10 08:44:46 2026
+
+@author: hounsousamuel
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ShieldAI — Agent Anti-Phishing (CrewAI)
+Auteur: hounsousamuel
+"""
+
+import asyncio
+import json
+import logging
+from datetime import datetime
+from typing import Optional
+from crewai import Agent, Task, Crew
+from crewai.tools import tool
+
+# ── Import direct des fonctions du module (pas de HTTP) ──────────────────────
+from anti_phishing_ia.core.features_extractor import _features_extractor_from_url
+from anti_phishing_ia.ml_model.phishing_ia import PhishingModel  # adapter selon ton import réel
+from anti_phishing_ia.config import DATA
+
+logger = logging.getLogger("shieldai.agent.antiphishing")
+
+# ── État partagé de l'agent ──────────────────────────────────────────────────
+_model: Optional[PhishingModel] = None
+_analysis_history: list[dict] = []
+
+def _get_model() -> PhishingModel:
+    global _model
+    if _model is None:
+        _model = PhishingModel(DATA)
+        _model.load()
+    return _model
+
+
+# ── Tools ────────────────────────────────────────────────────────────────────
+
+@tool("analyze_url")
+def analyze_url(url: str) -> str:
+    """
+    Analyse une URL et retourne un score de phishing avec les features extraites.
+    Retourne un JSON avec: url, label (safe/phishing), score, features principales.
+    """
+    try:
+        # 1 — extraction features
+        features = asyncio.run(_features_extractor_from_url(url))
+
+        # 2 — prédiction modèle
+        model = _get_model()
+        result = model.predict(features)  # adapter selon ton API réelle
+
+        # 3 — log historique
+        entry = {
+            "timestamp": datetime.now().isoformat(),
+            "url": url,
+            "label": result.get("label", "unknown"),
+            "score": result.get("score", -1),
+            "suspicious_signals": _extract_suspicious_signals(features),
+        }
+        _analysis_history.append(entry)
+        logger.info(f"[analyze_url] {url} → {entry['label']} (score={entry['score']})")
+
+        return json.dumps(entry, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"[analyze_url] Erreur: {e}")
+        return json.dumps({"url": url, "label": "error", "error": str(e)})
+
+
+@tool("analyze_batch")
+def analyze_batch(urls_json: str) -> str:
+    """
+    Analyse une liste d'URLs en parallèle.
+    Paramètre: JSON string d'une liste d'URLs ex: '["http://a.com", "http://b.com"]'
+    Retourne: JSON liste de résultats.
+    """
+    try:
+        urls = json.loads(urls_json)
+        if not isinstance(urls, list):
+            return json.dumps({"error": "urls_json doit être une liste JSON"})
+
+        async def _run_all():
+            tasks = [_features_extractor_from_url(u) for u in urls]
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        features_list = asyncio.run(_run_all())
+        model = _get_model()
+        results = []
+
+        for url, features in zip(urls, features_list):
+            if isinstance(features, Exception):
+                results.append({"url": url, "label": "error", "error": str(features)})
+                continue
+            result = model.predict(features)
+            results.append({
+                "url": url,
+                "label": result.get("label", "unknown"),
+                "score": result.get("score", -1),
+                "suspicious_signals": _extract_suspicious_signals(features),
+            })
+
+        phishing_count = sum(1 for r in results if r.get("label") == "phishing")
+        logger.info(f"[analyze_batch] {len(urls)} URLs analysées — {phishing_count} phishing détectés")
+        return json.dumps({"total": len(urls), "phishing": phishing_count, "results": results}, ensure_ascii=False)
+
+    except Exception as e:
+        logger.error(f"[analyze_batch] Erreur: {e}")
+        return json.dumps({"error": str(e)})
+
+
+@tool("get_analysis_history")
+def get_analysis_history(limit: int = 20) -> str:
+    """
+    Retourne l'historique des dernières analyses effectuées.
+    Paramètre limit: nombre max d'entrées à retourner (défaut 20).
+    """
+    history = _analysis_history[-limit:]
+    phishing = [h for h in history if h.get("label") == "phishing"]
+    return json.dumps({
+        "total_analyzed": len(_analysis_history),
+        "last_entries": history,
+        "phishing_in_last": len(phishing),
+    }, ensure_ascii=False)
+
+
+@tool("get_model_status")
+def get_model_status() -> str:
+    """
+    Retourne l'état actuel du modèle anti-phishing.
+    Inclut: modèle chargé, dernier refit, nombre d'analyses effectuées.
+    """
+    try:
+        model = _get_model()
+        status = {
+            "loaded": model is not None,
+            "total_analyses": len(_analysis_history),
+            "model_path": DATA.get("model_path"),
+            "n_features": DATA.get("n_features"),
+            "refit_time": DATA.get("refit_time"),
+        }
+        # ajouter les infos du modèle si disponibles
+        if hasattr(model, "last_refit"):
+            status["last_refit"] = str(model.last_refit)
+        if hasattr(model, "accuracy"):
+            status["accuracy"] = model.accuracy
+
+        return json.dumps(status, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"loaded": False, "error": str(e)})
+
+
+@tool("trigger_refit")
+def trigger_refit() -> str:
+    """
+    Force un refit du modèle anti-phishing sur les nouvelles données disponibles.
+    À utiliser quand de nouveaux patterns de phishing ont été détectés.
+    """
+    try:
+        model = _get_model()
+        if hasattr(model, "refit"):
+            model.refit()
+            logger.info("[trigger_refit] Refit déclenché avec succès")
+            return json.dumps({"status": "success", "message": "Refit déclenché", "timestamp": datetime.now().isoformat()})
+        return json.dumps({"status": "skipped", "message": "Méthode refit non disponible"})
+    except Exception as e:
+        logger.error(f"[trigger_refit] Erreur: {e}")
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+# ── Helper privé ─────────────────────────────────────────────────────────────
+
+def _extract_suspicious_signals(features: dict) -> list[str]:
+    """Extrait les signaux suspects d'un dict de features pour le rapport."""
+    signals = []
+    if features.get("has_ip"):           signals.append("IP dans URL")
+    if features.get("has_punycode"):     signals.append("Punycode détecté")
+    if features.get("suspicious_tld"):   signals.append("TLD suspect")
+    if features.get("brand_in_subdomain"): signals.append("Brand dans subdomain")
+    if features.get("has_at_sign"):      signals.append("@ dans URL")
+    if features.get("n_redirects", 0) > 2: signals.append(f"{features['n_redirects']} redirections")
+    if features.get("num_suspicious_words", 0) > 2:
+        signals.append(f"{features['num_suspicious_words']} mots suspects")
+    if features.get("domain_entropy", 0) > 4.0:
+        signals.append(f"Entropie domaine élevée ({features['domain_entropy']:.2f})")
+    if features.get("has_nonstandard_port"):
+        signals.append("Port non standard")
+    return signals
+
+
+# ── Création de l'agent ──────────────────────────────────────────────────────
+
+def create_anti_phishing_agent(llm) -> Agent:
+    """
+    Crée et retourne l'agent Anti-Phishing ShieldAI.
+    Paramètre llm: instance LLM CrewAI (Groq/Mistral 7B recommandé).
+    """
+    return Agent(
+        role="Anti-Phishing Specialist",
+        goal=(
+            "Détecter et analyser les URLs et emails de phishing avec précision maximale. "
+            "Identifier les patterns suspects, scorer les menaces et alerter l'orchestrateur "
+            "en cas de détection confirmée."
+        ),
+        backstory=(
+            "Tu es un expert en cybersécurité spécialisé dans la détection de phishing. "
+            "Tu analyses les URLs avec un modèle ML entraîné sur 2M+ URLs et 33 features. "
+            "Tu travailles au sein de ShieldAI, plateforme de cybersécurité autonome. "
+            "Tu reportes uniquement les faits — score, signaux suspects, label — sans interprétation excessive."
+        ),
+        tools=[
+            analyze_url,
+            analyze_batch,
+            get_analysis_history,
+            get_model_status,
+            trigger_refit,
+        ],
+        llm=llm,
+        verbose=True,
+        allow_delegation=False,  # agent spécialisé, ne délègue pas
+    )
+
+
+# ── Tasks prédéfinies ────────────────────────────────────────────────────────
+
+def task_analyze_single(agent: Agent, url: str) -> Task:
+    return Task(
+        description=f"Analyse l'URL suivante et détermine si elle est du phishing: {url}",
+        expected_output=(
+            "Un rapport JSON avec: label (safe/phishing), score, signaux suspects détectés, "
+            "et une recommandation (bloquer / surveiller / autoriser)."
+        ),
+        agent=agent,
+    )
+
+
+def task_analyze_email_links(agent: Agent, urls: list[str]) -> Task:
+    urls_json = json.dumps(urls)
+    return Task(
+        description=(
+            f"Un email intercepté contient {len(urls)} liens. "
+            f"Analyse tous ces liens et détermine si l'email est une tentative de phishing: {urls_json}"
+        ),
+        expected_output=(
+            "Un rapport complet: nombre de liens phishing détectés, liste des URLs dangereuses "
+            "avec leurs scores, verdict final sur l'email (phishing / suspect / safe), "
+            "et action recommandée à l'orchestrateur."
+        ),
+        agent=agent,
+    )
+
+
+def task_monitor_report(agent: Agent) -> Task:
+    return Task(
+        description="Génère un rapport de monitoring sur les dernières analyses anti-phishing effectuées.",
+        expected_output=(
+            "Rapport incluant: nombre total d'analyses, taux de phishing détecté, "
+            "patterns récurrents observés, état du modèle, recommandation de refit si nécessaire."
+        ),
+        agent=agent,
+    )
+
+
+# ── Utilisation standalone (test) ────────────────────────────────────────────
+
+if __name__ == "__main__":
+    from langchain_groq import ChatGroq  # adapter selon ton setup
+
+    llm = ChatGroq(model="mistral-7b-instruct", temperature=0)
+    agent = create_anti_phishing_agent(llm)
+
+    # Test analyse simple
+    task = task_analyze_single(agent, "http://paypal-secure-verify.tk/login?ref=paypal")
+    crew = Crew(agents=[agent], tasks=[task], verbose=True)
+    result = crew.kickoff()
+    print(result)============================
+================./config.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 10 10:21:04 2026
+
+@author: hounsousamuel
+"""
+
+import os
+
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+OUTPUT_LOG_FILE = os.path.join(BASEDIR, "agent_logs")
+os.makedirs(OUTPUT_LOG_FILE, exist_ok=True)
+OUTPUT_LOG_FILE = os.path.join(OUTPUT_LOG_FILE, "anti_phishing_logs.log")
+EXPLAIN_MD_PATH = os.path.join(BASEDIR, "knowledge", "explain.md")
+PDF_PATHS = [
+    os.path.join(BASEDIR, "knowledge", "apwg_trends_report_q1_2025.pdf")
+]
+
+AGENT_PERSONAS = {
+    "professional": {
+        "goal": (
+            "Maximiser la précision de détection des menaces (phishing) dans les URLs et les emails "
+            "tout en minimisant les faux positifs. Tu dois évaluer chaque cible, quantifier le risque "
+            "et ne remonter à l'orchestrateur que les alertes vérifiées ou les menaces actives.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Tu dois répondre exclusivement en JSON valide, sans texte avant ou après.\n"
+            "Le JSON doit contenir EXACTEMENT ces 5 champs :\n"
+            "{\n"
+            '  "tool_name": "nom_de_l_outil_utilisé",\n'
+            '  "tool_result": "résultat brut retourné par l_outil",\n'
+            '  "analysis": "ton analyse détaillée en langage naturel ici...",\n'
+            '  "final_decision": "safe|suspicious|phishing" (si utile sinon null),\n'
+            '  "confidence": 0.95 (si utile sinon null)\n'
+            "}\n"
+            "Ne JAMAIS ajouter de texte en dehors de ce JSON."
+        ),
+        "backstory": (
+            "Tu es un expert en cybersécurité avec une double compétence : l'analyse comportementale "
+            "et l'exploitation de modèles ML. Tu t'appuies sur un modèle entraîné sur plus de 2 millions "
+            "d'URLs et 33 caractéristiques techniques (présence d'IP, âge du domaine, mots suspects, etc.). "
+            "Tu évolues au sein de ShieldAI, une plateforme de sécurité autonome. Ta valeur ajoutée "
+            "est de transformer des signaux bruts (score, flags, similarité) en un verdict clair, "
+            "accompagné d'une interprétation factuelle et d'une recommandation actionnable.\n\n"
+            "🔧 FORMAT JSON : tool_name (l'outil que tu as appelé), tool_result (ce qu'il a retourné), "
+            "analysis (ton interprétation), final_decision (safe/suspicious/phishing), "
+            "confidence (float entre 0 et 1)."
+        )
+    },
+    
+    "hunter": {
+        "goal": (
+            "Traquer, analyser et neutraliser les tentatives de phishing. "
+            "Détecter la moindre anomalie (homoglyphe, typosquatting, TLD suspect), "
+            "scorer la menace et alerter immédiatement l'orchestrateur sans délai.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Tu dois répondre exclusivement en JSON valide.\n"
+            "{\n"
+            '  "tool_name": "...",\n'
+            '  "tool_result": "...",\n'
+            '  "analysis": "...",\n'
+            '  "final_decision": "safe|suspicious|phishing" (si utile sinon null),\n'
+            '  "confidence": 0.95 (si utile sinon null)\n'
+            "}\n"
+            "Aucun texte hors JSON."
+        ),
+        "backstory": (
+            "Tu es un limier du numérique. Là où un œil humain verrait un site 'presque' légitime, "
+            "tu décèles l'imposture. Tu combines ton intuition — forgée sur des milliers d'attaques "
+            "analysées — avec un modèle ML capable de passer au crible 33 caractéristiques suspectes. "
+            "Chez ShieldAI, tu es la première ligne de défense. Tu ne te contentes pas de signaler ; "
+            "tu expliques le 'pourquoi' et tu guides la décision avec un score de confiance et des indices concrets.\n\n"
+            "🔧 FORMAT JSON OBLIGATOIRE avec clés : tool_name, tool_result, analysis, final_decision, confidence."
+        )
+    },
+    
+    "educator": {
+        "goal": (
+            "Détecter avec une haute précision les URLs et emails frauduleux, "
+            "tout en fournissant des explications claires sur les signaux suspects détectés. "
+            "L'objectif est autant de protéger que de sensibiliser.\n\n"
+            "📌 FORMAT DE RÉPONSE OBLIGATOIRE :\n"
+            "Réponse exclusivement en JSON :\n"
+            "{\n"
+            '  "tool_name": "...",\n'
+            '  "tool_result": "...",\n'
+            '  "analysis": "...",\n'
+            '  "final_decision": "safe|suspicious|phishing" (si utile sinon null),\n'
+            '  "confidence": 0.95 (si utile sinon null)\n'
+            "}\n"
+            "Rien d'autre."
+        ),
+        "backstory": (
+            "Tu es un spécialiste en cybersécurité, mais aussi un excellent pédagogue. "
+            "Tu ne te contentes pas d'un verdict binaire (sûr / dangereux). Tu décomposes ton analyse : "
+            "'j'ai trouvé un caractère @, ce qui est rare dans une URL légitime', "
+            "ou 'ce domaine ressemble à 98% à google.com mais a été créé il y a 2 jours'. "
+            "Tu utilises un modèle ML robuste (2M+ URLs, 33 features) et tes connaissances pour "
+            "expliquer à l'orchestrateur et aux utilisateurs pourquoi un lien est dangereux. "
+            "Tu fais partie de ShieldAI, et ta mission est de rendre la cybersécurité compréhensible par tous.\n\n"
+            "🔧 JSON requis avec les clés : tool_name, tool_result, analysis, final_decision, confidence."
+        )
+    }
+}
+
+AGENT_PERSONAS = {
+    "hunter": {
+        "goal": (
+            "Débusquer et neutraliser les menaces de phishing avec une tolérance zéro. "
+            "Ton objectif est l'interception proactive. Tu dois traquer les signaux faibles : "
+            "domaines créés récemment, entropie anormale du TLD, homoglyphes invisibles à l'œil nu. "
+            "Si un score IA dépasse 0.7 ou si l'analyse passive détecte un flag CRITIQUE, "
+            "ton verdict doit être sans appel.\n\n"
+            "📌 RÈGLES D'ENGAGEMENT :\n"
+            "1. Utilise 'analyze_url' systématiquement.\n"
+            "2. Si un doute subsiste (suspicious), force une vérification 'check_blacklist'.\n"
+            "3. Ta réponse doit être un JSON PUR, sans préambule.\n\n"
+            "Format JSON :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...", "analysis": "...", '
+            '  "final_decision": "safe|suspicious|phishing", "confidence": 0.99\n'
+            "}"
+        ),
+        "backstory": (
+            "Tu es le 'Traqueur' de ShieldAI. Formé sur les champs de bataille de la cyber-guerre, "
+            "ton instinct est soutenu par un modèle ML entraîné sur 2 millions d'URLs. "
+            "Tu ne crois pas aux coïncidences. Pour toi, un certificat SSL gratuit sur un domaine "
+            "ressemblant à une banque est une preuve d'attaque. Tu es là pour protéger les infrastructures "
+            "africaines contre les prédateurs mondiaux. Tu es rapide, incisif et impitoyable."
+        )
+    },
+
+    "sentinel": { # Ancien 'professional'
+        "goal": (
+            "Garantir la continuité d'activité en filtrant les menaces sans bloquer les flux légitimes. "
+            "Tu agis comme un pare-feu intelligent. Tu évalues le ratio risque/bénéfice. "
+            "Tu ne déclenches l'alerte rouge que si les preuves sont irréfutables pour éviter la fatigue des alertes chez l'admin.\n\n"
+            "📌 FORMAT DE RÉPONSE (JSON UNIQUEMENT) :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...", "analysis": "Synthèse executive pour décideur...", '
+            '  "final_decision": "safe|suspicious|phishing", "confidence": 0.95\n'
+            "}"
+        ),
+        "backstory": (
+            "Tu es le stratège de ShieldAI. Tu comprends que dans une banque ou une administration, "
+            "un faux positif peut être aussi coûteux qu'une intrusion. Tu analyses les headers, "
+            "les scores SPF/DKIM et la réputation des domaines avec le sang-froid d'un auditeur. "
+            "Ta valeur ajoutée est la fiabilité chirurgicale de tes rapports."
+        )
+    },
+
+    "mentor": { # Ancien 'educator'
+        "goal": (
+            "Protéger l'utilisateur final tout en augmentant sa 'Cyber-Hygiène'. "
+            "Chaque détection est une opportunité d'apprentissage. Tu dois détailler les indices "
+            "qui t'ont mené au verdict (ex: 'L'usage d'une IP à la place d'un nom de domaine est anormal').\n\n"
+            "📌 FORMAT JSON OBLIGATOIRE :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...", "analysis": "Explication pédagogique simple...", '
+            '  "final_decision": "safe|suspicious|phishing", "confidence": 0.90\n'
+            "}"
+        ),
+        "backstory": (
+            "Tu es l'interface humaine de ShieldAI. Tu sais que l'humain est le maillon faible, "
+            "mais tu crois qu'il peut devenir le premier capteur de sécurité s'il est bien formé. "
+            "Tu décomposes les attaques complexes en concepts simples, sans jamais sacrifier "
+            "la rigueur technique de ton modèle ML (33 features)."
+        )
+    },
+
+    "forensic": { # Nouveau Persona pour l'analyse profonde
+        "goal": (
+            "Réaliser une autopsie technique complète de la menace. "
+            "Tu ne te contentes pas de dire 'phishing', tu décortiques l'infrastructure de l'attaquant. "
+            "Tu analyses les redirections, les scripts de la page, et tu cherches des corrélations "
+            "avec des campagnes de phishing connues dans la base APWG.\n\n"
+            "📌 FORMAT JSON OBLIGATOIRE :\n"
+            "{\n"
+            '  "tool_name": "...", "tool_result": "...", "analysis": "Rapport technique détaillé (flags, TTPs)...", '
+            '  "final_decision": "phishing|suspicious", "confidence": 0.99\n'
+            "}"
+        ),
+        "backstory": (
+            "Tu es l'analyste de laboratoire de ShieldAI. Tu travailles dans la Sandbox. "
+            "Rien ne t'échappe : obfuscation JavaScript, typosquatting avancé, ou utilisation "
+            "de services de cloud légitimes pour héberger du contenu malveillant. "
+            "Tes rapports servent à alimenter la base de connaissances pour que l'IA ne se laisse "
+            "plus jamais surprendre par le même pattern."
+        )
+    }
+}============================
+================./agent.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Agent CrewAI pour la détection de phishing.
+
+Création et configuration de l'agent Anti-Phishing ShieldAI.
+Tasks disponibles :
+- analyse_url : analyse une URL spécifique
+- analyse_email : analyse un email complet
+- analyse_batch : analyse multiple (URLs ou emails)
+- monitoring : rapport des dernières analyses
+
+Auteur: HOUNSOU Samuel
+Date: Juin 2026
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from crewai import Agent, Crew, Task, LLM, Process, Memory
+from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
+from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
+from anti_phishing_ia.agent.tools import ALL_TOOLS
+from anti_phishing_ia.agent.config import (
+    OUTPUT_LOG_FILE, AGENT_PERSONAS, 
+    EXPLAIN_MD_PATH, PDF_PATHS
+)
+
+
+# ============================================================================
+# AGENT PRINCIPAL
+# ============================================================================
+
+def create_anti_phishing_agent(
+    personna: str,
+    llm: LLM | str, 
+    tools: list = ALL_TOOLS,
+    verbose: bool = True,
+    memory: Memory = None,
+    embedder: dict = None,
+) -> Agent:
+    """
+    Crée et retourne l'agent Anti-Phishing ShieldAI.
+    
+    Args:
+        llm (LLM): Instance du modèle de langage (OpenAI, Groq, etc.)
+        tools (list): Liste des outils disponibles (défaut: ALL_TOOLS)
+        verbose (bool): Mode verbeux pour les logs
+    
+    Returns:
+        Agent: Agent CrewAI configuré pour la détection de phishing
+    
+    Example:
+        >>> from crewai import LLM
+        >>> llm = LLM(model="gpt-4o-mini")
+        >>> agent = create_anti_phishing_agent(llm)
+    """
+    agent_personna = AGENT_PERSONAS.get(personna, AGENT_PERSONAS['hunter'])
+    return Agent(
+        role="Anti-Phishing Specialist",
+        goal=agent_personna["goal"],
+        backstory=agent_personna["backstory"],
+        tools=tools,
+        llm=llm,
+        verbose=verbose,
+        allow_delegation=False,
+        memory=memory,
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ============================================================================
+# TASKS
+# ============================================================================
+
+def task_analyze_url(agent: Agent, url: str) -> Task:
+    """
+    Task pour analyser une URL unique.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+        url (str): URL à analyser
+    
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Analyse l'URL suivante et détermine si elle est du phishing: {url}",
+        expected_output=(
+            "Un rapport JSON avec: label (safe/phishing), score de confiance, source de la décision, "
+            "et une recommandation (bloquer / surveiller / autoriser). "
+            "Si l'URL contient des signaux suspects (IP, caractères spéciaux, TLD bizarre, etc.), "
+            "mentionne-les dans le rapport."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name == "analyze_url"],
+    )
+
+
+def task_analyze_email(agent: Agent, email_content: str = None, email_file: str = None) -> Task:
+    """
+    Task pour analyser un email complet.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+        email_content (str): Contenu brut de l'email (optionnel)
+        email_file (str): Chemin vers un fichier .eml (optionnel)
+    
+    Returns:
+        Task: Configuration de la tâche
+    
+    Note:
+        Fournir soit email_content soit email_file
+    """
+    if email_content and email_file:
+        raise ValueError("Fournir soit email_content soit email_file, pas les deux")
+    
+    if email_file:
+        description = f"Analyse l'email contenu dans le fichier: {email_file}"
+    else:
+        description = "Analyse l'email suivant: " + (email_content[:200] + "..." if len(email_content) > 200 else email_content)
+    
+    return Task(
+        description=description,
+        expected_output=(
+            "Un rapport JSON avec: label (safe/suspicious/phishing), score de confiance, "
+            "expéditeur, sujet, nombre d'URLs détectées, SPF/DKIM status, "
+            "et une recommandation (bloquer / surveiller / autoriser). "
+            "Signale également les points critiques: URLs malveillantes, SPF fail, DKIM absent, "
+            "Reply-To différent de From."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name == "analyze_email"],
+    )
+
+
+def task_analyze_batch(agent: Agent, urls: list[str] = None, emails: list[str] = None) -> Task:
+    """
+    Task pour analyser un lot d'URLs ou d'emails.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+        urls (list[str]): Liste d'URLs à analyser
+        emails (list[str]): Liste d'emails (contenu brut) à analyser
+    
+    Returns:
+        Task: Configuration de la tâche
+    """
+    if urls and emails:
+        description = f"Analyse le lot: {len(urls)} URLs et {len(emails)} emails"
+    elif urls:
+        description = f"Analyse le lot de {len(urls)} URLs: {', '.join(urls[:3])}{'...' if len(urls) > 3 else ''}"
+    elif emails:
+        description = f"Analyse le lot de {len(emails)} emails"
+    else:
+        raise ValueError("Fournir au moins urls ou emails")
+    
+    return Task(
+        description=description,
+        expected_output=(
+            "Un rapport JSON avec: "
+            "- total: nombre total d'analyses "
+            "- phishing: nombre d'éléments classés phishing "
+            "- suspicious: nombre d'éléments suspects "
+            "- safe: nombre d'éléments sûrs "
+            "- details: liste détaillée des résultats par URL/email"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name in ["analyze_url", "analyze_email"]],
+    )
+
+
+def task_monitor_report(agent: Agent, limit: int = 10) -> Task:
+    """
+    Task pour générer un rapport de monitoring.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+        limit (int): Nombre d'entrées récentes à inclure (défaut: 10)
+    
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description=f"Génère un rapport de monitoring sur les dernières analyses anti-phishing effectuées (limite: {limit}).",
+        expected_output=(
+            "Rapport incluant: "
+            "- nombre total d'analyses d'URLs "
+            "- nombre total d'analyses d'emails "
+            "- taux de phishing détecté (URLs et emails séparés) "
+            "- patterns récurrents observés (mots suspects, TLDs, spoofing) "
+            "- recommandation de refit du modèle si nécessaire "
+            "- dernières alertes significatives"
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name == "get_phishing_stats"],
+    )
+
+
+def task_clear_cache(agent: Agent) -> Task:
+    """
+    Task pour vider le cache des analyses.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+    
+    Returns:
+        Task: Configuration de la tâche
+    """
+    return Task(
+        description="Vide le cache des analyses anti-phishing pour forcer une réanalyse.",
+        expected_output=(
+            "Confirmation que le cache a été vidé avec succès."
+        ),
+        agent=agent,
+        tools=[t for t in agent.tools if t.name == "clear_cache"],
+    )
+
+def create_anti_phishing_crew(
+    agent: Agent,
+    tasks: list[Task], 
+    verbose: bool = True,
+    planning: bool = True,
+    checkpoint: bool = True,
+    tracing: bool = True,
+    memory: bool | Memory = True,
+    embedder: dict = None,
+) -> Crew:
+    """
+    Crée un Crew avec l'agent et les tâches définies.
+    
+    Args:
+        agent (Agent): Agent CrewAI
+        tasks (list[Task]): Liste des tâches à exécuter
+        verbose (bool): Mode verbeux
+    
+    Returns:
+        Crew: Crew CrewAI configuré
+    """
+    return Crew(
+        name="anti_phishing_crew",
+        agents=[agent],
+        tasks=tasks,
+        process=Process.sequential, 
+        verbose=verbose,
+        planning=planning,
+        output_log_file=OUTPUT_LOG_FILE,
+        checkpoint=checkpoint,
+        tracing=tracing,
+        memory=memory,
+        knowledge_sources=[
+            StringKnowledgeSource(
+                content=open(EXPLAIN_MD_PATH).read()
+            ),
+            PDFKnowledgeSource(
+                file_paths=PDF_PATHS
+            )
+        ],
+        **({"embedder": embedder} if embedder else {})
+    )
+
+
+# ============================================================================
+# FONCTION DE RÉPONSE RAPIDE (POUR INTÉGRATION SIMPLE)
+# ============================================================================
+
+async def quick_analyze_url(url: str, llm: LLM) -> dict:
+    """
+    Analyse rapide d'une URL via l'agent CrewAI.
+    
+    Args:
+        url (str): URL à analyser
+        llm (LLM): Instance LLM
+    
+    Returns:
+        dict: Résultat de l'analyse
+    """
+    agent = create_anti_phishing_agent(llm)
+    task = task_analyze_url(agent, url)
+    crew = create_anti_phishing_crew(agent, [task])
+    result = await crew.kickoff_async()
+    return result
+
+
+async def quick_analyze_email(email_content: str, llm: LLM) -> dict:
+    """
+    Analyse rapide d'un email via l'agent CrewAI.
+    
+    Args:
+        email_content (str): Contenu de l'email
+        llm (LLM): Instance LLM
+    
+    Returns:
+        dict: Résultat de l'analyse
+    """
+    agent = create_anti_phishing_agent(llm)
+    task = task_analyze_email(agent, email_content=email_content)
+    crew = create_anti_phishing_crew(agent, [task])
+    result = await crew.kickoff_async()
+    return result
+
+
+# ============================================================================
+# MAIN DE TEST
+# ============================================================================
+
+if __name__ == "__main__":
+    print("🔧 Test de l'agent Anti-Phishing")
+    print("=" * 60)
+    m = Memory(
+        storage="./memory"
+    )
+    # Configuration LLM (exemple avec Groq)
+    try:
+        llm = LLM(
+            model="groq/llama-3.3-70b-versatile",
+            temperature=0.1,
+        )
+    except Exception as e:
+        print(f"Erreur chargement LLM: {e}")
+        print("Utilisation d'un mock pour le test...")
+        
+        # Mock LLM pour test (si pas de clé API)
+        class MockLLM:
+            def invoke(self, prompt):
+                return "Test mode: Agent would analyze here"
+        
+        llm = MockLLM()
+    
+    # Créer l'agent
+    agent = create_anti_phishing_agent(llm, verbose=True)
+    
+    # Afficher les outils disponibles
+    print(f"\n📦 Outils disponibles ({len(agent.tools)}):")
+    for tool in agent.tools:
+        print(f"   - {tool.name}: {tool.description[:60]}...")
+    
+    # Exemple de tâche simple
+    print("\n" + "=" * 60)
+    print("📋 Tâches disponibles:")
+    print("   - task_analyze_url(agent, url)")
+    print("   - task_analyze_email(agent, email_content)")
+    print("   - task_analyze_batch(agent, urls=[...])")
+    print("   - task_monitor_report(agent)")
+    print("   - task_clear_cache(agent)")
+    print("\n✅ Agent prêt à l'emploi!")============================
+================./test_agents.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import threading
+import time
+import uvicorn
+from llama_cpp.server.app import create_app
+from llama_cpp.server.settings import Settings
+from crewai import Agent, Task, Crew, LLM, Process
+from crewai.tools import tool, BaseTool
+import requests
+import os
+import sys
+import json
+import asyncio
+from typing import Optional, List
+
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
+path = "/home/hounsousamuel/PROJETS/DEJA_SUR_GIT/Nexus_projet_hackaton/conversation_app/chat_nexus/MODEL/qwen/Qwen2.5-3B-Instruct-Q5_K_S.gguf"
+path = "/home/hounsousamuel/PROJETS/DEJA_SUR_GIT/Nexus_projet_hackaton/conversation_app/chat_nexus/MODEL/phi/Phi-3.5-mini-instruct-Q4_K_M.gguf"
+
+# ============================================================================
+# FONCTIONS SERVEUR
+# ============================================================================
+
+def wait_for_server(url="http://127.0.0.1:8000/v1/models", timeout=120):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                print("✅ Serveur prêt !")
+                return True
+        except requests.ConnectionError:
+            pass
+        time.sleep(2)
+    raise TimeoutError("❌ Le serveur n'a pas démarré dans les temps.")
+
+def start_server():
+    settings = Settings(
+        host="127.0.0.1",
+        port=8000,
+        model=path,
+        n_threads=10,
+        n_gpu_layers=0,
+        chat_format="chatml",
+    )
+    app = create_app(settings=settings)
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+
+# Lancer le serveur
+server_thread = threading.Thread(target=start_server, daemon=True)
+server_thread.start()
+
+print("🚀 Démarrage du serveur...")
+wait_for_server()
+print("🔗 Connexion à l'API locale...")
+
+# ============================================================================
+# 2. IMPORT DES OUTILS (depuis ton module existant)
+# ============================================================================
+
+from anti_phishing_ia.agent.tools import ALL_TOOLS
+from anti_phishing_ia.agent.agent import create_anti_phishing_agent
+from anti_phishing_ia.main_phish import get_ap_instance, HISTORY_FILE
+from anti_phishing_ia.analyze_mail import analyze_mail as _analyze_mail
+
+print(f"📦 {len(ALL_TOOLS)} outils chargés:")
+for t in ALL_TOOLS:
+    print(f"   - {t.name}")
+
+# ============================================================================
+# 3. LLM CONFIGURATION
+# ============================================================================
+
+llm = LLM(
+    model="openai/local",
+    base_url="http://127.0.0.1:8000/v1",
+    api_key="fake-key",
+    temperature=0.2,
+    max_tokens=2048,
+)
+
+# llm = LLM(
+#     model="groq/llama-3.1-8b-instant",
+#     api_key="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",
+#     temperature=0.2,
+#     max_tokens=2048,
+# )
+
+# ============================================================================
+# 4. AGENT ANTI-PHISHING
+# ============================================================================
+agent = create_anti_phishing_agent("hunter", llm=llm, tools=ALL_TOOLS[:5])
+# agent = Agent(
+#     role="Anti-Phishing Specialist",
+#     goal="Détecter et analyser les URLs et emails de phishing avec précision maximale",
+#     backstory="""Tu es un expert en cybersécurité spécialisé dans la détection de phishing.
+#     Tu analyses les URLs avec un modèle ML entraîné sur 2M+ URLs et 33 features.
+#     Tu travailles au sein de ShieldAI, une plateforme de cybersécurité autonome.
+#     Tu disposes d'outils spécialisés pour analyser URLs, emails, extraire des liens,
+#     obtenir des statistiques, et gérer le cache.
+#     Tu dois toujours justifier ton verdict avec les preuves détectées.""",
+#     tools=ALL_TOOLS,
+#     llm=llm,
+#     verbose=True,
+#     allow_delegation=False,
+#     memory=True,
+# )
+
+# ============================================================================
+# 5. TÂCHES PRÉDÉFINIES
+# ============================================================================
+
+def task_analyze_url(url: str) -> Task:
+    """Crée une tâche d'analyse d'URL."""
+    return Task(
+        description=f"Analyse l'URL suivante: {url}",
+        expected_output="""Un rapport structuré avec:
+        - final_decision: safe/phishing/suspicious
+        - confidence: score de confiance (0-1)
+        - source: whitelist/ia_prediction/passive_analyse
+        - breakdown: détails de l'analyse (si disponible)
+        - recommendation: blocage/surveillance/autorisation""",
+        agent=agent,
+    )
+
+def task_analyze_email(email_file: str = None, email_text: str = None) -> Task:
+    """Crée une tâche d'analyse d'email."""
+    if email_file:
+        desc = f"Analyse l'email contenu dans le fichier: {email_file}"
+    elif email_text:
+        desc = f"Analyse l'email: {email_text[:200]}..."
+    else:
+        raise ValueError("Fournir email_file ou email_text")
+    
+    return Task(
+        description=desc,
+        expected_output="""Un rapport structuré avec:
+        - final_decision: safe/suspicious/phishing
+        - confidence: score de confiance
+        - sender: expéditeur
+        - subject: sujet
+        - nb_urls_total, nb_urls_phishing
+        - spf, dkim
+        - recommendation: bloquer/surveiller/autoriser""",
+        agent=agent,
+    )
+
+def task_monitor_report(limit: int = 10) -> Task:
+    """Crée une tâche de monitoring."""
+    return Task(
+        description=f"Génère un rapport des {limit} dernières analyses anti-phishing",
+        expected_output="""Un rapport JSON avec:
+        - urls: {total, safe, suspicious, phishing, recent: [...]}
+        - emails: {total, safe, suspicious, phishing, recent: [...]}
+        - tendances observées
+        - recommandations""",
+        agent=agent,
+    )
+
+def task_clear_cache() -> Task:
+    """Crée une tâche de nettoyage du cache."""
+    return Task(
+        description="Vide le cache des analyses",
+        expected_output="Confirmation que le cache a été vidé",
+        agent=agent,
+    )
+
+# ============================================================================
+# 6. CREW
+# ============================================================================
+
+def run_crew(tasks: List[Task], verbose: bool = True) -> dict:
+    """Exécute un crew avec les tâches données."""
+    crew = Crew(
+        agents=[agent],
+        tasks=tasks,
+        process=Process.sequential,
+        verbose=verbose,
+        memory=True,
+        cache=True,
+    )
+    
+    print("\n" + "=" * 60)
+    print("🚀 EXÉCUTION DU CREW")
+    print("=" * 60)
+    
+    result = crew.kickoff()
+    return {"result": str(result), "tasks_count": len(tasks)}
+
+# ============================================================================
+# 7. FONCTIONS RAPIDES (ASYNC)
+# ============================================================================
+
+async def quick_analyze_url(url: str) -> dict:
+    """Analyse rapide d'une URL sans passer par Crew."""
+    ap = get_ap_instance()
+    return await ap.predict_url_async(url)
+
+async def quick_analyze_email(email_content: str, check_blacklist: bool = False) -> dict:
+    """Analyse rapide d'un email sans passer par Crew."""
+    ap = get_ap_instance()
+    return await ap.predict_email_async(email_content, check_blacklist)
+
+async def quick_get_stats(limit: int = 10) -> dict:
+    """Récupère rapidement les statistiques."""
+    from anti_phishing_ia.agent.tools import GetPhishingStats
+    stats_tool = GetPhishingStats()
+    return stats_tool._run(limit)
+
+# ============================================================================
+# 8. INTERFACE INTERACTIVE (REPL)
+# ============================================================================
+
+def interactive_mode():
+    """Mode interactif pour dialoguer avec l'agent."""
+    print("\n" + "=" * 60)
+    print("🛡️ SHIELD AI - Assistant Anti-Phishing")
+    print("=" * 60)
+    print("Commandes disponibles:")
+    print("  /analyze_url <url>     - Analyser une URL")
+    print("  /analyze_email <fichier> - Analyser un fichier .eml")
+    print("  /stats                 - Voir les statistiques")
+    print("  /clear_cache           - Vider le cache")
+    print("  /help                  - Afficher l'aide")
+    print("  /exit                  - Quitter")
+    print("=" * 60)
+    
+    while True:
+        try:
+            cmd = input("\n🔍 > ").strip()
+            if not cmd:
+                continue
+            
+            if cmd == "/exit":
+                print("👋 Au revoir !")
+                break
+            
+            elif cmd == "/help":
+                print("\nCommandes disponibles:")
+                print("  /analyze_url <url>")
+                print("  /analyze_email <fichier.eml>")
+                print("  /stats")
+                print("  /clear_cache")
+                print("  /exit")
+            
+            elif cmd.startswith("/analyze_url "):
+                url = cmd[13:].strip()
+                print(f"🔍 Analyse de {url}...")
+                result = asyncio.run(quick_analyze_url(url))
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+            
+            elif cmd.startswith("/analyze_email "):
+                filepath = cmd[15:].strip()
+                if not os.path.exists(filepath):
+                    print(f"❌ Fichier non trouvé: {filepath}")
+                    continue
+                with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                    content = f.read()
+                print(f"📧 Analyse de {filepath}...")
+                result = asyncio.run(quick_analyze_email(content))
+                # Afficher un résumé
+                print(f"📊 Décision: {result.get('final_decision', 'N/A')}")
+                print(f"   Confiance: {result.get('confidence', 0):.2%}")
+                print(f"   Expéditeur: {result.get('sender', 'N/A')}")
+                print(f"   URLs: {result.get('nb_urls_total', 0)} total, {result.get('nb_urls_phishing', 0)} phishing")
+            
+            elif cmd == "/stats":
+                print("📊 Récupération des statistiques...")
+                stats = asyncio.run(quick_get_stats(10))
+                print(json.dumps(stats, indent=2, ensure_ascii=False))
+            
+            elif cmd == "/clear_cache":
+                print("🗑️ Vidage du cache...")
+                from anti_phishing_ia.main_phish import clear
+                clear()
+                print("✅ Cache vidé")
+            
+            else:
+                # Passer la commande à l'agent Crew
+                print(f"🤔 Traitement de la demande: {cmd}")
+                crew = Crew(
+                    agents=[agent],
+                    tasks=[Task(description=cmd, expected_output="Réponse pertinente à la demande", agent=agent)],
+                    process=Process.sequential,
+                    verbose=True,
+                )
+                result = crew.kickoff()
+                print(f"\n📝 Réponse:\n{result}")
+        
+        except KeyboardInterrupt:
+            print("\n👋 Interrompu. Au revoir !")
+            break
+        except Exception as e:
+            print(f"❌ Erreur: {e}")
+
+# ============================================================================
+# 9. MAIN
+# ============================================================================
+
+if __name__ == "__main__":
+    print("\n" + "=" * 60)
+    print("🛡️ SHIELD AI - Système Anti-Phishing")
+    print("=" * 60)
+    print(f"   Modèle: {path.split('/')[-1]}")
+    print(f"   Outils: {len(ALL_TOOLS)}")
+    print("=" * 60)
+    
+    # Test rapide avant mode interactif
+    print("\n🧪 Test rapide de l'agent...")
+    try:
+        test_task = Task(
+            description="Quels outils as-tu à ta disposition pour détecter du phishing ?",
+            expected_output="Une liste des outils disponibles avec une brève description de chacun, formatée en JSON ou en texte clair.",
+            agent=agent,
+        )
+        test_crew = Crew(agents=[agent], tasks=[test_task], verbose=False)
+        response = test_crew.kickoff()
+        print(f"✅ Agent prêt: {str(response)[:200]}...")
+    except Exception as e:
+        print(f"⚠️ Erreur test agent: {e}")
+    
+    # Lancer mode interactif
+    interactive_mode()============================
+================./tools.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Tools pour Agent IA - Détection de phishing.
+Auteur: HOUNSOU Samuel
+"""
+
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import json
+import asyncio
+import time
+from datetime import datetime
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+from anti_phishing_ia.main_phish import get_ap_instance, HISTORY_FILE, clear
+from anti_phishing_ia.phishing_utils.mail_extractor_utils import extract_urls
+from modules_utils.loop_utils import _run_async
+# ============================================================================
+# INPUT SCHEMAS
+# ============================================================================
+
+class AnalyzeUrlInput(BaseModel):
+    url: str = Field(
+        description="L'URL à analyser pour détecter du phishing. Exemple: 'https://paypal-verify.tk/login'"
+    )
+    check_blacklist: bool = Field(
+        default=False,
+        description="Active la vérification auprès des blacklists externes (PhishDestroy). Utile pour les URLs très suspectes."
+    )
+    explain: bool = Field(
+        default=False,
+        description="Retourne les détails complets de l'analyse (flags, typosquatting, âge domaine, etc.)"
+    )
+    check_right_click: bool = Field(
+        default=False,
+        description="Vérifie si la page web désactive le clic droit (technique anti-inspection souvent utilisée par les sites de phishing)"
+    )
+
+
+class AnalyzeEmailInput(BaseModel):
+    email_content: str = Field(
+        default=None,
+        description="Le contenu brut de l'email à analyser (texte complet de l'email)"
+    )
+    email_file: str = Field(
+        default=None,
+        description="Chemin vers un fichier .eml à analyser. Alternative à email_content."
+    )
+    check_blacklist: bool = Field(
+        default=False,
+        description="Active la vérification des URLs extraites auprès des blacklists externes"
+    )
+
+
+class ExtractUrlsInput(BaseModel):
+    text: str = Field(
+        description="Le texte (email, message, page web) dans lequel extraire les URLs"
+    )
+
+
+class GetPhishingStatsInput(BaseModel):
+    limit: int = Field(
+        default=10,
+        description="Nombre maximum d'entrées d'historique à retourner (défaut: 10)"
+    )
+
+class AnalyzeUrlIAOnlyInput(BaseModel):
+    url: str = Field(
+        description="L'URL à analyser avec le modèle IA uniquement"
+    )
+    
+class AnalyzeUrlPassiveOnlyInput(BaseModel):
+    url: str = Field(
+        description="L'URL à analyser avec l'analyse passive uniquement"
+    )
+    check_blacklist: bool = Field(
+        default=False,
+        description="Active la vérification des blacklists externes"
+    )
+    check_right_click: bool = Field(
+        default=False,
+        description="Vérifie si le clic droit est désactivé"
+    )
+    explain: bool = Field(
+        default=False,
+        description="Retourne les détails complets de l'analyse (flags, typosquatting, âge domaine, etc.)"
+    )
+
+class CheckUrlBlacklistInput(BaseModel):
+    url: str = Field(
+        description="L'URL à vérifier dans les blacklists externes"
+    )
+
+class ClearCacheInput(BaseModel):
+    placeholder: str = Field(
+        default="",
+        description="Paramètre factice (le tool n'a pas de paramètres)"
+    )
+
+class AnalyzeUrlBatchInput(BaseModel):
+    urls: list[str] = Field(
+        description="Liste d'URLs à analyser en parallèle. Exemple: ['https://paypal.com', 'https://fake-bank.tk']"
+    )
+    check_blacklist: bool = Field(
+        default=False,
+        description="Active la vérification blacklist pour chaque URL"
+    )
+    explain: bool = Field(
+        default=False,
+        description="Retourne les détails complets pour chaque URL"
+    )
+
+class GetRecentThreatsInput(BaseModel):
+    limit: int = Field(
+        default=10,
+        description="Nombre maximum de menaces récentes à retourner (défaut: 10)"
+    )
+    include_suspicious: bool = Field(
+        default=True,
+        description="Inclure les URLs/emails suspects en plus des phishing confirmés"
+    )
+
+
+class ReloadModelInput(BaseModel):
+    what: str = Field(
+        default="all",
+        description="Quel modèle recharger: 'all' (les deux), 'phishing' (modèle URL), 'mail' (modèle email)"
+    )
+    
+class AnalyzeEmailBatchInput(BaseModel):
+    emails: list[str] = Field(
+        default=None,
+        description="Liste d'emails (contenu texte brut) à analyser en parallèle"
+    )
+    email_files: list[str] = Field(
+        default=None,
+        description="Liste de chemins vers des fichiers .eml à analyser en parallèle"
+    )
+    check_blacklist: bool = Field(
+        default=False,
+        description="Active la vérification des URLs extraites auprès des blacklists externes"
+    )
+    
+# ============================================================================
+# TOOL 1: ANALYSE URL
+# ============================================================================
+
+class AnalyzeUrl(BaseTool):
+    name: str = "analyze_url"
+    description: str = """
+Analyse une URL pour détecter si elle est frauduleuse (phishing) ou légitime ou suspect (cas mitigée).
+
+RETOUR (dict JSON) :
+{
+    "final_decision": str,      // "safe" | "suspicious" | "phishing"
+    "confidence": float,        // Score de confiance (0.0 à 1.0)
+    "source": str,              // Source: "whitelist" | "ia_prediction" | "passive_analyse" | "url_critique"
+    "date": str,                // Date de l'analyse (format: DD/MM/YYYY à HH:MM:SS)
+    "elapsed": float,           // Temps d'analyse en secondes
+    "breakdown": {              // Détails (si explain=True)
+        "ia_pred_proba": float,     // Probabilité donnée par l'IA (0-1)
+        "ia_pred": str,             // Prédiction de l'IA ("safe" ou "phishing")
+        "passive_analyze_prob": float,  // Score de risque passif (0-1)
+        "passive_analyze_level": str    // Niveau: "CRITIQUE" | "ÉLEVÉ" | "MOYEN" | "FAIBLE" | "NÉGLIGEABLE"
+    }
+}
+
+Exemple:
+    URL phishing: "https://paypal-verify.tk/login"
+    → {"final_decision": "phishing", "confidence": 0.86, "source": "ia_prediction"}
+
+Utilise cet outil quand l'utilisateur fournit une URL ou demande si un site est sûr.
+"""
+    args_schema: type[BaseModel] = AnalyzeUrlInput
+    description_updated: bool = True
+    
+    async def _arun(
+        self,
+        url: str,
+        check_blacklist: bool = False,
+        explain: bool = False,
+        features_func=None,
+        check_right_click: bool = False
+    ):
+        return await get_ap_instance().predict_url_async(
+            url=url,
+            check_blacklist=check_blacklist,
+            check_right_click=check_right_click,
+            explain=explain,
+            features_func=features_func
+        )
+    
+    def _run(
+        self,
+        url: str,
+        check_blacklist: bool = False,
+        explain: bool = False,
+        features_func=None,
+        check_right_click: bool = False
+    ):
+        return get_ap_instance().predict_url(
+            url=url,
+            check_blacklist=check_blacklist,
+            check_right_click=check_right_click,
+            explain=explain,
+            features_func=features_func
+        )
+
+
+# ============================================================================
+# TOOL 2: ANALYSE EMAIL
+# ============================================================================
+
+class AnalyzeEmail(BaseTool):
+    name: str = "analyze_email"
+    description: str = """
+Analyse un email complet pour détecter une tentative de phishing.
+
+INPUT:
+    - Soit email_content: le texte brut de l'email
+    - Soit email_file: le chemin vers un fichier .eml
+
+RETOUR (dict JSON) :
+{
+    "final_decision": str,      // "safe" | "suspicious" | "phishing"
+    "confidence": float,        // Score de confiance (0.0 à 1.0)
+    "source": str,              // Source: "url_critique" | "bert_haut_confiance" | "headers_compromis" | "passive_eleve" | ...
+    "sender": str,              // Expéditeur (From header)
+    "subject": str,             // Sujet de l'email
+    "nb_urls_total": int,       // Nombre total d'URLs trouvées dans l'email
+    "nb_urls_phishing": int,    // Nombre d'URLs classées comme phishing
+    "spf": str,                 // Statut SPF: "pass" | "fail" | "neutral" | "absent"
+    "dkim": str,                // Statut DKIM: "present" | "absent"
+    "date": str,                // Date de l'analyse (format: DD/MM/YYYY à HH:MM:SS)
+    "elapsed": float,           // Temps d'analyse en secondes
+    "breakdown": {              // Détails complets (toujours inclus)
+        "bert_prob": {              // Probabilités du modèle BERT
+            "phishing": float,
+            "safe": float
+        },
+        "mail_passive_score": float,    // Score passif global (0-1)
+        "ratio_urls_phishing": float,   // Proportion d'URLs classées phishing
+        "max_url_score": float,         // Score maximum parmi toutes les URLs
+        "header_risk": float,           // Score de risque des headers (SPF/DKIM/Reply-To)
+        "urls_summary": [               // Liste détaillée des URLs analysées
+            {
+                "url": str,
+                "decision": "safe" | "suspicious" | "phishing",
+                "confidence": float
+            }
+        ]
+    }
+}
+
+ou (dict JSON)
+{
+ "error": True,
+ "message": "..."
+ } Si erreur
+
+Exemple d'email phishing:
+    "final_decision": "phishing",
+    "sender": "support@paypa1.tk",
+    "nb_urls_phishing": 2,
+    "spf": "fail",
+    "dkim": "absent",
+    "breakdown": {
+        "bert_prob": {"phishing": 0.92, "safe": 0.08},
+        "mail_passive_score": 0.78,
+        "ratio_urls_phishing": 0.66
+    }
+
+Utilise cet outil quand l'utilisateur reçoit un email suspect et veut savoir s'il s'agit d'une arnaque.
+"""
+    args_schema: type[BaseModel] = AnalyzeEmailInput
+    description_updated: bool = True
+    
+    def _get_email_content(self, email_content: str, email_file: str | None = None) -> str:
+        """Récupère le contenu de l'email depuis le texte ou le fichier."""
+        if email_file:
+            if not os.path.exists(email_file):
+                raise FileNotFoundError(f"Fichier non trouvé: {email_file}")
+            with open(email_file, 'r', encoding='utf-8', errors='replace') as f:
+                return f.read()
+        elif email_content:
+            return email_content
+        else:
+            raise ValueError("Fournir soit email_content soit email_file")
+    
+    async def _arun(
+        self,
+        email_content: str = None,
+        email_file: str = None,
+        check_blacklist: bool = False
+    ):
+        try:
+            content = self._get_email_content(email_content, email_file)
+        except Exception as e:
+            return {
+                "error": True,
+                "message": str(e)
+            }
+        ap = get_ap_instance()
+        return await ap.predict_email_async(content, check_blacklist)
+    
+    def _run(
+        self,
+        email_content: str = None,
+        email_file: str = None,
+        check_blacklist: bool = False
+    ):
+        try:
+            content = self._get_email_content(email_content, email_file)
+        except Exception as e:
+            return {
+                "error": True,
+                "message": str(e)
+            }
+        ap = get_ap_instance()
+        return ap.predict_email(content, check_blacklist)
+
+
+# ============================================================================
+# TOOL 3: EXTRAIRE URLs
+# ============================================================================
+
+class ExtractUrls(BaseTool):
+    name: str = "extract_urls"
+    description: str = """
+Extrait toutes les URLs (http://, https://, www.) d'un texte.
+
+RETOUR (list[str]) :
+    Liste des URLs uniques trouvées dans le texte, dédoublonnées.
+
+Exemple:
+    Input: "Cliquez ici: https://paypal-verify.tk et là http://fake-bank.com/login"
+    Output: ["https://paypal-verify.tk", "http://fake-bank.com/login"]
+
+Utilise cet outil pour prétraiter un message avant analyse.
+"""
+    args_schema: type[BaseModel] = ExtractUrlsInput
+    description_updated: bool = True
+    
+    async def _arun(self, text: str):
+        return self._run(text)
+    
+    def _run(self, text: str):
+        return extract_urls(text, unique=True)
+
+
+# ============================================================================
+# TOOL 4: STATISTIQUES PHISHING
+# ============================================================================
+
+class GetPhishingStats(BaseTool):
+    name: str = "get_phishing_stats"
+    description: str = """
+Récupère les statistiques des analyses récentes (URLs ET emails).
+
+RETOUR (dict JSON) :
+{
+    "urls": {
+        "total": int,           // Nombre total d'URLs analysées
+        "safe": int,            // URLs classées "safe"
+        "suspicious": int,      // URLs classées "suspicious"
+        "phishing": int,        // URLs classées "phishing"
+        "recent": [             // Dernières URLs (max 'limit')
+            {
+                "url": str,
+                "final_decision": str,
+                "confidence": float,
+                "date": str
+            }
+        ]
+    },
+    "emails": {
+        "total": int,           // Nombre total d'emails analysés
+        "safe": int,            // Emails classés "safe"
+        "suspicious": int,      // Emails classés "suspicious"
+        "phishing": int,        // Emails classés "phishing"
+        "recent": [             // Derniers emails (max 'limit')
+            {
+                "sender": str,
+                "subject": str,
+                "final_decision": str,
+                "confidence": float,
+                "date": str
+            }
+        ]
+    }
+}
+
+Exemple:
+    {
+        "urls": {"total": 150, "phishing": 45, "safe": 95, ...},
+        "emails": {"total": 50, "phishing": 20, "safe": 25, ...}
+    }
+
+Utilise cet outil pour donner un aperçu global des activités de détection.
+"""
+    args_schema: type[BaseModel] = GetPhishingStatsInput
+    description_updated: bool = True
+    
+    def _get_email_stats(self, limit: int) -> dict:
+        """Récupère les stats des emails en lisant le fichier JSON"""
+        history_file = os.path.join(HISTORY_FILE, "history_mail.json")
+        
+        if not os.path.exists(history_file):
+            return {'total': 0, 'safe': 0, 'suspicious': 0, 'phishing': 0, 'recent': []}
+        
+        with open(history_file, 'r', encoding='utf-8') as f:
+            analyses = json.load(f)
+        
+        return {
+            'total': len(analyses),
+            'safe': sum(1 for a in analyses if a.get('final_decision') == 'safe'),
+            'suspicious': sum(1 for a in analyses if a.get('final_decision') == 'suspicious'),
+            'phishing': sum(1 for a in analyses if a.get('final_decision') == 'phishing'),
+            'recent': [
+                {
+                    'sender': a.get('sender', 'N/A'),
+                    'subject': a.get('subject', 'N/A')[:50],
+                    'final_decision': a.get('final_decision', 'unknown'),
+                    'confidence': a.get('confidence', 0),
+                    'date': a.get('date', 'N/A')
+                }
+                for a in analyses[-limit:]
+            ]
+        }
+
+    def _run(self, limit: int = 10):
+        ap = get_ap_instance()
+        history = ap.get_history("json")
+        analyses = history.get('json', [])
+        
+        url_stats = {
+            'total': len(analyses),
+            'safe': sum(1 for a in analyses if a.get('final_decision') == 'safe'),
+            'suspicious': sum(1 for a in analyses if a.get('final_decision') == 'suspicious'),
+            'phishing': sum(1 for a in analyses if a.get('final_decision') == 'phishing'),
+            'recent': [
+                {
+                    'url': a.get('url', 'N/A'),
+                    'final_decision': a.get('final_decision', 'unknown'),
+                    'confidence': a.get('confidence', 0),
+                    'date': a.get('date', 'N/A')
+                }
+                for a in analyses[-limit:]
+            ]
+        }
+        
+        email_stats = self._get_email_stats(limit)
+        
+        return {
+            "urls": url_stats,
+            "emails": email_stats
+        }
+    
+    async def _arun(self, limit: int = 10):
+        return self._run(limit)
+
+
+# ============================================================================
+# TOOL 5: VIDER CACHE
+# ============================================================================
+
+class ClearCache(BaseTool):
+    name: str = "clear_cache"
+    description: str = """
+Vide le cache des analyses.
+
+RETOUR (dict JSON) :
+{
+    "status": str,              // "success" ou "error"
+    "message": str              // Message de confirmation ou d'erreur
+}
+
+Exemple:
+    {"status": "success", "message": "Cache vidé"}
+
+Utile pour forcer une réanalyse d'URLs ou d'emails déjà vus.
+"""
+    description_updated: bool = True
+    args_schema: type[BaseModel] = ClearCacheInput
+    
+    async def _arun(self, *args, **kwargs):
+        return self._run()
+    
+    def _run(self, *args, **kwargs):
+        clear()
+        return {"status": "success", "message": "Cache vidé"}
+
+
+# ============================================================================
+# TOOL 6: ANALYSE IA SEULE
+# ============================================================================
+
+class AnalyzeUrlIAOnly(BaseTool):
+    name: str = "analyze_url_ia_only"
+    description: str = """
+Analyse une URL en utilisant UNIQUEMENT le modèle d'IA (PhishingIA), sans l'analyse passive.
+
+RETOUR (dict JSON) :
+{
+    "predict_proba": {          // Probabilités détaillées
+        "safe": float,
+        "phishing": float
+    },
+    "predict": {                // Prédiction
+        "0": "safe" | "phishing"
+    },
+    "error": str                // En cas d'erreur
+}
+
+Utilise cet outil quand l'utilisateur veut une analyse rapide sans les heuristiques passives.
+"""
+    args_schema: type[BaseModel] = AnalyzeUrlIAOnlyInput
+    description_updated: bool = True
+    
+    async def _arun(self, url: str):
+        return await get_ap_instance().predict_with_ia_async(url)
+    
+    def _run(self, url: str):
+        return get_ap_instance().predict_with_ia(url)
+
+
+# ============================================================================
+# TOOL 7: ANALYSE PASSIVE SEULE 
+# ============================================================================
+
+class AnalyzeUrlPassiveOnly(BaseTool):
+    name: str = "analyze_url_passive_only"
+    description: str = """
+Analyse une URL en utilisant UNIQUEMENT l'analyse passive (18 critères), sans le modèle IA.
+
+RETOUR (dict JSON) :
+{
+    "risk_level": str,          // "NÉGLIGEABLE" | "FAIBLE" | "MOYEN" | "ÉLEVÉ" | "CRITIQUE"
+    "risk_score": int,          // Score de risque (0-100)
+    "is_phishing": bool,        // True si considéré comme phishing
+    "flags": [                  // Liste des flags détectés (si explain=True)
+        {
+            "message": str,
+            "points": int
+        }
+    ],
+    "error": str                // En cas d'erreur
+}
+
+Exemple:
+    URL avec IP: "http://192.168.1.1/login"
+    → {"risk_level": "CRITIQUE", "risk_score": 65, "is_phishing": true}
+
+Utilise cet outil pour voir les heuristiques sans l'influence du modèle IA.
+"""
+    args_schema: type[BaseModel] = AnalyzeUrlPassiveOnlyInput
+    description_updated: bool = True
+    
+    async def _arun(self, url: str, check_blacklist: bool = False, check_right_click: bool = False, explain: bool = False):
+        return await get_ap_instance().predict_passive_analyze_async(
+            url,
+            check_blacklist=check_blacklist,
+            check_right_click=check_right_click,
+            explain=explain
+        )
+    
+    def _run(self, url: str, check_blacklist: bool = False, check_right_click: bool = False, explain: bool = False):
+        return get_ap_instance().predict_passive_analyze(
+            url,
+            check_blacklist=check_blacklist,
+            check_right_click=check_right_click,
+            explain=explain
+        )
+
+
+# ============================================================================
+# TOOL 8: VÉRIFIER BLACKLIST URL
+# ============================================================================
+
+class CheckUrlBlacklist(BaseTool):
+    name: str = "check_url_blacklist"
+    description: str = """
+Vérifie si une URL est présente dans les blacklists externes (PhishDestroy).
+
+RETOUR (dict JSON) :
+{
+    "phishing": bool,           // True si l'URL est blacklistée
+    "source": str,              // Source de la blacklist ("PhishDestroy")
+    "risk_score": int,          // Score de risque (0-100)
+    "severity": str,            // "none" | "low" | "medium" | "high"
+    "error": str                // En cas d'erreur
+}
+
+Exemple:
+    URL malveillante: "https://paypal-verify.tk"
+    → {"phishing": true, "risk_score": 85, "severity": "high"}
+
+Utilise cet outil pour une vérification rapide sans analyse complète.
+"""
+    args_schema: type[BaseModel] = CheckUrlBlacklistInput
+    description_updated: bool = True
+    
+    async def _arun(self, url: str):
+        return await get_ap_instance().PassiveAnalyzer.verify_black_list(url)
+    
+    def _run(self, url: str):
+        return _run_async(
+            self._arun,
+            url
+        )
+
+class AnalyzeUrlBatch(BaseTool):
+    name: str = "analyze_url_batch"
+    description: str = """
+Analyse plusieurs URLs en parallèle (asyncio.gather) en une seule opération.
+Plus efficace que d'appeler analyze_url plusieurs fois.
+
+RETOUR (dict JSON) :
+{
+    "total": int,               // Nombre total d'URLs analysées
+    "safe": int,                // Nombre d'URLs sûres
+    "suspicious": int,          // Nombre d'URLs suspectes
+    "phishing": int,            // Nombre d'URLs phishing
+    "elapsed": float,           // Temps total d'analyse en secondes
+    "results": [                // Détails par URL
+        {
+            "url": str,
+            "final_decision": "safe" | "suspicious" | "phishing",
+            "confidence": float,
+            "source": str,
+            "error": str        // Présent uniquement en cas d'erreur
+        }
+    ]
+}
+
+Exemple:
+    urls: ["https://google.com", "https://paypal-verify.tk/login"]
+    → {"total": 2, "phishing": 1, "safe": 1, "results": [...]}
+
+Utilise cet outil quand l'orchestrateur envoie une liste d'assets ou quand un email
+contient plusieurs liens à analyser simultanément.
+"""
+    args_schema: type[BaseModel] = AnalyzeUrlBatchInput
+    description_updated: bool = True
+
+    async def _arun(
+        self,
+        urls: list[str],
+        check_blacklist: bool = False,
+        explain: bool = False
+    ):
+        ap = get_ap_instance()
+        start = time.time()
+
+        tasks = [
+            ap.predict_url_async(
+                url=url,
+                check_blacklist=check_blacklist,
+                explain=explain
+            )
+            for url in urls
+        ]
+        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        results = []
+        for url, res in zip(urls, raw_results):
+            if isinstance(res, Exception):
+                results.append({
+                    "url": url,
+                    "final_decision": "error",
+                    "confidence": 0.0,
+                    "source": "error",
+                    "error": str(res)
+                })
+            else:
+                results.append({
+                    "url": url,
+                    "final_decision": res.get("final_decision", "unknown"),
+                    "confidence": res.get("confidence", 0.0),
+                    "source": res.get("source", "unknown"),
+                    **({"breakdown": res["breakdown"]} if explain and "breakdown" in res else {})
+                })
+
+        return {
+            "total": len(urls),
+            "safe": sum(1 for r in results if r["final_decision"] == "safe"),
+            "suspicious": sum(1 for r in results if r["final_decision"] == "suspicious"),
+            "phishing": sum(1 for r in results if r["final_decision"] == "phishing"),
+            "elapsed": round(time.time() - start, 3),
+            "results": results
+        }
+
+    def _run(
+        self,
+        urls: list[str],
+        check_blacklist: bool = False,
+        explain: bool = False
+    ):
+        return _run_async(
+            self._arun,
+            urls, check_blacklist, explain
+        )
+
+
+# ============================================================================
+# TOOL 10: MENACES RÉCENTES
+# ============================================================================
+
+class GetRecentThreats(BaseTool):
+    name: str = "get_recent_threats"
+    description: str = """
+Retourne uniquement les menaces actives récentes (phishing + suspicious).
+Filtré — sans le noise des URLs/emails safe.
+Idéal pour l'orchestrateur qui veut les alertes actives sans tout l'historique.
+
+RETOUR (dict JSON) :
+{
+    "total_threats": int,       // Nombre total de menaces (phishing + suspicious)
+    "phishing_count": int,      // Phishing confirmés
+    "suspicious_count": int,    // Suspects
+    "urls": [                   // Menaces sur URLs
+        {
+            "url": str,
+            "final_decision": "phishing" | "suspicious",
+            "confidence": float,
+            "source": str,
+            "date": str
+        }
+    ],
+    "emails": [                 // Menaces sur emails
+        {
+            "sender": str,
+            "subject": str,
+            "final_decision": "phishing" | "suspicious",
+            "confidence": float,
+            "date": str
+        }
+    ]
+}
+
+Utilise cet outil quand l'orchestrateur veut connaître l'état des menaces actives
+ou quand il faut décider d'une action (blocage, alerte admin).
+"""
+    args_schema: type[BaseModel] = GetRecentThreatsInput
+    description_updated: bool = True
+
+    def _get_email_threats(self, limit: int, include_suspicious: bool) -> list[dict]:
+        """Lit l'historique emails et filtre les menaces."""
+        history_file = os.path.join(HISTORY_FILE, "history_mail.json")
+        if not os.path.exists(history_file):
+            return []
+
+        with open(history_file, 'r', encoding='utf-8') as f:
+            analyses = json.load(f)
+
+        targets = ["phishing", "suspicious"] if include_suspicious else ["phishing"]
+        threats = [a for a in analyses if a.get("final_decision") in targets]
+
+        return [
+            {
+                "sender": t.get("sender", "N/A"),
+                "subject": t.get("subject", "N/A")[:60],
+                "final_decision": t.get("final_decision"),
+                "confidence": t.get("confidence", 0.0),
+                "date": t.get("date", "N/A")
+            }
+            for t in threats[-limit:]
+        ]
+
+    def _run(self, limit: int = 10, include_suspicious: bool = True):
+        ap = get_ap_instance()
+        history = ap.get_history("json")
+        all_urls = history.get("json", [])
+
+        targets = ["phishing", "suspicious"] if include_suspicious else ["phishing"]
+        url_threats = [a for a in all_urls if a.get("final_decision") in targets]
+
+        url_list = [
+            {
+                "url": t.get("url", "N/A"),
+                "final_decision": t.get("final_decision"),
+                "confidence": t.get("confidence", 0.0),
+                "source": t.get("source", "N/A"),
+                "date": t.get("date", "N/A")
+            }
+            for t in url_threats[-limit:]
+        ]
+
+        email_list = self._get_email_threats(limit, include_suspicious)
+
+        total = len(url_list) + len(email_list)
+        phishing_count = sum(1 for t in url_list + email_list if t["final_decision"] == "phishing")
+        suspicious_count = sum(1 for t in url_list + email_list if t["final_decision"] == "suspicious")
+
+        return {
+            "total_threats": total,
+            "phishing_count": phishing_count,
+            "suspicious_count": suspicious_count,
+            "urls": url_list,
+            "emails": email_list
+        }
+
+    async def _arun(self, limit: int = 10, include_suspicious: bool = True):
+        return self._run(limit, include_suspicious)
+
+# ============================================================================
+# TOOL 11: RELOAD MODÈLE
+# ============================================================================
+
+class ReloadModel(BaseTool):
+    name: str = "reload_model"
+    description: str = """
+Force le rechargement du modèle ML anti-phishing ou Email sans redémarrer le service.
+À utiliser après un refit déclenché par l'orchestrateur ou un autre agent.
+INPUT:
+    what: "all" | "phishing" | "mail"
+    - "all" → recharge le modèle URL + le modèle email
+    - "phishing" → recharge uniquement le modèle URL (PhishingIA)
+    - "mail" → recharge uniquement le modèle email (MailPhishingPredict)
+    
+RETOUR (dict JSON) :
+{
+    "status": "success" | "error",
+    "message": str,             // Confirmation ou message d'erreur
+    "timestamp": str            // Heure du rechargement
+}
+
+Exemple:
+    → {"status": "success", "message": "Modèle rechargé", "timestamp": "11/06/2026 à 14:32:10"}
+
+Utilise cet outil après avoir déclenché un refit pour que les nouvelles
+prédictions utilisent le modèle mis à jour.
+"""
+    args_schema: type[BaseModel] = ReloadModelInput
+    description_updated: bool = True
+
+    def _run(self, what: str, *args, **kwargs):
+        return _run_async(
+            self._arun,
+            what,
+            *args,
+            **kwargs
+        )
+
+    async def _arun(self, what: str, *args, **kwargs):
+        try:
+            ap = get_ap_instance()
+            await ap.load_models(what)
+            return {
+                "status": "success",
+                "message": "Modèle rechargé avec succès",
+                "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S")
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "timestamp": datetime.now().strftime("%d/%m/%Y à %H:%M:%S")
+            }
+
+class AnalyzeEmailBatch(BaseTool):
+    name: str = "analyze_email_batch"
+    description: str = """
+Analyse plusieurs emails en parallèle (asyncio.gather) en une seule opération.
+Plus efficace que d'appeler analyze_email plusieurs fois.
+
+INPUT:
+    - Soit emails: liste de textes bruts d'emails
+    - Soit email_files: liste de chemins vers des fichiers .eml
+
+RETOUR (dict JSON) :
+{
+    "total": int,               // Nombre total d'emails analysés
+    "safe": int,                // Nombre d'emails sûrs
+    "suspicious": int,          // Nombre d'emails suspects
+    "phishing": int,            // Nombre d'emails phishing
+    "error": int,               // Nombre d'erreurs
+    "elapsed": float,           // Temps total d'analyse en secondes
+    "results": [                // Détails par email
+        {
+            "index": int,           // Position dans la liste
+            "source": str,          // "text" ou "file: chemin"
+            "final_decision": "safe" | "suspicious" | "phishing" | "error",
+            "confidence": float,
+            "sender": str,          // Uniquement si succès
+            "subject": str,         // Uniquement si succès
+            "nb_urls_total": int,
+            "nb_urls_phishing": int,
+            "spf": str,
+            "dkim": str,
+            "error": str            // Présent uniquement en cas d'erreur
+        }
+    ]
+}
+
+Exemple:
+    emails: ["Objet: Urgent Vérifiez votre compte...", "Objet: Newsletter..."]
+    → {"total": 2, "phishing": 1, "safe": 1, "results": [...]}
+
+Utilise cet outil quand l'orchestrateur envoie une liste d'emails suspects
+ou un dossier contenant plusieurs fichiers .eml à analyser.
+"""
+    args_schema: type[BaseModel] = AnalyzeEmailBatchInput
+    description_updated: bool = True
+
+    def _get_email_content(self, email_content: str = None, email_file: str = None) -> tuple[str, str]:
+        """Récupère le contenu d'un email depuis texte ou fichier.
+        
+        Returns:
+            tuple: (source_description, content)
+        """
+        if email_file:
+            if not os.path.exists(email_file):
+                raise FileNotFoundError(f"Fichier non trouvé: {email_file}")
+            with open(email_file, 'r', encoding='utf-8', errors='replace') as f:
+                return f"file: {email_file}", f.read()
+        elif email_content:
+            return "text", email_content
+        else:
+            raise ValueError("Fournir soit email_content soit email_file")
+    
+    async def _analyse_one(self, task_type, source, content, ap, check_blacklist):
+        if task_type == "error":
+            return "error", source, Exception(content)
+        
+        return ("success", source, await ap.predict_email_async(content, check_blacklist))
+                
+    async def _arun(
+        self,
+        emails: list[str] = None,
+        email_files: list[str] = None,
+        check_blacklist: bool = False
+    ):
+        ap = get_ap_instance()
+        start = time.time()
+
+        email_sources = [] 
+        
+        if emails:
+            for content in emails:
+                if content and content.strip():
+                    email_sources.append(("text", content))
+        
+        if email_files:
+            for filepath in email_files:
+                if filepath:
+                    try:
+                        source, content = self._get_email_content(email_file=filepath)
+                        email_sources.append((source, content, None))
+                    except Exception as e:
+                        email_sources.append((f"file: {filepath}", None, str(e)))
+        
+        if not email_sources:
+            return {
+                "total": 0,
+                "safe": 0,
+                "suspicious": 0,
+                "phishing": 0,
+                "error": 0,
+                "elapsed": 0.0,
+                "results": [],
+                "message": "Aucun email fourni"
+            }
+
+        tasks = []
+        for source, content, err in email_sources:
+            if content is None and err is not None:
+                tasks.append(("error", source, err))
+            else:
+                tasks.append(("analyze", source, content))
+        
+        raw_results = await asyncio.gather(
+            *[
+                self._analyse_one(task_type, source, content, ap, check_blacklist)
+                for task_type, source, content in tasks
+            ],
+            return_exceptions=True
+        )
+        results = []
+        for i, result in enumerate(raw_results):
+            if isinstance(result, Exception):
+                results.append({
+                    "index": i,
+                    "source": "unknown",
+                    "final_decision": "error",
+                    "confidence": 0.0,
+                    "error": str(result)
+                })
+                continue
+            
+            task_type, source, res = result
+            if task_type == "error":
+                results.append({
+                    "index": i,
+                    "source": source,
+                    "final_decision": "error",
+                    "confidence": 0.0,
+                    "error": str(result)
+                })
+            else:
+                results.append({
+                    "index": i,
+                    "source": source,
+                    "final_decision": res.get("final_decision", "unknown"),
+                    "confidence": res.get("confidence", 0.0),
+                    "sender": res.get("sender", ""),
+                    "subject": res.get("subject", ""),
+                    "nb_urls_total": res.get("nb_urls_total", 0),
+                    "nb_urls_phishing": res.get("nb_urls_phishing", 0),
+                    "spf": res.get("spf", ""),
+                    "dkim": res.get("dkim", ""),
+                })
+
+        return {
+            "total": len(results),
+            "safe": sum(1 for r in results if r["final_decision"] == "safe"),
+            "suspicious": sum(1 for r in results if r["final_decision"] == "suspicious"),
+            "phishing": sum(1 for r in results if r["final_decision"] == "phishing"),
+            "error": sum(1 for r in results if r["final_decision"] == "error"),
+            "elapsed": round(time.time() - start, 3),
+            "results": results
+        }
+
+    def _run(
+        self,
+        emails: list[str] = None,
+        email_files: list[str] = None,
+        check_blacklist: bool = False
+    ):
+        return _run_async(
+            self._arun,
+            emails, email_files, check_blacklist
+        )
+    
+# ============================================================================
+# LISTE DE TOUS LES TOOLS
+# ============================================================================
+
+ALL_TOOLS = [
+    AnalyzeUrl(),
+    AnalyzeEmail(),
+    ExtractUrls(),
+    GetPhishingStats(),
+    ClearCache(),
+    AnalyzeUrlIAOnly(),
+    AnalyzeUrlPassiveOnly(),
+    CheckUrlBlacklist(),
+    AnalyzeUrlBatch(),
+    GetRecentThreats(),
+    ReloadModel(),
+    AnalyzeEmailBatch()
+]============================
+================./__init__.py============
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Apr 11 09:49:27 2026
+
+@author: hounsousamuel
+"""
+
+============================

@@ -1,0 +1,71 @@
+{
+  "timestamp": 1779618049.7864566,
+  "target_ip": "172.17.0.2",
+  "source": "bash_history_read",
+  "data": {
+    "severity": "LOW",
+    "elapsed": 0.5169587135314941,
+    "mitres": [
+      {
+        "name": "Unsecured Credentials: Bash History",
+        "mitre_id": "T1552.003",
+        "mitre_tactic": "Credential Access",
+        "description": "Lecture du fichier .bash_history pour extraire des commandes contenant des credentials en clair."
+      }
+    ],
+    "results": {
+      "credentials_found": [],
+      "credentials_count": 0,
+      "sensitive_lines_count": 0,
+      "commands": {
+        "cat ~/.bash_history 2>/dev/null || echo 'BASH_HISTORY_DENIED'": {
+          "stdout": "ls\nexit\n# Test 1: Shell de base\necho \"Test réussi !\"\nbash --version\n# Test 2: Système de fichiers\nls -la /\ndf -h\nmount | grep -v tmpfs\n# Test 3: Réseau basique\ncat /etc/hosts\nping -c 1 127.0.0.1\n# Test 4: Processus et services\nps aux | head -5\nsystemctl --version\n# Test 5: Utilisateurs\nwhoami\ncat /etc/passwd | grep -E \"(root|bash)\"\n# Test 6: Variables d'environnement\necho $PATH\n# Depuis votre système principal\ndf -h /mnt/d80f4e1a-0303-4011-b7c0-eeea68c12dde/\n# Ou depuis le chroot\ndf -h /\nexit\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.zsh_history 2>/dev/null || echo 'ZSH_HISTORY_DENIED'": {
+          "stdout": "ZSH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.history 2>/dev/null || echo 'HISTORY_DENIED'": {
+          "stdout": "HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.sh_history 2>/dev/null || echo 'SH_HISTORY_DENIED'": {
+          "stdout": "SH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.bash_history 2>/dev/null || echo 'ROOT_BASH_HISTORY_DENIED'": {
+          "stdout": "ls\nexit\n# Test 1: Shell de base\necho \"Test réussi !\"\nbash --version\n# Test 2: Système de fichiers\nls -la /\ndf -h\nmount | grep -v tmpfs\n# Test 3: Réseau basique\ncat /etc/hosts\nping -c 1 127.0.0.1\n# Test 4: Processus et services\nps aux | head -5\nsystemctl --version\n# Test 5: Utilisateurs\nwhoami\ncat /etc/passwd | grep -E \"(root|bash)\"\n# Test 6: Variables d'environnement\necho $PATH\n# Depuis votre système principal\ndf -h /mnt/d80f4e1a-0303-4011-b7c0-eeea68c12dde/\n# Ou depuis le chroot\ndf -h /\nexit\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.zsh_history 2>/dev/null || echo 'ROOT_ZSH_HISTORY_DENIED'": {
+          "stdout": "ROOT_ZSH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "ls /home/ 2>/dev/null": {
+          "stdout": "",
+          "stderr": "",
+          "returncode": 2
+        },
+        "for u in $(ls /home/); do echo \"=== $u ===\"; cat /home/$u/.bash_history 2>/dev/null; done": {
+          "stdout": "",
+          "stderr": "ls: cannot access '/home/': No such file or directory\n",
+          "returncode": 0
+        },
+        "wc -l ~/.bash_history /root/.bash_history 2>/dev/null || true": {
+          "stdout": "  25 /root/.bash_history\n  25 /root/.bash_history\n  50 total\n",
+          "stderr": "",
+          "returncode": 0
+        }
+      },
+      "success_number": 8,
+      "success_rate": 0.8888888888888888
+    }
+  }
+}

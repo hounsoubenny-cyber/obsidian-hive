@@ -1,0 +1,4718 @@
+[
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "🚨 COMBINAISON CRITIQUE: 4 mots suspects (account, update, paypal...)",
+          35
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:06:21",
+    "elapsed": 1.05
+  },
+  {
+    "url": "https://www.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "12/04/2026 à 15:06:22",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verify.tk/secure",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.014168657117069272,
+          "safe": 0.9858313428829307
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 73,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "confidence": 0.9858313428829307,
+    "source": "ia_prediction(haut confiance)",
+    "breakdown": {
+      "ia_pred_proba": 0.986,
+      "ia_pred": "safe",
+      "passive_analyze": null
+    },
+    "date": "12/04/2026 à 09:04:25",
+    "elapsed": 0.63
+  },
+  {
+    "url": "https://sam_new.com@voler.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999211295531858,
+          "safe": 7.887044681419283e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "📊 MOYEN",
+      "risk_score": 32,
+      "is_phishing": false,
+      "flags": [
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ]
+      ]
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d' informations trop personnelles à moins d' avoir confiance",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 1.0,
+      "ia_pred_proba_safe": 0.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.32,
+      "passive_analyze_level": "📊 MOYEN"
+    },
+    "date": "12/04/2026 à 15:07:00",
+    "elapsed": 9.87
+  },
+  {
+    "url": "https://sam_new.com@voler.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999211295531858,
+          "safe": 7.887044681419283e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "📊 MOYEN",
+      "risk_score": 32,
+      "is_phishing": false,
+      "flags": [
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ]
+      ]
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d' informations trop personnelles à moins d' avoir confiance",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 1.0,
+      "ia_pred_proba_safe": 0.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.32,
+      "passive_analyze_level": "📊 MOYEN"
+    },
+    "date": "12/04/2026 à 15:07:00",
+    "elapsed": 9.87
+  },
+  {
+    "url": "https://sam_new.com@voler1.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999115290632835,
+          "safe": 8.847093671653088e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 52,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.81,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.52,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "12/04/2026 à 15:08:56",
+    "elapsed": 0.38
+  },
+  {
+    "url": "https://sam_new.com@192.0.0.1/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999998986838784,
+          "safe": 1.0131612163525017e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:09:20",
+    "elapsed": 2.74
+  },
+  {
+    "url": "https://sam_new.com@192.0.0.1/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999998986838784,
+          "safe": 1.0131612163525017e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:09:20",
+    "elapsed": 2.74
+  },
+  {
+    "url": "https://sam_new.com@192.0.0.1/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999998986838784,
+          "safe": 1.0131612163525017e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:09:20",
+    "elapsed": 2.74
+  },
+  {
+    "url": "https://sam_new.com@192.0.0.1/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999998986838784,
+          "safe": 1.0131612163525017e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:09:20",
+    "elapsed": 2.74
+  },
+  {
+    "url": "https://sam_new.com@google.com/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "12/04/2026 à 15:09:53",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://sam_new.com@goooogles.com/sam/com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999387787804318,
+          "safe": 6.122121956818755e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.52) à un domaine connu (goooogles.com (suspect) vs google.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "12/04/2026 à 15:10:09",
+    "elapsed": 6.26
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "🚨 COMBINAISON CRITIQUE: 4 mots suspects (account, update, paypal...)",
+          35
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:10",
+    "elapsed": 1.54
+  },
+  {
+    "url": "https://secure-amazon-update.xyz/verify/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999942194013169,
+          "safe": 5.780598683097896e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'amazon'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 1.61
+  },
+  {
+    "url": "https://www.netflix.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.paypal.com/signin/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://goog1e.com/login/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9896554631180285,
+          "safe": 0.01034453688197148
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.94) à un domaine connu (goog1e.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.99,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 3.36
+  },
+  {
+    "url": "https://github.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://accounts.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://xn--mcrosoft-8g0a.com/security/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999991952231895,
+          "safe": 8.047768105699042e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 PUNICODE - Attaque homoglyphe confirmée",
+          52
+        ],
+        [
+          "📊 Mot suspect détecté: 'security'",
+          10
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.88,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.8
+  },
+  {
+    "url": "http://192.168.1.1/login.php",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999999877002179,
+          "safe": 1.229978210696506e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:17",
+    "elapsed": 0.42
+  },
+  {
+    "url": "https://www.amazon.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:17",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "🚨 COMBINAISON CRITIQUE: 4 mots suspects (account, update, paypal...)",
+          35
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:10",
+    "elapsed": 1.54
+  },
+  {
+    "url": "https://secure-amazon-update.xyz/verify/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999942194013169,
+          "safe": 5.780598683097896e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'amazon'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 1.61
+  },
+  {
+    "url": "https://www.netflix.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.paypal.com/signin/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:12",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://goog1e.com/login/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9896554631180285,
+          "safe": 0.01034453688197148
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.94) à un domaine connu (goog1e.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.99,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 3.36
+  },
+  {
+    "url": "https://github.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://accounts.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://xn--mcrosoft-8g0a.com/security/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999991952231895,
+          "safe": 8.047768105699042e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 PUNICODE - Attaque homoglyphe confirmée",
+          52
+        ],
+        [
+          "📊 Mot suspect détecté: 'security'",
+          10
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.88,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:16",
+    "elapsed": 0.8
+  },
+  {
+    "url": "http://192.168.1.1/login.php",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999999877002179,
+          "safe": 1.229978210696506e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 11:57:17",
+    "elapsed": 0.42
+  },
+  {
+    "url": "https://www.amazon.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 11:57:17",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://192.168.1.1/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999996014319407,
+          "safe": 3.985680592809488e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:03:52",
+    "elapsed": 2.1
+  },
+  {
+    "url": "http://192.168.1.1/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999996014319407,
+          "safe": 3.985680592809488e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:03:52",
+    "elapsed": 2.1
+  },
+  {
+    "url": "http://samuel.com/google.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9581589893477714,
+          "safe": 0.041841010652228575
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true,
+      "flags": [
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.48) à un domaine connu (samuel.com (suspect) vs amwell.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.73,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.958,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 13:06:13",
+    "elapsed": 6.52
+  },
+  {
+    "url": "https://www.google.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://accounts.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.paypal.com/signin/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://github.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.netflix.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://192.168.1.1/login.php",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999999877002179,
+          "safe": 1.229978210696506e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:07:48",
+    "elapsed": 0.56
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:07:49",
+    "elapsed": 1.03
+  },
+  {
+    "url": "https://xn--mcrosoft-8g0a.com/security/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999991952231895,
+          "safe": 8.047768105699042e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.88,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:07:51",
+    "elapsed": 1.23
+  },
+  {
+    "url": "http://goog1e.com/login/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9896554631180285,
+          "safe": 0.01034453688197148
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.99,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 13:07:56",
+    "elapsed": 5.11
+  },
+  {
+    "url": "https://secure-amazon-update.xyz/verify/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999942194013169,
+          "safe": 5.780598683097896e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:07:57",
+    "elapsed": 1.61
+  },
+  {
+    "url": "https://www.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:09:41",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "🚨 COMBINAISON CRITIQUE: 4 mots suspects (account, update, paypal...)",
+          35
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:14:00",
+    "elapsed": 0.19
+  },
+  {
+    "url": "https://secure-amazon-update.xyz/verify/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999942194013169,
+          "safe": 5.780598683097896e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'amazon'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:14:01",
+    "elapsed": 0.2
+  },
+  {
+    "url": "https://www.netflix.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:14:01",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.paypal.com/signin/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:14:01",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://goog1e.com/login/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9896554631180285,
+          "safe": 0.01034453688197148
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.94) à un domaine connu (goog1e.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.99,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 13:14:02",
+    "elapsed": 0.87
+  },
+  {
+    "url": "https://github.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:14:02",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://accounts.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:14:02",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://xn--mcrosoft-8g0a.com/security/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999991952231895,
+          "safe": 8.047768105699042e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 PUNICODE - Attaque homoglyphe confirmée",
+          52
+        ],
+        [
+          "📊 Mot suspect détecté: 'security'",
+          10
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.88,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:14:02",
+    "elapsed": 0.2
+  },
+  {
+    "url": "http://192.168.1.1/login.php",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999999877002179,
+          "safe": 1.229978210696506e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:14:03",
+    "elapsed": 0.46
+  },
+  {
+    "url": "https://www.amazon.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:14:03",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "🚨 COMBINAISON CRITIQUE: 4 mots suspects (account, update, paypal...)",
+          35
+        ],
+        [
+          "📊 Tirets multiples dans le domaine - possible typosquatting",
+          8
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:14:00",
+    "elapsed": 0.19
+  },
+  {
+    "url": "http://gooogle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9871195239124851,
+          "safe": 0.012880476087514891
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true,
+      "flags": [
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.57) à un domaine connu (gooogle.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.987,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 13:26:36",
+    "elapsed": 3.12
+  },
+  {
+    "url": "https://paypal-verify.tk/secure",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999771490807815,
+          "safe": 2.2850919218509734e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 73,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.89,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.73,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:26:50",
+    "elapsed": 0.98
+  },
+  {
+    "url": "https://www.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:26:54",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://sam",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9061752231023299,
+          "safe": 0.09382477689767015
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.543705133861398,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.094,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "25/05/2026 à 13:27:17",
+    "elapsed": 3.0
+  },
+  {
+    "url": "https://www.google.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:28:38",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://accounts.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:28:38",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.paypal.com/signin/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:28:38",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://github.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:28:38",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://www.netflix.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 13:28:38",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://192.168.1.1/login.php",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999999877002179,
+          "safe": 1.229978210696506e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.86,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:28:39",
+    "elapsed": 0.71
+  },
+  {
+    "url": "https://paypal-verification-security.com/account/update",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999668258239,
+          "safe": 3.317417612379127e-08
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 68,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.68,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:28:40",
+    "elapsed": 1.15
+  },
+  {
+    "url": "https://xn--mcrosoft-8g0a.com/security/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999991952231895,
+          "safe": 8.047768105699042e-07
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.88,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:28:41",
+    "elapsed": 1.03
+  },
+  {
+    "url": "http://goog1e.com/login/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9896554631180285,
+          "safe": 0.01034453688197148
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 50,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.79,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.99,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.5,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "25/05/2026 à 13:28:44",
+    "elapsed": 2.84
+  },
+  {
+    "url": "https://secure-amazon-update.xyz/verify/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999942194013169,
+          "safe": 5.780598683097896e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 13:28:45",
+    "elapsed": 1.61
+  },
+  {
+    "url": "http://gooogle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9871195239124851,
+          "safe": 0.012880476087514891
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.57) à un domaine connu (gooogle.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.987,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:21",
+    "elapsed": 0.27
+  },
+  {
+    "url": "https://www.google.com/",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "25/05/2026 à 16:50:23",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://gooogle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9871195239124851,
+          "safe": 0.012880476087514891
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.57) à un domaine connu (gooogle.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.987,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:21",
+    "elapsed": 0.27
+  },
+  {
+    "url": "https://paypal-verify.tk/secure",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999771490807815,
+          "safe": 2.2850919218509734e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 73,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.89,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.73,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:27",
+    "elapsed": 0.26
+  },
+  {
+    "url": "https://paypal-verify.tk/secureb",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999774197177111,
+          "safe": 2.2580282288890848e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 73,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.89,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.73,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:31",
+    "elapsed": 0.27
+  },
+  {
+    "url": "http://goooglle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9873614320419096,
+          "safe": 0.012638567958090362
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.55) à un domaine connu (goooglle.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.987,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:39",
+    "elapsed": 0.27
+  },
+  {
+    "url": "http://gooioglle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9866416620368103,
+          "safe": 0.013358337963189755
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.52) à un domaine connu (gooioglle.com (suspect) vs google.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.987,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:42",
+    "elapsed": 0.28
+  },
+  {
+    "url": "http://.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9858133729612374,
+          "safe": 0.014186627038762603
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.53) à un domaine connu (.com (suspect) vs x.com (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.986,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:50:48",
+    "elapsed": 0.22
+  },
+  {
+    "url": "http://.com.fr/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9773156797436701,
+          "safe": 0.02268432025632995
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 70,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.50) à un domaine connu (.com.fr (suspect) vs cm.fr (légitime))",
+          60
+        ],
+        [
+          "📊 Mot suspect détecté: 'login'",
+          10
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.87,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.977,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.7,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "25/05/2026 à 16:51:10",
+    "elapsed": 0.23
+  },
+  {
+    "url": "https://ll",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9422728593308902,
+          "safe": 0.057727140669109764
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.5653637155985342,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.058,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "25/05/2026 à 16:51:20",
+    "elapsed": 3.0
+  },
+  {
+    "url": "http://sam.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.892071560381056,
+          "safe": 0.10792843961894409
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.7,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.892,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "10/06/2026 à 11:33:12",
+    "elapsed": 3.64
+  },
+  {
+    "url": "http://127.0.0.1/sam@attaquant.com/login?redirect=paypal.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999999999999971,
+          "safe": 2.9274452668952513e-15
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "10/06/2026 à 12:10:22",
+    "elapsed": 0.47
+  },
+  {
+    "url": "https://ouigo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 14:45:55",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://ouigO.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 14:46:14",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://ouigO.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 14:46:14",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://ouigO.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 14:46:14",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://Ouigo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 14:47:27",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://ouIgo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9673193571322187,
+          "safe": 0.03268064286778128
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 60,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.53) à un domaine connu (ouIgo.com (suspect) vs ouigo.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.82,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.967,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.6,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "14/06/2026 à 14:49:47",
+    "elapsed": 83.89
+  },
+  {
+    "url": "https://oUIgo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9673193571322187,
+          "safe": 0.03268064286778128
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.49) à un domaine connu (oUIgo.com (suspect) vs fogo.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.74,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.967,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "14/06/2026 à 14:51:54",
+    "elapsed": 79.73
+  },
+  {
+    "url": "https://oUIgo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9673193571322187,
+          "safe": 0.03268064286778128
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.49) à un domaine connu (oUIgo.com (suspect) vs fogo.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.74,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.967,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "14/06/2026 à 14:51:54",
+    "elapsed": 79.73
+  },
+  {
+    "url": "https://OUIgo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9751052349211264,
+          "safe": 0.024894765078873553
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.5850631409526759,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.025,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "14/06/2026 à 14:55:43",
+    "elapsed": 81.34
+  },
+  {
+    "url": "https://OUIgo.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9751052349211264,
+          "safe": 0.024894765078873553
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.5850631409526759,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.025,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "14/06/2026 à 14:55:43",
+    "elapsed": 81.34
+  },
+  {
+    "url": "https://OUIgo.coM",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9751052349211264,
+          "safe": 0.024894765078873553
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.5850631409526759,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.025,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "14/06/2026 à 14:57:23",
+    "elapsed": 78.75
+  },
+  {
+    "url": "https://OUIgO.coM",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9751052349211264,
+          "safe": 0.024894765078873553
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "advice": "Faites attention ",
+    "confidence": 0.5850631409526759,
+    "source": "default_safe",
+    "breakdown": {
+      "ia_pred_proba": 0.025,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.0,
+      "passive_analyze_level": "✅ NÉGLIGEABLE"
+    },
+    "date": "14/06/2026 à 15:05:51",
+    "elapsed": 79.8
+  },
+  {
+    "url": "https://drevo-info.ru",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "14/06/2026 à 15:09:05",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://drevo-infO.ru",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9908065115142132,
+          "safe": 0.00919348848578681
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 60,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.55) à un domaine connu (drevo-infO.ru (suspect) vs drevo-info.ru (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.83,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.991,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.6,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "14/06/2026 à 15:12:05",
+    "elapsed": 152.87
+  },
+  {
+    "url": "https://www.librairie.be",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0031491190443380113,
+          "safe": 0.996850880955662
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 60,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.55) à un domaine connu (librairie.be (suspect) vs librairie.me (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "confidence": 0.996850880955662,
+    "source": "ia_prediction(haut confiance)",
+    "breakdown": {
+      "ia_pred_proba": 0.997,
+      "ia_pred": "safe",
+      "passive_analyze": null
+    },
+    "date": "14/06/2026 à 15:14:15",
+    "elapsed": 133.47
+  },
+  {
+    "url": "https://www.librairie.be",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0031491190443380113,
+          "safe": 0.996850880955662
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 60,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.55) à un domaine connu (librairie.be (suspect) vs librairie.me (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "confidence": 0.996850880955662,
+    "source": "ia_prediction(haut confiance)",
+    "breakdown": {
+      "ia_pred_proba": 0.997,
+      "ia_pred": "safe",
+      "passive_analyze": null
+    },
+    "date": "14/06/2026 à 15:14:15",
+    "elapsed": 133.47
+  },
+  {
+    "url": "https://www.librairie.be1",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.1119107393857125,
+          "safe": 0.8880892606142875
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "✅ NÉGLIGEABLE",
+      "risk_score": 0,
+      "is_phishing": false,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "confidence": 0.8880892606142875,
+    "source": "ia_prediction(haut confiance)",
+    "breakdown": {
+      "ia_pred_proba": 0.888,
+      "ia_pred": "safe",
+      "passive_analyze": null
+    },
+    "date": "14/06/2026 à 18:41:13",
+    "elapsed": 2.89
+  },
+  {
+    "url": "https://goooogle.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9721041721386686,
+          "safe": 0.027895827861331327
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.57) à un domaine connu (goooogle.com (suspect) vs gooogle.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.74,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.972,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "14/06/2026 à 18:41:34",
+    "elapsed": 6.31
+  },
+  {
+    "url": "https://sam.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "18/06/2026 à 22:29:50",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://sam.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "18/06/2026 à 22:36:35",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypa1.xxx.com/login?redirect=paypal.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "20/06/2026 à 20:55:28",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verify.tk/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999767883125109,
+          "safe": 2.321168748908045e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 100,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 Utilisation suspecte de la marque 'paypal'",
+          25
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.48) à un domaine connu (paypal-verify.tk (suspect) vs paypal-notify.com (légitime))",
+          60
+        ],
+        [
+          "⚠️ Plusieurs mots suspects: 2 termes",
+          18
+        ],
+        [
+          "⚠️ TLD suspect (.tk, .ml, .cf, .ga, .gq) - souvent abusé",
+          30
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 1.0,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 1.0,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "20/06/2026 à 21:01:16",
+    "elapsed": 16.98
+  },
+  {
+    "url": "https://www.example.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/06/2026 à 11:11:32",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://faceboOk.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9787804947437589,
+          "safe": 0.02121950525624109
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.85,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.979,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:14:54",
+    "elapsed": 17.67
+  },
+  {
+    "url": "http://gooogle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/06/2026 à 11:21:37",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://gooogle.com/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/06/2026 à 11:21:37",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://paypal-verification-securisee.tk/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999547105910568,
+          "safe": 4.528940894320878e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:25:18",
+    "elapsed": 7.49
+  },
+  {
+    "url": "https://paypal-verification-securisee.tk/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999547105910568,
+          "safe": 4.528940894320878e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:25:18",
+    "elapsed": 7.49
+  },
+  {
+    "url": "https://paypal-verification-securisee.tk/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999547105910568,
+          "safe": 4.528940894320878e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:25:18",
+    "elapsed": 7.49
+  },
+  {
+    "url": "https://paypal-verification-securisee.tk/login",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9999547105910568,
+          "safe": 4.528940894320878e-05
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 81,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.92,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 1.0,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.81,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:25:18",
+    "elapsed": 7.49
+  },
+  {
+    "url": "https://facebOok.com?redirect=facebook.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.6727463380543452,
+          "safe": 0.3272536619456548
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d'informations trop personnelles à moins d'avoir confiance",
+    "confidence": 0.67,
+    "source": "ia_prediction(confiance_faible) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 0.673,
+      "ia_pred_proba_safe": 0.327,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:37:25",
+    "elapsed": 9.86
+  },
+  {
+    "url": "https://googlee.com/login?redirect=paypal.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/06/2026 à 11:38:00",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://facebOok.com?redirect=facebook.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.6727463380543452,
+          "safe": 0.3272536619456548
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 65,
+      "is_phishing": true
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d'informations trop personnelles à moins d'avoir confiance",
+    "confidence": 0.67,
+    "source": "ia_prediction(confiance_faible) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 0.673,
+      "ia_pred_proba_safe": 0.327,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.65,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/06/2026 à 11:49:38",
+    "elapsed": 23.36
+  },
+  {
+    "url": "https://googlee.com/login?redirect=paypal.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": ""
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/06/2026 à 11:50:26",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://google.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/08/2026 à 21:04:57",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://goooogle.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/08/2026 à 21:07:10",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://gooooggle.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9689781706396468,
+          "safe": 0.0310218293603532
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "⚠️ ÉLEVÉ",
+      "risk_score": 40,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.69) à un domaine connu (gooooggle.com (suspect) vs goooogle.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.74,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.969,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.4,
+      "passive_analyze_level": "⚠️ ÉLEVÉ"
+    },
+    "date": "22/08/2026 à 21:07:39",
+    "elapsed": 9.94
+  },
+  {
+    "url": "https://198.0.8.1@sam.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/08/2026 à 21:10:36",
+    "elapsed": 0.0
+  },
+  {
+    "url": "https://198.0.8.1",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.03907151533338382,
+          "safe": 0.9609284846666162
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 55,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "safe",
+    "confidence": 0.9609284846666162,
+    "source": "ia_prediction(haut confiance)",
+    "breakdown": {
+      "ia_pred_proba": 0.961,
+      "ia_pred": "safe",
+      "passive_analyze": null
+    },
+    "date": "22/08/2026 à 21:10:59",
+    "elapsed": 4.32
+  },
+  {
+    "url": "http://198.0.8.1",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9984462708044759,
+          "safe": 0.0015537291955241186
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 55,
+      "is_phishing": true,
+      "flags": [
+        [
+          "📊 Impossible de joindre l'URL (timeout/erreur réseau)",
+          0
+        ],
+        [
+          "🚨 ADRESSE IP DANS L'URL - Masquage avancé",
+          55
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.82,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.998,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.55,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/08/2026 à 21:11:21",
+    "elapsed": 3.33
+  },
+  {
+    "url": "http://198.0.8.1@sam.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "22/08/2026 à 21:13:19",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://198.0.8.1@sam.com@attaquant.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.999465056065732,
+          "safe": 0.0005349439342680016
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 92,
+      "is_phishing": true,
+      "flags": [
+        [
+          "✅ Domaine ancien (> 2 ans) - forte confiance",
+          -20
+        ],
+        [
+          "🚨 CARACTÈRE @ - Technique d'obfuscation",
+          52
+        ],
+        [
+          "⚠️ Domaine ressemblant (0.64) à un domaine connu (attaquant.com (suspect) vs a-taquan.com (légitime))",
+          60
+        ]
+      ]
+    },
+    "final_decision": "phishing",
+    "confidence": 0.97,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.999,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.92,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/08/2026 à 21:13:47",
+    "elapsed": 11.81
+  },
+  {
+    "url": "http://clouddrive-mail-verify.net/account/verify.php?id=8827x&token=ab12cd34",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9111467774491051,
+          "safe": 0.08885322255089491
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 88,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.9,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.911,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.88,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/08/2026 à 21:40:45",
+    "elapsed": 24.19
+  },
+  {
+    "url": "https://novabank-secure-verify.com/confirm-identity?ref=8827x",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9755428107592916,
+          "safe": 0.0244571892407084
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "📊 MOYEN",
+      "risk_score": 26,
+      "is_phishing": false
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d'informations trop personnelles à moins d'avoir confiance",
+    "confidence": 0.98,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 0.976,
+      "ia_pred_proba_safe": 0.024,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.26,
+      "passive_analyze_level": "📊 MOYEN"
+    },
+    "date": "22/08/2026 à 21:40:59",
+    "elapsed": 10.84
+  },
+  {
+    "url": "http://clouddrive-mail-verify.net/account/verify.php?id=8827x&token=ab12cd34",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9111467774491051,
+          "safe": 0.08885322255089491
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 88,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.9,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.911,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.88,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/08/2026 à 21:40:45",
+    "elapsed": 24.19
+  },
+  {
+    "url": "https://novabank-secure-verify.com/confirm-identity?ref=8827x",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9755428107592916,
+          "safe": 0.0244571892407084
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "📊 MOYEN",
+      "risk_score": 26,
+      "is_phishing": false
+    },
+    "final_decision": "suspicious",
+    "advice": "Faites attention, ne divulguez pas d'informations trop personnelles à moins d'avoir confiance",
+    "confidence": 0.98,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba_phishing": 0.976,
+      "ia_pred_proba_safe": 0.024,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.26,
+      "passive_analyze_level": "📊 MOYEN"
+    },
+    "date": "22/08/2026 à 21:40:59",
+    "elapsed": 10.84
+  },
+  {
+    "url": "http://sam.ll.com",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.0,
+          "safe": 1.0
+        }
+      },
+      "predict": {
+        "0": "safe"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_score": 0,
+      "is_phishing": false,
+      "risk_level": "✅ DOMAINE VÉRIFIÉ",
+      "flag": "Domaine reconnu et sûr"
+    },
+    "final_decision": "safe",
+    "confidence": 1.0,
+    "source": "whitelist",
+    "breakdown": {},
+    "date": "23/08/2026 à 14:19:01",
+    "elapsed": 0.0
+  },
+  {
+    "url": "http://clouddrive-mail-verify.net/account/verify.php?id=8827x&token=ab12cd34",
+    "ia_pred": {
+      "predict_proba": {
+        "0": {
+          "phishing": 0.9111467774491051,
+          "safe": 0.08885322255089491
+        }
+      },
+      "predict": {
+        "0": "phishing"
+      },
+      "true_labels": {}
+    },
+    "passive_pred": {
+      "risk_level": "🚨 CRITIQUE",
+      "risk_score": 88,
+      "is_phishing": true
+    },
+    "final_decision": "phishing",
+    "confidence": 0.9,
+    "source": "ia_prediction(confiance_moyenne) && passive_analyse",
+    "breakdown": {
+      "ia_pred_proba": 0.911,
+      "ia_pred": "phishing",
+      "passive_analyze_prob": 0.88,
+      "passive_analyze_level": "🚨 CRITIQUE"
+    },
+    "date": "22/08/2026 à 21:40:45",
+    "elapsed": 24.19
+  }
+]

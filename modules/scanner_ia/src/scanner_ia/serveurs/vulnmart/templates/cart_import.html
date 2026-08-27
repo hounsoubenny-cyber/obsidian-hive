@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Importer un panier — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="tool-box">
+    <h2>Importer un panier sauvegardé <span class="vuln-tag">Désérialisation non sûre</span></h2>
+    <form method="POST">
+      <label style="display:block;font-size:.8rem;margin-bottom:6px;">Données du panier (base64)</label>
+      <textarea class="mono" style="width:100%;min-height:100px;padding:8px;border:1px solid var(--line);" name="cart_data"></textarea>
+      <button class="btn" style="margin-top:12px;" type="submit">Importer</button>
+    </form>
+    <p style="font-size:.8rem;margin-top:10px;">Le blob est désérialisé avec <code>pickle.loads()</code> côté serveur.</p>
+    {% if message %}<div class="alert info">{{ message }}</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

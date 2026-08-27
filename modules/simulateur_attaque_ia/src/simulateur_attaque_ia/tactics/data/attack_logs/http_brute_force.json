@@ -1,0 +1,5680 @@
+[
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "Début HTTP BRUTE FORCE à : Thu Jun 18 17:32:48 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": [
+            "/api",
+            "/backup",
+            "/config",
+            "/console",
+            "/admin",
+            "/login",
+            "/portal",
+            "/wp-admin",
+            "/phpmyadmin",
+            "/panel",
+            "/uploads",
+            "/robots.txt",
+            "/admin",
+            "/test",
+            "/files",
+            "/console",
+            "/dev",
+            "/.git",
+            "/config",
+            "/.env",
+            "/dashboard",
+            "/manager",
+            "/api",
+            "/config.php",
+            "/backup",
+            "/login",
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/wp-admin"
+        ]
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "Début HTTP BRUTE FORCE à : Thu Jun 18 17:32:48 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": [
+            "/api",
+            "/backup",
+            "/config",
+            "/console",
+            "/admin",
+            "/login",
+            "/portal",
+            "/wp-admin",
+            "/phpmyadmin",
+            "/panel",
+            "/uploads",
+            "/robots.txt",
+            "/admin",
+            "/test",
+            "/files",
+            "/console",
+            "/dev",
+            "/.git",
+            "/config",
+            "/.env",
+            "/dashboard",
+            "/manager",
+            "/api",
+            "/config.php",
+            "/backup",
+            "/login",
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/wp-admin"
+        ]
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:48 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Thu Jun 18 17:32:49 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "Début HTTP BRUTE FORCE à : Thu Jun 18 18:26:45 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": [
+            "/config",
+            "/login",
+            "/panel",
+            "/console",
+            "/api",
+            "/admin",
+            "/backup",
+            "/wp-admin",
+            "/portal",
+            "/phpmyadmin",
+            "/robots.txt",
+            "/.env",
+            "/.git",
+            "/login",
+            "/config.php",
+            "/admin",
+            "/backup",
+            "/portal",
+            "/phpmyadmin",
+            "/config",
+            "/dev",
+            "/files",
+            "/manager",
+            "/api",
+            "/wp-admin",
+            "/test",
+            "/panel",
+            "/console",
+            "/dashboard",
+            "/uploads"
+        ]
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "Début HTTP BRUTE FORCE à : Thu Jun 18 18:26:45 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": [
+            "/config",
+            "/login",
+            "/panel",
+            "/console",
+            "/api",
+            "/admin",
+            "/backup",
+            "/wp-admin",
+            "/portal",
+            "/phpmyadmin",
+            "/robots.txt",
+            "/.env",
+            "/.git",
+            "/login",
+            "/config.php",
+            "/admin",
+            "/backup",
+            "/portal",
+            "/phpmyadmin",
+            "/config",
+            "/dev",
+            "/files",
+            "/manager",
+            "/api",
+            "/wp-admin",
+            "/test",
+            "/panel",
+            "/console",
+            "/dashboard",
+            "/uploads"
+        ]
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:45 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:46 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:08 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Jul  1 08:47:08 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:08 2026",
+        "message": [
+            "/backup",
+            "/wp-admin",
+            "/admin",
+            "/portal",
+            "/console",
+            "/login",
+            "/phpmyadmin",
+            "/config",
+            "/panel",
+            "/api",
+            "/wp-admin",
+            "/portal",
+            "/phpmyadmin",
+            "/.git",
+            "/dashboard",
+            "/config.php",
+            "/uploads",
+            "/manager",
+            "/files",
+            "/backup",
+            "/admin",
+            "/console",
+            "/dev",
+            "/robots.txt",
+            "/.env",
+            "/login",
+            "/config",
+            "/test",
+            "/panel",
+            "/api"
+        ]
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:08 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Jul  1 08:47:08 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:08 2026",
+        "message": [
+            "/backup",
+            "/wp-admin",
+            "/admin",
+            "/portal",
+            "/console",
+            "/login",
+            "/phpmyadmin",
+            "/config",
+            "/panel",
+            "/api",
+            "/wp-admin",
+            "/portal",
+            "/phpmyadmin",
+            "/.git",
+            "/dashboard",
+            "/config.php",
+            "/uploads",
+            "/manager",
+            "/files",
+            "/backup",
+            "/admin",
+            "/console",
+            "/dev",
+            "/robots.txt",
+            "/.env",
+            "/login",
+            "/config",
+            "/test",
+            "/panel",
+            "/api"
+        ]
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:09 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:40 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Jul  1 08:54:40 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:40 2026",
+        "message": [
+            "/portal",
+            "/login",
+            "/config",
+            "/backup",
+            "/wp-admin",
+            "/api",
+            "/phpmyadmin",
+            "/admin",
+            "/console",
+            "/panel",
+            "/test",
+            "/login",
+            "/robots.txt",
+            "/dev",
+            "/console",
+            "/files",
+            "/panel",
+            "/portal",
+            "/config",
+            "/uploads",
+            "/manager",
+            "/backup",
+            "/.env",
+            "/admin",
+            "/dashboard",
+            "/wp-admin",
+            "/api",
+            "/phpmyadmin",
+            "/.git",
+            "/config.php"
+        ]
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:54:42 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Jul  1 08:59:03 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": [
+            "/admin",
+            "/wp-admin",
+            "/backup",
+            "/console",
+            "/panel",
+            "/login",
+            "/api",
+            "/phpmyadmin",
+            "/portal",
+            "/config",
+            "/files",
+            "/uploads",
+            "/panel",
+            "/dev",
+            "/portal",
+            "/config",
+            "/dashboard",
+            "/backup",
+            "/console",
+            "/.git",
+            "/config.php",
+            "/manager",
+            "/admin",
+            "/wp-admin",
+            "/.env",
+            "/robots.txt",
+            "/login",
+            "/api",
+            "/phpmyadmin",
+            "/test"
+        ]
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:59:03 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:42 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Jul  1 09:10:42 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:42 2026",
+        "message": [
+            "/wp-admin",
+            "/portal",
+            "/admin",
+            "/api",
+            "/phpmyadmin",
+            "/console",
+            "/panel",
+            "/login",
+            "/config",
+            "/backup",
+            "/config.php",
+            "/api",
+            "/test",
+            "/panel",
+            "/.git",
+            "/robots.txt",
+            "/portal",
+            "/uploads",
+            "/phpmyadmin",
+            "/console",
+            "/dev",
+            "/.env",
+            "/files",
+            "/dashboard",
+            "/backup",
+            "/wp-admin",
+            "/manager",
+            "/admin",
+            "/login",
+            "/config"
+        ]
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:10:43 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:44:57 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": [
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/config",
+            "/backup",
+            "/admin",
+            "/api",
+            "/console",
+            "/login",
+            "/wp-admin",
+            "/admin",
+            "/console",
+            "/config",
+            "/dev",
+            "/config.php",
+            "/robots.txt",
+            "/wp-admin",
+            "/login",
+            "/uploads",
+            "/test",
+            "/backup",
+            "/api",
+            "/.git",
+            "/files",
+            "/.env",
+            "/dashboard",
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/manager"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:44:57 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": [
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/config",
+            "/backup",
+            "/admin",
+            "/api",
+            "/console",
+            "/login",
+            "/wp-admin",
+            "/admin",
+            "/console",
+            "/config",
+            "/dev",
+            "/config.php",
+            "/robots.txt",
+            "/wp-admin",
+            "/login",
+            "/uploads",
+            "/test",
+            "/backup",
+            "/api",
+            "/.git",
+            "/files",
+            "/.env",
+            "/dashboard",
+            "/phpmyadmin",
+            "/panel",
+            "/portal",
+            "/manager"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:57 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:44:58 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:49:04 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": [
+            "/portal",
+            "/phpmyadmin",
+            "/panel",
+            "/api",
+            "/wp-admin",
+            "/admin",
+            "/console",
+            "/backup",
+            "/login",
+            "/config",
+            "/uploads",
+            "/test",
+            "/api",
+            "/config.php",
+            "/console",
+            "/backup",
+            "/login",
+            "/phpmyadmin",
+            "/manager",
+            "/dashboard",
+            "/config",
+            "/.git",
+            "/wp-admin",
+            "/robots.txt",
+            "/portal",
+            "/panel",
+            "/admin",
+            "/files",
+            "/dev",
+            "/.env"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:49:04 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": [
+            "/portal",
+            "/phpmyadmin",
+            "/panel",
+            "/api",
+            "/wp-admin",
+            "/admin",
+            "/console",
+            "/backup",
+            "/login",
+            "/config",
+            "/uploads",
+            "/test",
+            "/api",
+            "/config.php",
+            "/console",
+            "/backup",
+            "/login",
+            "/phpmyadmin",
+            "/manager",
+            "/dashboard",
+            "/config",
+            "/.git",
+            "/wp-admin",
+            "/robots.txt",
+            "/portal",
+            "/panel",
+            "/admin",
+            "/files",
+            "/dev",
+            "/.env"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:04 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:49:05 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:51:31 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": [
+            "/console",
+            "/backup",
+            "/portal",
+            "/config",
+            "/login",
+            "/wp-admin",
+            "/panel",
+            "/admin",
+            "/api",
+            "/phpmyadmin",
+            "/backup",
+            "/portal",
+            "/config",
+            "/login",
+            "/panel",
+            "/config.php",
+            "/manager",
+            "/phpmyadmin",
+            "/console",
+            "/test",
+            "/dashboard",
+            "/api",
+            "/.git",
+            "/.env",
+            "/robots.txt",
+            "/files",
+            "/dev",
+            "/wp-admin",
+            "/uploads",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 14:51:31 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": [
+            "/console",
+            "/backup",
+            "/portal",
+            "/config",
+            "/login",
+            "/wp-admin",
+            "/panel",
+            "/admin",
+            "/api",
+            "/phpmyadmin",
+            "/backup",
+            "/portal",
+            "/config",
+            "/login",
+            "/panel",
+            "/config.php",
+            "/manager",
+            "/phpmyadmin",
+            "/console",
+            "/test",
+            "/dashboard",
+            "/api",
+            "/.git",
+            "/.env",
+            "/robots.txt",
+            "/files",
+            "/dev",
+            "/wp-admin",
+            "/uploads",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:31 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:32 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:29 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 19:51:29 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:29 2026",
+        "message": [
+            "/api",
+            "/backup",
+            "/login",
+            "/config",
+            "/phpmyadmin",
+            "/console",
+            "/portal",
+            "/panel",
+            "/wp-admin",
+            "/admin",
+            "/files",
+            "/test",
+            "/api",
+            "/login",
+            "/wp-admin",
+            "/uploads",
+            "/backup",
+            "/config",
+            "/phpmyadmin",
+            "/portal",
+            "/.git",
+            "/dev",
+            "/manager",
+            "/dashboard",
+            "/console",
+            "/config.php",
+            "/panel",
+            "/robots.txt",
+            "/admin",
+            "/.env"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:29 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 19:51:29 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:29 2026",
+        "message": [
+            "/api",
+            "/backup",
+            "/login",
+            "/config",
+            "/phpmyadmin",
+            "/console",
+            "/portal",
+            "/panel",
+            "/wp-admin",
+            "/admin",
+            "/files",
+            "/test",
+            "/api",
+            "/login",
+            "/wp-admin",
+            "/uploads",
+            "/backup",
+            "/config",
+            "/phpmyadmin",
+            "/portal",
+            "/.git",
+            "/dev",
+            "/manager",
+            "/dashboard",
+            "/console",
+            "/config.php",
+            "/panel",
+            "/robots.txt",
+            "/admin",
+            "/.env"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:30 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:47 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 20:47:47 2026, pour url : 172.17.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:47 2026",
+        "message": [
+            "/login",
+            "/phpmyadmin",
+            "/config",
+            "/console",
+            "/api",
+            "/admin",
+            "/backup",
+            "/portal",
+            "/panel",
+            "/wp-admin",
+            "/api",
+            "/panel",
+            "/uploads",
+            "/wp-admin",
+            "/.git",
+            "/robots.txt",
+            "/console",
+            "/test",
+            "/admin",
+            "/backup",
+            "/config.php",
+            "/login",
+            "/config",
+            "/manager",
+            "/dashboard",
+            "/files",
+            "/dev",
+            "/phpmyadmin",
+            "/.env",
+            "/portal"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:47 2026",
+        "message": "Début HTTP BRUTE FORCE à : Sun Aug  2 20:47:47 2026, pour url : 172.17.0.2:8081 et 30 paths"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:47 2026",
+        "message": [
+            "/login",
+            "/phpmyadmin",
+            "/config",
+            "/console",
+            "/api",
+            "/admin",
+            "/backup",
+            "/portal",
+            "/panel",
+            "/wp-admin",
+            "/api",
+            "/panel",
+            "/uploads",
+            "/wp-admin",
+            "/.git",
+            "/robots.txt",
+            "/console",
+            "/test",
+            "/admin",
+            "/backup",
+            "/config.php",
+            "/login",
+            "/config",
+            "/manager",
+            "/dashboard",
+            "/files",
+            "/dev",
+            "/phpmyadmin",
+            "/.env",
+            "/portal"
+        ]
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:49 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 08:59:51 2026, pour url : 172.24.0.12:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": [
+            "/wp-admin",
+            "/api",
+            "/config",
+            "/panel",
+            "/backup",
+            "/portal",
+            "/console",
+            "/phpmyadmin",
+            "/login",
+            "/admin",
+            "/api",
+            "/dashboard",
+            "/login",
+            "/admin",
+            "/test",
+            "/uploads",
+            "/config",
+            "/console",
+            "/dev",
+            "/config.php",
+            "/manager",
+            "/panel",
+            "/.env",
+            "/backup",
+            "/portal",
+            "/.git",
+            "/files",
+            "/wp-admin",
+            "/robots.txt",
+            "/phpmyadmin"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 08:59:51 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:21 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 09:04:21 2026, pour url : 172.24.0.12:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:21 2026",
+        "message": [
+            "/wp-admin",
+            "/backup",
+            "/api",
+            "/console",
+            "/portal",
+            "/login",
+            "/config",
+            "/admin",
+            "/phpmyadmin",
+            "/panel",
+            "/backup",
+            "/console",
+            "/robots.txt",
+            "/dashboard",
+            "/test",
+            "/panel",
+            "/.env",
+            "/wp-admin",
+            "/api",
+            "/dev",
+            "/phpmyadmin",
+            "/manager",
+            "/.git",
+            "/admin",
+            "/files",
+            "/portal",
+            "/login",
+            "/config",
+            "/uploads",
+            "/config.php"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 09:04:22 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:20 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 13:11:20 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:20 2026",
+        "message": [
+            "/panel",
+            "/wp-admin",
+            "/console",
+            "/phpmyadmin",
+            "/login",
+            "/api",
+            "/admin",
+            "/backup",
+            "/portal",
+            "/config",
+            "/uploads",
+            "/panel",
+            "/files",
+            "/config.php",
+            "/.env",
+            "/dev",
+            "/api",
+            "/robots.txt",
+            "/manager",
+            "/console",
+            "/phpmyadmin",
+            "/login",
+            "/dashboard",
+            "/admin",
+            "/.git",
+            "/test",
+            "/wp-admin",
+            "/backup",
+            "/portal",
+            "/config"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:11:21 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:27:59 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 13:27:59 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:27:59 2026",
+        "message": [
+            "/config",
+            "/portal",
+            "/login",
+            "/console",
+            "/wp-admin",
+            "/admin",
+            "/panel",
+            "/api",
+            "/backup",
+            "/phpmyadmin",
+            "/.git",
+            "/.env",
+            "/config",
+            "/portal",
+            "/phpmyadmin",
+            "/manager",
+            "/login",
+            "/robots.txt",
+            "/files",
+            "/console",
+            "/dev",
+            "/dashboard",
+            "/panel",
+            "/config.php",
+            "/api",
+            "/test",
+            "/uploads",
+            "/wp-admin",
+            "/admin",
+            "/backup"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:00 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:45 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 14:49:45 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:45 2026",
+        "message": [
+            "/portal",
+            "/admin",
+            "/config",
+            "/api",
+            "/panel",
+            "/phpmyadmin",
+            "/backup",
+            "/login",
+            "/wp-admin",
+            "/console",
+            "/portal",
+            "/admin",
+            "/api",
+            "/login",
+            "/robots.txt",
+            "/test",
+            "/backup",
+            "/uploads",
+            "/dev",
+            "/.git",
+            "/wp-admin",
+            "/config.php",
+            "/console",
+            "/files",
+            "/dashboard",
+            "/config",
+            "/panel",
+            "/phpmyadmin",
+            "/.env",
+            "/manager"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:46 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 14:49:47 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:51 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 15:13:51 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:51 2026",
+        "message": [
+            "/portal",
+            "/panel",
+            "/login",
+            "/api",
+            "/config",
+            "/admin",
+            "/phpmyadmin",
+            "/console",
+            "/wp-admin",
+            "/backup",
+            "/login",
+            "/files",
+            "/phpmyadmin",
+            "/dashboard",
+            "/backup",
+            "/dev",
+            "/portal",
+            "/robots.txt",
+            "/panel",
+            "/api",
+            "/admin",
+            "/console",
+            "/.git",
+            "/.env",
+            "/config",
+            "/manager",
+            "/config.php",
+            "/test",
+            "/uploads",
+            "/wp-admin"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:13:52 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:30 2026",
+        "message": "Début HTTP BRUTE FORCE à : Tue Aug  4 15:17:30 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:30 2026",
+        "message": [
+            "/login",
+            "/phpmyadmin",
+            "/config",
+            "/admin",
+            "/backup",
+            "/wp-admin",
+            "/portal",
+            "/api",
+            "/panel",
+            "/console",
+            "/phpmyadmin",
+            "/.git",
+            "/manager",
+            "/robots.txt",
+            "/portal",
+            "/api",
+            "/config.php",
+            "/config",
+            "/backup",
+            "/test",
+            "/admin",
+            "/uploads",
+            "/panel",
+            "/files",
+            "/dashboard",
+            "/login",
+            "/wp-admin",
+            "/dev",
+            "/.env",
+            "/console"
+        ]
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:31 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:52 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Aug  5 15:17:52 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:52 2026",
+        "message": [
+            "/phpmyadmin",
+            "/wp-admin",
+            "/portal",
+            "/login",
+            "/console",
+            "/backup",
+            "/panel",
+            "/config",
+            "/api",
+            "/admin",
+            "/portal",
+            "/panel",
+            "/console",
+            "/api",
+            "/dev",
+            "/dashboard",
+            "/phpmyadmin",
+            "/wp-admin",
+            "/uploads",
+            "/files",
+            "/manager",
+            "/config",
+            "/config.php",
+            "/.git",
+            "/test",
+            "/login",
+            "/backup",
+            "/.env",
+            "/robots.txt",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:17:53 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:52 2026",
+        "message": "Début HTTP BRUTE FORCE à : Wed Aug  5 15:26:52 2026, pour url : 172.24.0.2:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:52 2026",
+        "message": [
+            "/phpmyadmin",
+            "/wp-admin",
+            "/portal",
+            "/login",
+            "/console",
+            "/backup",
+            "/panel",
+            "/config",
+            "/api",
+            "/admin",
+            "/portal",
+            "/panel",
+            "/console",
+            "/api",
+            "/dev",
+            "/dashboard",
+            "/phpmyadmin",
+            "/wp-admin",
+            "/uploads",
+            "/files",
+            "/manager",
+            "/config",
+            "/config.php",
+            "/.git",
+            "/test",
+            "/login",
+            "/backup",
+            "/.env",
+            "/robots.txt",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Wed Aug  5 15:26:53 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 11:56:07 2026, pour url : 172.24.0.3:80 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": [
+            "/console",
+            "/portal",
+            "/backup",
+            "/admin",
+            "/phpmyadmin",
+            "/api",
+            "/login",
+            "/config",
+            "/wp-admin",
+            "/panel",
+            "/test",
+            "/dashboard",
+            "/login",
+            "/config",
+            "/console",
+            "/api",
+            "/manager",
+            "/wp-admin",
+            "/config.php",
+            "/robots.txt",
+            "/phpmyadmin",
+            "/.git",
+            "/.env",
+            "/panel",
+            "/portal",
+            "/backup",
+            "/admin",
+            "/files",
+            "/uploads",
+            "/dev"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 11:56:07 2026, pour url : 172.24.0.3:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": [
+            "/console",
+            "/portal",
+            "/backup",
+            "/admin",
+            "/phpmyadmin",
+            "/api",
+            "/login",
+            "/config",
+            "/wp-admin",
+            "/panel",
+            "/test",
+            "/dashboard",
+            "/login",
+            "/config",
+            "/console",
+            "/api",
+            "/manager",
+            "/wp-admin",
+            "/config.php",
+            "/robots.txt",
+            "/phpmyadmin",
+            "/.git",
+            "/.env",
+            "/panel",
+            "/portal",
+            "/backup",
+            "/admin",
+            "/files",
+            "/uploads",
+            "/dev"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:07 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:56:08 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:01 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 15:34:01 2026, pour url : 172.24.0.3:80 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:01 2026",
+        "message": [
+            "/portal",
+            "/login",
+            "/api",
+            "/console",
+            "/panel",
+            "/backup",
+            "/admin",
+            "/config",
+            "/wp-admin",
+            "/phpmyadmin",
+            "/.env",
+            "/portal",
+            "/login",
+            "/api",
+            "/console",
+            "/files",
+            "/test",
+            "/phpmyadmin",
+            "/dev",
+            "/panel",
+            "/uploads",
+            "/config.php",
+            "/dashboard",
+            "/robots.txt",
+            "/config",
+            "/wp-admin",
+            "/manager",
+            "/backup",
+            "/.git",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:01 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 15:34:01 2026, pour url : 172.24.0.3:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:01 2026",
+        "message": [
+            "/portal",
+            "/login",
+            "/api",
+            "/console",
+            "/panel",
+            "/backup",
+            "/admin",
+            "/config",
+            "/wp-admin",
+            "/phpmyadmin",
+            "/.env",
+            "/portal",
+            "/login",
+            "/api",
+            "/console",
+            "/files",
+            "/test",
+            "/phpmyadmin",
+            "/dev",
+            "/panel",
+            "/uploads",
+            "/config.php",
+            "/dashboard",
+            "/robots.txt",
+            "/config",
+            "/wp-admin",
+            "/manager",
+            "/backup",
+            "/.git",
+            "/admin"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:02 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:03 2026",
+        "message": "Réponses positives : 60"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 16:49:05 2026, pour url : 172.24.0.4:80 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": [
+            "/panel",
+            "/console",
+            "/phpmyadmin",
+            "/config",
+            "/admin",
+            "/api",
+            "/login",
+            "/portal",
+            "/backup",
+            "/wp-admin",
+            "/console",
+            "/dashboard",
+            "/config.php",
+            "/admin",
+            "/uploads",
+            "/panel",
+            "/phpmyadmin",
+            "/.git",
+            "/api",
+            "/test",
+            "/robots.txt",
+            "/manager",
+            "/portal",
+            "/backup",
+            "/wp-admin",
+            "/dev",
+            "/files",
+            "/config",
+            "/.env",
+            "/login"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "Début HTTP BRUTE FORCE à : Mon Aug 24 16:49:05 2026, pour url : 172.24.0.4:8080 et 30 paths"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": [
+            "/panel",
+            "/console",
+            "/phpmyadmin",
+            "/config",
+            "/admin",
+            "/api",
+            "/login",
+            "/portal",
+            "/backup",
+            "/wp-admin",
+            "/console",
+            "/dashboard",
+            "/config.php",
+            "/admin",
+            "/uploads",
+            "/panel",
+            "/phpmyadmin",
+            "/.git",
+            "/api",
+            "/test",
+            "/robots.txt",
+            "/manager",
+            "/portal",
+            "/backup",
+            "/wp-admin",
+            "/dev",
+            "/files",
+            "/config",
+            "/.env",
+            "/login"
+        ]
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:05 2026",
+        "message": "Réponses positives : 30"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /console → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /dashboard → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /config.php → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /uploads → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /panel → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /phpmyadmin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /.git → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /api → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /test → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /robots.txt → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /manager → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /portal → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /backup → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /wp-admin → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /dev → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /files → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /config → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /.env → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "✅ FOUND: /login → 200 (accessible)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "Fin HTTP BRUTE FORCE : 20 tentatives"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:06 2026",
+        "message": "Réponses positives : 60"
+    }
+]

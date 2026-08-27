@@ -1,0 +1,126 @@
+.
+├── api
+│   ├── api_config.py
+│   ├── main_api.py
+│   ├── __pycache__
+│   │   ├── api_config.cpython-311.pyc
+│   │   ├── main_api.cpython-311.pyc
+│   │   └── router.cpython-311.pyc
+│   ├── router.py
+│   ├── run_api.py
+│   └── test_api.py
+├── configs
+│   ├── behavior_scorer_config.py
+│   ├── detect_language_config.py
+│   ├── executor_config.py
+│   ├── features_extractor_config.py
+│   ├── features_extractor_v2_config.py
+│   ├── fs_monitor_config.py
+│   ├── orchestrator_config.py
+│   ├── __pycache__
+│   │   ├── behavior_scorer_config.cpython-311.pyc
+│   │   ├── detect_language_config.cpython-311.pyc
+│   │   ├── features_extractor_config.cpython-311.pyc
+│   │   ├── features_extractor_v2_config.cpython-311.pyc
+│   │   ├── fs_monitor_config.cpython-311.pyc
+│   │   ├── orchestrator_config.cpython-311.pyc
+│   │   └── syscall_tracer_config.cpython-311.pyc
+│   └── syscall_tracer_config.py
+├── core
+│   ├── container_manager.py
+│   ├── __init__.py
+│   ├── orchestrator.py
+│   ├── __pycache__
+│   │   ├── behavior_scorer.cpython-311.pyc
+│   │   ├── container_manager.cpython-311.pyc
+│   │   ├── detect_language.cpython-311.pyc
+│   │   ├── executor.cpython-311.pyc
+│   │   ├── fs_monitor.cpython-311.pyc
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── orchestrator.cpython-311.pyc
+│   │   ├── quarantine.cpython-311.pyc
+│   │   └── syscall_tracer.cpython-311.pyc
+│   ├── quarantine.py
+│   ├── test_q.py
+│   ├── test_quarantine
+│   │   ├── index.json
+│   │   ├── reports
+│   │   │   ├── q_20260621_103130_11d84b5c_report.json
+│   │   │   ├── q_20260621_103130_99a5feae_report.json
+│   │   │   └── q_20260621_103130_be662062_report.json
+│   │   └── samples
+│   │       ├── q_20260621_103130_11d84b5c.python
+│   │       ├── q_20260621_103130_99a5feae.python
+│   │       └── q_20260621_103130_be662062.python
+│   ├── test_quarantine_export.json
+│   └── test_quarantine_import
+│       ├── index.json
+│       ├── reports
+│       └── samples
+│           ├── q_20260621_103130_11d84b5c.python
+│           ├── q_20260621_103130_99a5feae.python
+│           └── q_20260621_103130_be662062.python
+├── docker
+│   ├── Dockerfile.sandbox-base
+│   ├── Dockerfile.txt
+│   └── sam.txt
+├── executor
+│   ├── detect_language.py
+│   ├── executor.py
+│   └── __pycache__
+│       ├── detect_language.cpython-311.pyc
+│       └── executor.cpython-311.pyc
+├── ml_model
+│   ├── autoencoders.py
+│   ├── autoencoders_trainer.py
+│   ├── callbacks.py
+│   ├── classifier.py
+│   ├── classifier_trainer.py
+│   ├── dataset_builder.py
+│   ├── datasets
+│   ├── features_extractor.py
+│   ├── features_extractor_v2.py
+│   ├── model_dataset.py
+│   ├── __pycache__
+│   │   ├── autoencoders.cpython-311.pyc
+│   │   ├── callbacks.cpython-311.pyc
+│   │   ├── classifier.cpython-311.pyc
+│   │   ├── features_extractor_v2.cpython-311.pyc
+│   │   └── vocab.cpython-311.pyc
+│   └── vocab.py
+├── sandbox.txt
+├── sandbox_utils
+│   ├── logger.py
+│   ├── __pycache__
+│   │   ├── limiter.cpython-311.pyc
+│   │   ├── logger.cpython-311.pyc
+│   │   └── utils.cpython-311.pyc
+│   ├── signal_manager.py
+│   ├── utils.py
+│   └── warnings_manager.py
+├── scorers
+│   ├── behavior_scorer.py
+│   ├── __pycache__
+│   │   ├── behavior_scorer.cpython-311.pyc
+│   │   └── realtime_processor.cpython-311.pyc
+│   └── realtime_processor.py
+├── tests
+│   └── test_orchestrator.py
+├── tous_les_fichiers.txt
+├── tracers
+│   ├── fs_monitor.py
+│   ├── __pycache__
+│   │   ├── fs_monitor.cpython-311.pyc
+│   │   └── syscall_tracer.cpython-311.pyc
+│   └── syscall_tracer.py
+├── tree_sandbox.txt
+├── var
+│   └── sandbox_cache
+│       ├── cache.db
+│       ├── cache.db-shm
+│       └── cache.db-wal
+└── visons
+    ├── sandbox_architecture.md
+    └── vision_sandbox.md
+
+29 directories, 95 files

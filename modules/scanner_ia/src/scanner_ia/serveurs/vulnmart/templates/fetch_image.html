@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Importer une image — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="tool-box">
+    <h2>Importer une image produit <span class="vuln-tag">SSRF</span></h2>
+    <form method="POST">
+      <label style="display:block;font-size:.8rem;margin-bottom:6px;">URL de l'image</label>
+      <input class="mono" style="width:100%;padding:8px;border:1px solid var(--line);" type="text" name="url" value="{{ url }}" placeholder="https://...">
+      <button class="btn" style="margin-top:12px;" type="submit">Récupérer</button>
+    </form>
+    <p style="font-size:.8rem;margin-top:10px;">Le serveur fait la requête HTTP lui-même, sans filtrage d'IP/hôte.</p>
+    {% if result %}<pre class="output">{{ result }}</pre>{% endif %}
+  </div>
+</div>
+{% endblock %}

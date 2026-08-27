@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}VulnMart — Boutique{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <h1>Des objets bien pensés,<br>une sécurité pas pensée du tout.</h1>
+    <p>VulnMart est une boutique factice construite pour entraîner et tester des scanners de vulnérabilités : injections SQL, XSS, IDOR, SSRF, upload libre, et plus. Chaque faille est documentée dans le README.</p>
+  </div>
+  <div>
+    <a class="btn" href="/admin">Voir le panneau admin (essayez sans être connecté) →</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="section">
+    <h2>Catalogue</h2>
+    <div class="grid">
+      {% for p in products %}
+      <div class="card">
+        <img src="{{ p['image_url'] }}" alt="{{ p['name'] }}">
+        <a class="name" href="{{ url_for('product', pid=p['id']) }}">{{ p['name'] }}</a>
+        <div class="price mono">{{ "%.2f"|format(p['price']) }} €</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

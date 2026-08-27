@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+		<title>IP to Country Lite Free Database Download</title>
+		<meta name="description" content="IP to Country Lite Free Database Download" />
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, shrink-to-fit=no">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,600,700&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="/css/dbip.css" />
+		<link rel="search" href="https://db-ip.com/search.xml" type="application/opensearchdescription+xml" title="DB-IP" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="manifest" href="/manifest.json" />
+		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#007bff" />
+		<meta name="theme-color" content="#007bff" />
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-4TPGRVC5H7" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script type="dcd4d874751dfa677b2660a4-text/javascript">
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-4TPGRVC5H7');
+		</script>
+		<!-- to be removed 2023-07 -->
+		<script type="dcd4d874751dfa677b2660a4-text/javascript">
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-32777297-1']);
+		  _gaq.push(['_setDomainName', 'db-ip.com']);
+		  _gaq.push(['_trackPageview']);
+		  (function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+		</script>
+	</head>
+	<body>
+	<div id="pagetop"></div>
+		<!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+    <div class="container-fluid">
+        <div id="particles-js" class="navbarcontainer">
+            <nav class="navbar navbar-expand-lg navbar-dark">
+                <a class="navbar-brand" href="/"><img src="/logo/ip-to-country-lite.png" width="48" height="32" alt="IP Geolocation API and database" /></a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav">
+<li class='nav-item'><a class='nav-link' href='/api/'>API</a></li><li class='nav-item'><a class='nav-link' href='/api/doc.php'>Developers</a></li><li class='nav-item'><a class='nav-link' href='/db/'>Database</a></li><li class='nav-item'><a class='nav-link' href='/tools/'>Tools</a></li><li class='nav-item'><a class='nav-link' href='/about/'>Statistics</a></li><li class='nav-item'><a class='nav-link' href='/faq.php'>FAQ</a></li>		</ul>
+
+		<form method="POST" class="form-inline ml-4 mr-2" role="search">
+			<div class="input-group">
+				<input id="search_input" type="text" name="address" class="form-control m-0" value="41.85.162.244" placeholder="Lookup IP address" data-placement="bottom" title="Lookup IP address" data-content="Explore our API information by entering any IPv4 or IPv6 address in the search bar above." data-trigger="hover" />
+				<div class="input-group-append">
+					<button type="submit" class="btn lightblue">
+					<i class="fa fa-search" aria-hidden="true"></i>
+					<span class="sr-only">Search</span>
+					</button>
+				</div>
+			</div>
+		</form>
+		<span class="navbar-text ml-3 d-none d-lg-inline-block"><a href="/account/" class="h2" title="Customer sign-in"><i class="fa fa-user-circle"></i></a></span>
+
+	  </div>
+	  </nav>
+	</div>
+<section class="space-lg">
+	<div class="container">
+		<div class="title head">
+			<div class="sub purple">Database</div>
+			<h1 class="main display-4">IP to Country Lite database</h1>
+			<p>The free IP to Country Lite geolocation database is a subset of the full database with reduced accuracy.</p>
+		</div>
+
+	</div>
+</section>
+
+<section class="space-xl grey-bg">
+	<div class="container">
+		<div class="row flex-column-reverse flex-lg-row justify-content-between">
+			<div class="col-lg-8">
+
+<div class="container">
+	<nav aria-label="breadcrumb">
+	  <ol class="breadcrumb">
+		<li class="breadcrumb-item"><a href="/">Home</a></li>
+		<li class="breadcrumb-item"><a href="/db/">Downloads</a></li>
+		<li class="breadcrumb-item active">IP to Country Lite</li>
+	  </ol>
+	</nav><br />
+
+	<h2 class="display-4">IP to Country Lite</h2>
+	<p>The free IP to Country Lite database is a subset of the <a href="/db/ip-to-country">IP to Country</a> database with reduced coverage and accuracy distributed under the Creative Commons Attribution License.</p>
+	<p>Our IP to Country Lite database is updated monthly and available in <b>CSV</b> and <b>MMDB</b> formats.</p>
+	<br /><hr /><br />
+	<h2 class="display-4">Available information in the IP to Country Lite database</h2>
+	<p>The IP to Country Lite database contains a set of IP address ranges with the following details :</p>
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Description</th>
+				<th class="text-right">CSV</th>
+				<th class="text-right">MMDB</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>First IP address</td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+				<td class="text-right"><i class="fa fa-check text-muted"></i></td>
+			</tr>
+			<tr>
+				<td>Last IP address</td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+				<td class="text-right"><i class="fa fa-check text-muted"></i></td>
+			</tr>
+			<tr>
+				<td>Continent code</td>
+				<td></td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+			</tr>
+			<tr>
+				<td>Continent name</td>
+				<td></td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+			</tr>
+			<tr>
+				<td>Country ISO-3166-alpha2 code</td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+			</tr>
+			<tr>
+				<td>Country EU membership</td>
+				<td></td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+			</tr>
+			<tr>
+				<td>Country name</td>
+				<td></td>
+				<td class="text-right"><i class="fa fa-check"></i></td>
+			</tr>
+		</tbody>
+	</table>
+	<p>For technical details, see the following :</p>
+	<ul>
+		<li><b><a class="pl-2" href="/db/format/ip-to-country-lite/csv.html">IP to Country Lite CSV format</a></b></li>
+		<li><b><a class="pl-2" href="/db/format/ip-to-country-lite/mmdb.html">IP to Country Lite MMDB format</a></b></li>
+	</ul>
+	<br /><hr /><br />
+	<h2 class="display-4">IP to Country Lite Database Downloads</h2>
+	<p>The free <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">IP to Country Lite database</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://db-ip.com/" property="cc:attributionName" rel="cc:attributionURL">DB-IP</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</p>
+	<p>You are free to use this IP to Country Lite database in your application, provided you give attribution to DB-IP.com for the data.</p>
+	<p>In the case of a web application, you must include a link back to DB-IP.com on pages that display or use results from the database. You may do it by pasting the HTML code snippet below into your code : </p>
+	<pre><code class="language-javascript">&lt;a href='https://db-ip.com'&gt;IP Geolocation by DB-IP&lt;/a&gt;</code></pre>
+	<br />
+	<div class="custom-control custom-checkbox with-border">
+		<input id="license_agree" type="checkbox" class="custom-control-input" name="license_agree" style="border: #000" />
+		<label class="custom-control-label text-dark" for="license_agree">I agree with the licensing terms</label>
+	</div>
+	<br />
+	<div class="row">
+		<div class="col-6">
+			<div class="card">
+				<dl class="card-body">
+					<dt>Format</dt>
+					<dd>CSV</dd>
+					<dt>Release</dt>
+					<dd>November 2025</dd>
+					<dt>Supported language(s)</dt>
+					<dd>English</dd>
+					<dt>Number of records</dt>
+					<dd>596,519</dd>
+					<dt>File size</dt>
+					<dd>23.6 MB</dd>
+					<dt>MD5SUM</dt>
+					<dd class="small">e002147cc8f788ff6ff71cef6db44708</dd>
+					<dt>SHA1SUM</dt>
+					<dd class="small">c91c65b6b2cbd4de3969f69784761fd6636bb6ea</dd>
+				</dl>
+				<div class="px-1 mb-1">
+					<a href='https://download.db-ip.com/free/dbip-country-lite-2025-11.csv.gz' class='btn btn-block icon-txt download free_download_link'>Download IP to Country Lite CSV</a>
+				</div>
+			</div>
+		</div>
+		<div class="col-6">
+			<div class="card">
+				<dl class="card-body">
+					<dt>Format</dt>
+					<dd>MMDB</dd>
+					<dt>Release</dt>
+					<dd>November 2025</dd>
+					<dt>Supported language(s)</dt>
+					<dd>English, French, German, Spanish, Portuguese, Chinese, Japanese, Russian, Persian, Korean</dd>
+					<dt>Number of records</dt>
+					<dd>596,519</dd>
+					<dt>File size</dt>
+					<dd>7.1 MB</dd>
+					<dt>MD5SUM</dt>
+					<dd class="small">3bfbd6506589e0fe214c1a9b2687938d</dd>
+					<dt>SHA1SUM</dt>
+					<dd class="small">82140e50762fb6afd97992c55f7497d2fbcdbdfa</dd>
+				</dl>
+				<div class="px-1 mb-1">
+					<a href='https://download.db-ip.com/free/dbip-country-lite-2025-11.mmdb.gz' class='btn btn-block icon-txt download free_download_link'>Download IP to Country Lite MMDB</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<br /><hr /><br />
+	<h2 class="display-4">Commercial version</h2>
+	<p>The IP to Country Lite database is a subset of the IP to Country commercial database with reduced accuracy and number of records :</p>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Database</th>
+				<th class="text-right">Records</th>
+				<th class="text-right">Accuracy Index<sup>*</sup></th>
+				<th class="text-right">Latest release</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><b><a href="/db/ip-to-country">IP to Country</a></b></td>
+				<td class="text-right">1,037,759</td>
+				<td class="text-right h5"><span class="badge badge-success">93</span></td>
+				<td class="text-right">November 12th 2025</td>
+			</tr>
+			<tr>
+				<td><b>IP to Country Lite</b></td>
+				<td class="text-right">596,519</td>
+				<td class="text-right h5"><span class="badge badge-warning">81</span></td>
+				<td class="text-right">November 1st 2025</td>
+			</tr>
+		</tbody>
+	</table>
+	<small><small class="text-muted">* Accuracy index is an internal measurement of location accuracy based on database type, records granularity and real location testing</small></small>
+	<br /><br />
+	<p>Upgrade to the commercial <b>IP to Country</b> database and enjoy all its benefits :</p>
+	<ul class="feat-list">
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;No attribution required</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;Better accuracy</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;Automatic updates</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;More records</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;Additional data fields</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;Daily releases</li>
+		<li><i class="fa fa-check text-success"></i>&nbsp;&nbsp;Technical support</li>
+	</ul>
+	<br />
+	<a class="btn lightblue float-right" href="/db/ip-to-country">IP to Country&nbsp;&nbsp;<i class="fa fa-angle-right"></i></a>
+	<br />
+</div>
+					</div>
+					<div class="col-lg-3">
+						<div class="sticky-top">
+
+
+						<div class="menu shadow">
+							<ul class="nav sidenav flex-column">
+							  <li class="nav-item">
+                                <a class="nav-link" href="/db/">Database</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/ip-to-country">IP to Country</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/ip-to-location">IP to Location</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/ip-to-isp">IP to ISP</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/ip-to-location-isp">IP to Location + ISP</a>
+							  </li>
+							</ul>
+						</div>
+
+						<div class="menu shadow">
+							<ul class="nav sidenav flex-column">
+							  <li class="nav-item">
+                                <a class="nav-link" href="/db/lite.php">Lite editions</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link active" href="/db/download/ip-to-country-lite">IP to Country Lite</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/download/ip-to-city-lite">IP to City Lite</a>
+							  </li>
+							  <li class="nav-item">
+								<a class="nav-link" href="/db/download/ip-to-asn-lite">IP to ASN Lite</a>
+							  </li>
+							</ul>
+						</div>
+					</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3">
+                    <ul class="list-unstyled">
+                      <li>
+                        <a href="https://db-ip.com/"><img loading="lazy" width="180" height="112" src="/img/footer-logo.svg"></a>
+                        <p>The ultimate resource for IP address geolocation and network intelligence</p>
+                      </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3">
+                    <h5 class="">Company</h5>
+
+                    <ul class="list-unstyled">
+                      <li>
+                        <a href="/api/">IP Geolocation API</a>
+                      </li>
+                      <li>
+						<a href="/db/">IP Geolocation Database</a><br />
+                      </li>
+                      <li>
+                        <a href="/api/doc.php">Developers</a>
+                      </li>
+					  <li>
+                        <a href="/tools/">Geolocation tools</a>
+                      </li>
+                      <li>
+                        <a href="/about/">Statistics</a>
+                      </li>
+                      <li>
+						<a href="/account/">Customer sign-in</a><br />
+                      </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3">
+                    <h5 class="">Resources</h5>
+
+                    <ul class="list-unstyled">
+                      <li>
+                        <a href="/faq.php">FAQ</a>
+                      </li>
+					  <li>
+						<a href="/tutorials/">Tutorials</a>
+                      </li>
+                      <li>
+						<a href="/articles/">Articles</a>
+                      </li>
+                      <li>
+						<a href="/all/">Browse IPs</a><br />
+                      </li>
+					  <li>
+						<a href="/asn/">ASN List</a><br />
+                      </li>
+                      <li>
+						<a href="https://stats.uptimerobot.com/l75BNSRBk">Service status</a><br />
+                      </li>
+                    </ul>
+                </div>
+
+				<div class="col-lg-3">
+                    <h5 class="">Get in touch</h5>
+
+                    <ul class="list-unstyled contact">
+                      <li>
+                        Eris Networks S.A.S<br/>
+                        62 boulevard Jean Mermoz<br/>
+                        22700 Perros-Guirec<br/>
+						France
+                      </li>
+                      <li>
+                        <a href="/contact/">Email contact</a>
+                      </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row bottom-footer">
+                <div class="col-8">© 2025 db-ip.com - <a href="/tos.php">Terms of service</a> - <a href="/privacy.php">Privacy policy</a> - <a href="/affiliate/">Affiliate program</a></div>
+            </div>
+		</div>
+	</footer>
+</div>
+
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+        <script type="dcd4d874751dfa677b2660a4-text/javascript">window.jQuery || document.write('<script src="/js/vendor/jquery-1.11.3.min.js"><\/script>')</script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/tether/1.3.1/js/tether.min.js" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integritity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script async src="/js/vendor/prism.js" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" type="dcd4d874751dfa677b2660a4-text/javascript"></script>
+		<script type="dcd4d874751dfa677b2660a4-text/javascript">
+		$(function() {
+			// search bar popover
+			$("#search_input").popover();
+			particlesJS('particles-js',
+			  {
+				"particles": {
+				  "number": {
+					"value": 80,
+					"density": {
+					  "enable": true,
+					  "value_area": 700
+					}
+				  },
+				  "color": {
+					"value": "#ffffff"
+				  },
+				  "shape": {
+					"type": "circle",
+					"stroke": {
+					  "width": 0,
+					  "color": "#000000"
+					},
+					"polygon": {
+					  "nb_sides": 5
+					},
+					"image": {
+					  "src": "img/github.svg",
+					  "width": 100,
+					  "height": 100
+					}
+				  },
+				  "opacity": {
+					"value": 0.5,
+					"random": false,
+					"anim": {
+					  "enable": false,
+					  "speed": 1,
+					  "opacity_min": 0.1,
+					  "sync": false
+					}
+				  },
+				  "size": {
+					"value": 5,
+					"random": true,
+					"anim": {
+					  "enable": false,
+					  "speed": 40,
+					  "size_min": 0.1,
+					  "sync": false
+					}
+				  },
+				  "line_linked": {
+					"enable": true,
+					"distance": 150,
+					"color": "#ffffff",
+					"opacity": 0.4,
+					"width": 1
+				  },
+				  "move": {
+					"enable": true,
+					"speed": 1,
+					"direction": "none",
+					"random": false,
+					"straight": false,
+					"out_mode": "out",
+					"attract": {
+					  "enable": false,
+					  "rotateX": 600,
+					  "rotateY": 1200
+					}
+				  }
+				},
+				"interactivity": {
+					"detect_on": "window",
+					"events": {
+					  "onhover": {
+						"enable": true,
+						"mode": "bubble"
+					  },
+					  "onclick": {
+						"enable": true,
+						"mode": "push"
+					  },
+					  "resize": true
+					},
+					"modes": {
+					  "grab": {
+						"distance": 400,
+						"line_linked": {
+						  "opacity": 1
+						}
+					  },
+					  "bubble": {
+						"distance": 131.8597012778406,
+						"size": 15.982994094283706,
+						"duration": 2,
+						"opacity": 0.39957485235709267,
+						"speed": 3
+					  },
+					  "repulse": {
+						"distance": 0,
+						"duration": 0.4
+					  },
+					  "push": {
+						"particles_nb": 1
+					  },
+					  "remove": {
+						"particles_nb": 2
+					  }
+					}
+				},
+				"retina_detect": true,
+				"config_demo": {
+				  "hide_card": false,
+				  "background_color": "#b61924",
+				  "background_image": "",
+				  "background_position": "50% 50%",
+				  "background_repeat": "no-repeat",
+				  "background_size": "cover"
+				}
+			  }
+			);
+			// call page specific onLoad
+			if (typeof dbipOnLoad === "function") {
+				dbipOnLoad.call();
+			}
+			$(".free_download_link").click(function(ev) {
+				if (!$("#license_agree").prop("checked")) {
+					alert("You must first read and agree to the licensing terms.");
+					ev.preventDefault();
+					return false;
+				}
+			});
+		});
+		(function( w ){
+			"use strict";
+			if( !w.loadCSS ){
+				w.loadCSS = function(){};
+			}
+			var rp = loadCSS.relpreload = {};
+			rp.support = (function(){
+				var ret;
+				try {
+					ret = w.document.createElement( "link" ).relList.supports( "preload" );
+				} catch (e) {
+					ret = false;
+				}
+				return function(){
+					return ret;
+				};
+			})();
+			rp.bindMediaToggle = function( link ){
+				var finalMedia = link.media || "all";
+				function enableStylesheet(){
+					if( link.addEventListener ){
+						link.removeEventListener( "load", enableStylesheet );
+					} else if( link.attachEvent ){
+						link.detachEvent( "onload", enableStylesheet );
+					}
+					link.setAttribute( "onload", null );
+					link.media = finalMedia;
+				}
+				if( link.addEventListener ){
+					link.addEventListener( "load", enableStylesheet );
+				} else if( link.attachEvent ){
+					link.attachEvent( "onload", enableStylesheet );
+				}
+				setTimeout(function(){
+					link.rel = "stylesheet";
+					link.media = "only x";
+				});
+				setTimeout( enableStylesheet, 3000 );
+			};
+			rp.poly = function(){
+				if( rp.support() ){
+					return;
+				}
+				var links = w.document.getElementsByTagName( "link" );
+				for( var i = 0; i < links.length; i++ ){
+					var link = links[ i ];
+					if( link.rel === "preload" && link.getAttribute( "as" ) === "style" && !link.getAttribute( "data-loadcss" ) ){
+						link.setAttribute( "data-loadcss", true );
+						rp.bindMediaToggle( link );
+					}
+				}
+			};
+			if( !rp.support() ){
+				rp.poly();
+				var run = w.setInterval( rp.poly, 500 );
+				if( w.addEventListener ){
+					w.addEventListener( "load", function(){
+						rp.poly();
+						w.clearInterval( run );
+					} );
+				} else if( w.attachEvent ){
+					w.attachEvent( "onload", function(){
+						rp.poly();
+						w.clearInterval( run );
+					} );
+				}
+			}
+			if( typeof exports !== "undefined" ){
+				exports.loadCSS = loadCSS;
+			}
+			else {
+				w.loadCSS = loadCSS;
+			}
+		}( typeof global !== "undefined" ? global : this ) );
+		</script>
+	<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="dcd4d874751dfa677b2660a4-|49" defer></script></body>
+</html>

@@ -1,0 +1,91 @@
+score_semantic = (1 - cosine_similarity(baseline, test)) * 100
+# similarité haute → petit score → peu suspect
+# similarité basse → grand score → très suspect
+```
+
+---
+
+## Réponses à tes deux questions
+
+### Question 1 — Modèle partagé ou séparé pour l'Autoencoder A ?
+
+**Un seul modèle partagé.** Voilà pourquoi.
+
+L'autoencoder A est entraîné sur des "body HTTP normaux". Que ce soit dans le `response_analyzer` (il analyse un `test_body`) ou dans le `ScannerIA` (il analyse le `body` de l'URL crawlée), c'est la même question : *"Est-ce que ce body HTTP est normal ?"*.
+
+La distribution des body normaux est la même dans les deux contextes. Entraîner deux modèles séparément serait du gaspillage et introduirait une incohérence — les deux auraient des définitions légèrement différentes de "normal".
+
+**Un seul modèle, deux usages :**
+```
+Autoencoder A  ← entraîné une seule fois sur des body normaux
+      │
+      ├── response_analyzer.analyse()
+      │     → reconstruction_error(test_body)
+      │     → score_anomaly dans calculate_total_score()
+      │
+      └── FeatureExtractor.extract()
+            → reconstruction_error(url_body)
+            → feature 97 dans le vecteur d'entrée du ScannerIA
+```
+
+**Implication pratique** : l'autoencoder A doit être dans un module indépendant accessible des deux côtés — ni dans `fuzzer/`, ni dans `ml_model/` — ou dans `ml_model/` avec un import propre depuis `response_analyzer`.
+
+---
+
+### Question 2 — Le meta-learner
+
+**XGB ou HGBC léger, et voilà exactement ce qu'il prend en entrée :**
+```
+Entrées du meta-learner (par URL) :
+─────────────────────────────────────────────────────
+[1]  30 probas du ScannerIA supervisé
+     → proba_XSS, proba_SQLi, ..., proba_RaceCondition
+
+[2]  1 score de l'Autoencoder A (body)
+     → recon_error_body  (float 0→∞)
+
+[3]  1 score de l'Autoencoder C (96 features tabulaires)
+     → recon_error_features  (float 0→∞)
+
+[4]  Quelques métriques de contexte (optionnel)
+     → fuzzer_max_score, passive_critical_count, etc.
+─────────────────────────────────────────────────────
+Total : ~33 features d'entrée
+
+Sortie : 30 probabilités finales (une par vulnérabilité)
+```
+
+Pourquoi XGB/HGBC plutôt que Logistic Regression ?
+
+Parce que les interactions entre les autoencoders et le ScannerIA ne sont **pas linéaires**. Un cas typique : `proba_SQLi=0.3` (faible) mais `recon_error_body=0.9` (très anormal) → le meta-learner doit apprendre que cette combinaison est suspecte. Une régression logistique raterait ça. XGB/HGBC le capture naturellement.
+
+---
+
+## Architecture finale confirmée
+```
+AUTOENCODER A — partagé
+─────────────────────────────────────────────────────
+Entraîné : body HTTP normaux (texte brut)
+Architecture : Dense (pas LSTM pour la vitesse)
+  Input(max_len) → Embedding → Dense(256) → Dense(64) → Dense(256) → Output
+Usage 1 : response_analyzer → score_anomaly (7ème composant)
+Usage 2 : FeatureExtractor  → feature 97
+
+COSINE SIMILARITY — uniquement response_analyzer
+─────────────────────────────────────────────────────
+Ton code actuel (TF-IDF char n-grams)
+score_semantic = (1 - cosine_max(baseline, test)) * 100
+→ 6ème composant dans calculate_total_score()
+
+AUTOENCODER C — uniquement ScannerIA
+─────────────────────────────────────────────────────
+Entraîné : vecteurs de 96 features (tabulaire)
+Architecture : Dense pur
+  96 → Dense(64) → Dense(32) → Dense(64) → Dense(96)
+Usage : FeatureExtractor → feature 98
+
+META-LEARNER
+─────────────────────────────────────────────────────
+Input  : 30 probas + recon_error_A + recon_error_C [+ contexte]
+Modèle : XGB ou HGBC léger (max_depth=4, n_estimators=200)
+Output : 30 probas finales

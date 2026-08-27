@@ -1,0 +1,1362 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jun 13 12:18:51 2026
+
+@author: hounsousamuel
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ShieldAI — Tools CrewAI pour l'agent Scanner.
+Avec descriptions détaillées pour guider l'agent.
+Auteur: HOUNSOU Samuel
+"""
+
+import os
+import sys
+import json
+import time
+from typing import Optional, List, Dict, Any, Literal
+from datetime import datetime
+from pydantic import BaseModel, Field
+from crewai.tools import BaseTool
+
+sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+from scanner_ia.main_scanner import Scanner
+from scanner_ia.fuzzer.active_fuzzer import Fuzzer
+from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult
+from scanner_ia.base_class.passive_analyzer_base_class import PassiveAnalyzerResult
+from scanner_ia.base_class.code_analyse_base_class import CodeAnalyzerResult
+from scanner_ia.base_class.fuzzer_base_class import FuzzerResult
+from scanner_ia.base_class.main_scanner_base_class import ScannerResult
+from scanner_ia.core.crawler import Config as CrawlerConfig
+from scanner_ia.scanner_utils.logger import get_logger
+from modules_utils.loop_utils import _run_async
+
+logger = get_logger()
+
+
+# ============================================================================
+# INPUT SCHEMAS (avec descriptions enrichies)
+# ============================================================================
+
+class UrlInput(BaseModel):
+    """Entrée simple pour une URL."""
+    url: str = Field(
+        description="URL complète à analyser, avec protocole (http:// ou https://). "
+                    "Exemple: 'https://example.com/page?id=1'"
+    )
+
+
+class AnalyzeAndParseOnlyInput(BaseModel):
+    """Paramètres pour la phase de crawl/parsing."""
+    url: str = Field(
+        description="URL de départ pour le crawl. Doit commencer par http:// ou https://. "
+                    "Exemple: 'https://example.com'"
+    )
+    max_depth: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="Profondeur maximale de crawl. 1 = page uniquement, 2 = pages liées directement, etc. "
+                    "Augmenter pour les sites complexes, réduire pour les scans rapides."
+    )
+    max_pages: int = Field(
+        default=50,
+        ge=1,
+        le=500,
+        description="Nombre maximum de pages à crawler. Limite importante pour éviter les timeouts. "
+                    "50 par défaut, 100-200 pour un audit complet."
+    )
+    use_cache: bool = Field(
+        default=True,
+        description="Utiliser le cache disque. True = plus rapide sur les scans répétés, "
+                    "False = force un re-crawl complet."
+    )
+    restore: bool = Field(
+        default=False,
+        description="Restaurer un crawl précédent depuis le cache. "
+                    "Utile pour continuer un scan interrompu."
+    )
+    allowed_domains: Optional[List[str]] = Field(
+        default=None,
+        description="Liste des domaines autorisés. Restreint le crawl à ces domaines. "
+                    "Exemple: ['https://example.com', 'https://api.example.com']"
+    )
+    is_spa: bool = Field(
+        default=False,
+        description="Indique si le site est une Single Page Application (React, Angular, Vue). "
+                    "Active Playwright pour exécuter JavaScript. Plus lent mais nécessaire pour les SPA."
+    )
+    fetch: bool = Field(
+        default=True,
+        description="Télécharger et analyser les fichiers JavaScript externes. "
+                    "Désactiver (False) pour un scan plus rapide mais moins complet."
+    )
+    silent: bool = Field(
+        default=True,
+        description="Désactiver les logs verbeux du parser. True = moins de bruit, False = debug détaillé."
+    )
+
+
+class PassiveAnalyzeOnlyInput(BaseModel):
+    """Paramètres pour l'analyse passive."""
+    url: str = Field(description="URL cible (doit avoir été crawlée au préalable)")
+    use_cache: bool = Field(default=True, description="Utiliser les résultats en cache si disponibles")
+
+
+class CodeAnalyzeOnlyInput(BaseModel):
+    """Paramètres pour l'analyse de code statique."""
+    url: str = Field(description="URL cible (doit avoir été crawlée au préalable)")
+    use_cache: bool = Field(default=True, description="Utiliser les résultats en cache")
+
+
+class FuzzerOnlyInput(BaseModel):
+    """Paramètres pour le fuzzer actif."""
+    url: str = Field(
+        description="URL de base pour le fuzzing. "
+                    "Les paramètres et points d'injection seront automatiquement détectés."
+    )
+    limit_vuln: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=20,
+        description="Nombre maximum de types de vulnérabilités à tester. "
+                    "Ex: 5 = teste les 5 vulns les plus prioritaires (SQLi, XSS, etc.)"
+    )
+    limit_payloads: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description="Nombre maximum de payloads par vulnérabilité. "
+                    "Réduire (10-50) pour un scan rapide, augmenter (100-500) pour une couverture complète."
+    )
+    time_between: float = Field(
+        default=0.001,
+        ge=0,
+        le=1.0,
+        description="Délai en secondes entre deux requêtes. Augmenter (0.1-0.5) pour éviter la détection ou "
+                    "respecter les limites de rate, réduire (0-0.01) pour la vitesse."
+    )
+    dynamic_timeout: bool = Field(
+        default=True,
+        description="Ajuster automatiquement le timeout en fonction du nombre de tests. "
+                    "True = recommandé pour les scans longs."
+    )
+    vuln_names: Optional[List[str]] = Field(
+        default=None,
+        description="Liste explicite des vulnérabilités à tester. Ignore limit_vuln si spécifié. "
+                    "Valeurs possibles: 'XSS', 'SQLi', 'CMDi', 'SSTI', 'XXE', 'SSRF', 'DirTrav', "
+                    "'NoSQLi', 'LDAPi', 'OpenRedirect', 'CRLF', 'IDOR', 'CSRF'"
+    )
+    use_cache: bool = Field(default=True, description="Utiliser le cache des résultats")
+
+
+class FeaturesExtractOnlyInput(BaseModel):
+    """Paramètres pour l'extraction des features ML."""
+    url: str = Field(
+        description="URL cible. Nécessite que les phases crawl, passive, code et fuzzer soient terminées."
+    )
+    use_cache: bool = Field(default=True, description="Utiliser le cache")
+
+
+class MLPredictOnlyInput(BaseModel):
+    """Paramètres pour la prédiction ML."""
+    url: str = Field(
+        description="URL cible. Nécessite que l'extraction des features soit terminée."
+    )
+    threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Seuil de confiance pour la classification. Plus le seuil est bas, "
+                    "plus l'agent sera sensible (mais plus de faux positifs). "
+                    "0.5 = équilibre, 0.7 = plus strict, 0.3 = plus sensible."
+    )
+    use_cache: bool = Field(default=True, description="Utiliser le cache")
+
+
+class ConfigureScannerInput(BaseModel):
+    """Paramètres pour la configuration dynamique du scanner."""
+    param: str = Field(
+        description="Nom du paramètre à modifier. Exemples courants: "
+                    "'MAX_DEEPTH' (profondeur crawl), 'MAX_PAGES' (pages max), "
+                    "'TIMEOUT' (timeout requêtes), 'active_scan' (activer/désactiver fuzzer)"
+    )
+    value: Any = Field(description="Nouvelle valeur du paramètre. Le type dépend du paramètre.")
+    module: Literal["crawler", "fetcher", "analyzer_helper", "fuzzer", "scanner"] = Field(
+        default="scanner",
+        description="Module cible: 'crawler' pour le crawl, 'fetcher' pour les requêtes HTTP, "
+                    "'fuzzer' pour le fuzzer actif, 'scanner' pour l'instance principale."
+    )
+
+
+class GetPhaseResultInput(BaseModel):
+    """Paramètres pour consulter une phase."""
+    url: str = Field(description="URL cible")
+    phase: Literal["crawl", "passive", "code", "fuzzer", "features", "ml"] = Field(
+        description="Phase à consulter. 'crawl' = résultats du crawl, 'passive' = analyse passive, "
+                    "'code' = analyse statique, 'fuzzer' = résultats du fuzzing, "
+                    "'features' = features extraites, 'ml' = prédictions ML"
+    )
+
+
+class ListCachedScansInput(BaseModel):
+    """Paramètres pour lister les scans en cache."""
+    limit: int = Field(default=20, ge=1, le=100, description="Nombre maximum de scans à retourner")
+
+
+class StartScanInput(BaseModel):
+    """Paramètres pour un scan complet."""
+    url: str = Field(
+        description="URL cible à scanner. Doit commencer par http:// ou https://"
+    )
+    active_scan: bool = Field(
+        default=True,
+        description="Activer le scan actif (fuzzer). False = scan passif uniquement (plus rapide, moins complet)"
+    )
+    use_cache: bool = Field(default=True, description="Utiliser le cache pour accélérer les re-scans")
+    limit_payloads: Optional[int] = Field(
+        default=None,
+        description="Limiter le nombre de payloads. Réduire pour un scan rapide."
+    )
+    max_depth: Optional[int] = Field(default=None, description="Profondeur de crawl. Laisser None pour utiliser la config par défaut.")
+    max_pages: Optional[int] = Field(default=None, description="Pages max à crawler.")
+    allowed_domains: Optional[List[str]] = Field(default=None, description="Restreindre à ces domaines.")
+    threshold: float = Field(default=0.5, description="Seuil de confiance ML (0-1)")
+
+
+class GetVulnerabilitiesInput(BaseModel):
+    """Paramètres pour lister les vulnérabilités."""
+    scan_id: Optional[str] = Field(default=None, description="ID du scan (optionnel). Si None, utilise le dernier scan.")
+
+
+class GetReportPathsInput(BaseModel):
+    """Paramètres pour obtenir les chemins des rapports."""
+    scan_id: Optional[str] = Field(default=None, description="ID du scan. Si None, utilise le dernier scan.")
+
+
+class GetFeaturesInput(BaseModel):
+    """Paramètres pour obtenir les features ML."""
+    scan_id: Optional[str] = Field(default=None, description="ID du scan. Si None, utilise le dernier scan.")
+
+
+class ScanStatusInput(BaseModel):
+    """Paramètres pour vérifier le statut d'un scan."""
+    scan_id: str = Field(description="ID du scan retourné par start_scan")
+
+
+# ============================================================================
+# STATE MANAGER
+# ============================================================================
+
+class ScannerStateManager:
+    """Gère l'état des scans et les résultats intermédiaires."""
+    _instances: Dict[str, 'ScannerStateManager'] = {}
+    _scanner_instance: Optional[Scanner] = None
+    _last_scan_result: Optional[ScannerResult] = None
+    _last_scan_id: Optional[str] = None
+
+    def __init__(self, url: str):
+        self.url = url
+        self.analyzer_helper_result: Optional[AnalyzerHelperResult] = None
+        self.passive_result: Optional[PassiveAnalyzerResult] = None
+        self.code_result: Optional[CodeAnalyzerResult] = None
+        self.fuzzer_result: Optional[FuzzerResult] = None
+        self.features_df = None
+        self.ml_predictions: Optional[Dict] = None
+        self.last_updated: float = 0.0
+
+    @classmethod
+    def get_instance(cls, url: str) -> 'ScannerStateManager':
+        if url not in cls._instances:
+            cls._instances[url] = cls(url)
+        return cls._instances[url]
+
+    @classmethod
+    def get_or_create_scanner(cls, config_path: str = "shieldai_scanner.config.json5", **kwargs) -> Scanner:
+        if cls._scanner_instance is None:
+            cls._scanner_instance = Scanner(
+                config_path=config_path,
+                active_scan=kwargs.get("active_scan", True),
+                use_cache=kwargs.get("use_cache", True),
+                debug=kwargs.get("debug", False),
+                limit_payloads=kwargs.get("limit_payloads", None),
+                use_semantic=kwargs.get("use_semantic", True),
+            )
+        return cls._scanner_instance
+
+    @classmethod
+    def set_last_result(cls, result: ScannerResult, scan_id: str):
+        cls._last_scan_result = result
+        cls._last_scan_id = scan_id
+
+    @classmethod
+    def get_last_result(cls) -> Optional[ScannerResult]:
+        return cls._last_scan_result
+
+    @classmethod
+    def get_last_scan_id(cls) -> Optional[str]:
+        return cls._last_scan_id
+
+    def update(self, phase: str, result):
+        setattr(self, f"{phase}_result", result)
+        self.last_updated = time.time()
+
+    def to_dict(self) -> Dict:
+        return {
+            "url": self.url,
+            "has_crawl": self.analyzer_helper_result is not None,
+            "has_passive": self.passive_result is not None,
+            "has_code": self.code_result is not None,
+            "has_fuzzer": self.fuzzer_result is not None,
+            "has_features": self.features_df is not None,
+            "has_ml": self.ml_predictions is not None,
+            "last_updated": datetime.fromtimestamp(self.last_updated).isoformat(),
+        }
+
+
+# ============================================================================
+# TOOL 1: AnalyzeAndParseOnly (description enrichie)
+# ============================================================================
+
+class AnalyzeAndParseOnly(BaseTool):
+    name: str = "crawl_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: crawl_only - Phase de crawl et parsing
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Au début d'un scan, avant toute analyse
+    - Quand tu as besoin de découvrir la structure du site
+    - Pour récupérer toutes les URLs, formulaires, scripts d'un site
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",           // Ex: "https://example.com"
+        "max_depth": 2,                         // Profondeur (1-10)
+        "max_pages": 50,                        // Pages max (1-500)
+        "use_cache": true,                      // Utiliser le cache
+        "restore": false,                       // Restaurer un crawl
+        "allowed_domains": ["https://example.com"], // Domaines autorisés
+        "is_spa": false,                        // Site SPA (React/Vue)
+        "fetch": true,                          // Télécharger les JS externes
+        "silent": true                          // Logs silencieux
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "pages_crawled": 42,                    // Nombre de pages trouvées
+        "elapsed": 2.35,                        // Temps en secondes
+        "top_urls": ["https://...", "..."]      // Premières URLs découvertes
+    }
+
+    ⚠️ IMPORTANT :
+    - Exécute cette phase AVANT passive_analyze_only, code_analyze_only, etc.
+    - Les résultats sont stockés dans l'état du scanner pour cette URL
+    """
+    args_schema: type[BaseModel] = AnalyzeAndParseOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = AnalyzeAndParseOnlyInput(**kwargs)
+        scanner = ScannerStateManager.get_or_create_scanner()
+        
+        max_depth_backup = CrawlerConfig.MAX_DEEPTH
+        max_pages_backup = CrawlerConfig.MAX_PAGES
+        if inp.max_depth:
+            CrawlerConfig.MAX_DEEPTH = inp.max_depth
+        if inp.max_pages:
+            CrawlerConfig.MAX_PAGES = inp.max_pages
+
+        try:
+            result = await scanner.analyzer_helper.analyse_and_parse_all(
+                url=inp.url,
+                verify_reachability=True,
+                restore=inp.restore,
+                fetch=inp.fetch,
+                silent=inp.silent,
+                is_spa=inp.is_spa
+            )
+            state = ScannerStateManager.get_instance(inp.url)
+            state.update("crawl", result)
+            
+            return json.dumps({
+                "status": "success",
+                "pages_crawled": len(result.elements),
+                "elapsed": result.elapsed,
+                "top_urls": list(result.elements.keys())[:5],
+            }, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
+        finally:
+            CrawlerConfig.MAX_DEEPTH = max_depth_backup
+            CrawlerConfig.MAX_PAGES = max_pages_backup
+
+
+# ============================================================================
+# TOOL 2: PassiveAnalyzeOnly (description enrichie)
+# ============================================================================
+
+class PassiveAnalyzeOnly(BaseTool):
+    name: str = "passive_analyze_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: passive_analyze_only - Analyse passive de sécurité
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Après un crawl réussi
+    - Pour détecter les problèmes de configuration (headers, cookies, formulaires)
+    - Pour identifier les failles qui ne nécessitent pas d'envoi de payload
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",    // URL déjà crawlée
+        "use_cache": true                 // Utiliser le cache
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "total_vulns": 7,                 // Nombre total de vulnérabilités passives
+        "vuln_breakdown": {               // Détail par type
+            "headers": 3,                 // Headers de sécurité manquants
+            "cookies": 2,                // Cookies non sécurisés
+            "forms": 1,                  // Formulaires sans CSRF
+            "iframe": 1                  // Iframes dangereuses
+        },
+        "critical_count": 1,              // Vulnérabilités critiques
+        "high_count": 3                   // Vulnérabilités élevées
+    }
+
+    🔍 CE QUE CET OUTIL DÉTECTE :
+    - Headers manquants (HSTS, CSP, X-Frame-Options, etc.)
+    - Cookies sans Secure/HttpOnly/SameSite
+    - Formulaires sans token CSRF
+    - Iframes sans sandbox
+    - Commentaires avec mots de passe/URLs
+    - Liens HTTP sur page HTTPS (mixed content)
+
+    ⚠️ IMPORTANT :
+    - Nécessite qu'un crawl ait été effectué au préalable
+    - Si aucun crawl n'existe, lance automatiquement crawl_only avec les paramètres par défaut
+    """
+    args_schema: type[BaseModel] = PassiveAnalyzeOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = PassiveAnalyzeOnlyInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        if state.analyzer_helper_result is None:
+            crawler = AnalyzeAndParseOnly()
+            await crawler._arun(url=inp.url, use_cache=inp.use_cache)
+
+        result = scanner.passive_analyzer.analyse(state.analyzer_helper_result)
+        state.update("passive", result)
+
+        vuln_breakdown = {}
+        for page in result.pages.values():
+            for v in page._all_vulns() if hasattr(page, "_all_vulns") else []:
+                tag = getattr(v, "tag", "other")
+                vuln_breakdown[tag] = vuln_breakdown.get(tag, 0) + 1
+
+        return json.dumps({
+            "status": "success",
+            "total_vulns": result.total_vulns,
+            "vuln_breakdown": vuln_breakdown,
+            "critical_count": result.summary.get("critical", 0),
+            "high_count": result.summary.get("high", 0),
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 3: CodeAnalyzeOnly (description enrichie)
+# ============================================================================
+
+class CodeAnalyzeOnly(BaseTool):
+    name: str = "code_analyze_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: code_analyze_only - Analyse de code statique (HTML/JS)
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Après un crawl réussi
+    - Pour détecter les patterns dangereux dans le code source
+    - Pour identifier les XSS, injections, et failles de script
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",    // URL déjà crawlée
+        "use_cache": true                 // Utiliser le cache
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "total_vulns_body": 3,            // Vulnérabilités dans le HTML
+        "total_vulns_scripts": 2          // Vulnérabilités dans les JS
+    }
+
+    🔍 CE QUE CET OUTIL DÉTECTE (via signatures regex) :
+    - XSS (script tags, onerror, onload, eval, etc.)
+    - Information disclosure (commentaires, mots de passe)
+    - Credentials exposés (clés API, tokens)
+    - Patterns dangereux (javascript:, data:)
+
+    ⚠️ IMPORTANT :
+    - Nécessite qu'un crawl ait été effectué au préalable
+    - Utilise des signatures regex (fichiers html_signatures.json, js_signatures.json)
+    """
+    args_schema: type[BaseModel] = CodeAnalyzeOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = CodeAnalyzeOnlyInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        if state.analyzer_helper_result is None:
+            return json.dumps({"status": "error", "error": "Lancez crawl_only d'abord"})
+
+        result = scanner.code_analyzer.analyse(state.analyzer_helper_result)
+        state.update("code", result)
+
+        total_body = sum(len(r.get("body", {}).vulns) for r in result.results.values())
+        total_scripts = sum(
+            sum(len(s.vulns) for s in r.get("balises_script", {}).values())
+            for r in result.results.values()
+        )
+
+        return json.dumps({
+            "status": "success",
+            "total_vulns_body": total_body,
+            "total_vulns_scripts": total_scripts,
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 4: FuzzerOnly (description enrichie)
+# ============================================================================
+
+class FuzzerOnly(BaseTool):
+    name: str = "fuzzer_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: fuzzer_only - Scan actif par injection de payloads
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Après un crawl réussi (détection des points d'injection)
+    - Pour confirmer les vulnérabilités suspectées
+    - Pour découvrir des failles exploitables (SQLi, XSS, CMDi, etc.)
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",
+        "limit_vuln": 5,                  // Tester les 5 vulns les plus critiques
+        "limit_payloads": 50,             // Max 50 payloads par vuln
+        "time_between": 0.001,            // Délai entre requêtes (secondes)
+        "dynamic_timeout": true,          // Timeout adaptatif
+        "vuln_names": ["XSS", "SQLi"],    // Tester uniquement ces vulns
+        "use_cache": true
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "total_tests": 1250,              // Nombre total de requêtes envoyées
+        "total_vulns": 3,                 // Vulnérabilités confirmées
+        "vuln_count": {                   // Détail par type
+            "XSS": 2,
+            "SQLi": 1
+        }
+    }
+
+    🎯 VULNÉRABILITÉS TESTABLES :
+    - XSS (Cross-Site Scripting) — payloads HTML/JS
+    - SQLi (SQL Injection) — requêtes SQL malicieuses
+    - CMDi (Command Injection) — commandes shell
+    - SSTI (Server-Side Template Injection)
+    - XXE (XML External Entity)
+    - SSRF (Server-Side Request Forgery)
+    - DirTrav (Directory Traversal)
+    - NoSQLi, LDAPi, OpenRedirect, CRLF, IDOR, CSRF
+
+    ⚠️ IMPORTANT :
+    - Nécessite qu'un crawl ait été effectué au préalable
+    - Respecte les délais configurés pour éviter la détection
+    - Les payloads sont encodés (URL, Base64, HTML) automatiquement
+    """
+    args_schema: type[BaseModel] = FuzzerOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = FuzzerOnlyInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        if state.analyzer_helper_result is None:
+            return json.dumps({"status": "error", "error": "Lancez crawl_only d'abord"})
+        
+        fuzzer = scanner.fuzzer or Fuzzer(
+            session=scanner.session,
+            debug=scanner.debug,
+            limit=inp.limit_payloads,
+            use_semantic=True,
+        )
+
+        limit_backup = scanner.fuzzer.payload_generator.limit
+        if inp.limit_payloads:
+            scanner.fuzzer.payload_generator.limit = inp.limit_payloads
+
+        result = await fuzzer.fuzz(
+            base_url=inp.url,
+            analyzer_helper_result=state.analyzer_helper_result,
+            limit_vuln=inp.vuln_names or inp.limit_vuln,
+            time_between=inp.time_between,
+            dynamic_timeout=inp.dynamic_timeout,
+        )
+        state.update("fuzzer", result)
+        scanner.fuzzer.payload_generator.limit = limit_backup
+        
+        return json.dumps({
+            "status": "success",
+            "total_tests": result.stats.get("total_tests", 0),
+            "total_vulns": result.stats.get("total_vulns", 0),
+            "vuln_count": result.stats.get("vuln_count", {}),
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 5: FeaturesExtractOnly (description enrichie)
+# ============================================================================
+
+class FeaturesExtractOnly(BaseTool):
+    name: str = "features_extract_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: features_extract_only - Extraction des features pour le ML
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - APRÈS avoir exécuté les phases crawl, passive, code ET fuzzer
+    - Pour préparer les données avant la prédiction ML
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",
+        "use_cache": true
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "num_features": 95,               // Nombre de features extraites
+        "num_samples": 42,                // Nombre d'URLs analysées
+        "feature_names": ["url_length", "has_https", "num_balise_script", ...]
+    }
+
+    🔍 TYPES DE FEATURES EXTRAITES :
+    - Structure HTML : nombre de balises (a, img, script, form, iframe...)
+    - Réponse HTTP : status code, temps, longueur, entropie
+    - Sécurité : headers (HSTS, CSP, X-Frame-Options)
+    - Technologies : WordPress, Laravel, React, jQuery...
+    - Analyse passive : vulnérabilités détectées
+    - Analyse code : vulnérabilités dans body/scripts
+    - Fuzzer : résultats des tests actifs (binaires par vuln)
+
+    ⚠️ IMPORTANT :
+    - Nécessite les 4 phases précédentes (crawl, passive, code, fuzzer)
+    - Les features sont utilisées par ml_predict_only
+    """
+    args_schema: type[BaseModel] = FeaturesExtractOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = FeaturesExtractOnlyInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        required = ["crawl", "passive", "code", "fuzzer"]
+        missing = [p for p in required if getattr(state, f"{p}_result") is None]
+        if missing:
+            return json.dumps({"status": "error", "error": f"Phases manquantes : {missing}"})
+
+        df = await scanner.feature_extractor.extract(
+            analyzer_helper_result=state.analyzer_helper_result,
+            passive_analyzer_result=state.passive_result,
+            code_analyzer_result=state.code_result,
+            fuzzer_result=state.fuzzer_result,
+        )
+        state.features_df = df
+
+        return json.dumps({
+            "status": "success",
+            "num_features": df.shape[1],
+            "num_samples": df.shape[0],
+            "feature_names": list(df.columns)[:20],
+        }, default=str, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 6: MLPredictOnly (description enrichie)
+# ============================================================================
+
+class MLPredictOnly(BaseTool):
+    name: str = "ml_predict_only"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: ml_predict_only - Prédiction ML multi-label
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - APRÈS features_extract_only
+    - Pour obtenir une prédiction sur les vulnérabilités présentes
+    - Le modèle a été entraîné sur des scans réels
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",
+        "threshold": 0.5,                 // Seuil de confiance (0-1)
+        "use_cache": true
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "predictions": {                  // Probabilités par URL
+            "https://example.com/page1": {
+                "XSS": 0.87,
+                "SQLi": 0.12,
+                "SAFE": 0.05
+            }
+        },
+        "safe_urls": ["https://example.com/page1"],
+        "urls": ["https://example.com/page1", ...]
+    }
+
+    🧠 COMMENT ÇA MARCHE :
+    - Modèle multi-label entraîné sur 30+ types de vulnérabilités
+    - Utilise un stacking classifier (RandomForest + XGBoost + LightGBM)
+    - La classe "SAFE" indique qu'aucune vulnérabilité n'est détectée
+
+    ⚠️ IMPORTANT :
+    - Nécessite que features_extract_only ait été exécuté
+    - Les prédictions sont probabilistes, pas des certitudes
+    - Un score > threshold pour une vuln = considérée comme présente
+    """
+    args_schema: type[BaseModel] = MLPredictOnlyInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = MLPredictOnlyInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        if state.features_df is None:
+            return json.dumps({"status": "error", "error": "Lancez features_extract_only d'abord"})
+
+        scanner.scanner_ia.model_manager.verify_model()
+        urls = state.features_df["url"].tolist()
+        X = state.features_df.drop("url", axis=1).to_numpy()
+        ml_preds = scanner.scanner_ia.scanner_predict(X, threshold=inp.threshold)
+
+        state.ml_predictions = ml_preds
+
+        return json.dumps({
+            "status": "success",
+            "predictions": ml_preds.get("proba_predict", {}),
+            "safe_urls": [url for url, pred in ml_preds.get("predict", {}).items() if "SAFE" in pred],
+            "urls": urls,
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 7: ConfigureScanner (description enrichie)
+# ============================================================================
+
+class ConfigureScanner(BaseTool):
+    name: str = "configure_scanner"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: configure_scanner - Configuration dynamique du scanner
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour ajuster les paramètres avant un scan
+    - Pour réagir aux résultats intermédiaires (ex: augmenter la profondeur)
+    - Pour basculer entre mode actif/passif
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "param": "MAX_DEEPTH",            // Nom du paramètre
+        "value": 5,                       // Nouvelle valeur
+        "module": "crawler"               // Module cible
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "message": "Config.MAX_DEEPTH = 5"
+    }
+
+    🔧 PARAMÈTRES COURANTS PAR MODULE :
+
+    MODULE "crawler":
+        - MAX_DEEPTH (int, 1-10)      : Profondeur de crawl
+        - MAX_PAGES (int, 1-1000)     : Nombre max de pages
+        - Semaphore (int, 1-100)      : Requêtes simultanées
+
+    MODULE "fetcher":
+        - TIMEOUT (int, 1-30)         : Timeout des requêtes (s)
+        - MAX_ATTEMPT (int, 1-5)      : Tentatives en cas d'échec
+
+    MODULE "fuzzer":
+        - MAX_TEST (int, 0-10000)     : Nombre max de tests
+        - EARLY_STOP_PER_VULN (int)   : Arrêt précoce par vuln
+
+    MODULE "scanner":
+        - active_scan (bool)          : Activer/désactiver le fuzzer
+        - use_cache (bool)            : Utiliser le cache
+        - debug (bool)                : Mode debug
+
+    ⚠️ IMPORTANT :
+    - Les modifications sont APPLIQUÉES IMMÉDIATEMENT
+    - Elles affectent tous les scans suivants (pas le scan en cours)
+    """
+    args_schema: type[BaseModel] = ConfigureScannerInput
+
+    def _run(self, **kwargs) -> str:
+        inp = ConfigureScannerInput(**kwargs)
+        scanner = ScannerStateManager.get_or_create_scanner()
+
+        module_map = {
+            "crawler": ("scanner_ia.core.crawler", "Config"),
+            "fetcher": ("scanner_ia.core.fetcher", "Config"),
+            "analyzer_helper": ("scanner_ia.core.analyzer_helper", "Config"),
+            "fuzzer": ("scanner_ia.fuzzer.active_fuzzer", "Config"),
+            "scanner": None,
+        }
+
+        if inp.module == "scanner":
+            if hasattr(scanner, inp.param):
+                setattr(scanner, inp.param, inp.value)
+                return json.dumps({"status": "success", "message": f"scanner.{inp.param} = {inp.value}"})
+        else:
+            try:
+                mod_name, cls_name = module_map[inp.module]
+                import importlib
+                module = importlib.import_module(mod_name)
+                config_cls = getattr(module, cls_name)
+                if hasattr(config_cls, inp.param):
+                    setattr(config_cls, inp.param, inp.value)
+                    return json.dumps({"status": "success", "message": f"{cls_name}.{inp.param} = {inp.value}"})
+            except Exception as e:
+                return json.dumps({"status": "error", "message": str(e)})
+
+        return json.dumps({"status": "error", "message": f"Paramètre {inp.param} non trouvé"})
+
+
+# ============================================================================
+# TOOL 8: GetPhaseResult (description enrichie)
+# ============================================================================
+
+class GetPhaseResult(BaseTool):
+    name: str = "get_phase_result"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: get_phase_result - Consultation des résultats par phase
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour vérifier l'avancement d'un scan
+    - Pour décider de la phase suivante (ex: si crawl a trouvé peu de pages → relancer)
+    - Pour extraire des données spécifiques sans refaire la phase
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",
+        "phase": "crawl | passive | code | fuzzer | features | ml"
+    }
+
+    📤 RETOUR PAR PHASE :
+
+    PHASE "crawl":
+        {"status": "success", "pages_crawled": 42}
+
+    PHASE "passive":
+        {"status": "success", "total_vulns": 7}
+
+    PHASE "fuzzer":
+        {"status": "success", "total_vulns": 3}
+
+    PHASE "features":
+        {"status": "success", "shape": [42, 95]}
+
+    PHASE "ml":
+        {"status": "success", "has_predictions": true}
+
+    ⚠️ IMPORTANT :
+    - Retourne une erreur si la phase n'a pas encore été exécutée
+    - Les résultats sont ceux stockés dans l'état, pas en temps réel
+    """
+    args_schema: type[BaseModel] = GetPhaseResultInput
+
+    def _run(self, **kwargs) -> str:
+        inp = GetPhaseResultInput(**kwargs)
+        state = ScannerStateManager.get_instance(inp.url)
+
+        result_obj = getattr(state, f"{inp.phase}_result", None)
+        if result_obj is None:
+            return json.dumps({"status": "error", "error": f"Phase {inp.phase} non exécutée"})
+
+        if inp.phase == "crawl":
+            return json.dumps({"status": "success", "pages_crawled": len(result_obj.elements)})
+        elif inp.phase == "passive":
+            return json.dumps({"status": "success", "total_vulns": result_obj.total_vulns})
+        elif inp.phase == "fuzzer":
+            return json.dumps({"status": "success", "total_vulns": result_obj.stats.get("total_vulns")})
+        elif inp.phase == "features":
+            return json.dumps({"status": "success", "shape": state.features_df.shape})
+        elif inp.phase == "ml":
+            return json.dumps({"status": "success", "has_predictions": state.ml_predictions is not None})
+
+        return json.dumps({"status": "error", "error": f"Phase inconnue: {inp.phase}"})
+
+
+# ============================================================================
+# TOOL 9: ListCachedScans (description enrichie)
+# ============================================================================
+
+class ListCachedScans(BaseTool):
+    name: str = "list_cached_scans"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: list_cached_scans - Lister tous les scans en cache
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour connaître l'état de tous les scans en cours/complétés
+    - Pour décider quelle URL analyser ensuite
+    - Pour éviter de recrawler une URL déjà traitée
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "limit": 20    // Nombre max de scans à retourner
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success",
+        "total": 3,
+        "scans": {
+            "https://example.com": {
+                "url": "https://example.com",
+                "has_crawl": true,
+                "has_passive": true,
+                "has_code": false,
+                "has_fuzzer": false,
+                "has_features": false,
+                "has_ml": false,
+                "last_updated": "2026-01-15T14:32:10"
+            }
+        }
+    }
+
+    ⚠️ IMPORTANT :
+    - Le cache est en mémoire, pas persistant entre redémarrages
+    - Les scans sont conservés tant que l'agent tourne
+    """
+    args_schema: type[BaseModel] = ListCachedScansInput
+
+    def _run(self, **kwargs) -> str:
+        inp = ListCachedScansInput(**kwargs)
+        states = ScannerStateManager._instances
+        limited = dict(list(states.items())[:inp.limit])
+        return json.dumps({
+            "status": "success",
+            "total": len(states),
+            "scans": {url: state.to_dict() for url, state in limited.items()}
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 10: ResetScanState (description enrichie)
+# ============================================================================
+
+class ResetScanState(BaseTool):
+    name: str = "reset_scan_state"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: reset_scan_state - Réinitialiser l'état d'un scan
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour forcer un re-scan complet d'une URL
+    - Après avoir modifié la configuration de façon significative
+    - Quand les résultats en cache ne sont plus valides
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)"
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "error",
+        "message": "État supprimé pour https://example.com"
+    }
+
+    ⚠️ IMPORTANT :
+    - Cette action est IRREVERSIBLE
+    - Les résultats précédents sont perdus
+    - N'affecte pas le cache disque, seulement la mémoire
+    """
+    args_schema: type[BaseModel] = UrlInput
+
+    def _run(self, **kwargs) -> str:
+        url = kwargs.get("url")
+        if url in ScannerStateManager._instances:
+            del ScannerStateManager._instances[url]
+            return json.dumps({"status": "success", "message": f"État supprimé pour {url}"})
+        return json.dumps({"status": "error", "message": f"Aucun état pour {url}"})
+
+
+# ============================================================================
+# TOOL 11: StartScan (description enrichie)
+# ============================================================================
+
+class StartScan(BaseTool):
+    name: str = "start_scan"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: start_scan - Scan complet (toutes phases)
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour un audit de sécurité complet sans micro-gestion
+    - C'est l'outil principal, équivalent à "scanner.scan()"
+    - Exécute crawl + analyse passive + code + fuzzer + features + ML
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "url": "string (obligatoire)",
+        "active_scan": true,              // Activer le fuzzer
+        "use_cache": true,                // Utiliser le cache
+        "limit_payloads": null,           // Limiter les payloads
+        "max_depth": null,                // Profondeur de crawl
+        "max_pages": null,                // Pages max
+        "allowed_domains": null,          // Domaines autorisés
+        "threshold": 0.5                  // Seuil ML
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "success" | "partial",
+        "scan_id": "https://example.com|20260115143210",
+        "elapsed": 12.5,
+        "total_vulns": 7,
+        "vuln_count": {"XSS": 3, "SQLi": 2, "InfoDisc": 2},
+        "pages_crawled": 42
+    }
+
+    ⚠️ IMPORTANT :
+    - Cette opération peut prendre du temps (de quelques secondes à plusieurs minutes)
+    - Les résultats sont sauvegardés dans l'état du scanner
+    - Utilise get_vulnerabilities après pour plus de détails
+    """
+    args_schema = StartScanInput
+
+    def _run(self, **kwargs) -> str:
+        return _run_async(self._arun, **kwargs)
+
+    async def _arun(self, **kwargs) -> str:
+        inp = StartScanInput(**kwargs)
+        scanner = ScannerStateManager.get_or_create_scanner(
+            active_scan=inp.active_scan,
+            use_cache=inp.use_cache,
+            limit_payloads=inp.limit_payloads,
+        )
+
+        if inp.max_depth:
+            from scanner_ia.core.crawler import Config as CrawlerConfig
+            CrawlerConfig.MAX_DEEPTH = inp.max_depth
+        if inp.max_pages:
+            CrawlerConfig.MAX_PAGES = inp.max_pages
+
+        result = await scanner.scan(
+            url=inp.url,
+            allowed_domains=inp.allowed_domains,
+            threshold=inp.threshold,
+            use_cache=inp.use_cache,
+            put_result_in_cache=True,
+        )
+
+        scan_id = f"{inp.url}|{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        ScannerStateManager.set_last_result(result, scan_id)
+
+        phases = getattr(result, "phases_result", {}) or {}
+        fuzzer = phases.get("fuzzer")
+        stats = getattr(fuzzer, "stats", {}) if fuzzer else {}
+
+        return json.dumps({
+            "status": "success" if not result.errors else "partial",
+            "scan_id": scan_id,
+            "elapsed": result.elapsed,
+            "total_vulns": stats.get("total_vulns", 0),
+            "vuln_count": stats.get("vuln_count", {}),
+            "pages_crawled": len(phases.get("analyzer_helper(crawl_and_parse)", {}).get("elements", {})),
+        }, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 12: GetVulnerabilities (description enrichie)
+# ============================================================================
+
+class GetVulnerabilities(BaseTool):
+    name: str = "get_vulnerabilities"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: get_vulnerabilities - Liste des vulnérabilités détectées
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - APRÈS un scan complet (start_scan ou phases individuelles)
+    - Pour obtenir la liste structurée des vulnérabilités
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "scan_id": "string (optionnel)"   // ID du scan, None = dernier scan
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "total": 3,
+        "vulnerabilities": [
+            {
+                "name": "XSS",
+                "count": 2,
+                "severity": "critique"
+            },
+            {
+                "name": "InfoDisc",
+                "count": 1,
+                "severity": "faible"
+            }
+        ]
+    }
+
+    🏷️ SÉVÉRITÉ :
+    - "critique" : SQLi, CMDi
+    - "moyen"   : IDOR, CSRF, NoSQLi, CORS, OpenRedirect
+    - "faible"  : InfoDisc, CredsExpose, SessFix, InsecPerm
+
+    ⚠️ IMPORTANT :
+    - Ne retourne que les vulnérabilités du FUZZER (actives)
+    - Pour les vulns passives/code, utilise get_phase_result
+    """
+    args_schema: type[BaseModel] = GetVulnerabilitiesInput
+
+    def _run(self, scan_id: Optional[str] = None) -> str:
+        result = ScannerStateManager.get_last_result()
+        if result is None:
+            return json.dumps({"error": "Aucun scan effectué"})
+
+        phases = getattr(result, "phases_result", {}) or {}
+        fuzzer = phases.get("fuzzer")
+        if not fuzzer or not hasattr(fuzzer, "stats"):
+            return json.dumps({"vulnerabilities": []})
+
+        stats = fuzzer.stats
+        vuln_count = stats.get("vuln_count", {})
+
+        def severity(v):
+            high = {"SQLi", "CMDi", "XSS", "SSTI", "XXE", "SSRF"}
+            medium = {"IDOR", "CSRF", "NoSQLi", "CORS", "OpenRedirect"}
+            return "critique" if v in high else "moyen" if v in medium else "faible"
+
+        vulns = [{"name": k, "count": v, "severity": severity(k)} for k, v in vuln_count.items()]
+        return json.dumps({"total": len(vulns), "vulnerabilities": vulns}, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 13: GetReportPaths (description enrichie)
+# ============================================================================
+
+class GetReportPaths(BaseTool):
+    name: str = "get_report_paths"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: get_report_paths - Chemins des rapports générés
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - APRÈS un scan complet
+    - Pour récupérer les fichiers de rapport (JSON, HTML, PDF)
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "scan_id": "string (optionnel)"   // ID du scan, None = dernier scan
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "json": "/path/to/report.json",
+        "html": "/path/to/report.html",
+        "pdf": "/path/to/report.pdf"
+    }
+
+    ⚠️ IMPORTANT :
+    - Les rapports sont sauvegardés dans result_scan/
+    - Le rapport HTML est le plus lisible pour les humains
+    - Le JSON est utile pour un traitement automatisé
+    """
+    args_schema: type[BaseModel] = GetReportPathsInput
+
+    def _run(self, scan_id: Optional[str] = None) -> str:
+        result = ScannerStateManager.get_last_result()
+        if result is None:
+            return json.dumps({"error": "Aucun scan effectué"})
+        phases = getattr(result, "phases_result", {}) or {}
+        return json.dumps(phases.get("report_generation", {}), ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 14: GetFeatures (description enrichie)
+# ============================================================================
+
+class GetFeatures(BaseTool):
+    name: str = "get_features"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: get_features - Features ML extraites
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - APRÈS un scan complet
+    - Pour inspecter les données utilisées par le modèle ML
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "scan_id": "string (optionnel)"
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "columns": ["url", "num_balise_script", "fuzzer_XSS", ...],
+        "data": [
+            {"url": "https://...", "num_balise_script": 5, "fuzzer_XSS": 1, ...}
+        ]
+    }
+
+    ⚠️ IMPORTANT :
+    - Chaque ligne correspond à une URL crawlée
+    - Les colonnes "fuzzer_*" sont binaires (1 = vulnérabilité trouvée)
+    """
+    args_schema: type[BaseModel] = GetFeaturesInput
+
+    def _run(self, scan_id: Optional[str] = None) -> str:
+        result = ScannerStateManager.get_last_result()
+        if result is None:
+            return json.dumps({"error": "Aucun scan effectué"})
+        phases = getattr(result, "phases_result", {}) or {}
+        df = phases.get("features_extraction")
+        if df is None:
+            return json.dumps({"error": "Features non disponibles"})
+        return json.dumps({
+            "columns": list(df.columns),
+            "data": df.head(10).to_dict(orient="records")
+        }, default=str, ensure_ascii=False, indent=2)
+
+
+# ============================================================================
+# TOOL 15: GetScanStatus (description enrichie)
+# ============================================================================
+
+class GetScanStatus(BaseTool):
+    name: str = "get_scan_status"
+    description: str = """
+    ═══════════════════════════════════════════════════════════════════════════
+    OUTIL: get_scan_status - État d'un scan
+    ═══════════════════════════════════════════════════════════════════════════
+
+    📌 QUAND L'UTILISER :
+    - Pour vérifier si un scan est terminé
+    - Pour obtenir les métriques de base (temps, erreurs)
+
+    📥 PARAMÈTRES (JSON) :
+    {
+        "scan_id": "string (obligatoire)"   // ID retourné par start_scan
+    }
+
+    📤 RETOUR (JSON) :
+    {
+        "status": "completed" | "unknown",
+        "elapsed": 12.5,                  // Temps d'exécution (secondes)
+        "errors": 0                        // Nombre d'erreurs
+    }
+
+    ⚠️ IMPORTANT :
+    - Actuellement, retourne toujours "completed" si le scan_id est reconnu
+    - Pour du suivi temps réel, utilise l'API WebSocket
+    """
+    args_schema: type[BaseModel] = ScanStatusInput
+
+    def _run(self, scan_id: str) -> str:
+        last_id = ScannerStateManager.get_last_scan_id()
+        if scan_id != last_id:
+            return json.dumps({"status": "unknown", "message": "ID non reconnu"})
+        result = ScannerStateManager.get_last_result()
+        if result is None:
+            return json.dumps({"status": "unknown"})
+        return json.dumps({
+            "status": "completed",
+            "elapsed": result.elapsed,
+            "errors": len(result.errors),
+        })
+
+
+# ============================================================================
+# LISTE COMPLÈTE DES OUTILS
+# ============================================================================
+
+ALL_SCANNER_TOOLS = [
+    # Outils granulaires
+    AnalyzeAndParseOnly(),
+    PassiveAnalyzeOnly(),
+    CodeAnalyzeOnly(),
+    FuzzerOnly(),
+    FeaturesExtractOnly(),
+    MLPredictOnly(),
+    ConfigureScanner(),
+    GetPhaseResult(),
+    ListCachedScans(),
+    ResetScanState(),
+    # Outils haut niveau
+    StartScan(),
+    GetVulnerabilities(),
+    GetReportPaths(),
+    GetFeatures(),
+    GetScanStatus(),
+]

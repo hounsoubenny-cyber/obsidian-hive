@@ -1,0 +1,168 @@
+# =============================================================================
+# ShieldAI - Fichier de configuration principal
+# =============================================================================
+# Ce fichier contient tous les paramètres système de ShieldAI.
+# Les secrets (clés API, mots de passe) sont dans .env, PAS ici.
+#
+# Format: TOML (https://toml.io)
+# =============================================================================
+
+
+# =============================================================================
+# 1. CONFIGURATION GLOBALE
+# =============================================================================
+# Paramètres généraux du système, indépendants des modules.
+# =============================================================================
+
+[global]
+# start_ids_on_start : Démarrer automatiquement l'IDS/IPS au lancement du système
+#   - true  → L'IDS/IPS démarre avec l'API
+#   - false → L'IDS/IPS doit être démarré manuellement (via API ou CLI)
+start_ids_on_start = true
+
+# =============================================================================
+# 2. CONFIGURATION DE L'API
+# =============================================================================
+# Paramètres du serveur FastAPI.
+# =============================================================================
+
+[api]
+# api_port : Port sur lequel l'API ShieldAI écoute
+#   - Défaut : 8000
+#   - Plage recommandée : 8000-9000
+api_port = 8000
+
+
+# =============================================================================
+# 3. CONFIGURATION DU MOTEUR (Engine)
+# =============================================================================
+# Paramètres du moteur central Obsidian qui gère les assets et les workflows.
+# =============================================================================
+
+[engine_config]
+# db_url : URL de connexion à la base de données
+#   - SQLite : sqlite+aiosqlite:///./shieldai.db
+#   - PostgreSQL : postgresql+asyncpg://user:pass@localhost/shieldai
+db_url = "sqlite+aiosqlite:////home/hounsousamuel/PROJET/obsidian_hive/api/shieldai.db"
+
+# debug : Mode debug du moteur
+#   - true  → Logs détaillés, stacktraces complètes
+#   - false → Logs minimaux, mode production
+debug = false
+
+
+# =============================================================================
+# 4. CONFIGURATION DU LLM MANAGER
+# =============================================================================
+# Gestion des connexions aux LLM locaux (llama.cpp) et aux API externes.
+# =============================================================================
+
+[llm_manager]
+# host : Hôte sur lequel le serveur llama.cpp écoute
+#   - 127.0.0.1 → Local uniquement (recommandé)
+#   - 0.0.0.0   → Accessible depuis le réseau (⚠️ attention à la sécurité)
+host = "127.0.0.1"
+
+# port : Port du serveur llama.cpp
+#   - Défaut : 9090
+#   - S'assurer qu'il est libre avant de démarrer
+port = 9090
+
+# models_preset : Chemin vers le fichier de configuration des modèles GGUF
+#   - Liste des modèles disponibles pour le LLMManager
+#   - Format : fichier .ini avec une section par modèle
+models_preset = "/home/hounsousamuel/PROJET/obsidian_hive/core/managers/llm_managers/models.ini"
+
+# log_file : Fichier de log du serveur llama.cpp
+#   - null ou "" → logs dans le dossier par défaut
+#   - Chemin absolu → logs dans ce fichier
+log_file = "null"
+
+# models_max : Nombre maximum de modèles chargés simultanément
+#   - 1 → un seul modèle à la fois (économie de RAM)
+#   - >1 → plusieurs modèles en parallèle (plus de RAM)
+models_max = 1
+
+# wait_timeout : Temps d'attente maximum pour le démarrage du serveur (secondes)
+#   - Défaut : 120 secondes
+#   - Augmenter si le serveur met plus de temps à démarrer
+wait_timeout = 120
+
+# 🔑 Les clés API sont dans .env, pas ici.
+# Exemple dans .env :
+# OBSIDIAN_LLM_MANAGER_API_KEY_1=ornith1.0-9b,gsk_xxxxx
+# OBSIDIAN_LLM_MANAGER_API_KEY_2=qwen3.5-9b,gsk_yyyyy
+
+
+# =============================================================================
+# 5. CONFIGURATION DE L'ANALYSTE (Alex)
+# =============================================================================
+# Paramètres de l'agent Analyst qui analyse les résultats des modules.
+# =============================================================================
+
+[analyst]
+# max_iter : Nombre maximum d'itérations pour une analyse
+#   - Minimum : 5 (en dessous, analyse incomplète)
+#   - Défaut : 8
+#   - Plus le nombre est élevé, plus l'analyse est approfondie (mais plus lente)
+max_iter = 8
+
+# max_retries : Nombre de tentatives en cas d'échec
+#   - Défaut : 3
+#   - Augmenter pour des environnements instables
+max_retries = 3
+
+# temperature : Température du modèle LLM
+#   - 0.0 → Déterministe, réponse précise
+#   - 0.8 → Équilibre créativité/précision (recommandé)
+#   - 1.0 → Plus créatif, moins précis
+temperature = 0.8
+
+# max_tokens : Nombre maximum de tokens par réponse
+#   - Défaut : 32768
+#   - Augmenter pour des analyses très longues
+max_tokens = 32768
+
+# system_prompt_mode : Mode du prompt système
+#   - "short" → Prompt court (rapide)
+#   - "full"  → Prompt complet avec toutes les règles (recommandé)
+system_prompt_mode = "full"
+
+# model_name : Nom du modèle LLM à utiliser
+#   - null → Utilise le modèle par défaut du LLMManager
+#   - "ornith1.0-9b" → Utilise Ornith
+model_name = "null"
+
+[core_agent]
+# max_iter : Nombre maximum d'itérations 
+#   - Minimum : 5 
+#   - Défaut : 8
+#   - Plus le nombre est élevé, plus l'analyse est approfondie (mais plus lente)
+max_iter = 8
+
+# max_retries : Nombre de tentatives en cas d'échec
+#   - Défaut : 3
+#   - Augmenter pour des environnements instables
+max_retries = 3
+
+# temperature : Température du modèle LLM
+#   - 0.0 → Déterministe, réponse précise
+#   - 0.8 → Équilibre créativité/précision (recommandé)
+#   - 1.0 → Plus créatif, moins précis
+temperature = 0.8
+
+# max_tokens : Nombre maximum de tokens par réponse
+#   - Défaut : 32768
+#   - Augmenter pour des analyses très longues
+max_tokens = 32768
+
+# system_prompt_mode : Mode du prompt système
+#   - "short" → Prompt court (rapide)
+#   - "full"  → Prompt complet avec toutes les règles (recommandé)
+system_prompt_mode = "full"
+
+# model_name : Nom du modèle LLM à utiliser
+#   - null → Utilise le modèle par défaut du LLMManager
+#   - "ornith1.0-9b" → Utilise Ornith
+model_name = "null"
+

@@ -1,0 +1,442 @@
+[
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Début BashHistoryRead sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Début Command Line Execution à : Thu Jun 18 18:26:54 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:54 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Thu Jun 18 18:26:55 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Début BashHistoryRead sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 08:47:17 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 08:47:17 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Début BashHistoryRead sur testuser@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Début Command Line Execution à : Wed Jul  1 09:12:03 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Username: testuser, Password: password, commandes: 9"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "✅ SUCCESS: testuser:password"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Wed Jul  1 09:12:03 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Début BashHistoryRead sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 14:51:57 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:57 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 14:51:58 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Début BashHistoryRead sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 19:51:53 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 19:51:53 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Début BashHistoryRead sur root@172.17.0.2:22"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Début Command Line Execution à : Sun Aug  2 20:47:58 2026, pour ip : 172.17.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:58 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Sun Aug  2 20:47:59 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Début BashHistoryRead sur admin@172.24.0.2:22"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 13:28:31 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Username: admin, Password: admin123, commandes: 9"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 13:28:31 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Début BashHistoryRead sur admin@172.24.0.2:22"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Début Command Line Execution à : Tue Aug  4 15:17:54 2026, pour ip : 172.24.0.2 et port 22 "
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Username: admin, Password: admin123, commandes: 9"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "✅ SUCCESS: admin:admin123"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Tue Aug  4 15:17:54 2026",
+        "message": "BashHistoryRead terminé — 2 credential(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Début BashHistoryRead sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 11:57:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:27 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 11:57:28 2026",
+        "message": "BashHistoryRead terminé — 5 credential(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Début BashHistoryRead sur root@172.24.0.3:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 15:34:27 2026, pour ip : 172.24.0.3 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 15:34:27 2026",
+        "message": "BashHistoryRead terminé — 5 credential(s)"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Début BashHistoryRead sur root@172.24.0.4:22"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Début Command Line Execution à : Mon Aug 24 16:49:32 2026, pour ip : 172.24.0.4 et port 22 "
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Username: root, Password: toor, commandes: 9"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "✅ SUCCESS: root:toor"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Fin Command Line Execution, 9/9 commandes réussie!"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Accès refusé : Lecture historique zsh utilisateur courant"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Accès refusé : Lecture historique sh générique"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Accès refusé : Lecture historique sh alternatif"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "Accès refusé : Lecture historique zsh de root"
+    },
+    {
+        "timestamp": "Mon Aug 24 16:49:32 2026",
+        "message": "BashHistoryRead terminé — 5 credential(s)"
+    }
+]

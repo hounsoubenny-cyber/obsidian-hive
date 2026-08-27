@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 21 04:37:10 2026
+
+@author: hounsousamuel
+"""
+
+Exactement, les deux combinés 🎯 :
+
+**À chaque étape** — avant que l'user configure, l'IA analyse l'état courant et suggère :
+```
+🤖 IA : "J'ai vu les ports 22 et 8080 ouverts. 
+         Je suggère de bruteforcer SSH d'abord avec 
+         root/toor/admin. Port 8080 semble être nginx."
+         
+➜ Suivre la suggestion ? [O/n]
+   ou configurer manuellement ?
+```
+
+**À tout moment** — l'user peut poser une question libre :
+```
+[7] 💬 Demander à l'IA
+➜ Question : "Que faire si le bruteforce SSH échoue ?"
+🤖 IA : "Essaie HTTP sur 8080, ou teste des 
+         wordlists plus larges..."
+```
+
+---
+
+Côté code c'est minimal — tu ajoutes :
+
+```python
+# Dans run_interactive — option 7
+elif choice == "7":
+    await self.ask_ia()
+
+# Méthode ask_ia — question libre
+async def ask_ia(self):
+    question = _ask("Votre question")
+    # contexte = état courant sérialisé
+    # → envoie à Ollama/API
+    # → affiche réponse
+
+# Dans chaque étape — suggestion avant config
+async def _ia_suggest(self, step: str, context: dict) -> str:
+    # → envoie step + context à l'IA
+    # → retourne suggestion
+    # → Confirm.ask "Suivre ?"
+```
+
+L'IA reçoit toujours le **contexte complet** — ports découverts, creds trouvés, commandes exécutées — pour que ses suggestions soient pertinentes.
+
+---
+
+Pour l'IA tu utilises Ollama local ou l'API Anthropic ? 👀

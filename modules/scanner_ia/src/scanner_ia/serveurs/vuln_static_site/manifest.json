@@ -1,0 +1,51 @@
+{
+  "description": "Vérité terrain du site statique de test — à comparer aux résultats du scanner (mode passif, sans fuzzer/ML).",
+  "base_url": "http://localhost:8090",
+  "pages": {
+    "/index.html": {
+      "expected_vulns": ["InfoDisc"],
+      "notes": "commentaire HTML révélant un chemin admin caché (/admin_backup_old/)"
+    },
+    "/page_xss_dom.html": {
+      "expected_vulns": ["XSS"],
+      "notes": "DOM XSS via location.hash injecté dans innerHTML sans échappement"
+    },
+    "/page_secrets.html": {
+      "expected_vulns": ["CredsExpose"],
+      "notes": "clé Stripe, clés AWS, mot de passe DB en dur dans le JS + commentaire avec creds admin"
+    },
+    "/page_outdated_lib.html": {
+      "expected_vulns": ["XSS", "InsecCrypto"],
+      "notes": "jQuery 1.12.4 et Angular 1.5.8 avec CVE connues, + usage de .html() avec entrée utilisateur non filtrée (XSS via param 'msg')"
+    },
+    "/page_form_csrf.html": {
+      "expected_vulns": ["CSRF"],
+      "notes": "formulaires sans token CSRF, action sensible en GET, mot de passe en clair dans l'URL potentielle"
+    },
+    "/page_clickjack.html": {
+      "expected_vulns": ["InfoDisc"],
+      "notes": "action sensible sans protection anti-clickjacking (dépend aussi des headers globaux X-Frame-Options)"
+    },
+    "/page_info_disclosure.html": {
+      "expected_vulns": ["InfoDisc", "CredsExpose"],
+      "notes": "commentaires HTML avec IP interne, version vulnérable, stack trace avec mot de passe DB"
+    },
+    "/page_safe.html": {
+      "expected_vulns": ["SAFE"],
+      "notes": "témoin négatif — ne doit déclencher AUCUNE vulnérabilité (mesure des faux positifs)"
+    },
+    "/.env": {
+      "expected_vulns": ["CredsExpose", "InfoDisc"],
+      "notes": "fichier .env accessible publiquement avec secrets"
+    }
+  },
+  "global_headers_expected_missing": [
+    "content-security-policy",
+    "x-frame-options",
+    "x-content-type-options",
+    "strict-transport-security",
+    "referrer-policy",
+    "permissions-policy"
+  ],
+  "global_cors_issue": "Access-Control-Allow-Origin: * combiné à Access-Control-Allow-Credentials: true sur toutes les réponses -> CORS"
+}

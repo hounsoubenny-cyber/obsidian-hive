@@ -1,0 +1,15 @@
+Sur C/C++, crypto, réseau profond :
+C/C++ bas niveau :
+
+"Computer Systems: A Programmer's Perspective" (Bryant & O'Hallaron) — la bible
+Ensuite : coder des petits projets système (malloc, shell, HTTP server from scratch)
+
+Crypto :
+
+"Cryptography and Network Security" (Stallings)
+Ou plus pratique : cryptopals.com — challenges progressifs
+
+TCP/IP internals :
+
+"TCP/IP Illustrated Vol.1" (Stevens) — la référence absolue
+Compléter avec Wireshark sur tes propres containers Docker

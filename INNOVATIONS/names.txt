@@ -1,0 +1,50 @@
+"HiveMind Security"
+HiveMind
+├── Scout    → Scanner de vulnérabilités (Module 1)
+├── Watch    → IDS/IPS (Module 3)
+├── Decoy    → Honeypots (Module 16)
+├── Forge    → Simulateur d'attaques (Module 4)
+├── Vault    → Sandbox (Module 5)
+└── Hive     → Orchestrateur (Module 6)
+
+HiveMind Core:
+  Orchestrateur (Manager):
+    - Reçoit les requêtes utilisateur
+    - Décompose en tâches
+    - Coordonne les agents
+    - Gère les priorités
+
+Agents Spécialisés:
+  Scout (Scanner):
+    - Crawl + détection vulnérabilités
+    - Extrait features → ML
+
+  Watch (IDS/IPS):
+    - Surveille trafic réseau
+    - Détection anomalies temps réel
+    - Blocage automatique
+
+  Reaper (Simulateur):
+    - Génère attaques réalistes
+    - Teste les défenses
+    - Ajuste selon feedback
+
+  Sentinel (Anti-phishing):
+    - Analyse emails/URLs
+    - Score de confiance
+    - Signale tentatives
+
+  Vault (Sandbox):
+    - Environnement isolé
+    - Analyse comportementale
+    - Rapport forensique
+
+  Healer (Remédiation):
+    - Propose correctifs
+    - Génère patches
+    - Valide avec Scout
+
+  Scribe (Rapporteur):
+    - Synthèse des actions
+    - Génération rapports (PDF/HTML/JSON)
+    - Export SIEM

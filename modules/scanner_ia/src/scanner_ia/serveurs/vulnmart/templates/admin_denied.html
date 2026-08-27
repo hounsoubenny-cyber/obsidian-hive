@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé — VulnMart{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="alert error" style="margin-top:60px;">
+    Accès refusé — il vous manque le cookie <code class="mono">is_admin=true</code>. (indice : rien ne vérifie ça côté serveur pour un vrai rôle)
+  </div>
+</div>
+{% endblock %}
