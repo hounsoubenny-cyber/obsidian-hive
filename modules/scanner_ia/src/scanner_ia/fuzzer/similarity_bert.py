@@ -8,6 +8,7 @@ Created on Thu Mar 19 06:50:54 2026
 
 import os
 import time
+import torch
 import hashlib
 import traceback
 from sentence_transformers import SentenceTransformer
@@ -23,6 +24,11 @@ similarity_logger = get_logger()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TTLCACHE = TTLCache(maxsize=1000, ttl=60 * 10)
+
+try:
+    torch.set_num_threads(1)
+except Exception:
+    pass
 
 class CosineSimilarityBERT:
     def __init__(self, *args, **kwargs):
@@ -90,38 +96,39 @@ class CosineSimilarityBERT:
         # X1 (la baseline) est quasi toujours IDENTIQUE d'un payload à l'autre pour une
         # même URL — on cache son embedding pour éviter de le recalculer à chaque test.
         # X2 (la réponse au payload) change à chaque appel : pas de gain à le cacher.
-        x1_key = self._cache_key(X1)
-        with self._lock:
-            X1_vec = TTLCACHE.get(x1_key)
-
-        cache_hit = X1_vec is not None
-        if not cache_hit:
-            X1_vec = self.model.encode(X1, normalize_embeddings=True, convert_to_tensor=True)
+        with torch.inference_mode():
+            x1_key = self._cache_key(X1)
             with self._lock:
-                TTLCACHE[x1_key] = X1_vec
-
-        X2_vec = self.model.encode(X2, normalize_embeddings=True, convert_to_tensor=True)
+                X1_vec = TTLCACHE.get(x1_key)
+    
+            cache_hit = X1_vec is not None
+            if not cache_hit:
+                X1_vec = self.model.encode(X1, normalize_embeddings=True, convert_to_tensor=True)
+                with self._lock:
+                    TTLCACHE[x1_key] = X1_vec
+    
+            X2_vec = self.model.encode(X2, normalize_embeddings=True, convert_to_tensor=True)
         
-        # similarity_logger.debug(f"   └─ X1 shape: {X1_vec.shape}")
-        # similarity_logger.debug(f"   └─ X2 shape: {X2_vec.shape}")
-        
-        sim_matrix = pytorch_cos_sim(X1_vec, X2_vec)
-        if sim_matrix.shape[0] == 1:
-            result = sim_matrix.item()
-            aggregation = "first element (1D)"
-        elif aggregation == 'mean':
-            result = sim_matrix.mean()
-        elif aggregation == 'max':
-            result = sim_matrix.max()
-        elif aggregation == 'min':
-            result = sim_matrix.min()
-        else:
-            result = sim_matrix.mean()
-        
-        elapsed = time.time() - start_time
-        similarity_logger.debug(f"   └─ Similarité ({aggregation}): {result:.4f} ({elapsed:.3f}s, baseline_cache={'hit' if cache_hit else 'miss'})")
-        
-        return result
+            # similarity_logger.debug(f"   └─ X1 shape: {X1_vec.shape}")
+            # similarity_logger.debug(f"   └─ X2 shape: {X2_vec.shape}")
+            
+            sim_matrix = pytorch_cos_sim(X1_vec, X2_vec)
+            if sim_matrix.shape[0] == 1:
+                result = sim_matrix.item()
+                aggregation = "first element (1D)"
+            elif aggregation == 'mean':
+                result = sim_matrix.mean()
+            elif aggregation == 'max':
+                result = sim_matrix.max()
+            elif aggregation == 'min':
+                result = sim_matrix.min()
+            else:
+                result = sim_matrix.mean()
+            
+            elapsed = time.time() - start_time
+            similarity_logger.debug(f"   └─ Similarité ({aggregation}): {result:.4f} ({elapsed:.3f}s, baseline_cache={'hit' if cache_hit else 'miss'})")
+            
+            return result
     
     def save_model(self, model, path):
         # if self.model:

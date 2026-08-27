@@ -14,6 +14,7 @@ import tempfile
 from uuid import uuid4
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
+from cachetools import TTLCache
 from scanner_utils.logger import get_logger
 logger = get_logger()
 
@@ -31,7 +32,7 @@ DEFAULT_QUERY_PARAMS = {
 }
 
 # ─── Cache Arjun ─────────────────────────────────────────────────────────────
-_ARJUN_CACHE = {}
+_ARJUN_CACHE = TTLCache(maxsize=2048, ttl=4 * 3600)
 _KNOWN_PARAMS_FILE = None
 
 

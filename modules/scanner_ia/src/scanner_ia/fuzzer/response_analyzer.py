@@ -38,6 +38,7 @@ from scanner_ia.fuzzer.config import CRITICAL_HEADERS, SIMILARITY_MODEL_DIR, N_F
 from scanner_ia.fuzzer.similarity_bert import CosineSimilarityBERT as SimilarityModel
 from cachetools import TTLCache
 from scanner_ia.scanner_utils.logger import get_logger
+from functools import lru_cache
 
 TTL_CACHE_SIZE = 10000
 TTL = 100 * 60
@@ -107,7 +108,14 @@ _REFLECTION_PATTERNS = {
     ],
 }
 
-
+@lru_cache(maxsize=4096)
+def get_compiled_regex(pattern_str: str, flags: int = re.IGNORECASE | re.DOTALL | re.MULTILINE) -> Optional[re.Pattern]:
+    try:
+        return re.compile(pattern_str, flags)
+    except re.error as e:
+        logger_response_analyzer.warning(f"Regex indicateur invalide: {pattern_str!r} → {e}")
+        return None
+    
 class ResponseAnalyzer:
     """
     Analyseur de réponses HTTP pour détecter des vulnérabilités.
@@ -349,7 +357,10 @@ class ResponseAnalyzer:
             # ── Regex ────────────────────────────────────────────────────────
             if ind_type == "regex":
                 try:
-                    pattern = re.compile(indicator, re.IGNORECASE | re.DOTALL | re.MULTILINE)
+                    pattern = get_compiled_regex(indicator, re.IGNORECASE | re.DOTALL | re.MULTILINE)
+                    if pattern is None:
+                        continue
+                    
                     baseline_count = len(pattern.findall(baseline_body)) + len(pattern.findall(baseline_unescape))
                     test_count     = len(pattern.findall(test_body))     + len(pattern.findall(test_unescape))
 
