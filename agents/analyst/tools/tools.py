@@ -303,6 +303,10 @@ class CopyPathEntry(BaseModel):
     destination: str = Field(
         description="Chemin absolu de destination (peut être un dossier ou un fichier)."
     )
+    overwrite: bool = Field(
+        default=False, 
+        description="Si True, le fichier de destination est écrasé si exsitant, sinon une erreur est levée"
+    )
     
     @field_validator("source")
     @classmethod
@@ -314,7 +318,7 @@ class CopyPathEntry(BaseModel):
     @classmethod
     def validate_destination(cls, path: str) -> str:
         """Valide que la destination est dans le périmètre autorisé."""
-        return _validate_path(path)
+        return _validate_path(path, check_exists=False)
     
     @model_validator(mode="after")
     def validate_copy(self) -> 'CopyPathEntry':
@@ -322,12 +326,13 @@ class CopyPathEntry(BaseModel):
         if os.path.realpath(self.source) == os.path.realpath(self.destination):
             raise ValueError("Source and destination are the same file")
         
-        if os.path.exists(self.destination):
+        if os.path.exists(self.destination) and not self.overwrite:
             raise ValueError(f"Destination file already exists: {self.destination}")
             
         if os.path.isdir(self.source) and os.path.isfile(self.destination):
             raise RuntimeError("Cant' copy directory in file !")
-            
+        
+        os.makedirs(os.path.dirname(self.destination), exist_ok=True)
         return self
 
 class CreateDirectoryEntry(BaseModel):

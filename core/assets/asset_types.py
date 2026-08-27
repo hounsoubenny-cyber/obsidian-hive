@@ -6,28 +6,24 @@ Created on Mon Jun 22 19:57:55 2026
 @author: hounsousamuel
 """
 
-import os, sys
-# sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+import os
 
+import tempfile
 import time
-import json
 import json5
-import random
 import shutil
 from typing import Dict, List, Any
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
 from enum import IntEnum, StrEnum
-from pydantic import Field, BaseModel, field_validator, model_validator, ConfigDict
+from pydantic import Field, BaseModel, field_validator, model_validator
 from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
 from scanner_ia.api.api_config import DEFAULT_SCAN_PATH
 from modules_utils.validate_config import (
     validate_and_merge_config,
-    ConfigError,
 )
 from scanner_ia.api.api_config import (
-    CONFIG_TEMP_DIR, DEFAULT_SCAN_PATH,
-    MAX_CONFIG_SIZE,
+    CONFIG_TEMP_DIR, MAX_CONFIG_SIZE
 )
 
 def utcnow():
@@ -372,14 +368,17 @@ class WebAsset(AssetItem):
                 self.config_path = config_path
                 with open(config_path) as f:
                     value = json5.dumps(json5.loads(f.read()))
-                try:
-                    os.unlink(copy_path)
-                except Exception as e:
-                    print(f"Erreur de suppression: {e!r}")
                 
             except Exception as e:
                 print(f"Erreur setattr pour WebAsset. Name: {name}, value: {value}. Erreur: {e!r}")
                 return # Config invalide, on ignore
+            
+            finally:
+                if copy_path:
+                    try:
+                        os.unlink(copy_path)
+                    except Exception as e:
+                        print(f"Erreur de suppression: {e!r}")
         
         elif name in ("run_config", "init_config",):
             write_path = None
@@ -560,10 +559,6 @@ class NetworkAsset(AssetItem):
                 self.config_path = config_path
                 with open(config_path) as f:
                     value = json5.dumps(json5.loads(f.read()))
-                try:
-                    os.unlink(copy_path)
-                except Exception as e:
-                    print(f"Erreur de suppression: {e!r}")
                 
             except Exception as e:
                 print(f"Erreur setattr pour NetworkAsset. Name: {name}, value: {value}. Erreur: {e!r}")

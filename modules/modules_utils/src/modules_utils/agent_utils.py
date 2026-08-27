@@ -71,7 +71,7 @@ def _validate_confined(path: str) -> str:
         raise ValueError(f"Accès refusé : {path!r} est hors du périmètre autorisé.")
     return path
 
-def _validate_path(path: str) -> str:
+def _validate_path(path: str, check_exists: bool = True) -> str:
     """
     Valide qu'un chemin existe et n'est pas vide.
     
@@ -87,7 +87,7 @@ def _validate_path(path: str) -> str:
     if not path:
         raise ValueError("The path is falsy")
     
-    if not os.path.exists(path):
+    if check_exists and (not os.path.exists(path)):
         raise ValueError("This path doesn't exist")
     
     return _validate_confined(path)

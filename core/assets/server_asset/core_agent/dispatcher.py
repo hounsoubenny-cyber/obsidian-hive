@@ -160,7 +160,10 @@ class AgentDispatcher:
         if proc.returncode != 0:
             raise RuntimeError(f"tool_engine a échoué (code {proc.returncode}): {stderr.decode(errors='replace')}")
         response = stdout.decode()
-        return json5.loads(response[response.find("{"):])
+        idx = response.find("{")
+        if idx == -1:
+            raise RuntimeError(f"Réponse invalide de tool_engine (aucun JSON trouvé) : {response}")
+        return json5.loads(response[idx:])
     
     async def _on_tool_call(self, data: dict, ws):
         """Handler pour les appels d'outils.
