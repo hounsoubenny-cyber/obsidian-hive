@@ -20,7 +20,6 @@ API_IP = "127.0.0.1"
 ALLOWED_ORIGINS = [
     f"http://{API_IP}:{API_PORT}",
     f"http://localhost:{API_PORT}",
-    f"http://{API_HOST}:{API_PORT}",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]

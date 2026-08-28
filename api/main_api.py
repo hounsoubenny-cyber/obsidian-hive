@@ -263,7 +263,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "HEAD"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -299,7 +299,7 @@ _ROUTERS = [
     (download_router, "download", True),
     (download_public_router, "download", False),
     
-    (anti_phishing_extension_router, "anti_phishing_extension", False)
+    (anti_phishing_extension_router, "anti_phishing_extension", False),
     (extension_token_manager_router, "extension_tokens", True)
 ]
 

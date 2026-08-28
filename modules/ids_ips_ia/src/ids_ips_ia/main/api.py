@@ -29,8 +29,6 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-
 from ids_ips_ia.config.config_ids import ALLOWED_ORIGINS, REQUEST_LIMIT as REQUEST, API_CONFIG, GRAPH
 from ids_ips_ia.config.frontend_config import (
     STATICDIR, BUILD_DIR, INDEX_FILE, REACT_EXISTS, BUILD_URL, STATIC_URL
@@ -102,7 +100,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "HEAD"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

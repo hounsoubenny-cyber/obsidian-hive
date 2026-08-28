@@ -4,7 +4,6 @@
 Résolveur de query params pour _inject_payloads_in_query.
 """
 
-import os
 import asyncio
 import json5
 import json
@@ -14,7 +13,7 @@ from uuid import uuid4
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 from cachetools import TTLCache
-from scanner_utils.logger import get_logger
+from scanner_ia.scanner_utils.logger import get_logger
 logger = get_logger()
 
 # ─── Fallback générique ──────────────────────────────────────────────────────

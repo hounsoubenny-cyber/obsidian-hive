@@ -341,7 +341,8 @@ class LLMManager:
     ):
         if not os.path.exists(llama_server_path):
             raise RuntimeError("LLama server path is required")
-
+        
+        self._key_lock = threading.Lock()
         self.llama_server_path = llama_server_path
         self.log_file = log_file if log_file else os.path.join(
             DEFAUlT_LLAMA_SERVER_DIR,
@@ -383,7 +384,6 @@ class LLMManager:
         
         # 🔔 Bus d'événements
         self.events = EventBus()
-        self._key_lock = threading.Lock()
 
         self.start_server()
         if not self.wait_for_server(wait_timeout):
