@@ -6,15 +6,12 @@ Created on Tue May 26 14:00:48 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-from scanner_ia.api.api import start, app,close_api, close_api_atexit
+import sys
+from scanner_ia.api.api import start, app, close_api_atexit
 from scanner_ia.api.api_config import IP, PORT
-import signal
 import time
-import asyncio
 import nest_asyncio
-nest_asyncio.apply()
+from modules_utils.signal_manager import signal_manager
 
 def run_api():
     thread, server = start(app, host=IP, port=PORT)
@@ -30,10 +27,7 @@ def run_api():
         thread.join(2)
         sys.exit(0)
         
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)  
-    if sys.platform != "win32":
-        signal.signal(signal.SIGQUIT, signal_handler)
+    signal_manager(signal_handler)
     
     print('API lancé à : ', time.ctime())
     start_time = time.time()
@@ -52,6 +46,7 @@ def run_api():
     print('Fermeture API à : ', time.ctime())
     
 if __name__ == '__main__':
+    nest_asyncio.apply()
     run_api()
     
     

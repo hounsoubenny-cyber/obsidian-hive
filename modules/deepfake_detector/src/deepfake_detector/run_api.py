@@ -7,16 +7,14 @@ Created on Mon Apr  6 10:57:00 2026
 """
 
 import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
-from deepfake_detector.main import start, app, close_api, close_api_atexit
+
+from deepfake_detector.main import start, app, close_api_atexit
 from deepfake_detector.api.api_config import IP, PORT
-import signal
 import time
-import asyncio
 import nest_asyncio
-nest_asyncio.apply()
 from diskcache import Cache
 import shutil
+from modules_utils.signal_manager import signal_manager
 
 def run_api():
     thread, server = start(app, host=IP, port=PORT)
@@ -36,13 +34,12 @@ def run_api():
             except Exception as e:
                 print("Erreur suppression de .user_cache :", str(e))
                 Cache(".user_cache").clear()
-        asyncio.run(close_api(CLOSE_TARGET))
+        server.should_exit = True
         thread.join(2)
         sys.exit(0)
-        
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)  
-    signal.signal(signal.SIGQUIT, signal_handler)
+    
+    
+    signal_manager(signal_handler)
     
     print('API lancé à : ', time.ctime())
     start_time = time.time()
@@ -70,6 +67,7 @@ def run_api():
     print('Fermeture API à : ', time.ctime())
     
 if __name__ == '__main__':
+    nest_asyncio.apply()
     run_api()
     
     

@@ -6,12 +6,11 @@ Created on Tue Jul  7 02:18:37 2026
 @author: hounsousamuel
 """
 
-
 import sys
-import signal
 import time
 from obsidian_hive.api.main_api import start, app, stop
 from obsidian_hive.api.ap_config import API_HOST, API_PORT
+from modules_utils.signal_manager import signal_manager
 import nest_asyncio
 
 def run():
@@ -28,10 +27,11 @@ def run():
         stop(thread, 2)
         sys.exit(0)
         
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    if sys.platform != "win32":
-        signal.signal(signal.SIGQUIT, signal_handler)
+    signal_manager(signal_handler)
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
+    # if sys.platform != "win32":
+    #     signal.signal(signal.SIGQUIT, signal_handler)
     
     print('API lancé à : ', time.ctime())
     start_time = time.time()

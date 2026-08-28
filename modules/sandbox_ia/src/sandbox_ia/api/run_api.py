@@ -6,20 +6,13 @@ Created on Sun Jun 21 11:36:20 2026
 @author: hounsousamuel
 """
 
-import os
 import sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
-import signal
 import time
-import asyncio
 import nest_asyncio
 
-from sandbox_ia.api.main_api import app, start, stop, close_api_async
+from sandbox_ia.api.main_api import app, start, stop
 from sandbox_ia.api.api_config import API_HOST, API_PORT
-
-nest_asyncio.apply()
-
+from modules_utils.signal_manager import signal_manager
 
 def run_api():
     """Lance l'API Sandbox."""
@@ -34,10 +27,7 @@ def run_api():
         stop(thread, 2)
         sys.exit(0)
     
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    if sys.platform != "win32":
-        signal.signal(signal.SIGQUIT, signal_handler)
+    signal_manager(signal_handler)
     
     print(f'🚀 API Sandbox lancée sur http://{API_HOST}:{API_PORT}')
     print(f'📚 Documentation: http://{API_HOST}:{API_PORT}/api/docs')
@@ -57,4 +47,5 @@ def run_api():
 
 
 if __name__ == '__main__':
+    nest_asyncio.apply()
     run_api()

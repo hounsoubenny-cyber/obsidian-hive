@@ -6,9 +6,6 @@ Created on Fri Jul  3 21:08:33 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-
 import time
 from ids_ips_ia.main.server_state import (
     start, stop, logger
@@ -19,9 +16,10 @@ from ids_ips_ia.main.services import (
 )
 
 from ids_ips_ia.main.api import (
-    app, host, port, GRAPH, graph, signal_manager
+    app, host, port, GRAPH, graph
 )
 from modules_utils.loop_utils import _run_async
+from modules_utils.signal_manager import signal_manager
 
 def run_ids_ips():
     try:

@@ -6,16 +6,13 @@ Created on Tue Dec 30 21:02:30 2025
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-
-import signal
-import asyncio
+import sys
 import time
-from anti_phishing_ia.main_phish import start, app, close_api_atexit, close_api, stop, clear
+from anti_phishing_ia.main_phish import start, app, stop
 from anti_phishing_ia.config import HOST, PORT
 import nest_asyncio
-nest_asyncio.apply()
+from modules_utils.signal_manager import signal_manager
+
 
 def run():
     thread, server = start(app, host=HOST, port=PORT)
@@ -29,10 +26,7 @@ def run():
         stop(thread, 2)
         sys.exit(0)
         
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    if sys.platform != "win32":
-        signal.signal(signal.SIGQUIT, signal_handler)
+    signal_manager(signal_handler)
     
     print('API lancé à : ', time.ctime())
     start_time = time.time()
@@ -53,6 +47,7 @@ def run():
     
 if __name__ == '__main__':
     # clear()
+    nest_asyncio.apply()
     run()
     
     
