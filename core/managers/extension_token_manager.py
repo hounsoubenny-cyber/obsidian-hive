@@ -27,7 +27,7 @@ from obsidian_hive.core.assets.asset_types import utcnow
 from modules_utils.cryto_utils import hashpw
 from modules_utils.loop_utils import _run_async
 from modules_utils.cryto_utils import checkpw
-
+from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
 
 
 class ExtensionTokenDB(SQLModel, table=True):
@@ -101,7 +101,11 @@ class ExtensionTokenManager:
         """Initialise la base de données et crée la table si elle n'existe pas."""
         if self._initialized:
             return
+        
         self.engine = create_async_engine(self.db_url)
+        if "sqlite" in self.db_url:
+            _configure_sqlite_pragmas(self.engine)
+            
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
         self._initialized = True

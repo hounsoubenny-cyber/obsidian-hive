@@ -23,6 +23,7 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field as Pydantic_Field
 from obsidian_hive.core.assets.asset_types import utcnow, Severity, SEVERITY_ORDER, Source
 from modules_utils.loop_utils import _run_async
+from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
 
 
 class AnalysisReportDB(SQLModel, table=True):
@@ -179,7 +180,11 @@ class ReportManager:
         """Initialise la base de données et crée la table si elle n'existe pas."""
         if self._initialized:
             return
+        
         self.engine = create_async_engine(self.db_url)
+        if "sqlite" in self.db_url:
+            _configure_sqlite_pragmas(self.engine)
+            
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
         self._initialized = True

@@ -133,7 +133,7 @@ class Analyst:
         model_name: Optional[str] = None,
         tool_mapping: Optional[dict[str, Callable]] = None,
         system_prompt: Optional[str] = None,
-        max_iter: int = 8,
+        max_iter: int = 20,
         max_retries: int = 2,
         temperature: float = 0.8,
         max_tokens: int = 32768,

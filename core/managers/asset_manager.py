@@ -28,7 +28,7 @@ from obsidian_hive.core.assets.asset_types import (
     NetworkAsset
 )
 from modules_utils.loop_utils import _run_async
-
+from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
 
 class AssetItemDB(SQLModel, table=True):
     """Modèle de base de données pour les assets.
@@ -108,13 +108,21 @@ class AssetManager:
             dirname = os.path.dirname(db_path)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
+        self._initialized = False
         _run_async(self.init_db)
-    
+
     async def init_db(self):
-        """Initialise la base de données et crée les tables si elles n'existent pas."""
+        """Initialise la base de données et crée la table si elle n'existe pas."""
+        if self._initialized:
+            return
+        
         self.engine = create_async_engine(self.db_url)
+        if "sqlite" in self.db_url:
+            _configure_sqlite_pragmas(self.engine)
+            
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
+        self._initialized = True
     
     @staticmethod
     def normalize_asset_item(asset_item: AssetItem | dict | str):

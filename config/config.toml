@@ -103,9 +103,9 @@ wait_timeout = 120
 [analyst]
 # max_iter : Nombre maximum d'itérations pour une analyse
 #   - Minimum : 5 (en dessous, analyse incomplète)
-#   - Défaut : 8
+#   - Défaut : 20
 #   - Plus le nombre est élevé, plus l'analyse est approfondie (mais plus lente)
-max_iter = 8
+max_iter = 20
 
 # max_retries : Nombre de tentatives en cas d'échec
 #   - Défaut : 3
@@ -136,9 +136,9 @@ model_name = "null"
 [core_agent]
 # max_iter : Nombre maximum d'itérations 
 #   - Minimum : 5 
-#   - Défaut : 8
+#   - Défaut : 20
 #   - Plus le nombre est élevé, plus l'analyse est approfondie (mais plus lente)
-max_iter = 8
+max_iter = 20
 
 # max_retries : Nombre de tentatives en cas d'échec
 #   - Défaut : 3

@@ -1106,7 +1106,7 @@ class LLMManager:
         timeout: int = 300,
         seed: int = 42,
         stop: List | None = None,
-        max_iter: int = 5,
+        max_iter: int = 10,
         max_retries: int = 2,
         on_step: Optional[OnStep] = None,
         on_tool_call: Optional[OnToolCall] = None,
@@ -1319,6 +1319,7 @@ class LLMManager:
                                 "messages": msgs,
                                 "success": False,
                                 "error": str(e),
+                                "max_iter_reached": False
                             }
     
                 if model_unavailable or response is None:
@@ -1334,6 +1335,7 @@ class LLMManager:
                         "steps": steps,
                         "success": False,
                         "error": f"model {model_name} unavailable",
+                        "max_iter_reached": False
                     }
                 
                 choice = response.choices[0]
@@ -1374,7 +1376,8 @@ class LLMManager:
                             "messages": msgs,
                             "steps": steps,
                             "success": True,
-                            "error": None
+                            "error": None,
+                            "max_iter_reached": False
                         }
                     else:
                         step["ended_at"] = time.time()
@@ -1465,6 +1468,7 @@ class LLMManager:
                 "steps": steps,
                 "success": False,
                 "error": None,
+                "max_iter_reached": True
             }
         
         finally:

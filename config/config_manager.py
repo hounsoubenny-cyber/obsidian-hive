@@ -181,7 +181,7 @@ class AnalystConfig(BaseModel):
     """Configuration de l'agent Analyst (Alex)."""
     
     max_iter: int = Field(
-        default=8,
+        default=20,
         ge=6,
         description="Nombre maximum d'itérations pour une analyse (défaut: 8)"
     )
@@ -222,7 +222,7 @@ class CoreAgentConfig(BaseModel):
     """Configuration de l'agent Core (Coralie)."""
     
     max_iter: int = Field(
-        default=8,
+        default=20,
         ge=6,
         description="Nombre maximum d'itérations pour une analyse (défaut: 8)"
     )

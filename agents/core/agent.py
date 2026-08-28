@@ -71,6 +71,7 @@ class CoralieResult(BaseModel):
         default=None,
         description="Liste des tools appelés durant ce tour"
     )
+    max_iter_reached: bool =  Field(default=False, description="Nombre max d'iteration atteint")
 
     @property
     def success(self) -> bool:
@@ -109,7 +110,7 @@ class Coralie:
         tools_provider: Optional[CoreTools] = None,
         confirmer: Optional[Confirmer] = None,
         system_prompt: Optional[str] = None,
-        max_iter: int = 10,
+        max_iter: int = 20,
         max_retries: int = 2,
         temperature: float = 0.6,
         max_tokens: int = 32768,
@@ -119,7 +120,7 @@ class Coralie:
                 "llm_manager est requis — Coralie ne crée jamais le sien, "
                 "il doit être injecté (voir docstring du module)."
             )
-
+        
         self.llm_manager = llm_manager
         self.model_name = model_name
         self.system_prompt = system_prompt or get_system_prompt(mode="full")
@@ -237,7 +238,7 @@ class Coralie:
             msgs.extend(self._validate_history(history))
         msgs.append({"role": "user", "content": message})
         
-        run_agent_kwargs.setdefault("timeout", 1200000)
+        run_agent_kwargs.setdefault("timeout", 2 * 3600)
         raw_result = await self.llm_manager.run_agent(
             model_name=model_name or self.model_name,
             messages=msgs,
@@ -270,6 +271,7 @@ class Coralie:
             response_text=raw_result.get("response"),
             raw=raw_result,
             all_tools=list(tools_used) or None,
+            max_iter_reached=raw_result.get("max_iter_reached")
         )
 
         if not result.success:

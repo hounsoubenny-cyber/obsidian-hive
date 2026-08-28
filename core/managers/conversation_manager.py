@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
 from modules_utils.loop_utils import _run_async
-
+from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
 
 def utcnow():
     """Retourne la date/heure UTC actuelle avec fuseau horaire.
@@ -124,6 +124,7 @@ class MessageDB(SQLModel, table=True):
     iterations: Optional[int] = Field(
         default=None, description="Nombre d'itérations de la boucle agent ayant produit ce message."
     )
+    max_iter_reached: bool =  Field(default=False, description="Nombre max d'iteration atteint")
     created_at: datetime = Field(default_factory=utcnow, description="Date de création du message.")
 
     conversation: Optional[ConversationDB] = Relationship(
@@ -197,6 +198,7 @@ class Message(BaseModel):
     iterations: Optional[int] = Pydantic_Field(
         default=None, description="Nombre d'itérations de la boucle agent ayant produit ce message."
     )
+    max_iter_reached: bool =  Field(default=False, description="Nombre max d'iteration atteint")
     created_at: datetime = Pydantic_Field(description="Date de création du message.")
 
     def to_chat_message(self) -> dict:
@@ -233,6 +235,7 @@ def with_parsed_steps(func):
                 tool_calls_count=msg.tool_calls_count,
                 iterations=msg.iterations,
                 created_at=msg.created_at,
+                max_iter_reached=msg.max_iter_reached
             )
 
         if result is None:
@@ -280,7 +283,11 @@ class ConversationManager:
         """Initialise la base de données et crée la table si elle n'existe pas."""
         if self._initialized:
             return
+        
         self.engine = create_async_engine(self.db_url)
+        if "sqlite" in self.db_url:
+            _configure_sqlite_pragmas(self.engine)
+            
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
         self._initialized = True
@@ -572,6 +579,7 @@ class ConversationManager:
         total_time: float | None = None,
         tool_calls_count: int | None = None,
         iterations: int | None = None,
+        max_iter_reached: bool = False,
     ) -> MessageDB:
         """Insère un message SANS commit — laisse l'appelant décider quand commiter.
 
@@ -596,6 +604,7 @@ class ConversationManager:
             total_time=total_time,
             tool_calls_count=tool_calls_count,
             iterations=iterations,
+            max_iter_reached=max_iter_reached
         )
         session.add(msg)
     
@@ -621,6 +630,7 @@ class ConversationManager:
         total_time: float | None = None,
         tool_calls_count: int | None = None,
         iterations: int | None = None,
+        max_iter_reached: bool = False,
     ) -> MessageDB:
         """
         Ajoute un message à une conversation existante.
@@ -652,6 +662,7 @@ class ConversationManager:
             msg = await self._insert_message(
                 session, conv, role=role, content=content, steps=steps,
                 total_time=total_time, tool_calls_count=tool_calls_count, iterations=iterations,
+                max_iter_reached=max_iter_reached
             )
             await session.commit()
             await session.refresh(msg)
@@ -665,6 +676,7 @@ class ConversationManager:
         *,
         user_content: str,
         agent_result: dict,
+        max_iter_reached: bool = False,
     ) -> tuple[MessageDB, MessageDB]:
         """
         Sauvegarde en un coup un tour complet de façon atomique (un seul commit): le message user + la réponse
@@ -699,6 +711,7 @@ class ConversationManager:
                 total_time=agent_result.get("total_time"),
                 tool_calls_count=agent_result.get("tool_calls"),
                 iterations=agent_result.get("iterations"),
+                max_iter_reached=max_iter_reached or bool(agent_result.get("max_iter_reached")),
             )
     
             await session.commit() 

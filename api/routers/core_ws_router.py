@@ -287,7 +287,7 @@ def _stream_callbacks(ws_manager: WSManager, username: str, run_id: str) -> dict
         await send("error", iteration=iteration, error=str(exc))
 
     return dict(
-        show_reasoning=True,
+        show_reasoning=False,
         stream=True,
         on_stream_start=on_stream_start,
         on_stream_token=on_stream_token,
@@ -363,19 +363,25 @@ async def _run_chat(
             # s'est juste arrêtée en plein milieu d'un tool sensible.
             await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
             return
+        
         except Exception as e:
             print("erreur chat :", str(e))
             await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
             return
+        
         finally:
             current_confirm_username.reset(ctx_token)
 
         try:
-            if result.success and result.raw.get("success"):
+            can_save = result.success and result.raw.get("success")
+            can_save = can_save or \
+                (result.max_iter_reached and result.raw.get("max_iter_reached"))
+            if can_save:
                 await conversation_manager.save_agent_turn(
                     conversation_id=conversation_id,
                     user_content=message,
                     agent_result=result.raw,
+                    max_iter_reached=result.max_iter_reached
                 )
             else:
                 msg = f"Msg: {result.raw.get('response')}\n\n{result.raw.get('error')}"
