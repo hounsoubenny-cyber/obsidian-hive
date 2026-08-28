@@ -6,8 +6,8 @@ Created on Fri Jul  3 20:39:32 2026
 @author: hounsousamuel
 """
 
-import os, sys
-
+import os
+import sys
 import signal
 import asyncio
 import subprocess
@@ -24,6 +24,7 @@ from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
 from obsidian_hive.core.managers.report_manager import ReportManager
 from modules_utils.logger import get_logger
 from obsidian_hive.core.assets.workflows.workflow_utils.run_ids_ips import __file__ as run_file
+from obsidian_hive.api.ap_config import IDS_IPS_PY_VENV
 logger = get_logger("network_workflow")
 
 GRACEFUL_STOP_TIMEOUT = 15  # secondes avant escalade vers kill()
@@ -146,7 +147,7 @@ class NetworkWorkflow(WorkflowBase):
             conf_path = DEFAULT_IDS_CONFIG_PATH
             
         self.process = await asyncio.create_subprocess_exec(
-            sys.executable, RUN_IDS_IPS_PATH,
+            str(os.environ.get(IDS_IPS_PY_VENV)), RUN_IDS_IPS_PATH,
             env={
                 **os.environ, 
                 "IDS_CONFIG_PATH": conf_path,

@@ -26,6 +26,22 @@ from ids_ips_ia.ids_ips_utils.logger import get_logger
 from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
 
+
+# =============================================================================
+# BACKEND NFTABLES : lib python-nftables (in-process, sans fork) si dispo,
+# sinon fallback automatique sur subprocess (comportement historique).
+# Flag pour forcer/désactiver manuellement le backend lib :
+USE_NFT_LIB = True
+
+try:
+    if USE_NFT_LIB:
+        import nftables as _nftables_module
+    else:
+        _nftables_module = None
+except ImportError:
+    _nftables_module = None
+
+
 logger = get_logger()
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +92,24 @@ def clear_sets(set_name: list | str = None):
     
     return any(f.returncode == 0 for f in trys)
 
+def _has_net_admin_capability() -> bool:
+    """
+    True si le process peut manipuler nftables sans passer par sudo :
+    soit root (euid 0), soit CAP_NET_ADMIN effective (ex: via
+    AmbientCapabilities=CAP_NET_ADMIN dans un service systemd).
+    """
+    if os.geteuid() == 0:
+        return True
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("CapEff:"):
+                    cap_eff = int(line.split()[1], 16)
+                    CAP_NET_ADMIN_BIT = 12
+                    return bool(cap_eff & (1 << CAP_NET_ADMIN_BIT))
+    except Exception:
+        pass
+    return False
 
 class GeoLocator:
     def __init__(self, filename: str = "GeoLite2-Country.mmdb", suspicious_country: list = None):
@@ -147,6 +181,31 @@ class React:
         self.unlock_at_exit = unlock_at_exit
         self.clear_sets_at_exit = clear_sets_at_exit
         self.blocked = {}
+
+        # ---------------------------------------------------------------
+        # Backend nftables : lib in-process si dispo et root, sinon subprocess
+        # ---------------------------------------------------------------
+        self._nft = None
+        self._nft_lock = threading.Lock()
+        self._nft_lib_available = False
+        if _nftables_module is not None:
+            if not _has_net_admin_capability():
+                logger.print(
+                    "⚠️ python-nftables détecté mais pas root ni CAP_NET_ADMIN : "
+                    "la lib nftables in-process nécessite root ou "
+                    "AmbientCapabilities=CAP_NET_ADMIN (ex: via systemd). "
+                    "Fallback subprocess."
+                )
+            else:
+                try:
+                    self._nft = _nftables_module.Nftables()
+                    self._nft.set_json_output(False)
+                    self._nft_lib_available = True
+                    logger.print("✅ Backend nftables : lib python-nftables (in-process)")
+                except Exception as e:
+                    logger.print(f"⚠️ Échec init python-nftables ({e}), fallback subprocess")
+        if not self._nft_lib_available:
+            logger.print("ℹ️ Backend nftables : subprocess (fallback)")
         self.set_names = [
             # INPUT IPv4
             "blacklist_input_ip4", 
@@ -168,10 +227,6 @@ class React:
             "blacklist_rate_limite_output_ip6", 
             "blacklist_rate_limite_data_output_ip6",
             
-            # # WHITELIST
-            # "whitelist_ip4",
-            # "whitelist_ip6",
-            
             # METERS
             "rate_data_in_ip4_meter",
             "rate_in_ip4_meter",
@@ -187,6 +242,18 @@ class React:
         self.at_exit_handle()
         self.load_history(self.history_path)
         self.decrease_access_rights(NFT_DIR)
+
+    # =========================================================================
+    # HELPER : conversion cmd (liste/str) -> ligne de commande nft pure
+    # (sans "sudo"/"nft" en tête), pour la lib python-nftables
+    # =========================================================================
+    @staticmethod
+    def _to_nft_cmdline(cmd, shell: bool = False) -> str:
+        s = cmd if isinstance(cmd, str) else " ".join(cmd)
+        tokens = s.split()
+        while tokens and tokens[0] in ("sudo", "nft"):
+            tokens.pop(0)
+        return " ".join(tokens)
 
     # =========================================================================
     # MÉTHODE CENTRALISÉE POUR SUBPROCESS
@@ -211,7 +278,53 @@ class React:
         Returns:
             subprocess.CompletedProcess ou None si exception et check=False
         """
-        # Déterminer si on doit utiliser sudo
+        # -----------------------------------------------------------------
+        # BACKEND LIB (python-nftables, in-process, sans fork)
+        # -----------------------------------------------------------------
+        tokens = (cmd if isinstance(cmd, list) else cmd.split())
+        is_nft_cmd = any(t == "nft" for t in tokens[:2])  # "nft ..." ou "sudo nft ..."
+        
+        if self._nft_lib_available and is_nft_cmd:
+            cmdline = self._to_nft_cmdline(cmd, shell)
+            if success_msg:
+                logger.print(f"  {success_msg}")
+            else:
+                logger.print(f"  ▶ {cmdline[:50]}...")
+            try:
+                with self._nft_lock:
+                    rc, output, error = self._nft.cmd(cmdline)
+                output = output or ""
+                error = error or ""
+                logger.print("Cmd : ", cmdline)
+                if rc == 0:
+                    if output:
+                        logger.print(f"    ✓ Stdout: {output.strip()[:300]}")
+                else:
+                    if "interval overlaps with an existing one" not in error:
+                        if error_msg:
+                            logger.print(f"    ❌ {error_msg}")
+                        if error:
+                            logger.print(f"    ⚠️ Stderr: {error.strip()[:200]}")
+                r = subprocess.CompletedProcess(args=cmdline, returncode=rc, stdout=output, stderr=error)
+                if check and rc != 0:
+                    raise subprocess.CalledProcessError(rc, cmdline, output=output, stderr=error)
+                return r
+            except subprocess.CalledProcessError as e:
+                logger.print(f"    ❌ Échec (code {e.returncode})")
+                if e.stderr:
+                    logger.print(f"    ⚠️ Stderr: {e.stderr.strip()[:200]}")
+                if check:
+                    raise
+                return None
+            except Exception as e:
+                logger.print(f"    ❌ Exception: {e}")
+                if check:
+                    raise
+                return None
+
+        # -----------------------------------------------------------------
+        # BACKEND SUBPROCESS (fallback historique, inchangé)
+        # -----------------------------------------------------------------
         if use_sudo is None:
             use_sudo = os.geteuid() != 0
         
@@ -284,12 +397,12 @@ class React:
         except Exception as e:
             logger.print(f"Erreur dans le changement des permissions : {str(e)}")
 
-    def save_history(self, filename, value):
+    def save_history(self, filename: str, value: dict) -> bool:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
             os.chmod(filename, 0o644)
-            logger.print(f'Fichier historique sauvegardé dans : {filename}')
+            logger.print(f'Fichier historique sauvegardé dans : {filename} ({len(value)} entrées)')
             return True
         except Exception as e:
             logger.print(f"Erreur lors de la sauvegarde du fichier historique : {str(e)}")
@@ -452,10 +565,10 @@ class React:
         
         if white_ip4:
             for ip in white_ip4:
-                cmds.append(["nft", "add", "element", "inet", NFT_TABLE_NAME, "whitelist_ip4", "{", ip ,"}"]) #", ".join(white_ip4)
+                cmds.append(["nft", "add", "element", "inet", NFT_TABLE_NAME, "whitelist_ip4", "{", ip ,"}"])
         if white_ip6:
             for ip in white_ip6:
-                cmds.append(["nft", "add", "element", "inet", NFT_TABLE_NAME, "whitelist_ip6", "{", ip, "}"]) #", ".join(white_ip6)
+                cmds.append(["nft", "add", "element", "inet", NFT_TABLE_NAME, "whitelist_ip6", "{", ip, "}"])
         
         # Exécution
         for cmd in cmds:
@@ -511,7 +624,7 @@ class React:
         if ip_type == "error":
             return False
         
-        type_dir = "input" if input else "output"  # Type de la diretion, si input est True, donc traffic entrant, set input, sinon traffic sortant, set output
+        type_dir = "input" if input else "output"
         set_name = f'blacklist_{type_dir}_{ip_type}'
         if rule == "rate_limit":
             set_name = f'blacklist_rate_limite_{type_dir}_{ip_type}'
@@ -582,29 +695,21 @@ class React:
         Ajoute une IP ou un sous-réseau à la whitelist.
         Supporte IPv4, IPv6 et notation CIDR (ex: 192.168.1.0/24).
         """
-        # Déterminer le type (ip4 ou ip6)
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
             logger.print(f"❌ Format d'IP invalide : {ip}")
             return False
     
         set_name = f"whitelist_{ip_type}"
-        
-        # Commande nftables
         cmd = ["nft", "add", "element", "inet", NFT_TABLE_NAME, set_name, "{", ip, "}"]
-        
-        if os.geteuid() != 0:
-            cmd = ["sudo"] + cmd
-    
+
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            self._run_command(cmd, check=True)
             logger.print(f"✅ {ip} ajouté à la whitelist ({set_name})")
             
-            # Mettre à jour la liste interne
             if ip not in self.whitelist:
                 self.whitelist.append(ip)
                 
-            # Sauvegarder la whitelist si un fichier est défini
             if hasattr(self, 'whitelist_filename') and self.whitelist_filename:
                 with open(self.whitelist_filename, 'w') as f:
                     json.dump(self.whitelist, f, indent=4)
@@ -613,7 +718,6 @@ class React:
         except subprocess.CalledProcessError as e:
             logger.print(f"❌ Échec ajout whitelist : {e.stderr}")
             return False
-    
     
     def remove_from_whitelist(self, ip: str) -> bool:
         """
@@ -625,21 +729,15 @@ class React:
             return False
     
         set_name = f"whitelist_{ip_type}"
-        
         cmd = ["nft", "delete", "element", "inet", NFT_TABLE_NAME, set_name, "{", ip, "}"]
-        
-        if os.geteuid() != 0:
-            cmd = ["sudo"] + cmd
-    
+
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            self._run_command(cmd, check=True)
             logger.print(f"✅ {ip} retiré de la whitelist ({set_name})")
             
-            # Mettre à jour la liste interne
             if ip in self.whitelist:
                 self.whitelist.remove(ip)
                 
-            # Sauvegarder
             if hasattr(self, 'whitelist_filename') and self.whitelist_filename:
                 with open(self.whitelist_filename, 'w') as f:
                     json.dump(self.whitelist, f, indent=4)
@@ -771,7 +869,7 @@ if __name__ == "__main__":
     logger.print("\n" + "=" * 60)
     logger.print("✅ TESTS TERMINÉS")
     logger.print("=" * 60)
-    logger.print(f"\n📁 Fichiers créés :")
+    logger.print("\n📁 Fichiers créés :")
     logger.print(f"  - Conf NFT    : {react.nft_path}")
     logger.print(f"  - État NFT    : {react.nft_state_path}")
     logger.print(f"  - Historique  : {react.history_path}")
