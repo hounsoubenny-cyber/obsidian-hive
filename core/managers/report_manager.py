@@ -172,13 +172,17 @@ class ReportManager:
             dirname = os.path.dirname(db_path)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
+        self._initialized = False
         _run_async(self.init_db)
 
     async def init_db(self):
-        """Initialise la base de données et crée les tables si elles n'existent pas."""
+        """Initialise la base de données et crée la table si elle n'existe pas."""
+        if self._initialized:
+            return
         self.engine = create_async_engine(self.db_url)
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
+        self._initialized = True
 
     @asynccontextmanager
     async def get_session(self):

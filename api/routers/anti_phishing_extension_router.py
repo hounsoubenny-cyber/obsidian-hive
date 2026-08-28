@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, status, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from anti_phishing_ia.main_phish import get_ap_instance, AnalyzeUrlData
+from obsidian_hive.api.api_utils.helpers import get_extension_token_manager
 
 bearer_scheme = HTTPBearer(
     scheme_name="ExtensionToken",
@@ -20,8 +21,6 @@ bearer_scheme = HTTPBearer(
 )
 router_ext = APIRouter()
 
-def get_extension_token_manager(request: Request):
-    return request.app.state.extension_token_manager
 
 class AnalyzeUrlBatchData(BaseModel):
     urls: list[str]

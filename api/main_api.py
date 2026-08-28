@@ -61,6 +61,9 @@ from obsidian_hive.api.routers.donwloads_router import (
 from obsidian_hive.api.routers.anti_phishing_extension_router import (
     router_ext as anti_phishing_extension_router
 )
+from obsidian_hive.api.routers.extension_token_manager_router import (
+    router as extension_token_manager_router
+)
 from obsidian_hive.core.managers.extension_token_manager import ExtensionTokenManager
 from obsidian_hive.api.routers.utils_router import router as utils_router
 from obsidian_hive.api.routers.manager_router import router as manager_router
@@ -297,6 +300,7 @@ _ROUTERS = [
     (download_public_router, "download", False),
     
     (anti_phishing_extension_router, "anti_phishing_extension", False)
+    (extension_token_manager_router, "extension_tokens", True)
 ]
 
 dependencies = [Depends(

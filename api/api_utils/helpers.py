@@ -25,3 +25,14 @@ def _extract_bearer_token(request: Request) -> str | None:
     auth_header = request.headers.get("authorization", "")
     token = auth_header.removeprefix("Bearer ").strip()
     return token or None
+
+def get_extension_token_manager(request: Request):
+    """Récupère l'instance ExtensionTokenManager depuis l'état de l'application.
+
+    Args:
+        request (Request): La requête FastAPI en cours.
+
+    Returns:
+        ExtensionTokenManager: L'instance partagée, instanciée dans le lifespan.
+    """
+    return request.app.state.extension_token_manager
