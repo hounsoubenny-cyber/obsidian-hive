@@ -39,6 +39,7 @@ def _build_analyse_error(e: Exception):
 
 
 async def verify_extension_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ) -> str:
     """Vérifie le Bearer token d'une extension navigateur.
@@ -57,7 +58,7 @@ async def verify_extension_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Format de token invalide")
 
     token_id, secret = raw.split(".", 1)
-    manager = get_extension_token_manager()
+    manager = get_extension_token_manager(request)
     token_row = await manager.get_by_token_id(token_id)
 
     if token_row is None or not token_row.verify(secret):
@@ -107,7 +108,7 @@ async def check_urls_batch(data: AnalyzeUrlBatchData, token_id: str = Depends(ve
     
     check_right_clicks = list(data.check_right_clicks or [])
     check_right_clicks = _update_list_with(
-        check_blacklists, False, url_length - len(check_right_clicks)
+        check_right_clicks, False, url_length - len(check_right_clicks)
     )
     
     explains = list(data.explains or [])
@@ -118,18 +119,18 @@ async def check_urls_batch(data: AnalyzeUrlBatchData, token_id: str = Depends(ve
     tasks = [
         asyncio.create_task(
                 ap.predict_url_async(
-                url=data.url,
-                explain=data.explain,
+                url=url,
+                explain=explain,
                 features_func=None,
-                check_blacklist=data.check_blacklist,
-                check_right_click=data.check_right_click,
+                check_blacklist=check_blacklist,
+                check_right_click=check_right_click,
             )
         )
         for (url, explain, check_blacklist, check_right_click) in zip(
                 urls, explains, check_blacklists, check_right_clicks
             )
     ]
-    results = await asyncio.gather(tasks, return_exceptions=True)
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     to_return = {}
     for url, r in zip(urls, results):
         to_return[url] = r if not isinstance(r, Exception) else _build_analyse_error(r)
