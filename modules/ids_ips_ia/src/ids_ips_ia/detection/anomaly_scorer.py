@@ -70,12 +70,16 @@ _HOSTNAME_CACHE_MAXSIZE = 500
 
 async def resolve_hostname(ip: str) -> str:
     """Essaie de résoudre le nom d'hôte d'une IP (avec cache borné, FIFO)"""
+    if not ip or ip in ("0.0.0.0", "127.0.0.1", "::", "::1"):
+        return "local"
+    
     if ip in _hostname_cache:
         return _hostname_cache[ip]
 
     is_resolved = False
     try:
-        result = await asyncio.to_thread(socket.gethostbyaddr, ip)
+        result = asyncio.to_thread(socket.gethostbyaddr, ip)
+        result = asyncio.wait_for(result, 0.5)
         value = result[0]
         is_resolved = True
     except Exception:
@@ -467,7 +471,66 @@ class AnomalyScorer:
         }
         self.ip_data[ip] = dic
         return dic
+    
+    def cleanup_stale_data(self):
+        """
+        Garbage collector : Nettoie la RAM des IPs inactives.
+        Appelé périodiquement avant chaque sauvegarde sur le disque.
+        """
+        try:
+            current_time = time.time()
+            
+            # =========================================================
+            # 1. Nettoyage de la mémoire à COURT TERME (ip_event_history)
+            # =========================================================
+            keys_to_delete_events = []
+            
+            # On itère sur une copie des clés pour éviter les erreurs de concurrence
+            for ip, data in list(self.ip_event_history.items()):
+                last_update = data.get('last_update', 0)
+                # Si l'IP n'a rien envoyé depuis plus de 30 secondes (EVENT_WINDOW)
+                if (current_time - last_update) > self.EVENT_WINDOW:
+                    keys_to_delete_events.append(ip)
 
+            for ip in keys_to_delete_events:
+                self.ip_event_history.pop(ip, None) # Suppression safe
+
+            # =========================================================
+            # 2. Nettoyage de la mémoire à LONG TERME (ip_data)
+            # =========================================================
+            decay_conf = CONFIG.CONFIG.get(DECAY_CONFIG_KEY, {})
+            reset_seconds = decay_conf.get("reset_seconds", self.reset_days)
+            
+            keys_to_delete_data = []
+            
+            for ip, data in list(self.ip_data.items()):
+                last_update = data.get('last_update_timestamp', 0)
+                
+                # Si l'IP n'a rien fait depuis X jours (reset_seconds)
+                if (current_time - last_update) > reset_seconds:
+                    # ⚠️ RÈGLE D'OR : On ne supprime JAMAIS une IP si elle 
+                    # est actuellement bloquée dans le pare-feu !
+                    if ip not in self.React.blocked:
+                        keys_to_delete_data.append(ip)
+
+            for ip in keys_to_delete_data:
+                self.ip_data.pop(ip, None)
+
+            # =========================================================
+            # Logs de suivi
+            # =========================================================
+            if keys_to_delete_events or keys_to_delete_data:
+                logger.debug(
+                    f"🧹 Garbage Collector : "
+                    f"{len(keys_to_delete_events)} historiques courts purgés | "
+                    f"{len(keys_to_delete_data)} IPs mortes purgées de la RAM."
+                )
+
+        except Exception as e:
+            logger.error(f"❌ Erreur dans le Garbage Collector de l'IDS : {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+        
     def _analyze_event(self, ip: str, current_score: int | float, event_timestamp: float | None = None):
         current_time = event_timestamp if event_timestamp is not None else time.time()
         if ip in self.ip_event_history:
@@ -753,6 +816,7 @@ class AnomalyScorer:
 
         t = time.time()
         if t - self.last_save >= self.save_interval:
+            self.cleanup_stale_data()
             await asyncio.to_thread(self.save, self.ip_score_dir, self.ip_data)
             self.last_save = time.time()
         return score_dangerous

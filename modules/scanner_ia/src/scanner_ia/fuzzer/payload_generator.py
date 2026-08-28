@@ -15,13 +15,13 @@ import traceback
 import time
 import random
 import string
-from urllib.parse import urlparse, urlunparse, quote, urlencode
+from urllib.parse import urlparse, urlunparse, quote, urlencode, parse_qs
 from scanner_ia.scanner_utils.logger import get_logger
 from scanner_ia.base_class.payloads_base_class import Payload, Payloads, PayloadResult
 from scanner_ia.base_class.analyser_helper_base_class import OneAnalyzerHelperResult
 from scanner_ia.base_class.parser_base_class import ParseElementResult
 from scanner_ia.fuzzer.config import PAYLOADS_FILE, DEFAULT_FORM_VALUES
-from scanner_ia.fuzzer.query_resolver import resolve_query_params, set_known_params_dir
+from scanner_ia.fuzzer.query_resolver import set_known_params_dir
 from nest_asyncio import apply
 
 logger_payload_generator = get_logger()
@@ -219,6 +219,7 @@ class PayloadGenerator:
             limit_per_key:int|None = 2,
             max_keys:int|None = 5,
             payloads:list[dict[str, str]] = [],
+            resolved_params: dict | None = None,
         ) -> Payloads:
         """
         Injecte des payloads dans les paramètres query d'une URL.
@@ -240,7 +241,7 @@ class PayloadGenerator:
             return result
         
         parsed = urlparse(url)
-        params = resolve_query_params(url=url, use_arjun=self.use_arjun, arjun_timeout=self.arjun_timeout)
+        params = resolved_params if resolved_params is not None else parse_qs(parsed.query)
         seen = set()                                                   
         params_copy = copy.deepcopy(params) 
         if max_keys:
@@ -702,16 +703,17 @@ class PayloadGenerator:
         return prepared
     
     def inject_payloads(
-            self, 
-            data: OneAnalyzerHelperResult,
-            vuln_name: str = "",
-            max_keys_h: int = 3,
-            max_keys_c: int = 3,
-            max_keys_query: int|None = 5,
-            limit_per_key_query: int|None = 2,
-            path_limit: int|None = 5,
-            json_keys: list[str] | None = None,
-        ) -> PayloadResult:
+        self, 
+        data: OneAnalyzerHelperResult,
+        vuln_name: str = "",
+        max_keys_h: int = 3,
+        max_keys_c: int = 3,
+        max_keys_query: int|None = 5,
+        limit_per_key_query: int|None = 2,
+        path_limit: int|None = 5,
+        json_keys: list[str] | None = None,
+        resolved_query_params: dict | None = None,
+    ) -> PayloadResult:
         """
         Injecte des payloads dans tous les points d'injection disponibles.
         
@@ -760,6 +762,7 @@ class PayloadGenerator:
             "query": lambda p: self._inject_payloads_in_query(
                 url=data.fetched.url, vuln_name=vuln_name, payloads=p,
                 limit_per_key=limit_per_key_query, max_keys=max_keys_query,
+                resolved_params=resolved_query_params
             ),
             "form": lambda p: self._inject_payload_in_forms(
                 forms=data.parsed.form, payloads=p, vuln_name=vuln_name,

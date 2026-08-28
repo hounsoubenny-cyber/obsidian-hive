@@ -4,11 +4,10 @@
 Résolveur de query params pour _inject_payloads_in_query.
 """
 
-import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
+import os
+import asyncio
 import json5
 import json
-import re
 import subprocess
 import tempfile
 from uuid import uuid4
@@ -77,7 +76,7 @@ def load_known_params(url: str) -> dict[str, list[str]] | None:
     return None
 
 
-def discover_params_arjun(
+async def discover_params_arjun(
     url: str,
     timeout: int = 30,
     wordlist: str | None = None,
@@ -95,7 +94,8 @@ def discover_params_arjun(
         cmd += ["-w", wordlist]
 
     try:
-        subprocess.run(
+        await asyncio.to_thread(
+            subprocess.run,
             cmd,
             capture_output=True,
             text=True,
@@ -133,7 +133,7 @@ def discover_params_arjun(
     return params if params else None
 
 
-def resolve_query_params(
+async def resolve_query_params(
     url: str,
     use_arjun: bool = False,
     arjun_timeout: int = 30,
@@ -154,7 +154,7 @@ def resolve_query_params(
 
     # Arjun
     if use_arjun:
-        discovered = discover_params_arjun(url, timeout=arjun_timeout)
+        discovered = await discover_params_arjun(url, timeout=arjun_timeout)
         if discovered:
             return discovered
 

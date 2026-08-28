@@ -25,6 +25,7 @@ from scanner_ia.fuzzer.payload_generator import PayloadGenerator
 from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, FuzzerResult, WorkerFuzzerEntry
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult, OneAnalyzerHelperResult
 from scanner_ia.scanner_utils.signal_manager import signal_manager
+from scanner_ia.fuzzer.query_resolver import resolve_query_params
 from scanner_ia.scanner_utils.logger import get_logger
 
 logger_fuzzer = get_logger()
@@ -149,6 +150,7 @@ class Fuzzer:
             max_workers=self.config.MAX_WORKERS, 
             thread_name_prefix="fuzzer_workers"
         )
+        self._cancel_flag = False
 
     def is_in_scope(self, url: str, allowed_domains: list[str]) -> bool:
         if not allowed_domains:
@@ -272,6 +274,11 @@ class Fuzzer:
             url_stats = 0
             for vuln in vulns:
                 name = vuln["name"]
+                resolved_params = await resolve_query_params(
+                    url=url, 
+                    use_arjun=self.payload_generator.use_arjun, 
+                    arjun_timeout=self.payload_generator.arjun_timeout
+                )
                 payload_result = self.payload_generator.inject_payloads(
                     vuln_name=name,
                     data=page_,
@@ -279,7 +286,8 @@ class Fuzzer:
                     max_keys_h=self.config.MAX_KEYS_H,
                     max_keys_query=self.config.MAX_KEYS_QUERY,
                     limit_per_key_query=self.config.LIMIT_PER_KEY_QUERY,
-                    path_limit=self.config.PATH_LIMIT
+                    path_limit=self.config.PATH_LIMIT,
+                    resolved_query_params=resolved_params
                 )
 
                 if payload_result.n_payloads == 0:
@@ -536,7 +544,10 @@ class Fuzzer:
             get_item = False
             can_put = False
             worker_result = WorkerFuzzerResult()
-
+            
+            if self._cancel_flag:
+                break
+            
             try:
                 worker_entry: WorkerFuzzerEntry = await asyncio.wait_for(queue.get(), timeout=self.config.GET_TIMEOUT)
                 get_item = True
@@ -656,7 +667,11 @@ class Fuzzer:
                 t.cancel()
             except Exception:
                 pass
-            
+    
+    def set_cancel_flag(self):
+        self._cancel_flag = True
+        return
+    
     async def fuzz(
         self,
         base_url: str,
@@ -762,23 +777,41 @@ class Fuzzer:
                         queue.task_done()
                     except asyncio.QueueEmpty:
                         break
-
-                self.stop_task(tasks)
-
+                
+            
+            except asyncio.CancelledError:
+                logger_fuzzer.warning(f"🛑 Annulation demandée ! Arrêt immédiat des {len(tasks)} workers du fuzzer.")
+                raise
+                
             except Exception as e:
                 logger_fuzzer.error(f"Erreur pour join : {e}")
                 if self.debug:
                     logger_fuzzer.error(traceback.format_exc())
-
+                    
+                
             finally:
+                self.set_cancel_flag()
+                
                 for _ in range(self.config.MAX_WORKERS):
                     await queue.put(None)
-                await asyncio.gather(*tasks, return_exceptions=True)
+                    
+                self.stop_task(tasks)
+                
+                try:
+                    t = asyncio.gather(*tasks, return_exceptions=True)
+                    await asyncio.wait_for(t, 10)
+                except Exception:
+                    pass
 
             self.stop_task(tasks)
 
             logger_fuzzer.info(f"Fuzzing terminé pour {base_url}")
-
+        
+        except asyncio.CancelledError as e:
+            self.set_cancel_flag()
+            logger_fuzzer.error(f"Erreur dans fuzz: {e}")
+            raise
+            
         except Exception as e:
             logger_fuzzer.error(f"Erreur dans fuzz: {e}")
             if self.debug:

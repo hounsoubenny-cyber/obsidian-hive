@@ -87,7 +87,7 @@ class TaskManager:
         self.tasks[task_id]["timestamp"] = time.time()
         return True
     
-    async def cancel_task(self, task_id: str, timeout: float = 20):
+    async def cancel_task(self, task_id: str, timeout: float = 30):
         """Annule une tâche en cours d'exécution.
 
         Args:
@@ -107,6 +107,7 @@ class TaskManager:
                 
             except asyncio.CancelledError:
                 pass
+            
             except Exception as e:
                 message = f"Erreur: {str(e)}."
                 if self.debug:
@@ -122,7 +123,7 @@ class TaskManager:
         """
         if task_id in self.tasks:
             await self.cancel_task(task_id)
-            self.tasks.pop(task_id)
+            self.tasks.pop(task_id, None)
     
     async def add_cancel_task(self, task_id:str, timeout:float = 60):
         """Ajoute une tâche d'annulation programmée après un timeout.

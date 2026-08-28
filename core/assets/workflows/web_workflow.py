@@ -91,16 +91,20 @@ class WebWorkflow(WorkflowBase):
         Returns:
             ScannerResult: Les résultats du scan.
         """
-        run_config = self.asset.run_config
-        url = self.asset.url
-        is_spa = self.asset.__class__.__name__ == "WebAppAsset" or AssetType(self.asset.type).value == AssetType.WEB_APP.value
-        conf = {"url": url, "is_spa": is_spa}
-        run_config = {**run_config, **conf}
-
-        await self._init_scanner()
-
-        self.scan_result = await self.scanner.scan(**run_config)
-        return self.scan_result
+        try:
+            run_config = self.asset.run_config
+            url = self.asset.url
+            is_spa = self.asset.__class__.__name__ == "WebAppAsset" or AssetType(self.asset.type).value == AssetType.WEB_APP.value
+            conf = {"url": url, "is_spa": is_spa}
+            run_config = {**run_config, **conf}
+    
+            await self._init_scanner()
+    
+            self.scan_result = await self.scanner.scan(**run_config)
+            return self.scan_result
+        
+        except asyncio.CancelledError:
+            raise
     
     def build_prompt(self, scan_result: dict) -> str:
         """Construit le prompt à envoyer à Alex à partir des résultats du scan.
@@ -211,29 +215,33 @@ class WebWorkflow(WorkflowBase):
         Returns:
             ScannerResult: Les résultats du scan.
         """
-        async def _run():
-            result = await self.scan()
-            await self.analyze_with_alex(result)
-            return await self.report(result)
-
-        if self.do_silence:
-            scanner_logger.remove()
-            logger.remove()
-            try:
-                with silence_output():
-                    result = await _run()
-            finally:
-                scanner_logger.setup(
-                    level=scanner_logger.logger.getEffectiveLevel(),
-                    structured=scanner_logger.structured,
-                )
-                logger.setup(
-                    level=logger.logger.getEffectiveLevel(),
-                    structured=logger.structured
-                )
-            return result
-
-        return await _run()
+        try:
+            async def _run():
+                result = await self.scan()
+                await self.analyze_with_alex(result)
+                return await self.report(result)
+    
+            if self.do_silence:
+                scanner_logger.remove()
+                logger.remove()
+                try:
+                    with silence_output():
+                        result = await _run()
+                finally:
+                    scanner_logger.setup(
+                        level=scanner_logger.logger.getEffectiveLevel(),
+                        structured=scanner_logger.structured,
+                    )
+                    logger.setup(
+                        level=logger.logger.getEffectiveLevel(),
+                        structured=logger.structured
+                    )
+                return result
+    
+            return await _run()
+        
+        except asyncio.CancelledError:
+            raise
 
     def run(self):
         """Exécute le workflow de manière synchrone.

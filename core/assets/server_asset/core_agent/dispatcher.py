@@ -20,6 +20,7 @@ from obsidian_hive.core.assets.server_asset.core_agent.config import AgentConfig
 from obsidian_hive.core.assets.server_asset.tools.server_asset_tools_type import ToolResult, ToolCall
 from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import ReceiveMsgType
 from obsidian_hive.core.assets.server_asset.core_agent.transport import AgentHttpClient, AgentWSClient
+from modules_utils.stop_process import kill_process_async
 
 TOOL_ENGINE_PATH = "/opt/obsidian-agent/bin/tool_engine"
 UNINSTALL_SCRIPT_PATH = "/opt/obsidian-agent/uninstall.sh"
@@ -145,26 +146,41 @@ class AgentDispatcher:
             RuntimeError: Si le binaire tool_engine échoue ou si le timeout est dépassé.
             asyncio.TimeoutError: Si le timeout est dépassé.
         """
-        proc = await asyncio.create_subprocess_exec(
-            TOOL_ENGINE_PATH,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout: bytes
-        stderr: bytes
-        stdout, stderr = await asyncio.wait_for(
-            proc.communicate(json.dumps({"asset_id": asset_id, "tool_call": tool_call}).encode()),
-            timeout=timeout,
-        )
-        if proc.returncode != 0:
-            raise RuntimeError(f"tool_engine a échoué (code {proc.returncode}): {stderr.decode(errors='replace')}")
-        response = stdout.decode()
-        idx = response.find("{")
-        if idx == -1:
-            raise RuntimeError(f"Réponse invalide de tool_engine (aucun JSON trouvé) : {response}")
-        return json5.loads(response[idx:])
-    
+        proc = None
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                TOOL_ENGINE_PATH,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout: bytes
+            stderr: bytes
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(json.dumps({"asset_id": asset_id, "tool_call": tool_call}).encode()),
+                timeout=timeout,
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(f"tool_engine a échoué (code {proc.returncode}): {stderr.decode(errors='replace')}")
+            response = stdout.decode()
+            idx = response.find("{")
+            if idx == -1:
+                raise RuntimeError(f"Réponse invalide de tool_engine (aucun JSON trouvé) : {response}")
+            return json5.loads(response[idx:])
+        
+        except asyncio.TimeoutError:
+            raise RuntimeError("Timeout lors de l'exécution de l'outil sur l'agent.")
+            
+        except Exception:
+            raise
+        
+        finally:
+            if proc:
+                try:
+                    await kill_process_async(proc, name="Dispatcher server agent tool engine")
+                except Exception:
+                    pass
+                    
     async def _on_tool_call(self, data: dict, ws):
         """Handler pour les appels d'outils.
 

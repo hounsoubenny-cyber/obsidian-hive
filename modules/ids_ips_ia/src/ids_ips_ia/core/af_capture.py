@@ -29,6 +29,7 @@ class AFPacketCapture:
         # Optionnel : augmenter la taille du buffer pour éviter les pertes
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8 * 1024 * 1024)
         sock.settimeout(0.03)
+        self.sock = sock
         print(f"🚀 Capture AF_PACKET démarrée sur {self.iface}")
 
         while not self.event.is_set():

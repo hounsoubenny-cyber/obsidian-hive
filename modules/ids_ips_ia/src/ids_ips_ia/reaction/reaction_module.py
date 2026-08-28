@@ -286,10 +286,6 @@ class React:
 
     def save_history(self, filename, value):
         try:
-            try:
-                value = list(set(value))
-            except Exception:
-                pass
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
             os.chmod(filename, 0o644)

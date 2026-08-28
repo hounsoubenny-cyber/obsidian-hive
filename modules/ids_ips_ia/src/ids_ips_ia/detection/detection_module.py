@@ -655,6 +655,14 @@ class AnomalyDetector:
                     item = self.q.get_nowait()
                     self.pkt_proccessed += 1
                     if isinstance(item, tuple):
+                        if isinstance(item[1], bytes):
+                            ts, raw_bytes = item
+                            pkt = dpkt.ethernet.Ethernet(raw_bytes)
+                            pkt.ts = ts
+                            item = pkt
+                    
+                    
+                    if isinstance(item, tuple):
                         fake_pkt, alert = item
                         buffer_pkt.append(fake_pkt)
                         pkt_fea = self.FeatureExtractor.extract_pack_features(fake_pkt)

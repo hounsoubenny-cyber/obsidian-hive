@@ -714,7 +714,7 @@ class Scanner:
                 'timestamp': time.time()
             })
             result.elapsed = result.end_time - result.start_time
-            return result
+            raise
         
         except (ConnectionError, aiohttp.ClientError, TimeoutError) as e:
             """Erreurs réseau"""
