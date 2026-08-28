@@ -162,6 +162,9 @@ desktop.ini
 *.orig
 .ipynb_checkpoints/
 .git_back/
+all_files.txt
+all_files.txt
+files_without_modules.txt
 ./all_code.txt
 ./all_files.txt
 ./files_without_modules.txt
