@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Obsidian Hive — Anti-Phishing",
+  "version": "1.0.0",
+  "description": "Analyse en temps réel les liens visités pour détecter le phishing.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon48.png"
+  },
+  "options_page": "options.html",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "anti-phishing@obsidian-hive.local",
+      "strict_min_version": "109.0"
+    }
+  }
+}
