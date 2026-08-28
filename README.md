@@ -252,11 +252,11 @@ ShieldAI uses exactly three AI agents — no more. Each has a strict domain.
 
 | Agent | Role | Lives where |
 |---|---|---|
-| **AegisCore** | Orchestrates all modules, correlates events, decides, alerts | Core platform |
-| **AegisAnalyst** | Interprets raw technical data, explains vulnerabilities, proposes fixes | Core platform |
-| **AegisRed** | Pilots attack simulations, adapts strategy, analyzes resistance | Sandbox only — never exits |
+| **Coralie, the decision-maker** | Orchestrates all modules, correlates events, decides, alerts | Core platform |
+| **Alex, the analyst** | Interprets raw technical data, explains vulnerabilities, proposes fixes | Core platform |
+| **Red, the the hacker** | Pilots attack simulations, adapts strategy, analyzes resistance | Sandbox only — never exits |
 
-> AegisRed is sandbox-isolated by design. It has no access to real assets. Ever.
+> Red is sandbox-isolated by design. It has no access to real assets. Ever.
 
 ---
 
