@@ -547,7 +547,7 @@ class Fetcher():
             'https://invalid-url-that-does-not-exist.com'
         ]
         url = choice(urls)
-        url = "http://localhost:8090"
+        url = "http://localhost:5050/comments/cmdi-ping_host_shell_true"
         
         logger_fetcher.info(f"Test sur {url}")
         self.session = await self.create_session(None)

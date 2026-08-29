@@ -63,6 +63,7 @@
     "EMPTY_AWAIT_BETWEEN": 10,    // Délai d'attente si queue vide (secondes) — défaut code: 10, pas 5
     "SKIP_EXTERNAL_LINKS": true,   // 🆕 absent de ton ancienne config — ignore les liens hors domaine pendant le crawl
     "USE_CACHE_FOR_GET_LINKS": false,
+    "SAVE_ON_CRAWL": false
   },
 
   // ══════════════════════════════════════════════════════════════════════════

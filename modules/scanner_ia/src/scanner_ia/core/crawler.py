@@ -88,6 +88,13 @@ class Config:
         self.EMPTY_AWAIT_BETWEEN = 10
         self.SKIP_EXTERNAL_LINKS:bool = True
         self.USE_CACHE_FOR_GET_LINKS: bool = True
+        # Contrôle l'écriture (pas la lecture) du diskcache pendant/après le
+        # crawl. USE_CACHE_FOR_GET_LINKS ne gouverne que la LECTURE ; sans ce
+        # flag, save_worker() écrivait dans var/crawler_cache (SQLite) à
+        # chaque cible même quand on ne restaure jamais (restore=False),
+        # ce qui devient un goulot d'étranglement à haute concurrence
+        # (écritures concurrentes sur le même fichier SQLite).
+        self.SAVE_ON_CRAWL: bool = True
     
 
 class QueueEmptyError(Exception):
@@ -541,7 +548,7 @@ class Crawler:
                         pass
                 
                 async with lock:
-                    if can_save and len(result.result) % self.config.SAVE_PERIOD == 0:
+                    if self.config.SAVE_ON_CRAWL and can_save and len(result.result) % self.config.SAVE_PERIOD == 0:
                         await self.save_worker(url=url, visited=visited, result=result)
                         
                     local_count += 1
@@ -749,7 +756,8 @@ class Crawler:
                         
             elapsed = float(f"{time.time() - start_time :.2f}")
             await self._compute_stats(result, elapsed)
-            await self.save_worker(url, visited, result)
+            if self.config.SAVE_ON_CRAWL:
+                await self.save_worker(url, visited, result)
             
         except Exception as e:
             logger_crawler.error(f"Erreur dans crawl : {e}")
@@ -913,7 +921,7 @@ async def test_crawl_detailed(
         test_urls = {
             "test_local": {
                 "name": "TEST Local", 
-                "urls": "https://www.wikipedia.org/", 
+                "urls": "http://localhost:5050/comments/cmdi-ping_host_shell_true", 
                 # "urls": "http://localhost:8081", 
                 "mode": "simple",
                 "helpers": helpers,
@@ -1039,7 +1047,7 @@ if __name__ == "__main__":
     # Test avec helpers
     asyncio.run(test_crawl_detailed(
         restore=False,
-        helpers=helpers,
+        # helpers=helpers,
         raise_on_helper_error=True,
     ))
     

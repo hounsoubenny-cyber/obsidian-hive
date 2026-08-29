@@ -1,0 +1,18 @@
+{
+  "run_timestamp": "2026-08-29T10:18:50.516685",
+  "total_targets": 10,
+  "num_workers": 100,
+  "success": 10,
+  "failed": 0,
+  "success_rate": 1.0,
+  "elapsed_seconds": 4.37,
+  "avg_time_per_target": 1.66,
+  "errors_by_type": {},
+  "errors_detail": [],
+  "labels_distribution": {
+    "SQLi": 5,
+    "CMDi": 3,
+    "InsecDeser": 2,
+    "SAFE (labels=[])": 0
+  }
+}

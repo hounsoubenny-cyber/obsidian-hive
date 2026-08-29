@@ -21,7 +21,7 @@ from nest_asyncio import apply
 from scanner_ia.core.parser import Parser, ParserResult
 from scanner_ia.core.fetcher import FetcherResult
 from scanner_ia.fuzzer.response_analyzer import ResponseAnalyzer
-from scanner_ia.fuzzer.payload_generator import PayloadGenerator
+from scanner_ia.fuzzer.payload_generator import PayloadGenerator, _DEFAULT_JSON_KEYS
 from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, FuzzerResult, WorkerFuzzerEntry
 from scanner_ia.base_class.analyser_helper_base_class import AnalyzerHelperResult, OneAnalyzerHelperResult
 from scanner_ia.scanner_utils.signal_manager import signal_manager
@@ -271,6 +271,19 @@ class Fuzzer:
             else:
                 page_ = page
 
+            # Clés JSON réelles de l'endpoint (si body JSON exploitable), sinon
+            # fallback silencieux sur _DEFAULT_JSON_KEYS (géré dans payload_generator)
+            json_keys = None
+            endpoint_ct = (page_.fetched.headers or {}).get("Content-Type", "").lower()
+            if "json" in endpoint_ct and page_.fetched.body:
+                try:
+                    parsed_body = json.loads(page_.fetched.body)
+                    real_keys = self._flatten_json_keys(parsed_body)
+                    if real_keys:
+                        json_keys = list(dict.fromkeys(real_keys + _DEFAULT_JSON_KEYS))
+                except (json.JSONDecodeError, ValueError):
+                    json_keys = None
+
             url_stats = 0
             for vuln in vulns:
                 name = vuln["name"]
@@ -287,7 +300,8 @@ class Fuzzer:
                     max_keys_query=self.config.MAX_KEYS_QUERY,
                     limit_per_key_query=self.config.LIMIT_PER_KEY_QUERY,
                     path_limit=self.config.PATH_LIMIT,
-                    resolved_query_params=resolved_params
+                    resolved_query_params=resolved_params,
+                    json_keys=json_keys
                 )
 
                 if payload_result.n_payloads == 0:
@@ -444,6 +458,21 @@ class Fuzzer:
             logger_fuzzer.error(f"Erreur envoi payload {ptype}: {e}")
             return None
 
+    def _flatten_json_keys(self, obj, prefix: str = "") -> list[str]:
+        """
+        Extrait récursivement les clés d'un objet JSON (dict/list imbriqués)
+        en chemins pointés, ex: {"user": {"address": {"zip": ...}}} -> "user.address.zip"
+        """
+        keys = []
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                path = f"{prefix}.{k}" if prefix else k
+                keys.append(path)
+                keys.extend(self._flatten_json_keys(v, path))
+        elif isinstance(obj, list) and obj:
+            keys.extend(self._flatten_json_keys(obj[0], prefix))
+        return keys
+
     async def get_baseline(self, url: str, **kwargs) -> OneAnalyzerHelperResult:
         """
         Obtient la baseline d'une URL (page de référence).
@@ -475,7 +504,14 @@ class Fuzzer:
 
             # Fallback si body vide
             body = result_fetch.body or "<html><body>Page vide</body></html>"
-            parser_r.tree = lxml.html.fromstring(body)
+            ct = (result_fetch.headers or {}).get("Content-Type", "").lower()
+            if "json" in ct or "xml" in ct:
+                # Body non-HTML : pas de DOM à extraire, tree vide.
+                # L'injection "body" (JSON/XML) ne dépend pas de ce tree,
+                # seul l'injection "form" en aurait besoin (non applicable ici).
+                parser_r.tree = lxml.html.fromstring("<html><body></body></html>")
+            else:
+                parser_r.tree = lxml.html.fromstring(body)
 
             result.parsed = await self.parser.parse(
                 url,
@@ -819,6 +855,13 @@ class Fuzzer:
 
         finally:
             result.elapsed = time.time() - start_time
+            # Reset systématique : set_cancel_flag() est appelé plus haut comme
+            # simple signal d'arrêt propre pour les workers internes de CE run
+            # (ligne ~829), pas comme un état persistant. Sans ce reset, une
+            # instance de Fuzzer réutilisée pour plusieurs cibles restait
+            # silencieusement bloquée après la première cible ayant déclenché
+            # set_cancel_flag() (ex: trop de réponses vides/timeouts).
+            self._cancel_flag = False
 
         result.stats = self._compute_stats(result, len(same_domain.elements), total_payloads)
         self.config.MAX_TEST = max_test_b

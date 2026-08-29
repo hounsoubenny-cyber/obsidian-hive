@@ -1691,9 +1691,9 @@ if __name__ == '__main__':
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  ⚠️  INTENTIONNELLEMENT VULNÉRABLE — LOCAL UNIQUEMENT ⚠️                 ║
 ╠══════════════════════════════════════════════════════════════════════════╣
-║  URL     : http://localhost:5000                                          ║
+║  URL     : http://localhost:5001                                          ║
 ║  Calibré : payloads_v3.json v3.0.0 — Système SHLD{{MARKER}}            ║
 ║  Principe: les payloads sont reflétés/exécutés sans sanitisation         ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 """)
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)

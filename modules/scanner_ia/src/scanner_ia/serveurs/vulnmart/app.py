@@ -370,4 +370,4 @@ if __name__ == "__main__":
     if not os.path.exists(welcome):
         with open(welcome, "w") as f:
             f.write("Bienvenue sur VulnMart. Essayez ?name=../app.py sur /file 😉\n")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)

@@ -58,6 +58,9 @@ from obsidian_hive.api.routers.donwloads_router import (
     router as download_router, 
     public_router as download_public_router
 )
+from obsidian_hive.api.routers.scanner_report_manager_router import (
+    router as scanner_report_manager_router, MOUNT_PATH, WEB_ASSET_SCAN_REPORT_DIR
+)
 from obsidian_hive.api.routers.anti_phishing_extension_router import (
     router_ext as anti_phishing_extension_router
 )
@@ -268,6 +271,7 @@ app.add_middleware(
 )
 
 app.mount("/api/scanner_reports", StaticFiles(directory=REPORT_DIR), name="reports")
+app.mount(MOUNT_PATH, StaticFiles(directory=WEB_ASSET_SCAN_REPORT_DIR), name="asset_scan_reports")
 
 if REACT_EXISTS:
     app.mount(BUILD_URL, StaticFiles(directory=BUILD_DIR), name="build")
@@ -300,7 +304,9 @@ _ROUTERS = [
     (download_public_router, "download", False),
     
     (anti_phishing_extension_router, "anti_phishing_extension", False),
-    (extension_token_manager_router, "extension_tokens", True)
+    (extension_token_manager_router, "extension_tokens", True),
+    
+    (scanner_report_manager_router, "web_asset_report", True),
 ]
 
 dependencies = [Depends(

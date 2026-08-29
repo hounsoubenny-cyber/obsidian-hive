@@ -1,11 +1,16 @@
 """
-Générateur de routes pour le serveur vulnérable.
+Générateur de routes — VERSION SAFE (contre-partie sécurisée du vulnserver).
 
-- Routes MONO-vuln : un Unit d'un seul moteur.
-- Routes MULTI-vuln : plusieurs Units de moteurs différents combinés dans le
-  même handler HTTP (combinaisons réalistes curées à la main).
-- Un manifest.json est produit en parallèle, mappant chaque route à :
-  méthode, vulns présentes, paramètres/contextes d'injection, difficulté.
+Même structure exacte que le serveur vulnérable (mêmes ressources, mêmes
+variants, mêmes points d'injection) mais chaque moteur implémente le
+comportement SÉCURISÉ correspondant. Sert de jeu d'exemples "négatifs"
+(vulns=[]) pour équilibrer le dataset d'entraînement du modèle multi-label.
+
+- Routes MONO : un Unit sécurisé d'un seul moteur.
+- Routes MULTI : plusieurs Units sécurisés de moteurs différents combinés.
+- manifest.json généré en parallèle : vulns=[] partout (aucune faille réelle),
+  avec un champ "hardened_against" qui indique quelle(s) classe(s) de faille
+  chaque route est conçue pour repousser (utile pour l'analyse, pas un label).
 """
 
 import json
@@ -92,7 +97,8 @@ def build_app():
             merged["_meta"] = {
                 "route": path_template,
                 "page_type": page_type,
-                "vulns": [u.vuln_id for u in units],
+                "vulns": [],
+                "hardened_against": [u.vuln_id for u in units],
             }
             return jsonify(merged)
 
@@ -104,10 +110,11 @@ def build_app():
             "method": methods[0] if len(methods) == 1 else methods,
             "page_type": page_type,
             "resource": resource,
-            "vulns": [u.vuln_id for u in units],
+            "vulns": [],  # aucune faille réelle : label négatif pour l'entraînement
+            "hardened_against": [u.vuln_id for u in units],
             "details": [
                 {
-                    "vuln": u.vuln_id,
+                    "hardened_against": u.vuln_id,
                     "variant": u.variant,
                     "context": u.context,
                     "param": u.param,
@@ -168,6 +175,7 @@ def build_app():
     @app.route("/", methods=["GET"])
     def home():
         return jsonify({"app": "Vuln server", "owner": "Samuel"})
+    
     return app, manifest
 
 
@@ -180,4 +188,4 @@ if __name__ == "__main__":
     multi = sum(1 for r in manifest if r["page_type"] == "multi")
     print(f"  mono : {mono}")
     print(f"  multi: {multi}")
-    app.run(host="0.0.0.0", port=6000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)

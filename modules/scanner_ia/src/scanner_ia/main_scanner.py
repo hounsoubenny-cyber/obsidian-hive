@@ -169,6 +169,7 @@ class Scanner:
         use_arjun: bool = False,         
         arjun_timeout: int = 30,          
         known_params_dir: Optional[str] = None,  
+        report_dir: Optional[str] = REPORT_DIR
     ):
         self.config_path = Path(config_path)
         if not self.config_path.exists():
@@ -181,7 +182,9 @@ class Scanner:
         
         self.config_manager = ConfigManager()
         self._base_scan_key = self.config_manager.configure(path=str(config_path))
-        self.sess_limit = FetcherConfig().Semaphore
+        self.sess_limit = semaphore or FetcherConfig().Semaphore
+        self.sem = semaphore
+        self.report_dir = report_dir
         if self.config_manager.fetcher_conf.get("Semaphore"):
             self.sess_limit = self.config_manager.fetcher_conf.get("Semaphore")
         
@@ -220,7 +223,7 @@ class Scanner:
 
         self.feature_extractor = FeatureExtractor()
         self.scanner_ia = ScannerIA(model_dir=model_dir)
-        self.report_generator = ReportGenerator(storage_dir=str(REPORT_DIR), theme=theme)
+        self.report_generator = ReportGenerator(storage_dir=str(self.report_dir), theme=theme)
         self.report_builder = ReportBuilder()
         
         if threading.current_thread() is threading.main_thread():
@@ -592,7 +595,8 @@ class Scanner:
                     silent=not self.debug,
                     helpers=[],
                     raise_on_helper_error=False,
-                    is_spa=is_spa
+                    is_spa=is_spa,
+                    semaphore=self.sem,
                 ),
                 result, errors, url
             )

@@ -22,5 +22,5 @@ if __name__ == "__main__":
     multi = sum(1 for r in manifest if r["page_type"] == "multi")
     print(f"[vulnserver] {len(manifest)} routes générées ({mono} mono / {multi} multi)")
     print("[vulnserver] manifest.json écrit à la racine du projet")
-    print("[vulnserver] démarrage sur http://0.0.0.0:5000 ...")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    print("[vulnserver] démarrage sur http://0.0.0.0:5050 ...")
+    app.run(host="0.0.0.0", port=5050, debug=False, threaded=True)

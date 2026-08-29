@@ -6,11 +6,11 @@ Created on Mon Jun 22 23:18:09 2026
 @author: hounsousamuel
 """
 
-import os, sys
-# sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", "..", ".."))))
-
+import os
 import json
+import time
 import asyncio
+from datetime import datetime
 from scanner_ia.main_scanner import Scanner, ScannerIA, DEFAULT_CONFIG_PATH
 from scanner_ia.scanner_utils.logger import get_logger as scanner_get_logger
 from scanner_ia.api.api import get_shared_scanner_ia
@@ -25,13 +25,12 @@ from obsidian_hive.agents.analyst.agent import (
     Analyst, NoReportProducedError, 
     AnalystResult, create_alex
 )
-from obsidian_hive.agents.analyst.tools.tools import MAPPING as TOOL_MAPPING
+from obsidian_hive.core.assets.config import WEB_ASSET_SCAN_REPORT_DIR
 from modules_utils.logger import get_logger
-from obsidian_hive.config.config import ANALYST_CONFIG
 
 scanner_logger = scanner_get_logger()
 logger = get_logger("web_workflow")
-
+DATE_FORMAT = "%d-%m-%Y_%H-%M-%S"
 
 class WebWorkflow(WorkflowBase):
     """Workflow pour l'analyse de vulnérabilités web.
@@ -77,8 +76,11 @@ class WebWorkflow(WorkflowBase):
         avec un partage d'instance ScannerIA.
         """
         init_config = self.asset.init_config
+        report_dir = os.path.join(WEB_ASSET_SCAN_REPORT_DIR, self.asset.id)
+        os.makedirs(report_dir, exist_ok=True)
         if not init_config.get("config_path") or not os.path.exists(init_config.get("config_path", "")):
             init_config["config_path"] = DEFAULT_CONFIG_PATH
+        init_config["report_dir"] = report_dir
         self.scanner = Scanner(**init_config)
         self.scanner.scanner_ia: ScannerIA = await asyncio.to_thread(get_shared_scanner_ia)
 
@@ -93,6 +95,9 @@ class WebWorkflow(WorkflowBase):
         """
         try:
             run_config = self.asset.run_config
+            now = datetime.now().strftime(DATE_FORMAT)
+            filename = f"report|@{now}|@{self.asset.id}|@{time.monotonic()}"
+            run_config["filename"] = filename
             url = self.asset.url
             is_spa = self.asset.__class__.__name__ == "WebAppAsset" or AssetType(self.asset.type).value == AssetType.WEB_APP.value
             conf = {"url": url, "is_spa": is_spa}

@@ -527,14 +527,18 @@ class Parser:
             classify_link_response = await self.classify_link(url, use_cache=use_cache)
             result.type = classify_link_response.type
             # print(f"Clasify Response: {classify_link_response.to_dict()}")
-            if not classify_link_response.type.lower() == "html" or not parse.scheme.startswith("http"):
-                result.error = "Lien invalide, scheme=" + parse.scheme + ",type=" + classify_link_response.type
+            
+            ACCEPTED_TYPES = ("html", "json", "xml", "text", "other")
+            if result.type.lower() not in ACCEPTED_TYPES or not parse.scheme.startswith("http"):
+                result.error = "Lien non supporté, scheme=" + parse.scheme + ",type=" + classify_link_response.type
                 return result
             
             parse_html_response = await self.parse_html(url, response=True, use_playwright=use_playwright, use_cache=use_cache)
+            
             # print(parse_html_response.to_dict())
             if not (parse_html_response.response and not str(parse_html_response.response.error).lower() == "retryerror"):
                 return result
+            
             tree = parse_html_response.tree
             # print(tree)
             result.status_code = parse_html_response.response.status_code
