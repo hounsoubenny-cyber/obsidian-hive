@@ -31,7 +31,7 @@ class WeakSecurityHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    with socketserver.TCPServer(("0.0.0.0", PORT), WeakSecurityHandler) as httpd:
+    with socketserver.ThreadingTCPServer(("0.0.0.0", PORT), WeakSecurityHandler) as httpd:
         print(f"🔥 Site statique vulnérable servi sur http://localhost:{PORT}")
         print(f"⚠️  Headers de sécurité volontairement absents/faibles — usage local uniquement !")
         httpd.serve_forever()

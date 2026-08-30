@@ -77,6 +77,7 @@ if __name__ == "__main__":
             "https://example.com",
             "https://url-qui-nexiste-pas.com",
             "http://localhost:8080",
+            "http://localhost:5050/users/ssti-custom_template_field_form"
         ]
 
         print("🔍 Test de reachabilité:")

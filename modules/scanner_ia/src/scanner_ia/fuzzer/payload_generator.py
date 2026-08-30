@@ -179,7 +179,7 @@ class PayloadGenerator:
         for payload in payloads:
             for i, path in enumerate(paths[:len(paths) if not path_limit else path_limit]):
                 if self.limit:
-                    if self.limit and len(result.payloads) >= self.limit:
+                    if len(result.payloads) >= self.limit:
                         result.n_payloads = len(result.payloads)
                         return result
                 
@@ -254,7 +254,7 @@ class PayloadGenerator:
             for k, v in params_copy.items():
                 for i, _  in enumerate(v):
                     if self.limit:
-                        if self.limit and len(result.payloads) >= self.limit:
+                        if len(result.payloads) >= self.limit:
                             result.n_payloads = len(result.payloads)
                             return result
                     
@@ -319,7 +319,7 @@ class PayloadGenerator:
         for payload in payloads:
             for k in keys:
                 if self.limit:
-                    if self.limit and len(result.payloads) >= self.limit:
+                    if len(result.payloads) >= self.limit:
                         result.n_payloads = len(result.payloads)
                         return result
                 
@@ -382,7 +382,7 @@ class PayloadGenerator:
         for payload in payloads:
             for k in keys:
                 if self.limit:
-                    if self.limit and len(result.payloads) >= self.limit:
+                    if len(result.payloads) >= self.limit:
                         result.n_payloads = len(result.payloads)
                         return result
                 
@@ -443,7 +443,7 @@ class PayloadGenerator:
         for payload in payloads:
             for form in forms:
                 if self.limit:
-                    if self.limit and len(result.payloads) >= self.limit:
+                    if len(result.payloads) >= self.limit:
                         result.n_payloads = len(result.payloads)
                         return result
                 

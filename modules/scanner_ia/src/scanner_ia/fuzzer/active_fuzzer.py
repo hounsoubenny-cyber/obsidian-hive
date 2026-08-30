@@ -706,6 +706,20 @@ class Fuzzer:
     
     def set_cancel_flag(self):
         self._cancel_flag = True
+
+    def close(self):
+        """Arrête proprement le ThreadPoolExecutor interne.
+
+        À appeler explicitement quand une instance de Fuzzer ne sera plus
+        réutilisée (ex: fin d'un lot en traitement par chunks) — sans ça,
+        les threads de l'executor restent vivants pour rien jusqu'à la fin
+        du process, et s'accumulent si de nouvelles instances de Fuzzer sont
+        créées régulièrement dans le même process (fuite de threads).
+        """
+        try:
+            self._executor.shutdown(wait=True, cancel_futures=True)
+        except Exception:
+            pass
         return
     
     async def fuzz(
@@ -717,6 +731,7 @@ class Fuzzer:
         allowed_domains: list[str] | None = None,
         dynamic_timeout: bool = False,
         max_test: int | None = None,
+        close_threadpool: bool = True,
         **kwargs
     ) -> FuzzerResult:
         """
@@ -862,6 +877,8 @@ class Fuzzer:
             # silencieusement bloquée après la première cible ayant déclenché
             # set_cancel_flag() (ex: trop de réponses vides/timeouts).
             self._cancel_flag = False
+            if close_threadpool:
+                self.close()
 
         result.stats = self._compute_stats(result, len(same_domain.elements), total_payloads)
         self.config.MAX_TEST = max_test_b

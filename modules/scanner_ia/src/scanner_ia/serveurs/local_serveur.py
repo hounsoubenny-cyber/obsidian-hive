@@ -13,7 +13,7 @@ Génère un site avec des milliers de pages et liens imbriqués
 
 import os
 import random
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 import threading
 import time
 import socket
@@ -306,7 +306,7 @@ def run_server():
     port = PORT
     while True:
         try:
-            server = HTTPServer(('', port), handler)
+            server = ThreadingHTTPServer(('', port), handler)
             print(f"🚀 Serveur démarré sur http://localhost:{port}")
             print(f"📁 Racine: {os.path.abspath('.')}")
             print("🔧 Appuyez sur Ctrl+C pour arrêter")
