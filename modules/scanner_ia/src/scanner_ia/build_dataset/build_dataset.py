@@ -445,7 +445,7 @@ async def build_dataset(
     results_lock = asyncio.Lock()
 
     async with aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=num_workers * 10),
+        connector=aiohttp.TCPConnector(limit=500), # num_workers * 10
     ) as session:
 
         passive_analyzer = PassiveCodeAnalyzer()
@@ -601,6 +601,7 @@ async def build_dataset_chunked(
     out_dir: str = "./dataset_chunks",
     num_workers: int = NUM_WORKERS,
     chunk_size: int = 100,
+    start: int = 0,
 ) -> List[str]:
     """Découpe `targets` en lots de `chunk_size` et appelle `build_dataset()`
     séquentiellement sur chacun, avec nettoyage explicite entre les lots :
@@ -631,7 +632,6 @@ async def build_dataset_chunked(
         f"📦 Découpage en {n_chunks} lots de {chunk_size} cibles "
         f"({len(targets)} cibles au total, {num_workers} workers/lot)"
     )
-    start = 6 # 0
     for i in range(start, n_chunks):
         chunk = targets[i * chunk_size:(i + 1) * chunk_size]
         chunk_out_path = os.path.join(out_dir, f"chunk_{i:04d}")
@@ -669,13 +669,13 @@ async def build_dataset_chunked(
 # Nombre FIXE de workers, réduit après le diagnostic ab (num_workers x
 # fuzzer.config.MAX_WORKERS=10 concurrent sur les serveurs cibles — 100
 # workers = jusqu'à 1000 concurrent, dégradation confirmée par ab à c=1000).
-NUM_WORKERS_DEFAULT_RUN = 15
+NUM_WORKERS_DEFAULT_RUN = 12
 CHUNK_SIZE_DEFAULT = 100
 
 if __name__ == "__main__":
     apply()
 
-    async def main():
+    async def main(start: int = 0):
         print("=" * 70)
         print("🚀 GÉNÉRATION DU DATASET D'ENTRAÎNEMENT SCANNER IA (par lots)")
         print("=" * 70)
@@ -686,6 +686,7 @@ if __name__ == "__main__":
             max_test_fuzzer=None,
             dynamic_timeout=False,
             debug=False,
+            timeout=120,
             fuzzer_limit=100,
             use_semantic=True,
             semaphore=200,
@@ -702,6 +703,7 @@ if __name__ == "__main__":
             out_dir=out_dir,
             num_workers=NUM_WORKERS_DEFAULT_RUN,
             chunk_size=CHUNK_SIZE_DEFAULT,
+            start=start
         )
         elapsed = time.time() - t0
 
@@ -709,5 +711,8 @@ if __name__ == "__main__":
         print(f"🎉 {len(chunk_paths)} lots prêts en {elapsed:.2f}s dans {out_dir}")
         print("👉 Lance merge_chunks.py pour les recombiner en un seul dataset")
         print("=" * 70)
-
-    asyncio.run(main())
+    
+    import sys
+    DEFAULT = 13 # 0
+    start = list(sys.argv)[1] if len(list(sys.argv)) >= 2 else DEFAULT 
+    asyncio.run(main(start=start))

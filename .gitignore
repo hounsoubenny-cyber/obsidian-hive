@@ -72,8 +72,6 @@ tool_engine.exe
 *.db
 *.sqlite
 *.sqlite3
-modules/sandbox_ia/src/sandbox_ia/ml_model/output/
-modules/sandbox_ia/src/sandbox_ia/core/test_quarantine/
 .sha256
 .sha256_*
 **/checkpoints*/
@@ -167,3 +165,7 @@ all_files.txt
 files_without_modules.txt
 modules/CLE_API.txt
 *CLE_API*
+modules/sandbox_ia/src/sandbox_ia/ml_model/output/
+modules/sandbox_ia/src/sandbox_ia/core/test_quarantine/
+modules/scanner_ia/src/scanner_ia/build_dataset/dataset_chunks/
+modules/scanner_ia/src/scanner_ia/build_dataset/log*.txt

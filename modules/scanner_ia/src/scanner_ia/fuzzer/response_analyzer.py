@@ -34,8 +34,8 @@ from scanner_ia.fuzzer.config import WEIGTHS_FILE, WEIGTHS_FILE_WITH_SEMANTIC
 from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, pformat
 from scanner_ia.base_class.response_analyzer_base_class import ResponseAnalyzerResult
 from scanner_ia.fuzzer.config import CRITICAL_HEADERS, SIMILARITY_MODEL_DIR, N_FEATURES_SIM
-# from fuzzer.similarity import CosineSimilarityTFIDF as SimilarityModel
-from scanner_ia.fuzzer.similarity_bert import CosineSimilarityBERT as SimilarityModel
+from scanner_ia.fuzzer.similarity import CosineSimilarityTFIDF as SimilarityModel
+# from scanner_ia.fuzzer.similarity_bert import CosineSimilarityBERT as SimilarityModel
 from cachetools import TTLCache
 from scanner_ia.scanner_utils.logger import get_logger
 from functools import lru_cache

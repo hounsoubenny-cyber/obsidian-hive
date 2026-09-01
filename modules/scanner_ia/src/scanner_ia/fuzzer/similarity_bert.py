@@ -16,7 +16,7 @@ from sentence_transformers.util import pytorch_cos_sim
 from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
 from scanner_ia.fuzzer.config import BERT_SIMILARITY_MODEL
 from cachetools import TTLCache
-from threading import Lock
+from threading import Lock, Semaphore
 from scanner_ia.scanner_utils.logger import get_logger
 
 suppres_warnings()
@@ -30,6 +30,13 @@ try:
 except Exception:
     pass
 
+try:
+    torch.set_num_interop_threads(1)
+except Exception:
+    pass
+
+MAX_CONCURRENT = 8
+
 class CosineSimilarityBERT:
     def __init__(self, *args, **kwargs):
         self.model = None
@@ -38,6 +45,7 @@ class CosineSimilarityBERT:
         self.metadata = {}
         similarity_logger.info(f"✅ CosineSimilarityBERT initialisé - model_dir: {self.model_dir}")
         self._lock = Lock()
+        self._encode_semaphore = Semaphore(MAX_CONCURRENT)
         self._is_verify = False
     
     def transform(self, X, **kwargs):
@@ -96,39 +104,40 @@ class CosineSimilarityBERT:
         # X1 (la baseline) est quasi toujours IDENTIQUE d'un payload à l'autre pour une
         # même URL — on cache son embedding pour éviter de le recalculer à chaque test.
         # X2 (la réponse au payload) change à chaque appel : pas de gain à le cacher.
-        with torch.inference_mode():
-            x1_key = self._cache_key(X1)
-            with self._lock:
-                X1_vec = TTLCACHE.get(x1_key)
-    
-            cache_hit = X1_vec is not None
-            if not cache_hit:
-                X1_vec = self.model.encode(X1, normalize_embeddings=True, convert_to_tensor=True)
+        with self._encode_semaphore:
+            with torch.inference_mode():
+                x1_key = self._cache_key(X1)
                 with self._lock:
-                    TTLCACHE[x1_key] = X1_vec
-    
-            X2_vec = self.model.encode(X2, normalize_embeddings=True, convert_to_tensor=True)
+                    X1_vec = TTLCACHE.get(x1_key)
         
-            # similarity_logger.debug(f"   └─ X1 shape: {X1_vec.shape}")
-            # similarity_logger.debug(f"   └─ X2 shape: {X2_vec.shape}")
+                cache_hit = X1_vec is not None
+                if not cache_hit:
+                    X1_vec = self.model.encode(X1, normalize_embeddings=True, convert_to_tensor=True)
+                    with self._lock:
+                        TTLCACHE[x1_key] = X1_vec
+        
+                X2_vec = self.model.encode(X2, normalize_embeddings=True, convert_to_tensor=True)
             
-            sim_matrix = pytorch_cos_sim(X1_vec, X2_vec)
-            if sim_matrix.shape[0] == 1:
-                result = sim_matrix.item()
-                aggregation = "first element (1D)"
-            elif aggregation == 'mean':
-                result = sim_matrix.mean()
-            elif aggregation == 'max':
-                result = sim_matrix.max()
-            elif aggregation == 'min':
-                result = sim_matrix.min()
-            else:
-                result = sim_matrix.mean()
-            
-            elapsed = time.time() - start_time
-            similarity_logger.debug(f"   └─ Similarité ({aggregation}): {result:.4f} ({elapsed:.3f}s, baseline_cache={'hit' if cache_hit else 'miss'})")
-            
-            return result
+                # similarity_logger.debug(f"   └─ X1 shape: {X1_vec.shape}")
+                # similarity_logger.debug(f"   └─ X2 shape: {X2_vec.shape}")
+                
+                sim_matrix = pytorch_cos_sim(X1_vec, X2_vec)
+                if sim_matrix.shape[0] == 1:
+                    result = sim_matrix.item()
+                    aggregation = "first element (1D)"
+                elif aggregation == 'mean':
+                    result = sim_matrix.mean()
+                elif aggregation == 'max':
+                    result = sim_matrix.max()
+                elif aggregation == 'min':
+                    result = sim_matrix.min()
+                else:
+                    result = sim_matrix.mean()
+                
+                elapsed = time.time() - start_time
+                similarity_logger.debug(f"   └─ Similarité ({aggregation}): {result:.4f} ({elapsed:.3f}s, baseline_cache={'hit' if cache_hit else 'miss'})")
+                
+                return result
     
     def save_model(self, model, path):
         # if self.model:

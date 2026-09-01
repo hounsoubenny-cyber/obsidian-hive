@@ -1,0 +1,134 @@
+{
+  "bert": {
+    "name": "BERT",
+    "mean_safe_score": 0.9835637211799622,
+    "mean_vuln_score": 0.3051826293979372,
+    "separation": 0.678381091782025,
+    "roc_auc": 1.0,
+    "total_time_s": 0.4988365599856479,
+    "avg_time_ms": 45.34877818051344,
+    "per_case": [
+      {
+        "note": "payload sans effet, écho identique",
+        "label": "SAFE",
+        "score": 1.0
+      },
+      {
+        "note": "input neutre, comportement inchangé",
+        "label": "SAFE",
+        "score": 1.0
+      },
+      {
+        "note": "API JSON, payload ignoré",
+        "label": "SAFE",
+        "score": 0.9999998807907104
+      },
+      {
+        "note": "quasi identique, commentaire HTML ajouté seulement",
+        "label": "SAFE",
+        "score": 0.9342550039291382
+      },
+      {
+        "note": "XSS reflété — payload exécutable injecté verbatim",
+        "label": "VULN",
+        "score": 0.531959056854248
+      },
+      {
+        "note": "SQLi — message d'erreur SQL exposé",
+        "label": "VULN",
+        "score": 0.40231627225875854
+      },
+      {
+        "note": "CMDi — sortie de commande système exposée",
+        "label": "VULN",
+        "score": -0.029758773744106293
+      },
+      {
+        "note": "DirTrav — contenu de /etc/passwd exposé",
+        "label": "VULN",
+        "score": 0.1354365050792694
+      },
+      {
+        "note": "XXE — lecture de fichier via entité externe",
+        "label": "VULN",
+        "score": 0.43793198466300964
+      },
+      {
+        "note": "IDOR — accès à un profil non autorisé",
+        "label": "VULN",
+        "score": 0.6049530506134033
+      },
+      {
+        "note": "InsecDeser — stack trace Python exposée",
+        "label": "VULN",
+        "score": 0.053440310060977936
+      }
+    ]
+  },
+  "tfidf": {
+    "name": "TF-IDF",
+    "mean_safe_score": 0.9353388845920563,
+    "mean_vuln_score": 0.1475313829287188,
+    "separation": 0.7878075016633375,
+    "roc_auc": 1.0,
+    "total_time_s": 0.08346334598900285,
+    "avg_time_ms": 7.587576908091168,
+    "per_case": [
+      {
+        "note": "payload sans effet, écho identique",
+        "label": "SAFE",
+        "score": 0.9999998211860657
+      },
+      {
+        "note": "input neutre, comportement inchangé",
+        "label": "SAFE",
+        "score": 0.9999998211860657
+      },
+      {
+        "note": "API JSON, payload ignoré",
+        "label": "SAFE",
+        "score": 1.0000001192092896
+      },
+      {
+        "note": "quasi identique, commentaire HTML ajouté seulement",
+        "label": "SAFE",
+        "score": 0.7413557767868042
+      },
+      {
+        "note": "XSS reflété — payload exécutable injecté verbatim",
+        "label": "VULN",
+        "score": 0.19245529174804688
+      },
+      {
+        "note": "SQLi — message d'erreur SQL exposé",
+        "label": "VULN",
+        "score": 0.11440791189670563
+      },
+      {
+        "note": "CMDi — sortie de commande système exposée",
+        "label": "VULN",
+        "score": 0.003769397037103772
+      },
+      {
+        "note": "DirTrav — contenu de /etc/passwd exposé",
+        "label": "VULN",
+        "score": -0.00012678753410000354
+      },
+      {
+        "note": "XXE — lecture de fichier via entité externe",
+        "label": "VULN",
+        "score": 0.17264504730701447
+      },
+      {
+        "note": "IDOR — accès à un profil non autorisé",
+        "label": "VULN",
+        "score": 0.5489131212234497
+      },
+      {
+        "note": "InsecDeser — stack trace Python exposée",
+        "label": "VULN",
+        "score": 0.0006556988228112459
+      }
+    ]
+  }
+}

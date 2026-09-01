@@ -58,9 +58,9 @@ _ms.logger = get_mock_logger(logger)
 # =============================================================================
 
 def _initial_conf_api():
+    import scanner_ia.main_scanner as _ms
     logger = _ml.get_logger()
     logger.remove(all_handlers=False)
-    import scanner_ia.main_scanner as _ms
     _ms.RICH_AVAILABLE = False
     _ms.logger = get_mock_logger(logger)
     

@@ -1,0 +1,17 @@
+{
+  "date_saved": "2026-09-01T11:07:08.124759",
+  "num_model": 3,
+  "models_name": [
+    "word_tokens",
+    "short_ngrams",
+    "long_ngrams"
+  ],
+  "n_features": 262144,
+  "use_hashing": true,
+  "use_streaming": true,
+  "compression": {
+    "original_size_mb": 1.2901439666748047,
+    "final_size_mb": 1.2845735549926758,
+    "ratio": 1.0041418194612073
+  }
+}
