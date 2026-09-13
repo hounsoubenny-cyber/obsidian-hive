@@ -39,6 +39,10 @@ echo "==> Téléchargement du binaire de l'agent..."
 curl -sSL -H "Authorization: Bearer $TOKEN" -o "$BIN_PATH" "$CENTRAL_HTTP_URL/api/download/agent/agent_core"
 chmod 700 "$BIN_PATH"
 
+echo "==> Application des permissions sur le dossier de l'agent..."
+chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+
+
 echo "==> Écriture de la configuration..."
 cat > "$CONFIG_PATH" << CONF_EOF
 asset_id = "$ASSET_ID"
@@ -70,13 +74,13 @@ rm -f "/etc/sudoers.d/obsidian-agent"
 
 echo "Agent désinstallé."
 UNINSTALL_EOF
-chmod 700 "$INSTALL_DIR/uninstall.sh"
+chown root:root "$INSTALL_DIR/uninstall.sh"
+chmod 500 "$INSTALL_DIR/uninstall.sh"
 
 echo "==> Règle sudoers restreinte pour l'auto-désinstallation..."
 echo "$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/uninstall.sh" > /etc/sudoers.d/obsidian-agent
 chmod 440 /etc/sudoers.d/obsidian-agent
 
-chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
 echo "==> Écriture du service systemd..."
 cat > "/etc/systemd/system/$SERVICE_NAME.service" << SERVICE_EOF

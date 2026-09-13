@@ -7,12 +7,14 @@ Created on Fri Aug 28 21:22:58 2026
 """
 
 import os
+import ast
 import gc
 import math
 import json
 import time
 import asyncio
 import aiohttp
+import resource
 import traceback
 import pandas as pd
 from dataclasses import asdict, dataclass, field
@@ -51,6 +53,46 @@ NUM_WORKERS = 20
 
 
 # =============================================================================
+# 0. DIMENSIONNEMENT RÉSEAU DYNAMIQUE
+# =============================================================================
+
+def compute_connector_limit(
+    num_workers: int,
+    fuzzer_max_workers: int,
+    safety_margin: float = 1.3,
+    min_limit: int = 100,
+) -> int:
+    """Dimensionne le TCPConnector à partir de la concurrence réelle du run.
+
+    Le pic de connexions simultanées est atteint en phase fuzz (~98% du temps
+    par cible) : chaque tâche `_worker` de active_fuzzer.py ne parallélise pas
+    en interne (1 requête en vol par tâche), donc le pic théorique est
+    num_workers x fuzzer_max_workers. safety_margin absorbe le chevauchement
+    avec la phase crawl et les connexions keep-alive pas encore libérées.
+    """
+    peak_concurrent = num_workers * fuzzer_max_workers
+    return max(min_limit, math.ceil(peak_concurrent * safety_margin))
+
+
+def check_ulimit(required: int) -> None:
+    """Avertit (et tente de relever) ulimit -n si trop bas pour `required`
+    connexions simultanées. Chaque connexion aiohttp consomme un file
+    descriptor, +marge pour les fichiers ouverts par DirTrav/InsecUpload."""
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    needed = required + 2000  # marge : fds de fichiers, logs, stdout, etc.
+    if soft < needed:
+        try:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (min(needed, hard), hard))
+            logger.info(f"🔧 ulimit -n relevé de {soft} à {min(needed, hard)}")
+        except (ValueError, OSError):
+            logger.warning(
+                f"⚠️ ulimit -n actuel ({soft}) trop bas pour {required} connexions "
+                f"simultanées (besoin ~{needed}). Lance le script avec "
+                f"`ulimit -n 65536` avant, sinon risque de 'Too many open files'."
+            )
+
+
+# =============================================================================
 # 1. CLASSE DE CONFIGURATION AVEC TO_DICT ET FROM_DICT
 # =============================================================================
 
@@ -82,6 +124,13 @@ class SingleUrlExtractorConfig:
     arjun_timeout: int = 30
     known_params_dir: Optional[str] = None
     fuzzer_limit: Optional[int] = None
+    # Nombre de tâches async concurrentes DANS un Fuzzer (consommation de la
+    # queue de payloads pour UNE cible). À ne pas confondre avec num_workers
+    # (le pool build_dataset, qui lui traite plusieurs cibles en parallèle).
+    # Piloté ici plutôt qu'en dur dans _dataset_worker pour que le connector
+    # (compute_connector_limit) et le ThreadPoolExecutor du Fuzzer restent
+    # cohérents avec la même valeur.
+    fuzzer_max_workers: int = 10
 
     # ── Cache & Debug ──
     # Tout le cache est désactivé par défaut pour le build de dataset :
@@ -115,6 +164,56 @@ class SingleUrlExtractorConfig:
 # =============================================================================
 # 2. FONCTION PRINCIPALE ASYNC SANS GESTION DE SESSION
 # =============================================================================
+
+def _normalize_vulns(vulns: Any, url: str = "") -> List[str]:
+    """Force `vulns` en vraie liste de strings, quel que soit le format
+    reçu depuis `V1_TARGETS`.
+
+    Bug constaté le 04/09 : certaines entrées de `V1_TARGETS` ont `vulns`
+    stocké comme une string simple ("SSTI" au lieu de ["SSTI"]) ou comme le
+    repr d'une liste ("['XSS']" au lieu de la vraie liste). Sans cette
+    normalisation, `row["labels"] = vulns` copie la string telle quelle, et
+    un `for v in labels` en aval (stats de `build_dataset`, dédup dans
+    `merge_chunks.py`) l'itère caractère par caractère → labels absurdes
+    ('S', 'T', 'i', "'", '[', ']'...) au lieu des vraies classes.
+
+    Cette fonction rattrape le coup ici, mais le vrai fix reste de nettoyer
+    `V1_TARGETS` à la source — un warning est loggé à chaque fois qu'une
+    entrée sale est rencontrée pour pouvoir les repérer.
+    """
+    if vulns is None:
+        return []
+    if isinstance(vulns, (list, tuple, set)):
+        return [str(v) for v in vulns]
+    if isinstance(vulns, str):
+        s = vulns.strip()
+        if not s:
+            return []
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                parsed = ast.literal_eval(s)
+                if isinstance(parsed, (list, tuple, set)):
+                    logger.warning(
+                        f"⚠️ vulns mal formé pour {url!r} : stocké comme repr "
+                        f"de liste ({s!r}) au lieu d'une vraie liste dans "
+                        f"V1_TARGETS. Parsé correctement ici, mais V1_TARGETS "
+                        f"mérite d'être corrigé à la source."
+                    )
+                    return [str(v) for v in parsed]
+            except (ValueError, SyntaxError):
+                pass
+        logger.warning(
+            f"⚠️ vulns mal formé pour {url!r} : string simple ({s!r}) au "
+            f"lieu d'une liste dans V1_TARGETS. Enveloppé en [{s!r}] ici, "
+            f"mais V1_TARGETS mérite d'être corrigé à la source."
+        )
+        return [s]
+    logger.warning(
+        f"⚠️ vulns de type inattendu ({type(vulns).__name__}) pour {url!r} : "
+        f"{vulns!r}. Converti en [str(vulns)]."
+    )
+    return [str(vulns)]
+
 
 async def extract_features_single_url(
     url: str,
@@ -256,7 +355,7 @@ async def extract_features_single_url(
 
         row = row_df.iloc[0].to_dict()
         row["url"] = url
-        row["labels"] = vulns if vulns is not None else []
+        row["labels"] = _normalize_vulns(vulns, url=url)
 
         return features_df, row, timings
 
@@ -302,6 +401,13 @@ async def _dataset_worker(worker_id: int, ctx: _DatasetWorkerContext) -> None:
     NE JAMAIS partager un `Fuzzer` ENTRE plusieurs workers concurrents : il
     porte de l'état d'instance (self.config, self._cancel_flag) qui n'est
     pas isolé par tâche.
+
+    Robustesse : TOUT le corps de la boucle (y compris la construction
+    d'AnalyzerHelper) est dans le try/except, et t0/row/err/phase_timings
+    sont initialisés AVANT le try — comme ça, une exception à n'importe
+    quel endroit (même avant que t0 existe) est catchée, enregistrée dans
+    ctx.results avec son error_type, et le worker continue sur l'item
+    suivant au lieu de crasher et d'abandonner le reste de sa part de queue.
     """
     base_config = ctx.base_config
 
@@ -317,12 +423,17 @@ async def _dataset_worker(worker_id: int, ctx: _DatasetWorkerContext) -> None:
             known_params_dir=base_config.known_params_dir,
             limit=base_config.fuzzer_limit
         )
-        fuzzer.config.MAX_WORKERS = 6
+        fuzzer.config.MAX_WORKERS = base_config.fuzzer_max_workers
         fuzzer.config.GET_TIMEOUT = 2
         fuzzer.config.FUZZ_TIMEOUT = 10 * 10 * 60
+        fuzzer.config.TIMEOUT = base_config.timeout
         # Remplace le ResponseAnalyzer (avec son propre BERT) créé par le
         # constructeur de Fuzzer par l'instance partagée pour tout le run.
         fuzzer.response_analyzer = ctx.shared_response_analyzer
+        # Recrée le ThreadPoolExecutor interne à la bonne taille : sinon il
+        # reste figé sur la valeur par défaut de Config() prise au moment du
+        # __init__ du Fuzzer, indépendamment de MAX_WORKERS réglé juste au-dessus.
+        fuzzer._init_pool()
 
     while True:
         try:
@@ -330,48 +441,52 @@ async def _dataset_worker(worker_id: int, ctx: _DatasetWorkerContext) -> None:
         except asyncio.QueueEmpty:
             break
 
-        names = [
-            h.get("name") if isinstance(h, dict) else getattr(h, "name", "")
-            for h in helpers
-        ] if helpers else []
-        logger.info(
-            f"[{i}/{ctx.total}] (worker {worker_id}) Analyse de {url} "
-            f"-> {vulns or 'SAFE'} (SPA={is_spa}, Helpers={names})"
-        )
-
-        cfg = SingleUrlExtractorConfig.from_dict(base_config.to_dict())
-        cfg.is_spa = is_spa
-        cfg.helpers = helpers or []
-
-        # AnalyzerHelper (et son Crawler) restent créés par cible : objets
-        # légers (pas de modèle), garantit un état de crawl frais pour
-        # chaque URL sans avoir à auditer la remise à zéro interne du
-        # Crawler entre deux appels sur une même instance.
-        analyzer_helper = AnalyzerHelper(
-            session=ctx.session,
-            use_cache=cfg.use_cache,
-            DEBUG=cfg.debug,
-            Semaphore=cfg.semaphore,
-        )
-        analyzer_helper.crawler.config.MAX_WORKERS = 1
-        analyzer_helper.crawler.config.MAX_DEEPTH = 1
-        analyzer_helper.crawler.config.MAX_PAGES = 1
-        analyzer_helper.crawler.config.GET_TIMEOUT = 2
-        analyzer_helper.crawler.config.JOIN_TIMEOUT = 1 * 10 * 60
-        # Cache disque du classify_link/get_all_links (TTL 24h) : désactivé,
-        # sinon un ancien résultat périmé peut être resservi silencieusement
-        # (cf. bug du 29/08).
-        analyzer_helper.crawler.config.USE_CACHE_FOR_GET_LINKS = False
-        # Aucun bénéfice à écrire dans var/crawler_cache pour un build de
-        # dataset one-shot (restore toujours False) — évite la contention
-        # d'écriture SQLite à haute concurrence (num_workers élevé).
-        analyzer_helper.crawler.config.SAVE_ON_CRAWL = False
-
+        # Initialisés AVANT le try : garantit qu'on peut toujours calculer
+        # elapsed_url et enregistrer un résultat (même en échec), peu importe
+        # où l'exception a lieu à l'intérieur du bloc.
         t0 = time.time()
+        row: Optional[dict] = None
         err: Optional[Exception] = None
-        row = None
         phase_timings: Dict[str, float] = {}
+
         try:
+            names = [
+                h.get("name") if isinstance(h, dict) else getattr(h, "name", "")
+                for h in helpers
+            ] if helpers else []
+            logger.info(
+                f"[{i}/{ctx.total}] (worker {worker_id}) Analyse de {url} "
+                f"-> {vulns or 'SAFE'} (SPA={is_spa}, Helpers={names})"
+            )
+
+            cfg = SingleUrlExtractorConfig.from_dict(base_config.to_dict())
+            cfg.is_spa = is_spa
+            cfg.helpers = helpers or []
+
+            # AnalyzerHelper (et son Crawler) restent créés par cible : objets
+            # légers (pas de modèle), garantit un état de crawl frais pour
+            # chaque URL sans avoir à auditer la remise à zéro interne du
+            # Crawler entre deux appels sur une même instance.
+            analyzer_helper = AnalyzerHelper(
+                session=ctx.session,
+                use_cache=cfg.use_cache,
+                DEBUG=cfg.debug,
+                Semaphore=cfg.semaphore,
+            )
+            analyzer_helper.crawler.config.MAX_WORKERS = 1
+            analyzer_helper.crawler.config.MAX_DEEPTH = 1
+            analyzer_helper.crawler.config.MAX_PAGES = 1
+            analyzer_helper.crawler.config.GET_TIMEOUT = 2
+            analyzer_helper.crawler.config.JOIN_TIMEOUT = 1 * 10 * 60
+            # Cache disque du classify_link/get_all_links (TTL 24h) : désactivé,
+            # sinon un ancien résultat périmé peut être resservi silencieusement
+            # (cf. bug du 29/08).
+            analyzer_helper.crawler.config.USE_CACHE_FOR_GET_LINKS = False
+            # Aucun bénéfice à écrire dans var/crawler_cache pour un build de
+            # dataset one-shot (restore toujours False) — évite la contention
+            # d'écriture SQLite à haute concurrence (num_workers élevé).
+            analyzer_helper.crawler.config.SAVE_ON_CRAWL = False
+
             _, row, phase_timings = await extract_features_single_url(
                 url=url,
                 analyzer_helper=analyzer_helper,
@@ -437,6 +552,15 @@ async def build_dataset(
         f"avec {num_workers} workers fixes (queue asyncio)..."
     )
 
+    # Connector dimensionné dynamiquement : pic théorique = num_workers x
+    # fuzzer_max_workers (voir compute_connector_limit), pas un chiffre en dur.
+    connector_limit = compute_connector_limit(num_workers, base_config.fuzzer_max_workers)
+    check_ulimit(connector_limit)
+    logger.info(
+        f"🔌 Connector dimensionné à {connector_limit} "
+        f"(num_workers={num_workers} × fuzzer_max_workers={base_config.fuzzer_max_workers})"
+    )
+
     queue: "asyncio.Queue[tuple]" = asyncio.Queue()
     for i, target in enumerate(targets, 1):
         queue.put_nowait((i, *target))
@@ -445,7 +569,11 @@ async def build_dataset(
     results_lock = asyncio.Lock()
 
     async with aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=500), # num_workers * 10
+        connector=aiohttp.TCPConnector(
+            limit=connector_limit,
+            limit_per_host=connector_limit,  # tout tape sur 127.0.0.1, même chose
+            ttl_dns_cache=300,
+        ),
     ) as session:
 
         passive_analyzer = PassiveCodeAnalyzer()
@@ -480,7 +608,18 @@ async def build_dataset(
             asyncio.create_task(_dataset_worker(w, ctx), name=f"dataset-worker-{w}")
             for w in range(num_workers)
         ]
-        await asyncio.gather(*workers)
+        # return_exceptions=True : un crash imprévu dans UN worker (bug pas
+        # encore anticipé, en dehors du try/except de _dataset_worker) ne tue
+        # plus les autres. Sans ça, un seul worker en échec faisait planter
+        # gather(), annulait tous les workers restants (résultats déjà en
+        # mémoire perdus car jamais écrits sur disque) et arrêtait tout le
+        # script — c'était la cause probable des chunks entiers "perdus".
+        worker_errors = await asyncio.gather(*workers, return_exceptions=True)
+        for w, exc in enumerate(worker_errors):
+            if isinstance(exc, Exception):
+                logger.error(f"💥 Worker {w} a crashé hors try/except interne : {exc}")
+                if base_config.debug:
+                    logger.error("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
         run_elapsed = time.time() - t0_run
 
         # ── Agrégation des résultats + stats complètes ──
@@ -540,6 +679,8 @@ async def build_dataset(
             "run_timestamp": datetime.now().isoformat(),
             "total_targets": total,
             "num_workers": num_workers,
+            "fuzzer_max_workers": base_config.fuzzer_max_workers,
+            "connector_limit": connector_limit,
             "success": n_success,
             "failed": n_failed,
             "success_rate": round(n_success / total, 4) if total else 0.0,
@@ -595,13 +736,73 @@ async def build_dataset(
 # 5. DÉCOUPAGE EN LOTS (chunks)
 # =============================================================================
 
+def round_chunk_size(chunk_size: int, num_workers: int) -> int:
+    """Arrondit `chunk_size` au multiple de `num_workers` le plus proche
+    (jamais 0 : au moins `num_workers` lui-même). Pur confort d'équilibrage
+    entre workers — n'affecte jamais la correction du resume (voir `start`)."""
+    if num_workers <= 0:
+        return chunk_size
+    n = max(1, round(chunk_size / num_workers))
+    return n * num_workers
+
+
+def _progress_path(out_dir: str) -> str:
+    return os.path.join(out_dir, "_progress.json")
+
+
+def load_progress(out_dir: str, total_targets: int, fallback: int = 0) -> int:
+    """Lit `_progress.json` s'il existe et renvoie l'offset absolu à partir
+    duquel reprendre. Refuse (raise) si `total_targets` a changé depuis le
+    dernier run enregistré : ça veut dire que `V1_TARGETS` a été modifié
+    (ajout/suppression de cibles) et que l'offset stocké ne pointerait plus
+    sur les bonnes cibles — mieux vaut planter clairement que corrompre le
+    dataset silencieusement.
+    """
+    p = _progress_path(out_dir)
+    if not os.path.exists(p):
+        return fallback
+
+    with open(p, encoding="utf-8") as f:
+        data = json.load(f)
+    
+    stored_total = data.get("total_targets")
+    if stored_total != total_targets:
+        raise RuntimeError(
+            f"❌ _progress.json incohérent : enregistré avec total_targets="
+            f"{stored_total}, mais len(targets) actuel={total_targets}. "
+            f"`V1_TARGETS` a changé depuis le dernier run — l'offset "
+            f"last_completed_offset={data.get('last_completed_offset')} ne "
+            f"pointe plus forcément sur les bonnes cibles. Supprime/corrige "
+            f"{p} manuellement (ou repars avec un out_dir neuf) avant de "
+            f"relancer."
+        )
+
+    return data["last_completed_offset"]
+
+
+def save_progress(out_dir: str, last_completed_offset: int, total_targets: int) -> None:
+    """Écrit l'état de progression après chaque lot réussi. `total_targets`
+    est stocké pour détecter une incohérence si `targets` change de taille
+    entre deux runs (voir `load_progress`)."""
+    with open(_progress_path(out_dir), "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "last_completed_offset": last_completed_offset,
+                "total_targets": total_targets,
+                "updated_at": datetime.now().isoformat(),
+            },
+            f,
+            indent=2,
+        )
+
+
 async def build_dataset_chunked(
     targets: list,
     config: Optional[SingleUrlExtractorConfig] = None,
     out_dir: str = "./dataset_chunks",
     num_workers: int = NUM_WORKERS,
     chunk_size: int = 100,
-    start: int = 0,
+    start: Optional[int] = None,
 ) -> List[str]:
     """Découpe `targets` en lots de `chunk_size` et appelle `build_dataset()`
     séquentiellement sur chacun, avec nettoyage explicite entre les lots :
@@ -612,31 +813,51 @@ async def build_dataset_chunked(
       - `gc.collect()` explicite entre les lots pour forcer la libération
         mémoire immédiatement plutôt que d'attendre le GC automatique.
 
-    Chaque lot produit son propre `{out_dir}/chunk_XXXX.pkl` (+ `.csv` +
-    `_stats.json`) — utilise `merge_chunks.py` ensuite pour les recombiner
-    en un seul dataset.
+    `start` est un OFFSET ABSOLU (0-based) dans `targets`, pas un numéro de
+    lot — il reste valide même si `chunk_size` change d'un run à l'autre
+    (ex: via `round_chunk_size` pour équilibrer sur `num_workers`).
+    Si `start=None` (défaut), l'offset est lu depuis `{out_dir}/_progress.json`
+    s'il existe, sinon `0`. Le fichier de progression est mis à jour
+    automatiquement après chaque lot réussi — tu n'as normalement jamais à
+    le toucher à la main (voir `load_progress`/`save_progress`).
+
+    Chaque lot produit son propre fichier nommé par la plage de cibles qu'il
+    couvre (`chunk_00000-00099.pkl` + `.csv` + `_stats.json`) plutôt que par
+    un numéro de lot arbitraire — lisible directement sans avoir à recalculer
+    avec quel `chunk_size` il a été produit. Utilise `merge_chunks.py`
+    ensuite pour les recombiner en un seul dataset.
 
     Si un lot échoue avec une exception non gérée, les lots précédents
-    restent sur disque (rien n'est perdu) — relance juste à partir du lot
-    concerné en adaptant `targets[i*chunk_size:]`.
+    restent sur disque (rien n'est perdu) et `_progress.json` pointe déjà sur
+    le dernier lot réussi — relance simplement le script sans argument.
 
     Returns:
-        Liste des chemins `.pkl` de chaque lot produit.
+        Liste des chemins `.pkl` de chaque lot produit (dans cette exécution).
     """
     os.makedirs(out_dir, exist_ok=True)
     base_config = config or SingleUrlExtractorConfig()
-    n_chunks = math.ceil(len(targets) / chunk_size)
+    total = len(targets)
+    if start is None:
+        start = load_progress(out_dir, total_targets=total, fallback=0)
+
+    if start >= total:
+        logger.info(f"✅ Rien à faire : start={start} >= total={total} (déjà terminé).")
+        return []
+
     chunk_paths: List[str] = []
-
+    n_chunks_remaining = math.ceil((total - start) / chunk_size)
+    
     logger.info(
-        f"📦 Découpage en {n_chunks} lots de {chunk_size} cibles "
-        f"({len(targets)} cibles au total, {num_workers} workers/lot)"
+        f"📦 Reprise à l'offset {start}/{total} — {n_chunks_remaining} lots de "
+        f"~{chunk_size} cibles restants ({num_workers} workers/lot)"
     )
-    for i in range(start, n_chunks):
-        chunk = targets[i * chunk_size:(i + 1) * chunk_size]
-        chunk_out_path = os.path.join(out_dir, f"chunk_{i:04d}")
 
-        logger.info(f"\n{'=' * 60}\n📦 Lot {i + 1}/{n_chunks} — {len(chunk)} cibles\n{'=' * 60}")
+    for offset in range(start, total, chunk_size):
+        end = min(offset + chunk_size, total)
+        chunk = targets[offset:end]
+        chunk_out_path = os.path.join(out_dir, f"chunk_{offset:05d}-{end - 1:05d}")
+
+        logger.info(f"\n{'=' * 60}\n📦 Cibles [{offset}:{end}] ({len(chunk)})\n{'=' * 60}")
 
         try:
             await build_dataset(
@@ -647,16 +868,23 @@ async def build_dataset_chunked(
             )
             chunk_paths.append(f"{chunk_out_path}.pkl")
         except Exception as ex:
-            logger.error(f"❌ Lot {i + 1}/{n_chunks} interrompu : {ex}")
+            logger.error(f"❌ Lot [{offset}:{end}] interrompu : {ex}")
             logger.error(traceback.format_exc())
             logger.info(
-                f"Les {len(chunk_paths)} lots précédents sont intacts sur disque. "
-                f"Relance à partir du lot {i} pour continuer."
+                f"Les {len(chunk_paths)} lots de cette exécution sont intacts sur "
+                f"disque. `_progress.json` est resté sur le dernier offset validé "
+                f"({offset}) — relance simplement le script sans argument pour "
+                f"reprendre exactement là où ça a cassé."
             )
             raise
 
+        # Le lot est écrit sur disque avec succès AVANT qu'on avance le curseur
+        # de progression : si le process meurt entre les deux (kill -9, OOM),
+        # on retraite au pire ce même lot au prochain run — jamais un trou.
+        save_progress(out_dir, last_completed_offset=end, total_targets=total)
+
         gc.collect()
-        logger.info(f"🧹 Lot {i + 1}/{n_chunks} terminé, mémoire nettoyée.")
+        logger.info(f"🧹 Lot [{offset}:{end}] terminé, mémoire nettoyée.")
 
     logger.info(f"\n✨ Tous les lots terminés : {len(chunk_paths)} fichiers dans {out_dir}")
     return chunk_paths
@@ -666,16 +894,19 @@ async def build_dataset_chunked(
 # 6. POINT D'ENTRÉE DU SCRIPT
 # =============================================================================
 
-# Nombre FIXE de workers, réduit après le diagnostic ab (num_workers x
-# fuzzer.config.MAX_WORKERS=10 concurrent sur les serveurs cibles — 100
-# workers = jusqu'à 1000 concurrent, dégradation confirmée par ab à c=1000).
-NUM_WORKERS_DEFAULT_RUN = 12
-CHUNK_SIZE_DEFAULT = 100
+# Passage progressif 12 -> 20 workers (au lieu d'un saut direct à 100) :
+# chunk_size arrondi au multiple de num_workers le plus proche pour un
+# partage équitable entre workers en fin de lot (voir round_chunk_size).
+# fuzzer_max_workers reste à 10 (déjà pris en compte dans le connector
+# dynamique ci-dessus). Reste sur ce palier le temps de valider
+# `errors_by_type` sur 2-3 chunks avant de remonter plus haut.
+NUM_WORKERS_DEFAULT_RUN = 10
+CHUNK_SIZE_DEFAULT = round_chunk_size(30, NUM_WORKERS_DEFAULT_RUN)  # → 100 (déjà multiple)
 
 if __name__ == "__main__":
     apply()
 
-    async def main(start: int = 0):
+    async def main(start: Optional[int] = None):
         print("=" * 70)
         print("🚀 GÉNÉRATION DU DATASET D'ENTRAÎNEMENT SCANNER IA (par lots)")
         print("=" * 70)
@@ -688,6 +919,7 @@ if __name__ == "__main__":
             debug=False,
             timeout=120,
             fuzzer_limit=100,
+            fuzzer_max_workers=10,
             use_semantic=True,
             semaphore=200,
             use_cache=False,   # explicite : jamais de résultats périmés
@@ -703,7 +935,7 @@ if __name__ == "__main__":
             out_dir=out_dir,
             num_workers=NUM_WORKERS_DEFAULT_RUN,
             chunk_size=CHUNK_SIZE_DEFAULT,
-            start=start
+            start=start,  # None => lu automatiquement depuis _progress.json
         )
         elapsed = time.time() - t0
 
@@ -711,8 +943,11 @@ if __name__ == "__main__":
         print(f"🎉 {len(chunk_paths)} lots prêts en {elapsed:.2f}s dans {out_dir}")
         print("👉 Lance merge_chunks.py pour les recombiner en un seul dataset")
         print("=" * 70)
-    
+
     import sys
-    DEFAULT = 13 # 0
-    start = list(sys.argv)[1] if len(list(sys.argv)) >= 2 else DEFAULT 
+    # Aucun argv => start=None => offset lu automatiquement depuis
+    # dataset_chunks/_progress.json (ou 0 si le fichier n'existe pas encore).
+    # Passer un argv force un offset ABSOLU précis (ex: pour reprendre
+    # manuellement après avoir corrigé _progress.json à la main).
+    start = int(sys.argv[1]) if len(sys.argv) >= 2 else None
     asyncio.run(main(start=start))

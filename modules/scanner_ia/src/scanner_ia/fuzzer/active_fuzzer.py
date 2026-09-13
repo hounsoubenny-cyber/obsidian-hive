@@ -146,10 +146,7 @@ class Fuzzer:
         )
         self.config = Config()
         self.update_conf(kwargs)
-        self._executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.config.MAX_WORKERS, 
-            thread_name_prefix="fuzzer_workers"
-        )
+        self._init_pool()
         self._cancel_flag = False
 
     def is_in_scope(self, url: str, allowed_domains: list[str]) -> bool:
@@ -159,7 +156,13 @@ class Fuzzer:
 
     async def create_session(self, session):
         return session or aiohttp.ClientSession()
-
+    
+    def _init_pool(self):
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.config.MAX_WORKERS, 
+            thread_name_prefix="fuzzer_workers"
+        )
+        
     def update_conf(self, kwargs: dict = None):
         """
         Met à jour la configuration.
@@ -755,7 +758,8 @@ class Fuzzer:
                 logger_fuzzer.error(f"URL hors scope → {base_url}")
                 self.config.MAX_TEST = max_test_b
                 return FuzzerResult()
-
+        
+        
         result = FuzzerResult()
         # await self.ensure_session()
         start_time = time.time()

@@ -175,21 +175,22 @@ class Logger:
         console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(ColoredFormatter())
         self.logger.addHandler(console_handler)
-
+        max_bytes = 0 # 100 * 1024 * 1024
+        backup_count = 0 # 30
         # Fichier JSON structuré
         if self.structured:
             log_file = self.log_dir / f"{self.module_name}.json"
             fh = logging.handlers.RotatingFileHandler(
-                log_file, maxBytes=100*1024*1024, backupCount=30, encoding='utf-8'
+                log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
             )
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(JsonFormatter())
-            self.logger.addHandler(fh)
+            # self.logger.addHandler(fh)
 
         # Fichier texte lisible
         log_file = self.log_dir / f"{self.module_name}.log"
         fh = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=100*1024*1024, backupCount=30, encoding='utf-8'
+            log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
         )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(logging.Formatter(
@@ -197,12 +198,12 @@ class Logger:
             "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S"
         ))
-        self.logger.addHandler(fh)
+        # self.logger.addHandler(fh)
 
         # Fichier erreurs uniquement
         error_file = self.log_dir / f"errors_{self.module_name}.log"
         eh = logging.handlers.RotatingFileHandler(
-            error_file, maxBytes=50*1024*1024, backupCount=90, encoding='utf-8'
+            error_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
         )
         eh.setLevel(logging.ERROR)
         eh.setFormatter(logging.Formatter(
@@ -210,7 +211,7 @@ class Logger:
             "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S"
         ))
-        self.logger.addHandler(eh)
+        # self.logger.addHandler(eh)
 
     def _detect_level(self, message: str) -> int:
         """Détecte le niveau via regex compilés — ordre : SUCCESS avant ERROR

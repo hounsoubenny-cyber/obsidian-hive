@@ -219,6 +219,7 @@ class Scanner:
                 **self.config_manager.fuzzer_conf  # Pour que le pool soit à jour.
             )
             self.fuzzer.update_conf(self.config_manager.fuzzer_conf)
+            self._init_pool()
         self.fuzzer_mock = MockFuzzer()
 
         self.feature_extractor = FeatureExtractor()

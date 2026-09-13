@@ -878,7 +878,8 @@ async def agent_ws(ws: WebSocket, asset_id: str):
 
             elif msg_type == "self_destruct_ack":
                 ws_manager.resolve_pending_ack(asset_id)
-                return            await ws.send_json({"type": "ack_error", "message": f"Type inconnu: {msg_type!r}"})
+                await ws.send_json({"type": "ack_error", "message": f"Type inconnu: {msg_type!r}"})
+                return
 
     except WebSocketDisconnect:
         pass

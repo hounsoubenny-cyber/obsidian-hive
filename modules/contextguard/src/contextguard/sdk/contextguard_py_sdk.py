@@ -25,8 +25,6 @@ sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", 
 from contextguard.core.utils import verify_salt
 from fastapi import HTTPException, status
 
-nest_asyncio.apply()
-
 # Configuration des URLs de l'API
 _API_URL = "http://localhost:8000"
 _ANALYSE_PATH = "/api/analyse"
@@ -677,6 +675,8 @@ class ContextGuardSDK:
 # ==================== EXEMPLE D'UTILISATION ====================
 
 if __name__ == "__main__":
+    nest_asyncio.apply()
+    
     USERNAME = "test_user"    
     PASSWORD = "password"
     SALT = b'$2b$12$ATMNYOv6TKJpTm7o1GTFYO'.decode()

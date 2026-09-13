@@ -380,10 +380,10 @@ class Crawler:
                 get_timeout_err = 0
                 queue_empty_count = 0
                 #objet: {worker_object.to_dict() if hasattr(worker_object, 'to_dict') else None}
-                print(
-                    f"ID: {worker_id},  "
-                    f"Taille queue: {queue.qsize()}"
-                )
+                # print(
+                #     f"ID: {worker_id},  "
+                #     f"Taille queue: {queue.qsize()}"
+                # )
                 if worker_object is None:
                     break
                 
@@ -392,7 +392,7 @@ class Crawler:
                        continue
                 
                 same_domain = self.parser.is_same_domain(worker_object.url, url) 
-                print("Same domain:", same_domain, "base url:", url)
+                # print("Same domain:", same_domain, "base url:", url)
                 # async with lock:
                 #     is_same = self.parser.is_same_domain(worker_object.url, url)
                 #     should_skip = self.config.RESTRAIN_FOR_THIS_DOMAIN and not is_same
@@ -451,9 +451,9 @@ class Crawler:
                 worker_object.same_domain = same_domain
                 worker_object.other_links = list(dict.fromkeys(get_all_links_result.other_links))
                 worker_object.type = get_all_links_result.type
-                print(
-                    f"ID: {worker_id}, objet: {worker_object.to_dict() if hasattr(worker_object, 'to_dict') else None} "
-                )
+                # print(
+                #     f"ID: {worker_id}, objet: {worker_object.to_dict() if hasattr(worker_object, 'to_dict') else None} "
+                # )
                 
                 for link, data in get_all_links_result.html_links.items():
                     # print(link, data)

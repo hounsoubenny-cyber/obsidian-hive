@@ -1,0 +1,12 @@
+bind = "127.0.0.1:5051"
+workers = 18
+worker_class = "gevent"
+worker_connections = 5000
+backlog = 8192
+keep_alive = 2
+timeout = 30
+reuse_port = True
+limit_request_line = 32768
+limit_request_field_size = 32768
+check_config = False
+print_config = False

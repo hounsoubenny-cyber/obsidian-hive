@@ -1,0 +1,341 @@
+{
+  "min_samples_for_smote": 6,
+  "k_neighbors": 5,
+  "n_categorical_features": 52,
+  "n_continuous_features": 43,
+  "combos_before": {
+    "SQLi": 352,
+    "InsecDeser": 147,
+    "InsecUpload": 142,
+    "CMDi": 209,
+    "BrokenAuth": 217,
+    "CredsExpose": 223,
+    "XSS": 352,
+    "BufOvr": 142,
+    "XXE": 139,
+    "NoSQLi": 217,
+    "DirTrav": 214,
+    "LDAPi": 148,
+    "IDOR": 217,
+    "InsecPerm": 218,
+    "SSRF": 207,
+    "SessFix": 140,
+    "SSTI": 212,
+    "Prototype_Pollution": 141,
+    "XPATH_Injection": 138,
+    "GraphQLi": 142,
+    "CSRF": 212,
+    "HTTP_Request_Smuggling": 142,
+    "RateLimit": 140,
+    "CORS": 148,
+    "InsecCrypto": 145,
+    "OpenRedirect": 141,
+    "InfoDisc": 214,
+    "JWT": 214,
+    "CRLF_Injection": 144,
+    "RaceCondition": 145,
+    "CSRF+XSS": 71,
+    "InfoDisc+SQLi": 69,
+    "IDOR+InsecPerm": 65,
+    "CredsExpose+SSRF": 74,
+    "BrokenAuth+JWT": 75,
+    "CORS+CredsExpose": 69,
+    "InsecCrypto+XSS": 72,
+    "BrokenAuth+SQLi": 76,
+    "DirTrav+InfoDisc": 70,
+    "DirTrav+InsecUpload": 72,
+    "BrokenAuth+NoSQLi": 66,
+    "CSRF+OpenRedirect": 75,
+    "SSRF+XXE": 75,
+    "InfoDisc+SSTI": 71,
+    "CSRF+IDOR": 72,
+    "BrokenAuth+RateLimit": 74,
+    "InsecCrypto+JWT": 69,
+    "BrokenAuth+LDAPi": 65,
+    "InfoDisc+XPATH_Injection": 76,
+    "GraphQLi+RateLimit": 72,
+    "InsecPerm+Prototype_Pollution": 73,
+    "CredsExpose+HTTP_Request_Smuggling": 72,
+    "CRLF_Injection+OpenRedirect": 70,
+    "InsecPerm+RaceCondition": 69,
+    "CMDi+InfoDisc": 74,
+    "CredsExpose+InsecDeser": 67,
+    "BufOvr+InfoDisc": 72,
+    "BrokenAuth+SessFix": 73,
+    "SQLi+XSS": 76,
+    "CredsExpose+IDOR+InfoDisc": 71,
+    "InfoDisc+SSRF+XXE": 70,
+    "CSRF+OpenRedirect+XSS": 72,
+    "BrokenAuth+InfoDisc+SQLi": 70,
+    "IDOR+InsecPerm+JWT": 74,
+    "CORS+CredsExpose+JWT": 66,
+    "SAFE": 192
+  },
+  "combos_synthesized": {
+    "SessFix": {
+      "before": 140,
+      "after": 140
+    },
+    "InfoDisc+SSRF+XXE": {
+      "before": 70,
+      "after": 76
+    },
+    "CSRF+OpenRedirect": {
+      "before": 75,
+      "after": 76
+    },
+    "InfoDisc+SSTI": {
+      "before": 71,
+      "after": 76
+    },
+    "BufOvr": {
+      "before": 142,
+      "after": 142
+    },
+    "InfoDisc+SQLi": {
+      "before": 69,
+      "after": 76
+    },
+    "InsecUpload": {
+      "before": 142,
+      "after": 142
+    },
+    "CSRF": {
+      "before": 212,
+      "after": 212
+    },
+    "SSTI": {
+      "before": 212,
+      "after": 212
+    },
+    "BrokenAuth+RateLimit": {
+      "before": 74,
+      "after": 76
+    },
+    "DirTrav": {
+      "before": 214,
+      "after": 214
+    },
+    "CredsExpose+SSRF": {
+      "before": 74,
+      "after": 76
+    },
+    "CRLF_Injection+OpenRedirect": {
+      "before": 70,
+      "after": 76
+    },
+    "CredsExpose+IDOR+InfoDisc": {
+      "before": 71,
+      "after": 76
+    },
+    "CSRF+IDOR": {
+      "before": 72,
+      "after": 76
+    },
+    "CredsExpose": {
+      "before": 223,
+      "after": 223
+    },
+    "Prototype_Pollution": {
+      "before": 141,
+      "after": 141
+    },
+    "BufOvr+InfoDisc": {
+      "before": 72,
+      "after": 76
+    },
+    "CSRF+OpenRedirect+XSS": {
+      "before": 72,
+      "after": 76
+    },
+    "InsecDeser": {
+      "before": 147,
+      "after": 147
+    },
+    "GraphQLi": {
+      "before": 142,
+      "after": 142
+    },
+    "BrokenAuth+SessFix": {
+      "before": 73,
+      "after": 76
+    },
+    "IDOR": {
+      "before": 217,
+      "after": 217
+    },
+    "BrokenAuth": {
+      "before": 217,
+      "after": 217
+    },
+    "CORS": {
+      "before": 148,
+      "after": 148
+    },
+    "CSRF+XSS": {
+      "before": 71,
+      "after": 76
+    },
+    "CMDi+InfoDisc": {
+      "before": 74,
+      "after": 76
+    },
+    "BrokenAuth+InfoDisc+SQLi": {
+      "before": 70,
+      "after": 76
+    },
+    "CORS+CredsExpose+JWT": {
+      "before": 66,
+      "after": 76
+    },
+    "BrokenAuth+JWT": {
+      "before": 75,
+      "after": 76
+    },
+    "BrokenAuth+SQLi": {
+      "before": 76,
+      "after": 76
+    },
+    "RateLimit": {
+      "before": 140,
+      "after": 140
+    },
+    "InfoDisc": {
+      "before": 214,
+      "after": 214
+    },
+    "DirTrav+InfoDisc": {
+      "before": 70,
+      "after": 76
+    },
+    "CORS+CredsExpose": {
+      "before": 69,
+      "after": 76
+    },
+    "HTTP_Request_Smuggling": {
+      "before": 142,
+      "after": 142
+    },
+    "JWT": {
+      "before": 214,
+      "after": 214
+    },
+    "BrokenAuth+LDAPi": {
+      "before": 65,
+      "after": 76
+    },
+    "SSRF": {
+      "before": 207,
+      "after": 207
+    },
+    "OpenRedirect": {
+      "before": 141,
+      "after": 141
+    },
+    "CRLF_Injection": {
+      "before": 144,
+      "after": 144
+    },
+    "InsecPerm+RaceCondition": {
+      "before": 69,
+      "after": 76
+    },
+    "InsecPerm": {
+      "before": 218,
+      "after": 218
+    },
+    "DirTrav+InsecUpload": {
+      "before": 72,
+      "after": 76
+    },
+    "InsecCrypto": {
+      "before": 145,
+      "after": 145
+    },
+    "XXE": {
+      "before": 139,
+      "after": 139
+    },
+    "CMDi": {
+      "before": 209,
+      "after": 209
+    },
+    "InsecCrypto+JWT": {
+      "before": 69,
+      "after": 76
+    },
+    "GraphQLi+RateLimit": {
+      "before": 72,
+      "after": 76
+    },
+    "InsecPerm+Prototype_Pollution": {
+      "before": 73,
+      "after": 76
+    },
+    "IDOR+InsecPerm+JWT": {
+      "before": 74,
+      "after": 76
+    },
+    "SSRF+XXE": {
+      "before": 75,
+      "after": 76
+    },
+    "InfoDisc+XPATH_Injection": {
+      "before": 76,
+      "after": 76
+    },
+    "BrokenAuth+NoSQLi": {
+      "before": 66,
+      "after": 76
+    },
+    "XSS": {
+      "before": 352,
+      "after": 352
+    },
+    "InsecCrypto+XSS": {
+      "before": 72,
+      "after": 76
+    },
+    "SQLi": {
+      "before": 352,
+      "after": 352
+    },
+    "IDOR+InsecPerm": {
+      "before": 65,
+      "after": 76
+    },
+    "CredsExpose+HTTP_Request_Smuggling": {
+      "before": 72,
+      "after": 76
+    },
+    "CredsExpose+InsecDeser": {
+      "before": 67,
+      "after": 76
+    },
+    "RaceCondition": {
+      "before": 145,
+      "after": 145
+    },
+    "NoSQLi": {
+      "before": 217,
+      "after": 217
+    },
+    "SQLi+XSS": {
+      "before": 76,
+      "after": 76
+    },
+    "XPATH_Injection": {
+      "before": 138,
+      "after": 138
+    },
+    "SAFE": {
+      "before": 192,
+      "after": 192
+    },
+    "LDAPi": {
+      "before": 148,
+      "after": 148
+    }
+  },
+  "combos_skipped_too_small": {}
+}
