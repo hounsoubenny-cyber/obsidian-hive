@@ -1,0 +1,53 @@
+======================================================================
+RAPPORT D'ÉVALUATION — scanner_ia
+======================================================================
+Généré le    : 2026-09-14T12:54:59.336301
+Échantillons de test : 2729 (jamais upsamplés)
+
+F1 micro        : 0.2738
+F1 macro        : 0.3765
+F1 samples      : 0.3877
+F1 weighted     : 0.3815
+Hamming loss    : 0.1246
+Jaccard(samples): 0.3537
+
+----------------------------------------------------------------------
+RAPPORT PAR CLASSE
+----------------------------------------------------------------------
+                        precision    recall  f1-score   support
+
+                  SQLi       0.16      0.65      0.26       161
+                  CMDi       0.23      0.66      0.34        71
+            InsecDeser       0.05      0.70      0.09        54
+           InsecUpload       0.05      0.57      0.09        54
+                BufOvr       0.86      0.94      0.90        54
+           CredsExpose       0.44      0.87      0.58       160
+            BrokenAuth       0.21      0.72      0.33       179
+                   XSS       0.17      0.75      0.28       161
+               DirTrav       0.23      0.66      0.34        89
+                   XXE       0.07      0.65      0.12        71
+                NoSQLi       0.83      0.97      0.90        71
+                 LDAPi       0.44      0.70      0.54        53
+             InsecPerm       0.24      0.68      0.36       125
+                  IDOR       0.13      0.85      0.23       125
+               SessFix       0.25      0.68      0.37        53
+                  SSRF       0.28      0.58      0.37       106
+                  SSTI       0.06      0.73      0.12        71
+   Prototype_Pollution       0.05      0.45      0.09        53
+HTTP_Request_Smuggling       1.00      0.98      0.99        54
+       XPATH_Injection       0.09      0.61      0.15        54
+              GraphQLi       0.17      0.68      0.28        53
+                  CORS       0.68      0.99      0.80        71
+                  CSRF       0.16      0.51      0.24       125
+             RateLimit       0.10      0.39      0.16        71
+              InfoDisc       0.43      0.83      0.57       214
+           InsecCrypto       0.07      0.53      0.12        72
+          OpenRedirect       0.14      0.46      0.22        90
+                   JWT       0.61      0.73      0.66       125
+        CRLF_Injection       0.87      0.61      0.72        54
+         RaceCondition       0.05      0.44      0.08        54
+
+             micro avg       0.17      0.70      0.27      2748
+             macro avg       0.30      0.69      0.38      2748
+          weighted avg       0.30      0.70      0.38      2748
+           samples avg       0.36      0.52      0.39      2748

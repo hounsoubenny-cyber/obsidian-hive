@@ -91,7 +91,7 @@ class AnomalyDetector:
         prenom: str = 'Admin',
         graph: RealTimePLot = None,
         interfaces: list = None,
-        whiltelist: str = "whitelist.json",
+        whitelist: str = "whitelist.json",
         clear_sets_at_exit: bool = True,
         unlock_at_exit: bool = True,
         mode: str = "ids",
@@ -107,7 +107,7 @@ class AnomalyDetector:
         self.last_anomalies_queue: deque = deque(maxlen=int(MAX_ANOMALIES) * 5)
         self.whitelist = []
         self.React = React(
-            whitelist=whiltelist,
+            whitelist=whitelist,
             clear_sets_at_exit=clear_sets_at_exit,
             unlock_at_exit=unlock_at_exit
         )

@@ -5,7 +5,6 @@ Test end-to-end ObsidianEngine
 import asyncio
 import tempfile
 import os
-import sys
 
 from obsidian_hive.core.engine import ObsidianEngine
 from obsidian_hive.core.assets.asset_types import WebAsset, Priority
@@ -26,7 +25,7 @@ async def test():
         ) as engine:
 
             # 1. Status initial
-            print(f"\n✅ Moteur démarré")
+            print("\n✅ Moteur démarré")
             print(f"   {engine.status()}")
 
             # 2. Ajouter un asset — workflow immédiat
@@ -73,22 +72,22 @@ async def test():
 
             # 5. Pause
             await engine.pause_asset(asset.id)
-            print(f"\n⏸️  Asset mis en pause")
+            print("\n⏸️  Asset mis en pause")
             print(f"   Tasks actives: {engine.status()['active_tasks']}")
 
             # 6. Resume
             await engine.resume_asset(asset.id)
-            print(f"\n▶️  Asset repris")
+            print("\n▶️  Asset repris")
             print(f"   Tasks actives: {engine.status()['active_tasks']}")
 
             # 7. Remove
             await engine.remove_asset(asset.id)
-            print(f"\n🗑️  Asset retiré")
+            print("\n🗑️  Asset retiré")
 
             # Vérifier suppression
             asset_db = await engine.asset_manager.get_by_item_id(asset.id)
             assert asset_db is None, "❌ Asset toujours en DB après suppression"
-            print(f"✅ Asset bien supprimé de la DB")
+            print("✅ Asset bien supprimé de la DB")
 
         print("\n✅ Moteur arrêté proprement")
         print("\n" + "=" * 60)

@@ -107,7 +107,7 @@ class ScannerIA:
         visualize:bool = True,
         test_size:float = 0.2,
         do_learning_curve:bool = True,
-        user_mlb:bool = True,
+        use_mlb:bool = True,
         restrain_to_cols:bool = True,
         apply_smote:bool = True,
     ):
@@ -139,7 +139,7 @@ class ScannerIA:
             optimization_size=optimization_size,
             n_trial=n_trial, timeout=timeout,
             do_learning_curve=do_learning_curve,
-            user_mlb=user_mlb, test_size=test_size
+            use_mlb=use_mlb, test_size=test_size
             )
         return self
         
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     #     optimize=False,          # pas d'Optuna pour le MVP
     #     test_size=0.1,
     #     do_learning_curve=False, # trop peu de données
-    #     user_mlb=True,
+    #     use_mlb=True,
     #     n_trial=5,
     # )
 

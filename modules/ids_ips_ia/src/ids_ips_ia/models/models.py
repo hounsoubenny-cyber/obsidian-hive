@@ -1126,9 +1126,9 @@ class Models:
             recons = tf_model.predict(X_test)
         else:
             if cnn_bottleneck:
-                cnn_memory = cnn_memory = cnn_bottleneck.predict(X_test)
+                cnn_memory = cnn_bottleneck.predict(X_test)
             else:
-                cnn_memory = np.zeros((X_test.shape[0], X_test.shape[1]//4, 16))
+                cnn_memory = np.zeros((X_test.shape[0], X_test.shape[1] // 4, 16))
             
             recons = tf_model.predict([X_test, cnn_memory])
         mse = np.square(X_test - recons)

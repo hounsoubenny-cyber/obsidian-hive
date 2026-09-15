@@ -69,6 +69,7 @@ class NetworkWorkflow(WorkflowBase):
         super().__init__(llm_manager=llm_manager, report_manager=report_manager)
         self.asset = asset
         self.process: asyncio.subprocess.Process | None = None
+        self.iface_prefix = "br-"
     
     async def _setup_deployment(self):
         """Configure le déploiement réseau en fonction du mode choisi.
@@ -93,7 +94,7 @@ class NetworkWorkflow(WorkflowBase):
                 conf.update("GLOBAL_CONFIG", {"interface": interfaces})
         
             elif mode == NetworkDeploymentMode.BRIDGE.value:
-                bridge_name = f"br-{self.asset.id[-8:]}"
+                bridge_name = f"{self.iface_prefix}{self.asset.id[-8:]}"
         
                 # Idempotence : on ne tente la création que si le bridge n'existe
                 # pas déjà (utile aux redémarrages — évite un `ip link add` retenté
@@ -118,6 +119,19 @@ class NetworkWorkflow(WorkflowBase):
     
         await asyncio.to_thread(_run_ip_cmds)
     
+    async def delete_interface(self, interfaces: list[str]):
+        def delete():
+            if interfaces:
+                for iface in interfaces:
+                    if isinstance(iface, str) and iface:
+                        iface = str(iface).strip()
+                        try:
+                            subprocess.run(["ip", "link", "delete", str(iface)], check=False, timeout=30)
+                        except Exception as e:
+                            logger.info(f"Erreur lors de la suppresion de l'interface {str(iface)!r}: {e!r}")
+        
+        return await asyncio.to_thread(delete)
+
     async def run_async(self):
         """Exécute le workflow de surveillance réseau de manière asynchrone.
         
@@ -166,6 +180,19 @@ class NetworkWorkflow(WorkflowBase):
         
         finally:
             log_file.close()
+            
+            mode = self.asset.deployment_mode
+            if mode == NetworkDeploymentMode.BRIDGE.value:
+                conf = Config(self.asset.config_path)
+                interfaces = conf.CONFIG[GLOBAL_CONFIG_KEY].get("interfaces", [])
+                if isinstance(interfaces, str):
+                    interfaces = [interfaces]
+                
+                if interfaces and isinstance(interfaces, list):
+                    interfaces = [iface for iface in interfaces if str(iface).startswith(self.iface_prefix)]
+                
+                    await self.delete_interface(interfaces)
+            
     
     async def is_healthy(self) -> bool:
         """Vérifie si le processus IDS/IPS est toujours en vie.

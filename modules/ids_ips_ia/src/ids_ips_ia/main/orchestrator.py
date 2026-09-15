@@ -103,7 +103,7 @@ class IDS_IPS:
         self.session_id = str(uuid4())
         self.RefitQueue = RefitQueue(session_id=self.session_id)
         self.Capture = None
-        self.whiltelist = "whitelist.json"
+        self.whitelist = "whitelist.json"
         self.detector = None  # sera assigné dans _detection_coroutine
         self.process = []
         self.threads = []
@@ -237,7 +237,7 @@ class IDS_IPS:
         self.do_not_fit = input(
             "Capturer le traffic pour fit un modèle ? Mettre 0 pour non, si vous avez un modèle, si il est imcompatible le fit sera quand même lancé (1/0, default 0)"
         ).strip().lower() == "O"
-        self.whiltelist = []
+        self.whitelist = []
 
     def _file_config(self):
         """Charge la configuration depuis le dictionnaire CONFIG."""
@@ -255,7 +255,7 @@ class IDS_IPS:
         self.clear_sets_at_exit = CONFIG.get("clear_sets_at_exit", False)
         self.unlock_at_exit = CONFIG.get("unlock_at_exit", True)
         self.do_not_fit = CONFIG.get("do_not_fit", False)
-        self.whiltelist = CONFIG.get("whitelist", [])
+        self.whitelist = CONFIG.get("whitelist", [])
 
     def _print_configuration(self):
         """Affiche la configuration courante."""
@@ -495,7 +495,7 @@ class IDS_IPS:
                 unlock_at_exit=self.unlock_at_exit,
                 mode=self.ids_mode,
                 queue=queue_or_mem,
-                whiltelist=self.whiltelist,
+                whitelist=self.whitelist,
             )
             self.detector = detector
 

@@ -384,7 +384,7 @@ class AgentWSClient:
         self.ack_timeout = ack_timeout
         self.secret = secret
         self.default_headers = {
-            "Authorization": f"Baerer {self.secret}"
+            "Authorization": f"Bearer {self.secret}"
         }
         self._last_ack_at: float | None = None
         self.n_messages: int = 0

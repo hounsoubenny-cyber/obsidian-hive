@@ -48,7 +48,7 @@ import skops.io as skio
 from zipfile import ZIP_DEFLATED
 
 from scanner_ia.ml_model.mlsmote import MLSMOTE
-from scanner_utils.logger import get_logger
+from scanner_ia.scanner_utils.logger import get_logger
 
 # Configuration des logs
 modelmanager_logger = get_logger()
@@ -610,7 +610,7 @@ class ModelManager:
         visualize:bool = True,
         test_size:float = 0.2,
         do_learning_curve:bool = True,
-        user_mlb:bool = True
+        use_mlb:bool = True
     ):
         modelmanager_logger.info("=" * 70)
         modelmanager_logger.info("🚀 DÉMARRAGE DU FIT")
@@ -622,7 +622,7 @@ class ModelManager:
         except Exception:
             modelmanager_logger.debug("Ajustement du MultiLabelBinarizer...")
             self.mlb.fit([])
-        if user_mlb:
+        if use_mlb:
             y = self.mlb.transform(y)
             modelmanager_logger.info(f"✓ Labels transformés: {y.shape}")
         else:
@@ -922,7 +922,7 @@ if __name__ == "__main__":
         visualize=True,
         test_size=0.2,
         do_learning_curve=True,
-        user_mlb=False, n_trial=5
+        use_mlb=False, n_trial=5
     )
     
     # 5. Test des prédictions
