@@ -27,7 +27,7 @@ class SendMsgType(StrEnum):
 class ReceiveMsgType(StrEnum):
     HEARTBEAT_ACK = "heartbeat_ack"
     TOOL_CALL = "tool_call"
-    SELF_DESTRCUT = "self_destruct"
+    SELF_DESTRUCT = "self_destruct"
     SECRET_ROTATED = "secret_rotated"
     REVOKED = "revoked"
     CONFIG_UPDATE = "config_update"

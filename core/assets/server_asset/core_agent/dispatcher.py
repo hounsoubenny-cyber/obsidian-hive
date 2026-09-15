@@ -67,7 +67,7 @@ class AgentDispatcher:
         handler = {
             ReceiveMsgType.HEARTBEAT_ACK.value : self._on_heartbeat_ack,
             ReceiveMsgType.TOOL_CALL.value : self._on_tool_call,
-            ReceiveMsgType.SELF_DESTRCUT.value : self._on_self_destruct,
+            ReceiveMsgType.SELF_DESTRUCT.value : self._on_self_destruct,
             ReceiveMsgType.REVOKED.value : self._on_revoked,
             ReceiveMsgType.SECRET_ROTATED.value : self._on_secret_rotated,
             ReceiveMsgType.CONFIG_RELOAD.value : self._on_config_reload,
