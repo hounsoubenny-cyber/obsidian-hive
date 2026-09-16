@@ -7,6 +7,7 @@ Created on Wed Mar 18 11:22:09 2026
 """
 
 import os
+import json
 import asyncio
 import aiohttp
 import traceback
@@ -42,6 +43,123 @@ TECHS = {
     'angular': ['angular', 'ng-'],
     'react': ['react', 'react-dom']
 }
+
+# Clés JSON dont la présence est un signal (fuite d'erreur/debug, secrets, auth...)
+JSON_SUSPICIOUS_KEYS = {
+    "error", "errors", "err", "stack", "stacktrace", "trace", "traceback",
+    "exception", "debug", "internal", "message",
+    "token", "access_token", "refresh_token", "api_key", "apikey", "key",
+    "secret", "password", "passwd", "credentials", "auth", "session",
+    "query", "sql", "admin", "private",
+}
+
+
+def _detect_content_type(headers: dict, body: str) -> tuple[bool, object]:
+    """
+    Détecte si une réponse est du JSON, en se basant sur le header
+    Content-Type ET sur une tentative de parsing du body (le header peut
+    être absent ou mentir). Retourne (is_json, objet_parsé_ou_None).
+    """
+    headers = headers or {}
+    content_type_header = ""
+    for key in ("content-type", "Content-Type"):
+        if key in headers:
+            content_type_header = str(headers[key]).lower()
+            break
+
+    looks_json_header = "json" in content_type_header
+
+    parsed = None
+    if body:
+        try:
+            candidate = json.loads(body)
+            if isinstance(candidate, (dict, list)):
+                parsed = candidate
+        except (ValueError, TypeError):
+            parsed = None
+
+    is_json = looks_json_header or parsed is not None
+    return is_json, parsed
+
+
+def _json_depth(obj, current: int = 0) -> int:
+    if isinstance(obj, dict) and obj:
+        return max(_json_depth(v, current + 1) for v in obj.values())
+    if isinstance(obj, list) and obj:
+        return max(_json_depth(v, current + 1) for v in obj)
+    return current
+
+
+def _json_count_keys(obj) -> int:
+    if isinstance(obj, dict):
+        return len(obj) + sum(_json_count_keys(v) for v in obj.values())
+    if isinstance(obj, list):
+        return sum(_json_count_keys(v) for v in obj)
+    return 0
+
+
+def _json_count_suspicious_keys(obj) -> int:
+    """
+    Compte par sous-chaîne (pas égalité stricte) pour attraper les clés
+    composées réelles : "handler_error", "auth_token", "stack_trace"...
+    """
+    if isinstance(obj, dict):
+        count = sum(
+            1 for k in obj
+            if any(sus in str(k).lower() for sus in JSON_SUSPICIOUS_KEYS)
+        )
+        return count + sum(_json_count_suspicious_keys(v) for v in obj.values())
+    if isinstance(obj, list):
+        return sum(_json_count_suspicious_keys(v) for v in obj)
+    return 0
+
+
+def _json_leaf_values(obj):
+    if isinstance(obj, dict):
+        for v in obj.values():
+            yield from _json_leaf_values(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _json_leaf_values(v)
+    else:
+        yield obj
+
+
+def _json_avg_value_length(obj) -> float:
+    leaves = [str(v) for v in _json_leaf_values(obj) if v is not None]
+    if not leaves:
+        return 0.0
+    return sum(len(v) for v in leaves) / len(leaves)
+
+
+def extract_json_features(headers: dict, body: str) -> dict:
+    """
+    Calcule les features spécifiques à une réponse JSON. Si la réponse
+    n'est pas du JSON, retourne des valeurs par défaut à 0 (et is_json=0) —
+    le modèle distingue alors les deux régimes via ce flag plutôt que de
+    recevoir des zéros indiscernables d'un "vrai" JSON vide.
+    """
+    is_json, parsed = _detect_content_type(headers, body)
+
+    if not is_json or parsed is None:
+        return {
+            "is_json": int(is_json),
+            "json_num_keys": 0,
+            "json_depth": 0,
+            "json_num_suspicious_keys": 0,
+            "json_is_array": 0,
+            "json_avg_value_length": 0.0,
+        }
+
+    return {
+        "is_json": 1,
+        "json_num_keys": _json_count_keys(parsed),
+        "json_depth": _json_depth(parsed),
+        "json_num_suspicious_keys": _json_count_suspicious_keys(parsed),
+        "json_is_array": int(isinstance(parsed, list)),
+        "json_avg_value_length": _json_avg_value_length(parsed),
+    }
+
 
 class FeatureExtractor:
     """
@@ -107,16 +225,19 @@ class FeatureExtractor:
             is_np = isinstance(data, np.ndarray)
             frame = pd.DataFrame(data)
             num_isna = frame.isna().sum().sum()
+            
             try:
                 describe = frame.describe()
                 feature_extractor_logger.info(f'Describe : \n{describe}')
             except Exception as e:
                 feature_extractor_logger.warning(f"Erreur sur describe : {str(e)}")
+                
             cols_values = None
             if special_cols:
                 special_cols = [col for col in special_cols if col in frame.columns]
                 cols_values = frame[special_cols]
                 frame.drop(special_cols, axis=1, inplace=True)
+                
             feature_extractor_logger.info(f"Num NaN : {num_isna}")
             # feature_extractor_logger.info(f'Describe : \n{describe}')
             if impute and num_isna != 0:
@@ -251,7 +372,14 @@ class FeatureExtractor:
                         "n_redirects": len(analyzer_helper_element.fetched.history),
                     })
                 result.update(balise_num)
-                
+
+                # Features JSON (complément aux features HTML ci-dessus —
+                # une réponse est soit HTML, soit JSON, soit ni l'un ni
+                # l'autre ; is_json permet au modèle de distinguer les régimes)
+                result.update(
+                    extract_json_features(analyzer_helper_element.fetched.headers, body)
+                )
+
                 security_report = {}
                 if analyzer_helper_element.parsed.headers.elements:
                     security_report = analyzer_helper_element.parsed.headers.elements[0].get("security_report", {}) or {}
@@ -368,7 +496,10 @@ class FeatureExtractor:
             if isinstance(result, Exception):
                 feature_extractor_logger.warning(f"Exception survenu dans un worker, {result}")
         
-        dataset:pd.DataFrame = self._process_data(pd.DataFrame(dataset), True, special_cols=["url"])
+        dataset = pd.DataFrame(dataset)
+        df_cols = list(dataset.columns)
+        dataset = dataset.loc[:, [col for col in FEATURES_LIST if col in df_cols]]
+        dataset: pd.DataFrame = self._process_data(dataset, True, special_cols=["url"])
         return dataset
     
     @staticmethod
@@ -412,4 +543,3 @@ if __name__ == "__main__":
     FE = FeatureExtractor()
     print(len(FeatureExtractor.get_features_name()))
     asyncio.run(test_features(None, 100))
-        

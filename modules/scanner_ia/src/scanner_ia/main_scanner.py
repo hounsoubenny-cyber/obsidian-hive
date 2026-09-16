@@ -244,7 +244,7 @@ class Scanner:
     def _create_session(self):
         return aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(
-                limit=self.sess_limit
+                limit=self.sess_limit,
             ),
             headers=FetcherConfig.HEADERS, 
         )

@@ -395,7 +395,7 @@ class CodeAnalyzer:
         result.context = context
         return result
         
-    def analyse(self, analyzer_helper_result:AnalyzerHelperResult) -> CodeAnalyzerResult:
+    def analyse(self, analyzer_helper_result: AnalyzerHelperResult) -> CodeAnalyzerResult:
         """
         Analyse complète d'un résultat d'AnalyzerHelper.
         

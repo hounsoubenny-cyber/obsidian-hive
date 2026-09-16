@@ -46,6 +46,14 @@ FEATURES_LIST = [
     'other_link_ratio',
     'n_redirects',
     
+    # ===== 2bis. Features JSON (6 features) =====
+    'is_json',
+    'json_num_keys',
+    'json_depth',
+    'json_num_suspicious_keys',
+    'json_is_array',
+    'json_avg_value_length',
+
     # ===== 3. Features Sécurité Headers (7 features) =====
     'strict_transport_security',
     'x_frame_options',
@@ -143,6 +151,11 @@ FEATURES_BY_CATEGORY = {
         'num_links', 'num_html_link', 'other_link_ratio', 'n_redirects'
     ],
     
+    'contenu_json': [
+        'is_json', 'json_num_keys', 'json_depth', 'json_num_suspicious_keys',
+        'json_is_array', 'json_avg_value_length'
+    ],
+
     'securite_headers': [
         'strict_transport_security', 'x_frame_options', 'x_content_type_options',
         'content_security_policy', 'x_xss_protection', 'referrer_policy',

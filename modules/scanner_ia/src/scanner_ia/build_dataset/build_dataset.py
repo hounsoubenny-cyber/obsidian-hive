@@ -478,6 +478,7 @@ async def _dataset_worker(worker_id: int, ctx: _DatasetWorkerContext) -> None:
             analyzer_helper.crawler.config.MAX_PAGES = 1
             analyzer_helper.crawler.config.GET_TIMEOUT = 2
             analyzer_helper.crawler.config.JOIN_TIMEOUT = 1 * 10 * 60
+            analyzer_helper.crawler.parser.fetcher.config.TIMEOUT = 120
             # Cache disque du classify_link/get_all_links (TTL 24h) : désactivé,
             # sinon un ancien résultat périmé peut être resservi silencieusement
             # (cf. bug du 29/08).

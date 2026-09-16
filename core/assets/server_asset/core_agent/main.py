@@ -169,7 +169,7 @@ class Agent:
         """
         try:
             await self.init()
-            await self.ws_client.run_forever()
+            return await self.ws_client.run_forever()
         except asyncio.CancelledError:
             pass
         
@@ -180,7 +180,7 @@ class Agent:
 async def main():
     """Fonction principale de l'agent."""
     agent = Agent()
-    await agent.run()
+    return await agent.run()
     
 
 if __name__ == "__main__":

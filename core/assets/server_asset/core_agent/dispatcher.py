@@ -253,7 +253,7 @@ class AgentDispatcher:
         """
         try:
             os.chmod(UNINSTALL_SCRIPT_PATH, 0o755) # Rendre exécutable
-            process = await asyncio.create_subprocess_exec(
+            await asyncio.create_subprocess_exec(
                 "sudo", UNINSTALL_SCRIPT_PATH,
                 start_new_session=True,
                 stdout=asyncio.subprocess.PIPE,

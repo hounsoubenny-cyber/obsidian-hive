@@ -39,7 +39,7 @@ class Config:
     def __init__(self):
         self.MAX_REDIRECTS = 3
         self.Semaphore = 20
-        self.TIMEOUT = 2
+        self.TIMEOUT = 30
         self.DEBUG = False
         self.MAX_ATTEMPT = MAX_ATTEMPT
         self.WAIT_BETWEEN = WAIT_BETWEEN
@@ -226,15 +226,19 @@ class Fetcher():
         self, 
         url:str, 
         session:aiohttp.ClientSession,
-        timeout:int = 2,  
-        params:dict = {},
-        headers:dict = {},
-        cookies:dict = {},
+        timeout:int = None,  
+        params:dict = None,
+        headers:dict = None,
+        cookies:dict = None,
         semaphore:int = None,
         **kwargs
     ):
         headers = headers or self.headers
-        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
+        if timeout is None:
+            timeout = self.config.TIMEOUT
+        timeout = aiohttp.ClientTimeout(total=timeout)
+        params = params or {}
+        cookies = cookies or {}
         if not url.startswith("http"):
             url = "https://" + url
         key = self._create_key(self._fetch_get, **{"url": url, "params": params, "headers": headers, "cookies": cookies})
@@ -258,9 +262,10 @@ class Fetcher():
                             url=url, 
                             params=params, 
                             cookies=cookies,
-                            headers=self.headers,
+                            headers=headers,
                             allow_redirects=True,
                             max_redirects=self.max_redirects,
+                            timeout=timeout
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="GET")
                             result.delay = float(f"{time.time() - start_time:.2f}")
@@ -281,20 +286,26 @@ class Fetcher():
         self, 
         url:str, 
         session:aiohttp.ClientSession,
-        timeout:int = 10,  
-        params:dict = {},
-        headers:dict = {},
-        cookies:dict = {},
+        timeout:int = None,  
+        params:dict = None,
+        headers:dict = None,
+        cookies:dict = None,
         semaphore:int = None,
-        json:dict = {},
-        data:dict = {},
+        json:dict = None,
+        data:dict = None,
         **kwargs
     ):
         headers = headers or self.headers
-        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
+        if timeout is None:
+            timeout = self.config.TIMEOUT
+        timeout = aiohttp.ClientTimeout(total=timeout)
+        params = params or {}
+        cookies = cookies or {}
+        json = json or {}
+        data = data or {}
         if not url.startswith("http"):
             url = "https://" + url
-        key = self._create_key(self._fetch_get, **{"url": url, "params": params, "headers": headers, "cookies": cookies, "json":json})
+        key = self._create_key(self._fetch_post, **{"url": url, "params": params, "headers": headers, "cookies": cookies, "json":json})
         cached_result = CACHE.get(key)
         if cached_result:
             logger_fetcher.debug(f"Cache hit Fetch pour POST {url}")
@@ -321,9 +332,10 @@ class Fetcher():
                             url=url,
                             params=params,
                             cookies=cookies,
-                            headers=self.headers,
+                            headers=headers,
                             allow_redirects=True,
                             max_redirects=self.max_redirects,
+                            timeout=timeout,
                             **body_kwargs
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="POST")
@@ -343,16 +355,18 @@ class Fetcher():
         self, 
         url:str, 
         session:aiohttp.ClientSession,
-        timeout:int = 10,  
-        headers:dict = {},
+        timeout:int = None,  
+        headers:dict = None,
         semaphore:int = None,
         **kwargs
     ):
         headers = headers or self.headers
-        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
+        if timeout is None:
+            timeout = self.config.TIMEOUT
+        timeout = aiohttp.ClientTimeout(total=timeout)
         if not url.startswith("http"):
             url = "https://" + url
-        key = self._create_key(self._fetch_get, **{"url": url, "headers": headers})
+        key = self._create_key(self._fetch_head, **{"url": url, "headers": headers})
         cached_result = CACHE.get(key)
         if cached_result:
             logger_fetcher.debug(f"Cache hit Fetch pour HEAD {url}")
@@ -371,7 +385,8 @@ class Fetcher():
                     try:
                         async with session.head(
                             url=url, 
-                            headers=self.headers,
+                            headers=headers,
+                            timeout=timeout
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="HEAD")
                             result.delay = float(f"{time.time() - start_time:.2f}")
@@ -391,7 +406,7 @@ class Fetcher():
         self,
         url: str,
         session: aiohttp.ClientSession = None, 
-        timeout: int = 15,
+        timeout: int = None,
         **kwargs
     ) -> FetcherResult:
         """
@@ -408,6 +423,9 @@ class Fetcher():
             logger_fetcher.debug(f"Cache hit Fetch playwright pour {url}")
             return cached
         
+        if timeout is None:
+            timeout = self.config.TIMEOUT
+        
         logger_fetcher.debug(f"Début playwright fetch url = {url}")
         page = None
         try:
@@ -417,7 +435,7 @@ class Fetcher():
             response = await page.goto(
                 url,
                 wait_until="domcontentloaded",
-                timeout=(timeout or self.config.TIMEOUT) * 1000  # playwright en ms
+                timeout=timeout * 1000  # playwright en ms
             )
             result.headers = response.headers
             result.status_code = response.status if response else 0
@@ -465,11 +483,11 @@ class Fetcher():
     async def fetch_once(
         self,
         url: str,
-        timeout: int = 3,
+        timeout: int = None,
         method: str = "GET",
-        headers: dict = {},
-        params: dict = {},
-        cookies: dict = {},
+        headers: dict = None,
+        params: dict = None,
+        cookies: dict = None,
         max_attempts: int = 1,
         wait_between: float = 0.0,
         **kwargs
@@ -484,6 +502,13 @@ class Fetcher():
     
         if not url.startswith("http"):
             url = "https://" + url
+        
+        headers = headers or self.headers
+        params = params or {}
+        cookies = cookies or {}
+        
+        if timeout is None:
+            timeout = self.config.TIMEOUT
     
         key = self._create_key(self._fetch_get, **{"url": url, "params": params})
         cached = CACHE.get(key)
@@ -492,7 +517,7 @@ class Fetcher():
             return cached
     
         _timeout = aiohttp.ClientTimeout(total=timeout)
-        _headers = headers or self.headers
+        _headers = headers
         _method  = getattr(self.session, method.lower(), self.session.get)
     
         for attempt in range(1, max_attempts + 1):

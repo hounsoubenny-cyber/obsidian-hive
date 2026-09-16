@@ -14,6 +14,79 @@ from flask import Flask, jsonify, request
 from engines import ENGINES
 from engines.base import Unit, UnitCtx, context_needs
 
+# Un tiers des routes rendent une vraie page HTML (structure variée :
+# balises, formulaire, script, iframe...) plutôt que du JSON pur — pour
+# que le dataset de features reflète la diversité réelle des cibles
+# scannées (API JSON ET pages web classiques). Le reste continue de
+# renvoyer du JSON, comme avant.
+HTML_RATIO_MOD = 2  # 1 route sur HTML_RATIO_MOD rend du HTML
+
+
+def _should_render_html(route_counter: int) -> bool:
+    return route_counter % HTML_RATIO_MOD == 0
+
+
+def _fragment_to_text(frag) -> str:
+    """Convertit un fragment de résultat de moteur en texte affichable."""
+    if isinstance(frag, dict):
+        for key in ("output", "message", "body", "result", "value"):
+            if key in frag and isinstance(frag[key], str):
+                return frag[key]
+        return json.dumps(frag, ensure_ascii=False, default=str)
+    return str(frag)
+
+
+def _render_html(merged: dict, path_template: str, resource: str, units) -> str:
+    """
+    Construit une vraie page HTML (structure variée : liens, formulaire,
+    images, script, iframe, meta) qui reflète les sorties des moteurs de
+    vuln — pour que l'extracteur de features ML ait du vrai contenu HTML
+    à analyser sur une partie du dataset.
+    """
+    sections = []
+    for u in units:
+        frag = merged.get(u.vuln_id)
+        sections.append(
+            f'<section class="vuln-block" data-vuln="{u.vuln_id}">'
+            f'<h2>{u.vuln_id} — {u.variant}</h2>'
+            f'<div class="output">{_fragment_to_text(frag)}</div>'
+            f'</section>'
+        )
+
+    form_field = ""
+    if any(u.context in ("form", "body") for u in units):
+        form_field = (
+            '<form method="post" action="">'
+            '<input type="text" name="q" placeholder="search">'
+            '<input type="password" name="pwd">'
+            '<input type="hidden" name="csrf_token" value="tok_placeholder">'
+            '<input type="file" name="upload">'
+            '<button type="submit">Envoyer</button>'
+            '</form>'
+        )
+
+    return f'''<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{resource} - {path_template}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav><a href="/">Accueil</a> <a href="/{resource}">{resource}</a></nav>
+    <main>
+        <h1>{resource}</h1>
+        {form_field}
+        {''.join(sections)}
+        <img src="/static/placeholder.png" alt="illustration">
+        <iframe src="about:blank" title="preview"></iframe>
+    </main>
+    <script>console.log("route", "{path_template}");</script>
+    <footer><cite>Genere par vulnserver</cite></footer>
+</body>
+</html>'''
+
 # ---------------------------------------------------------------------
 # Ressources (noms métier utilisés pour nommer routes / données factices)
 # ---------------------------------------------------------------------
@@ -79,6 +152,7 @@ def build_app():
         nonlocal route_counter
         route_counter += 1
         endpoint_name = f"ep_{route_counter}"
+        render_html = _should_render_html(route_counter)
 
         def view(**path_kwargs):
             merged = {}
@@ -94,6 +168,8 @@ def build_app():
                 "page_type": page_type,
                 "vulns": [u.vuln_id for u in units],
             }
+            if render_html:
+                return _render_html(merged, path_template, resource, units)
             return jsonify(merged)
 
         view.__name__ = endpoint_name
@@ -105,6 +181,7 @@ def build_app():
             "page_type": page_type,
             "resource": resource,
             "vulns": [u.vuln_id for u in units],
+            "response_format": "html" if render_html else "json",
             "details": [
                 {
                     "vuln": u.vuln_id,
