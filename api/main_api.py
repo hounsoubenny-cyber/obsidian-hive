@@ -8,7 +8,6 @@ Created on Sat Jun 27 23:28:18 2026
 
 import os
 import aiohttp
-import asyncio
 import atexit
 import uvicorn
 import threading
@@ -18,35 +17,32 @@ from fastapi import (
     FastAPI, Depends, HTTPException,
     Request
 )
-
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
-from modules_utils.api_dependencies import AuthManager, get_loop
-from scanner_ia.api.api import (
+from modules_utils.api_dependencies import get_loop
+from scanner_ia.api.api import ( # noqa
     router as scanner_router, get_shared_scanner_ia,
     ws_router as scanner_ws_router,
     REPORT_DIR
 )
-from anti_phishing_ia.main_phish import router as ap_router, get_ap_instance
-from sandbox_ia.api.router import (
+from anti_phishing_ia.main_phish import router as ap_router, get_ap_instance # noqa
+from sandbox_ia.api.router import ( # noqa
     router as sandbox_router, get_orchestrator, 
     get_models as get_sandbox_models, ML_AVAILABLE as SANDBOX_ML_AVAILABLE
 )
 from ids_ips_ia.main.api import (
     router_no_auth as ids_ips_router
 )
-from ids_ips_ia.main.services import(
-    _do_start_logic as ids_ips_start, _do_stop_logic as ids_ips_stop
-)
 from simulateur_attaque_ia.api.routers.router_no_auth import (
-    router as make_sim_router, attach_to_state as sim_attach_to_state,
-    SimulationManager, WSManager as SimWSManager, ContainerManager as SimContainerManager
+    router as make_sim_router
 )
 from simulateur_attaque_ia.api.api import (
-    start_tasks as sim_start_tasks, stop_task as sim_stop_task,
     lifespan_start as sim_lifespan_start, lifespan_end as sim_lifespan_end
+)
+from contextguard.api.router import (
+    router as contextguard_router
 )
 from obsidian_hive.api.api_utils.core_shared import get_engine
 from obsidian_hive.api.routers.core_router import (
@@ -67,131 +63,26 @@ from obsidian_hive.api.routers.anti_phishing_extension_router import (
 from obsidian_hive.api.routers.extension_token_manager_router import (
     router as extension_token_manager_router
 )
-from obsidian_hive.core.managers.extension_token_manager import ExtensionTokenManager
 from obsidian_hive.api.routers.utils_router import router as utils_router
 from obsidian_hive.api.routers.manager_router import router as manager_router
 from obsidian_hive.api.routers.login_router import router as login_router
 from modules_utils.logger import get_logger
 from modules_utils.limiter import limiter, get_remote_address
-from obsidian_hive.core.assets.workflows.workflow_base import WorkflowBase
-from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
-from obsidian_hive.core.managers.report_manager import ReportManager
-from obsidian_hive.core.managers.job_manager import JobManager
-from obsidian_hive.core.managers.conversation_manager import ConversationManager
-
 from obsidian_hive.api.ap_config import (
-    ALLOWED_ORIGINS, EXP, NOT_BEFORE,
-    USER_ENV_KEY, PASSWD_ENV_KEY, 
-    SECRET_KEY_ENV_KEY, LIMITE,
+    ALLOWED_ORIGINS, LIMITE,
     REACT_EXISTS, INDEX_FILE, STATIC_DIR,
     BUILD_DIR, BUILD_URL, STATIC_URL,
 )
 
-from obsidian_hive.config.config import (
-    LLM_MANAGER_CONFIG, ENGINE_CONFIG,
+from obsidian_hive.api.state import (
+    _get_auth_manager, _get_contextguard_client, _get_conversation_manager,
+    _get_extension_token_manager, _get_job_manager, _get_llm_manager,
+    _get_report_manager
 )
-
 load_dotenv()
-_auth_manager = None
-_shared_llm_manager = None
-_shared_llm_manager_is_set = False
-_shared_report_manager = None
-_shared_conversation_manager = None
-_shared_extension_token_manager = None
-_shared_report_manager_is_set = False
-_shared_job_manager = None
+
 logger = get_logger("main_shield_api")
 server = None
-
-
-def _get_auth_manager() -> AuthManager:
-    """
-    Retourne l'instance singleton du gestionnaire d'authentification.
-
-    Returns:
-        AuthManager: L'instance du gestionnaire d'authentification.
-    """
-    global _auth_manager
-    if _auth_manager is None:
-        _auth_manager = AuthManager(
-            exp=EXP,
-            not_before=NOT_BEFORE,
-            user_env_key=USER_ENV_KEY,
-            passwd_env_key=PASSWD_ENV_KEY,
-            secret_key_env_key=SECRET_KEY_ENV_KEY,
-        )
-        _auth_manager.verify_env_utils()
-    return _auth_manager
-
-
-def _get_llm_manager():
-    """
-    Retourne l'instance singleton du gestionnaire LLM.
-
-    Returns:
-        LLMManager: L'instance du gestionnaire LLM.
-    """
-    global _shared_llm_manager, _shared_llm_manager_is_set
-    if not _shared_llm_manager:
-        _shared_llm_manager = LLMManager(
-            **LLM_MANAGER_CONFIG
-        )
-    if not _shared_llm_manager_is_set:
-        WorkflowBase.set_llm_manager(_shared_llm_manager)
-        _shared_llm_manager_is_set = True
-    return _shared_llm_manager
-
-
-async def _get_report_manager():
-    """
-    Retourne l'instance singleton du gestionnaire de rapports.
-
-    Returns:
-        ReportManager: L'instance du gestionnaire de rapports.
-    """
-    global _shared_report_manager, _shared_report_manager_is_set
-    if not _shared_report_manager:
-        _shared_report_manager = ReportManager(db_url=ENGINE_CONFIG["db_url"]) 
-        await _shared_report_manager.init_db()
-    if not _shared_report_manager_is_set:
-        WorkflowBase.set_report_manager(_shared_report_manager)
-        _shared_report_manager_is_set = True
-    return _shared_report_manager
-
-
-async def _get_job_manager():
-    """
-    Retourne l'instance singleton du gestionnaire de jobs.
-
-    Returns:
-        JobManager: L'instance du gestionnaire de jobs.
-    """
-    global _shared_job_manager
-    if not _shared_job_manager:
-        _shared_job_manager = JobManager(db_url=ENGINE_CONFIG["db_url"]) 
-        _shared_job_manager.start()
-    return _shared_job_manager
-
-
-async def _get_conversation_manager():
-    """
-    Retourne l'instance singleton du gestionnaire de conversations.
-
-    Returns:
-        ConversationManager: L'instance du gestionnaire de conversations.
-    """
-    global _shared_conversation_manager
-    if not _shared_conversation_manager:
-        _shared_conversation_manager = ConversationManager(db_url=ENGINE_CONFIG["db_url"]) 
-        await _shared_conversation_manager.init_db()
-    return _shared_conversation_manager
-
-async def _get_extension_token_manager():
-    global _shared_extension_token_manager
-    if not _shared_extension_token_manager:
-        _shared_extension_token_manager = ExtensionTokenManager(db_url=ENGINE_CONFIG["db_url"]) 
-        await _shared_extension_token_manager.init_db()
-    return _shared_extension_token_manager
 
 async def lifespan_start(app: FastAPI):
     """
@@ -203,15 +94,12 @@ async def lifespan_start(app: FastAPI):
     _get_auth_manager().verify_env_utils()
     # app.state.ap_instance = get_ap_instance()
     
-    # app.state.sandbox_orchestrator_instance = get_orchestrator()
-    
-    # app.state.sandbox_models = None
-    # if SANDBOX_ML_AVAILABLE:
-    #     app.state.sandbox_models = get_sandbox_models()    
-    
     # app.state.shared_scanner_ia_instance = get_shared_scanner_ia()
     
-    # await sim_lifespan_start(app)
+    # app.state.sandbox_orchestrator_instance = get_orchestrator()
+    # app.state.sandbox_models = None
+    # if SANDBOX_ML_AVAILABLE:
+    #     app.state.sandbox_models = get_sandbox_models()   
     
     app.state.core_engine = get_engine()
     app.state.llm_manager = _get_llm_manager()
@@ -220,7 +108,9 @@ async def lifespan_start(app: FastAPI):
     app.state.job_manager = await _get_job_manager()
     app.state.conversation_manager = await _get_conversation_manager()
     app.state.extension_token_manager = await _get_extension_token_manager()
+    app.state.context_guard_client = await _get_contextguard_client()
     
+    await sim_lifespan_start(app)
     await app.state.core_engine.start()
     
     logger.success("API démaré")
@@ -234,11 +124,10 @@ async def lifespan_end(app: FastAPI):
         app (FastAPI): L'application FastAPI.
     """
     
-    # await sim_lifespan_end(app)
-    
+    await sim_lifespan_end(app)
     logger.success("API fermée")
 
-    
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -253,10 +142,10 @@ async def lifespan(app: FastAPI):
     
 
 app = FastAPI(
-    title="ShieldAI App",
+    title="Obsidian-Hive",
     version="1.0.0",
     lifespan=lifespan,
-    description="API de shield AI",
+    description="API de obsidian",
     docs_url='/api/docs',
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -265,7 +154,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -280,38 +169,57 @@ if REACT_EXISTS:
 sim_router, sim_ws_router = make_sim_router(_get_auth_manager().verify_token_params)
 
 _ROUTERS = [
+    # Scanner
     (scanner_router, "scanner", True),
     (scanner_ws_router, "scanner", False),
     
+    # Anti Phishing
     (ap_router, "anti_phishing", True),
     
+    # IDS-IPS
     (ids_ips_router, "ids_ips", True),
     
+    # Sandbox
     (sandbox_router, "sandbox", True),
     
+    # Simulateur
     (sim_router, "simulator", True),
     (sim_ws_router, "simulator", False),
     
+    # ContextGuard
+    (contextguard_router, "contextguard", True),
+    
+    # Core
     (core_router, "core", True),
     (core_public_router, "core", False),
     (ws_router, "core_ws", False),
     
+    # Managers
     (manager_router, "managers", True),
+    
+    # Utils
     (utils_router, "utils", True),
+    
+    # Login
     (login_router, "auth_routes", False),
     
+    # Download
     (download_router, "download", True),
     (download_public_router, "download", False),
     
+    # Extentions
+    # Anti Phishing ectension
     (anti_phishing_extension_router, "anti_phishing_extension", False),
     (extension_token_manager_router, "extension_tokens", True),
     
+    # Scanner report routes (WebAsset reports)
     (scanner_report_manager_router, "web_asset_report", True),
 ]
 
 dependencies = [Depends(
     _get_auth_manager().verify_token
 )]
+
 for router, name, dependencie in _ROUTERS:
     app.include_router(
         router=router,
@@ -350,7 +258,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
         content={
-            "error": "Trop rapide !",
+            "error": "Trop de requêtes, veuillez patienter avant de retenter !",
             "message": f"{LIMITE} requêtes max par minute",
             "retry_after": 60
         }
@@ -517,6 +425,7 @@ def close_api_atexit(url):
             _run_async(close_api, url)
         except Exception:
             pass
+        
     atexit.register(_close)
 
     

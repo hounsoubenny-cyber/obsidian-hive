@@ -19,7 +19,7 @@ from uuid import uuid4
 from typing import Any, Optional, Tuple, List, Dict
 from nest_asyncio import apply
 from scanner_ia.core.parser import Parser, ParserResult
-from scanner_ia.core.fetcher import FetcherResult
+from scanner_ia.core.fetcher import FetcherResult, MethodCheks
 from scanner_ia.fuzzer.response_analyzer import ResponseAnalyzer
 from scanner_ia.fuzzer.payload_generator import PayloadGenerator, _DEFAULT_JSON_KEYS
 from scanner_ia.base_class.fuzzer_base_class import WorkerFuzzerResult, FuzzerResult, WorkerFuzzerEntry
@@ -356,7 +356,12 @@ class Fuzzer:
         if await self.parser.fetcher.should_skip_method(url, method):
             logger_fuzzer.debug(f"{method} non supporté sur {url} (OPTIONS), payload skip")
             return None
-        return await self.parser.fetcher.fetch(url=url, method=method, **fetch_kwargs)
+        return await self.parser.fetcher.fetch(
+            url=url, 
+            method=method,
+            method_check=MethodCheks.OFF.value, 
+            **fetch_kwargs
+        )
 
     async def send_payload(self, entry: WorkerFuzzerEntry, **kwargs) -> Optional[FetcherResult]:
         """

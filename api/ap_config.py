@@ -17,11 +17,13 @@ API_PORT = _get_config_manager().api_config.api_port
 LIMITE = 25
 PORT = 8000
 API_IP = "127.0.0.1"
+SCHEME = "http"
+BASE_URL = f"{SCHEME}://{API_IP}:{API_PORT}" if API_PORT is not None else  f"{SCHEME}://{API_IP}"
 ALLOWED_ORIGINS = [
-    f"http://{API_IP}:{API_PORT}",
-    f"http://localhost:{API_PORT}",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    BASE_URL,
+    f"{SCHEME}://localhost:{API_PORT}" if API_PORT is not None else f"{SCHEME}://localhost",
+    "{SCHEME}://localhost:3000",
+    "{SCHEME}://127.0.0.1:3000",
 ]
 NOT_BEFORE = 0.1
 EXP = 60 * 5
@@ -38,6 +40,7 @@ PASSWD_ENV_KEY = "OBSIDIAN_ADMIN_PASSWORD"
 SECRET_KEY_ENV_KEY = "OBSIDIAN_JWT_SECRET"
 
 IDS_IPS_PY_VENV = "OBSIDIAN_IDS_IPS_PY_VENV"
+CHECK_PROMPT_KEY = "OBSIDIAN_CHECK_PROMPT"
 
 # Asset Config
 ASSETS_CONFIG_DIR = os.path.join(

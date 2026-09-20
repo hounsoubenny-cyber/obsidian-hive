@@ -19,11 +19,16 @@ from dotenv import load_dotenv
 
 class User(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
-    id:Optional[int] = Field(default=None, primary_key=True, description="User ID")
-    username:str = Field(default_factory=str)
-    password:bytes = Field(default_factory=bytes)
-    history:Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON), description="Historique de l'utilisateur")
-    created_at:datetime = Field(default_factory=datetime.utcnow)
+    id: Optional[int] = Field(default=None, primary_key=True, description="User ID")
+    username: str = Field(default_factory=str)
+    password: bytes = Field(default_factory=bytes)
+    salt: str = Field(
+        default="",
+        description="Salt bcrypt — sert UNIQUEMENT à dériver la clé Fernet. "
+                    "N'est plus utilisé comme clé de signature JWT.",
+    )
+    history: Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON), description="Historique de l'utilisateur")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class DBManager:
     load_dotenv()
@@ -40,7 +45,7 @@ class DBManager:
             "error": "",
             "success": False,
             "id": ""
-            }
+        }
         # print(kwargs)
         # user = User(**kwargs)
         # input(user)
@@ -134,7 +139,7 @@ class DBManager:
                 result["success"] = True
                 return result
             except Exception as e:
-                print("Erreur survenue dans la suppression de l'user avec par nom:", str(e))
+                print("Erreur survenue dans la suppression de l'user par nom:", str(e))
                 session.rollback()
                 result["error"] = str(e)
                 return result
@@ -160,7 +165,7 @@ class DBManager:
                 result["success"] = True
                 return result
             except Exception as e:
-                print("Erreur survenue dans la mise à jour d'historique par id:", str(e))
+                print("Erreur survenue dans la mise à jour d'historique par nom:", str(e))
                 result["error"] = str(e)
                 session.rollback()
                 return result
@@ -184,7 +189,7 @@ class DBManager:
                 result["success"] = True
                 return result
             except Exception as e:
-                print("Erreur survenue dans la mise à jour d'historique par nom:", str(e))
+                print("Erreur survenue dans la mise à jour d'historique par id:", str(e))
                 result["error"] = str(e)
                 session.rollback()
                 return result

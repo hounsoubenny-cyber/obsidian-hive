@@ -6,11 +6,9 @@ Created on Wed Apr  8 15:05:16 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
 import re
 import json
-from config import STATIC_RULES_PATH, MATCH
+from contextguard.api.config import STATIC_RULES_PATH, MATCH
 
 class StaticAnalyser:
     def __init__(self):

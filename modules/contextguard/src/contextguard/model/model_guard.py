@@ -202,14 +202,14 @@ class ContextGuardModel(nn.Module):
             
         print("Erreur : Chemin inexistant !")
     
-    def predict(self, input_ids:torch.Tensor, attention_mask:torch.Tensor, logits = None, threashold:float = 0.5, *args, **kwargs):
+    def predict(self, input_ids:torch.Tensor, attention_mask:torch.Tensor, logits = None, threshold:float = 0.5, *args, **kwargs):
         with torch.inference_mode():
             if logits is None:
                 logits = self(input_ids, attention_mask)
             
             if self._params["num_classe"] == 1:
                 prob = nn.functional.sigmoid(logits)  
-                pred = (prob > threashold).long()
+                pred = (prob > threshold).long()
                 return prob, pred
             
             else :
@@ -279,12 +279,12 @@ class ModelWrapper(nn.Module):
         attention_mask = attention_mask.to(device) if attention_mask.ndim == 2 else attention_mask.squeeze(1).to(device)
         return self.model(input_ids, attention_mask)
 
-    def predict(self, X, y, logits=None, threashold=0.5):
+    def predict(self, X, y, logits=None, threshold=0.5):
         input_ids, attention_mask = X
         input_ids      = input_ids.squeeze(1).to(device)
         attention_mask = attention_mask.squeeze(1).to(device)
         return self.model.predict(
-            input_ids, attention_mask, y, logits, threashold
+            input_ids, attention_mask, y, logits, threshold
         )
         
     def state_dict(self, **kwargs):
@@ -305,7 +305,7 @@ class PredictWrapper(nn.Module):
         self.model.eval()
         self.static_analyzer = static_analyzer if isinstance(static_analyzer, StaticAnalyser) else StaticAnalyser()
     
-    def predict(self, text, threashold=0.5, use_onnx:bool = False, onnx_model=None, onnx_file:str=None):
+    def predict(self, text, threshold=0.5, use_onnx:bool = False, onnx_model=None, onnx_file:str=None):
         texts = [text] if isinstance(text, str) else text
         static_result = [self.static_analyzer.analyse(t) for t in texts]
         if all(c != -1 for c in static_result):
@@ -331,9 +331,9 @@ class PredictWrapper(nn.Module):
         if use_onnx:
             if onnx_model is not None and onnx_file is not None:
                 logits = torch.tensor(onnx_model.inference(onnx_file, [ids.cpu().numpy(), attn_mask.cpu().numpy()], ["output"])[0])
-                prob, preb = self.model.predict(ids, attn_mask, threashold=threashold, logits=logits)
+                prob, preb = self.model.predict(ids, attn_mask, threshold=threshold, logits=logits)
         else:
-            prob, pred = self.model.predict(ids, attn_mask, threashold=threashold)
+            prob, pred = self.model.predict(ids, attn_mask, threshold=threshold)
             
         final_pred = torch.zeros(len(texts), dtype=torch.long)
         final_prob = torch.zeros(len(texts), self.model._params["num_classe"])
@@ -378,7 +378,7 @@ if __name__ == "__main__":
     )
     model.load(MODEL_SAVE)
     predictmodel = PredictWrapper(tokenizer, model)
-    prob, pred = predictmodel.predict(prompt, threashold=0.2)
+    prob, pred = predictmodel.predict(prompt, threshold=0.2)
     if isinstance(pred, list):
         print(prob)
         print(pred)

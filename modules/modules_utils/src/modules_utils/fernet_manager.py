@@ -6,10 +6,8 @@ Created on Mon Apr  6 08:44:55 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
+import os
 import base64
-import getpass
 import bcrypt
 from cryptography.fernet import Fernet
 
@@ -115,24 +113,5 @@ class FernetManager:
         except Exception as e:
             print('Erreur lors du cryptage de ', filename, " erreur : ", str(e))
             return False          
-            
-def hashpw(password:str):
-    if isinstance(password, str):
-        password = password.encode()
-    
-    return bcrypt.hashpw(password, bcrypt.gensalt())
-
-def checkpw(password:str, hashed:bytes):
-    if isinstance(password, str):
-        password = password.encode()
-
-    return bcrypt.checkpw(password=password, hashed_password=hashed)
-
-def checksalt(salt):
-    try:
-        password = "password".encode()
-        bcrypt.hashpw(password, salt)
-        return True
-    except Exception:
-        return False
+      
     

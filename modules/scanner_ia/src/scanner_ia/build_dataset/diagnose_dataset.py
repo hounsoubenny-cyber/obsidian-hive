@@ -114,7 +114,7 @@ def main():
     df, all_labels = load_data(DATA_PATH)
     feature_cols = get_feature_columns(df, all_labels)
     print(f"✅ {len(df)} échantillons | {len(all_labels)} labels | {len(feature_cols)} features numériques\n")
-
+    print("Toutes les cols:", list(pd.read_csv(DATA_PATH).columns))
     print("=" * 70)
     print("1️⃣  VARIANCE DES FEATURES (colonnes à std ~0 = inutiles)")
     print("=" * 70)

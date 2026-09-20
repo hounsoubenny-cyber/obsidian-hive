@@ -40,31 +40,34 @@ class AuthManager:
         self.secret_key = None
         self.user = None
         self.passwd = None
+        self._user = None
+        self._passwd = None
     
     def _get_username(self):
         if self.user:
             return self.user
         
+        self._user = getenv_required(
+            self.user_env_key,
+            help_text="Nom d'utilisateur pour l'authentification admin",
+            exit_=False
+        )   
         self.user = hashpw(
-             getenv_required(
-                 self.user_env_key,
-                 help_text="Nom d'utilisateur pour l'authentification admin",
-                 exit_=False
-             )   
+             self._user
         )
         return self.user
     
     def _get_password(self):
         if self.passwd:
             return self.passwd
-        passwd = getenv_required(
+        self._passwd = getenv_required(
             self.passwd_env_key,
             help_text="Mot de passe fort (min 8 caractères) pour l'admin",
             exit_=False
         )   
-        validate_password(passwd)
+        validate_password(self._passwd)
         self.passwd = hashpw(
-             password=passwd
+             self._passwd
         )
         return self.passwd
     

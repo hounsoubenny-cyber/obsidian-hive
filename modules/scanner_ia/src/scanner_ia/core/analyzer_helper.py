@@ -364,13 +364,13 @@ class AnalyzerHelper:
                         response=True
                     )
                     parser_response = await self.crawler.parser.parse(
-                            url=worker_result.url,
-                            parse_html_response=parse_html_response,
-                            fetch=fetch,
-                            restore=restore,
-                            semaphore=semaphore,
-                            silent=silent
-                        )
+                        url=worker_result.url,
+                        parse_html_response=parse_html_response,
+                        fetch=fetch,
+                        restore=restore,
+                        semaphore=semaphore,
+                        silent=silent
+                    )
                     
                     new_obj = OneAnalyzerHelperResult()
                     new_obj.fetched = parse_html_response.response

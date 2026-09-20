@@ -28,7 +28,7 @@ from fastapi import (
     WebSocket, WebSocketDisconnect, WebSocketException
 )
 from pydantic import ValidationError
-
+from modules_utils.logger import get_logger
 from obsidian_hive.core.managers.conversation_manager import ConversationManager
 from obsidian_hive.api.models.models import AlexAnalyzeData
 from obsidian_hive.agents.analyst.agent import (
@@ -64,6 +64,10 @@ from obsidian_hive.api.api_utils.core_shared import (
     get_conversation_manager,
     _notify_agent_config_updated,
 )
+from obsidian_hive.api.api_utils.helpers import check_prompt, can_check_prompt
+
+
+logger = get_logger("core_ws")
 
 ws_router = APIRouter()
 
@@ -329,11 +333,36 @@ async def _run_chat(
         await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": "Message vide"})
         return
 
+    if can_check_prompt():
+        is_safe, check_result = await check_prompt(message)
+    
+        if is_safe is False:
+            item = check_result.results[message]
+            msg = (
+                f"Prompt bloqué par ContextGuard : `{item.label}` "
+                f"({item.prob:.1%})"
+            )
+            await ws_manager.send_to(
+                username,
+                {"type": "injection_detected", "message": msg},
+            )
+            return
+    
+        elif is_safe is None:
+            # ContextGuard indisponible — on laisse passer mais on trace
+            logger.warning(f"ContextGuard indisponible — prompt non vérifié : {message[:60]!r}")
+            await ws_manager.send_to(username, {
+                "type": "warning",
+                "message": "Vérification ContextGuard indisponible."
+            })
+    
+        # is_safe is True → on continue normalement
+        
     if not conversation_id:
         conv = await conversation_manager.create_conversation(owner=username)
         conversation_id = conv.conversation_id
         await ws_manager.send_to(username, {"type": "conversation_created", "conversation_id": conversation_id})
-
+        
     # ---- verrou par conversation --------------------------------------
     # Bloque même si le run "concurrent" tourne sur une AUTRE connexion WS
     # (autre onglet, ou reload de page pendant qu'un run n'a pas fini de
@@ -365,7 +394,7 @@ async def _run_chat(
             return
         
         except Exception as e:
-            print("erreur chat :", str(e))
+            logger.error(f"Erreur chat : {str(e)}")
             await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
             return
         
@@ -390,7 +419,7 @@ async def _run_chat(
             # Le tour a été streamé avec succès côté client même si la
             # persistance échoue : on prévient sans le faire passer pour une
             # erreur de chat (le client a déjà sa réponse).
-            print("erreur chat :", str(e))
+            logger.error(f"Erreur chat : {str(e)}")
             await ws_manager.send_to(username, {"type": "persist_error", "run": run_id, "error": str(e)})
 
     finally:
@@ -433,8 +462,34 @@ async def _run_analyze(
         await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
         return
 
-    alex = create_alex(llm_manager)
     content = f"{options.base_prompt}\n\n{options.content}"
+    if can_check_prompt():
+        message = content
+        is_safe, check_result = await check_prompt(message)
+    
+        if is_safe is False:
+            item = check_result.results[message]
+            msg = (
+                f"Prompt bloqué par ContextGuard : `{item.label}` "
+                f"({item.prob:.1%})"
+            )
+            await ws_manager.send_to(
+                username,
+                {"type": "injection_detected", "message": msg},
+            )
+            return
+    
+        elif is_safe is None:
+            # ContextGuard indisponible — on laisse passer mais on trace
+            logger.warning(f"ContextGuard indisponible — prompt non vérifié : {message[:60]!r}")
+            await ws_manager.send_to(username, {
+                "type": "warning",
+                "message": "Vérification ContextGuard indisponible."
+            })
+    
+        # is_safe is True → on continue normalement
+        
+    alex = create_alex(llm_manager)
     callbacks = _stream_callbacks(ws_manager, username, run_id)
 
     ctx_token = current_confirm_username.set(username)

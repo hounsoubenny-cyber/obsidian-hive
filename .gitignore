@@ -170,3 +170,8 @@ modules/sandbox_ia/src/sandbox_ia/core/test_quarantine/
 modules/scanner_ia/src/scanner_ia/build_dataset/dataset_chunks/
 modules/scanner_ia/src/scanner_ia/ml_model/reports/
 modules/scanner_ia/src/scanner_ia/build_dataset/log*.txt
+modules/scanner_ia/src/scanner_ia/serveurs/vulnserver/manifest.json
+modules/scanner_ia/src/scanner_ia/serveurs/safeserver/manifest.json
+modules/scanner_ia/src/scanner_ia/build_dataset/dataset_chunks_backup/
+modules/scanner_ia/src/scanner_ia/build_dataset/*crawl_result*
+modules/scanner_ia/src/scanner_ia/build_dataset/crawl_final_result

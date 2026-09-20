@@ -9,6 +9,8 @@ Created on Sun Apr 12 22:12:11 2026
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 import json
+import time
+import asyncio
 import socket
 import atexit
 import threading
@@ -187,6 +189,7 @@ class React:
         # ---------------------------------------------------------------
         self._nft = None
         self._nft_lock = threading.Lock()
+        self._blocked_lock = threading.Lock()
         self._nft_lib_available = False
         if _nftables_module is not None:
             if not _has_net_admin_capability():
@@ -561,6 +564,17 @@ class React:
              "meter", "rate_data_out_ip6_meter", "{", "ip6", "daddr", "limit", "rate", NFT_RATE_DATA_LIMITE, "}", "accept"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip6", "daddr", "@blacklist_rate_limite_output_ip6",
              "meter", "rate_out_ip6_meter", "{", "ip6", "daddr", "limit", "rate", NFT_RATE_LIMITE, "}", "accept"],
+            
+            # Protect anti syn flood
+            # ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input",
+            #  "tcp", "flags", "syn", "tcp", "flags", "!=", "ack", "ct", "state", "new",
+            #  "limit", "rate", "5000/second", "burst", "200", "packets", "accept"],
+            # ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input",
+            #  "tcp", "flags", "syn", "tcp", "flags", "!=", "ack", "ct", "state", "new",
+            #  "meter", "syn_flood_meter", "size", "65535", "{", "ip", "saddr",
+            #  "limit", "rate", "20/second", "burst", "5", "packets", "}", "accept"],
+            # ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input",
+            #  "tcp", "flags", "syn", "tcp", "flags", "!=", "ack", "ct", "state", "new", "drop"]
         ]
         
         if white_ip4:
@@ -619,7 +633,7 @@ class React:
     # =========================================================================
     # ACTIONS DE BLOCAGE/DÉBLOCAGE
     # =========================================================================
-    def block(self, ip, rule: str = "drop", input: bool = False, timeout: int|None = None, unit: str = "m", *args, **kwargs):
+    def block(self, ip, rule: str = "drop", input: bool = False, timeout: int | None = None, unit: str = "m", *args, **kwargs):
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
             return False
@@ -644,13 +658,52 @@ class React:
         r = self._run_command(cmd, check=False, success_msg=f"Blocage de {ip}")
         
         if r and r.returncode == 0:
-            self.blocked[ip] = {
-                'ip': ip, 'rule': rule, 'set_name': set_name,
-                'duration': timeout, "input": input,
-            }
+            with self._blocked_lock:
+                self.blocked[ip] = {
+                    'ip': ip, 'rule': rule, 'set_name': set_name,
+                    'duration': timeout, 'unit': unit, "input": input,
+                    'blocked_at': time.time(),
+                }
             return True
         return False
-
+    
+    def is_blocked(self, ip: str) -> bool:
+        """
+        Vérifie si une IP est bloquée. Purge automatiquement (paresseusement)
+        l'entrée si son timeout nftables a déjà dû expirer côté noyau.
+        """
+        with self._blocked_lock:
+            entry = self.blocked.get(ip)
+            if entry is None:
+                return False
+        
+            duration = entry.get("duration")
+            if duration is None or duration == float("inf"):
+                return True  # blocage permanent
+        
+            blocked_at = entry.get("blocked_at")
+            if blocked_at is None:
+                return True  # ancienne entrée sans timestamp, on garde par prudence
+        
+            unit_seconds = {"s": 1, "m": 60, "h": 3600}.get(entry.get("unit", "s"), 1)
+            if time.time() - blocked_at > duration * unit_seconds:
+                del self.blocked[ip]
+                return False
+            return True
+    
+    def purge_expired_blocks(self):
+        now = time.time()
+        unit_map = {"s": 1, "m": 60, "h": 3600}
+        with self._blocked_lock:
+            expired = [
+                ip for ip, entry in list(self.blocked.items())
+                if entry.get("duration") not in (None, float("inf"))
+                and entry.get("blocked_at") is not None
+                and now - entry["blocked_at"] > entry["duration"] * unit_map.get(entry.get("unit", "s"), 1)
+            ]
+            for ip in expired:
+                del self.blocked[ip]
+        
     def unlock(self, ip, rule: str = "drop", input: bool = False, *args, **kwargs):
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
@@ -665,7 +718,17 @@ class React:
         
         cmd = ["nft", "delete", "element", "inet", NFT_TABLE_NAME, set_name, "{", ip, "}"]
         r = self._run_command(cmd, check=False, success_msg=f"Déblocage de {ip}")
-        return r and r.returncode == 0
+        success = r and r.returncode == 0
+        if success:
+            with self._blocked_lock:
+                self.blocked.pop(ip, None)
+        return success
+    
+    async def block_async(self, ip, rule="drop", input=False, timeout=None, unit="m", *args, **kwargs):
+        return await asyncio.to_thread(self.block, ip, rule, input, timeout, unit, *args, **kwargs)
+    
+    async def unlock_async(self, ip, rule="drop", input=False, *args, **kwargs):
+        return await asyncio.to_thread(self.unlock, ip, rule, input, *args, **kwargs)
 
     def clear_sets(self, set_name=None):
         if set_name is None:
@@ -757,7 +820,7 @@ class React:
         if self.clear_sets_at_exit:
             self.clear_sets(self.set_names)
         elif self.unlock_at_exit:
-            for data in self.blocked.values():
+            for data in list(self.blocked.values()):
                 logger.print("Déblocage de l'ip :", data["ip"])
                 self.unlock(**data)
         else:

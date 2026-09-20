@@ -39,6 +39,9 @@ async def main(urls: list[str], concurrency: int = 10):
             # print(f"{url} -> {r.to_dict(deep=True)}")
             async with lock:
                 result[key] = r
+                if len(result) > 0 and len(result) % 500 == 0:
+                    import joblib
+                    joblib.dump(result, "./crawl_result_1")
             await asyncio.sleep(0.001)
             queue.task_done()
             
@@ -60,7 +63,7 @@ async def main(urls: list[str], concurrency: int = 10):
         analyzer.crawler.config.JOIN_TIMEOUT = 1 * 10 * 60
         analyzer.crawler.config.USE_CACHE_FOR_GET_LINKS = False
         analyzer.crawler.config.SAVE_ON_CRAWL = False
-        analyzer.crawler.parser.fetcher.config.TIMEOUT = 120
+        analyzer.crawler.parser.fetcher.config.TIMEOUT = 12000
         workers = [
             asyncio.create_task(
                 worker(an=analyzer, lock=lock, result=result, queue=queue, n_url=n_url)
@@ -83,11 +86,15 @@ if __name__ == "__main__":
     async def m():
         import pandas as pd
         dataframes = [pd.read_csv(p) for p in DATASET_PATHS]
-        samples_n = sum(df.shape[0] for df in dataframes)
+        # samples_n = sum(df.shape[0] for df in dataframes)
+        # urls = URLS[:samples_n]
+        urls = [u for df in dataframes for u in df["url"]]
         del dataframes
-        urls = URLS[:samples_n]
         t = asyncio.create_task(main(urls, 100))
         import joblib
         r  = await t
-        joblib.dump(r, "./crawl_result")
+        joblib.dump(r, "./crawl_result_1")
+    
+    from nest_asyncio import apply
+    apply()
     asyncio.run(m())

@@ -12,12 +12,14 @@ import httpx
 import aiohttp
 import asyncio
 import traceback
+from functools import partial
 from urllib.parse import urlparse
 from random import choice
 from nest_asyncio import apply
 from cachetools import TTLCache
 from tenacity import wait_fixed, stop_after_attempt, RetryError, AsyncRetrying
 from playwright.async_api import async_playwright
+from enum import StrEnum
 from scanner_ia.base_class.fetcher_base_class import FetcherResult
 from scanner_ia.scanner_utils.logger import get_logger
 
@@ -28,6 +30,11 @@ TTL = 10 * 60
 MAX_ATTEMPT = 3
 WAIT_BETWEEN = 3
 
+class MethodCheks(StrEnum):
+    PROACTIVE = "proactive"
+    REACTIVE = "reactive"
+    OFF = "off"
+    
 class Config:
     HEADERS =  {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36',
@@ -39,7 +46,7 @@ class Config:
     def __init__(self):
         self.MAX_REDIRECTS = 3
         self.Semaphore = 20
-        self.TIMEOUT = 30
+        self.TIMEOUT = 10
         self.DEBUG = False
         self.MAX_ATTEMPT = MAX_ATTEMPT
         self.WAIT_BETWEEN = WAIT_BETWEEN
@@ -98,8 +105,11 @@ class Fetcher():
             "get": self._fetch_get,
             "post": self._fetch_post,
             "head": self._fetch_head,
-            "playwrigth": self._playwright_fetch,
-            }
+            "put": partial(self._fetch_generic, method="PUT"),
+            "delete": partial(self._fetch_generic, method="DELETE"),
+            "patch": partial(self._fetch_generic, method="PATCH"),
+            "playwright": self._playwright_fetch,
+        }
         self._ip_cache = {}
         self.config = Config()
         self.update_conf(kwargs)
@@ -167,7 +177,11 @@ class Fetcher():
                     logger_fetcher.debug(f"OPTIONS {url} -> pas de header Allow exploitable")
                     return None
 
-                methods = {m.strip().upper() for m in allow_header.split(",") if m.strip()}
+                methods = {
+                    m.strip().upper() 
+                    for m in allow_header.split(",") 
+                    if m.strip() and m.strip() not in {"OPTIONS",}
+                }
                 METHODS_CACHE[cache_key] = methods
                 logger_fetcher.debug(f"OPTIONS {url} -> Allow: {methods}")
                 return methods
@@ -224,19 +238,17 @@ class Fetcher():
     
     async def _fetch_get(
         self, 
-        url:str, 
-        session:aiohttp.ClientSession,
-        timeout:int = None,  
-        params:dict = None,
-        headers:dict = None,
-        cookies:dict = None,
-        semaphore:int = None,
+        url: str, 
+        session: aiohttp.ClientSession,
+        timeout: int = None,  
+        params: dict | None = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        semaphore: int = None,
         **kwargs
     ):
         headers = headers or self.headers
-        if timeout is None:
-            timeout = self.config.TIMEOUT
-        timeout = aiohttp.ClientTimeout(total=timeout)
+        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
         params = params or {}
         cookies = cookies or {}
         if not url.startswith("http"):
@@ -265,7 +277,6 @@ class Fetcher():
                             headers=headers,
                             allow_redirects=True,
                             max_redirects=self.max_redirects,
-                            timeout=timeout
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="GET")
                             result.delay = float(f"{time.time() - start_time:.2f}")
@@ -284,28 +295,26 @@ class Fetcher():
     
     async def _fetch_post(
         self, 
-        url:str, 
-        session:aiohttp.ClientSession,
-        timeout:int = None,  
-        params:dict = None,
-        headers:dict = None,
-        cookies:dict = None,
-        semaphore:int = None,
-        json:dict = None,
-        data:dict = None,
+        url: str, 
+        session: aiohttp.ClientSession,
+        timeout: int = None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        semaphore: int = None,
+        json: dict | None = None,
+        data: dict | None = None,
         **kwargs
     ):
         headers = headers or self.headers
-        if timeout is None:
-            timeout = self.config.TIMEOUT
-        timeout = aiohttp.ClientTimeout(total=timeout)
+        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
         params = params or {}
         cookies = cookies or {}
-        json = json or {}
         data = data or {}
+        json = json or {}
         if not url.startswith("http"):
             url = "https://" + url
-        key = self._create_key(self._fetch_post, **{"url": url, "params": params, "headers": headers, "cookies": cookies, "json":json})
+        key = self._create_key(self._fetch_get, **{"url": url, "params": params, "headers": headers, "cookies": cookies, "json":json})
         cached_result = CACHE.get(key)
         if cached_result:
             logger_fetcher.debug(f"Cache hit Fetch pour POST {url}")
@@ -335,7 +344,6 @@ class Fetcher():
                             headers=headers,
                             allow_redirects=True,
                             max_redirects=self.max_redirects,
-                            timeout=timeout,
                             **body_kwargs
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="POST")
@@ -353,20 +361,18 @@ class Fetcher():
                        
     async def _fetch_head(
         self, 
-        url:str, 
-        session:aiohttp.ClientSession,
-        timeout:int = None,  
-        headers:dict = None,
-        semaphore:int = None,
+        url: str, 
+        session: aiohttp.ClientSession,
+        timeout: int = None,  
+        headers: dict | None = None,
+        semaphore: int = None,
         **kwargs
     ):
         headers = headers or self.headers
-        if timeout is None:
-            timeout = self.config.TIMEOUT
-        timeout = aiohttp.ClientTimeout(total=timeout)
+        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
         if not url.startswith("http"):
             url = "https://" + url
-        key = self._create_key(self._fetch_head, **{"url": url, "headers": headers})
+        key = self._create_key(self._fetch_get, **{"url": url, "headers": headers})
         cached_result = CACHE.get(key)
         if cached_result:
             logger_fetcher.debug(f"Cache hit Fetch pour HEAD {url}")
@@ -386,7 +392,6 @@ class Fetcher():
                         async with session.head(
                             url=url, 
                             headers=headers,
-                            timeout=timeout
                         ) as response:
                             result = await self._make_result(url, response=response, result=result, method="HEAD")
                             result.delay = float(f"{time.time() - start_time:.2f}")
@@ -402,6 +407,84 @@ class Fetcher():
                         logger_fetcher.warning(f"Échec HEAD {url} ({type(e).__name__}), {str(e)}")
                         raise
     
+    async def _fetch_generic(
+        self,
+        url: str,
+        session: aiohttp.ClientSession,
+        method: str,
+        timeout: int = None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        cookies: dict | None = None,
+        semaphore: int = None,
+        json: dict | None = None,
+        data: dict | None = None,
+        **kwargs
+    ):
+        """
+        Fetch générique pour les méthodes sans implémentation dédiée
+        (PUT, DELETE, PATCH...). Même structure (cache, retry, sémaphore)
+        que _fetch_get/_fetch_post, mais via session.request() paramétré
+        par `method` au lieu d'un verbe figé.
+        """
+        headers = headers or self.headers
+        timeout = aiohttp.ClientTimeout(timeout or self.config.TIMEOUT)
+        params = params or {}
+        cookies = cookies or {}
+        data = data or {}
+        json = json or {}
+        if not url.startswith("http"):
+            url = "https://" + url
+        key = self._create_key(
+            self._fetch_generic,
+            **{"url": url, "method": method, "params": params, "headers": headers, "cookies": cookies, "json": json}
+        )
+        cached_result = CACHE.get(key)
+        if cached_result:
+            logger_fetcher.debug(f"Cache hit Fetch pour {method} {url}")
+            return cached_result
+
+        async for attempt in AsyncRetrying(
+            stop=stop_after_attempt(self.config.MAX_ATTEMPT),
+            wait=wait_fixed(self.config.WAIT_BETWEEN),
+        ):
+            with attempt:
+                SEMAPHORE = self._get_semaphore(semaphore)
+                result = FetcherResult()
+                start_time = time.time()
+                logger_fetcher.debug(f"Début fetching {method} url = {url}")
+                async with SEMAPHORE:
+                    try:
+                        body_kwargs = {}
+                        if json:
+                            body_kwargs["json"] = json
+                        elif data:
+                            body_kwargs["data"] = data
+
+                        async with session.request(
+                            method=method,
+                            url=url,
+                            params=params,
+                            cookies=cookies,
+                            headers=headers,
+                            allow_redirects=True,
+                            max_redirects=self.max_redirects,
+                            **body_kwargs
+                        ) as response:
+                            result = await self._make_result(url, response=response, result=result, method=method)
+                            result.delay = float(f"{time.time() - start_time:.2f}")
+                            if str(response.status).startswith("2") or str(response.status) in ("404", "410", "403", "301", "302"):
+                                CACHE[key] = result
+                            logger_fetcher.debug(f"{method} {url} -> {response.status} en {result.delay}s")
+                            return result
+
+                    except Exception as e:
+                        result.error = str(e)
+                        result.delay = float(f"{time.time() - start_time:.2f}")
+                        self.backup_result = result
+                        logger_fetcher.warning(f"Échec {method} {url} ({type(e).__name__}), {str(e)}")
+                        raise
+
     async def _playwright_fetch(
         self,
         url: str,
@@ -423,9 +506,6 @@ class Fetcher():
             logger_fetcher.debug(f"Cache hit Fetch playwright pour {url}")
             return cached
         
-        if timeout is None:
-            timeout = self.config.TIMEOUT
-        
         logger_fetcher.debug(f"Début playwright fetch url = {url}")
         page = None
         try:
@@ -435,7 +515,7 @@ class Fetcher():
             response = await page.goto(
                 url,
                 wait_until="domcontentloaded",
-                timeout=timeout * 1000  # playwright en ms
+                timeout=(timeout or self.config.TIMEOUT) * 1000  # playwright en ms
             )
             result.headers = response.headers
             result.status_code = response.status if response else 0
@@ -458,13 +538,78 @@ class Fetcher():
         finally:
             (await page.close()) if page else None
     
-    async def fetch(self, url:str, method:str = "GET", *args, **kwargs):
+    async def fetch(
+        self,
+        url: str,
+        method: str = "GET",
+        method_check: str = MethodCheks.REACTIVE.value,
+        *args,
+        **kwargs,
+    ):
+        """
+        method_check:
+          - "reactive" (défaut) : tente `method` directement, ne retente
+            avec la méthode réellement acceptée (via OPTIONS) qu'EN CAS de
+            405. Coût nul dans le cas courant (endpoint visité une fois) —
+            adapté au Crawler/Parser.
+          - "proactive" : interroge OPTIONS AVANT d'émettre la requête
+            réelle (résultat mis en cache par endpoint dans
+            get_allowed_methods) et part directement sur la bonne méthode.
+            Rentable quand le même endpoint est appelé de nombreuses fois
+            (ex: le Fuzzer qui teste des dizaines de payloads sur la même
+            route) — le coût de l'OPTIONS n'est payé qu'une fois, jamais
+            à chaque payload. Si OPTIONS échoue/est inconclusif, on ignore
+            l'optimisation et on part sur `method` tel quel, sans bloquer.
+          - "off" : aucune vérification/retry de méthode, comportement brut.
+        """
         try:
-            method = method.lower()
-            func = self.map.get(method, self._fetch_get)
-            logger_fetcher.debug(f"Fetch {method.upper()} {url}")
-            return await func(url, session=self.session, *args, **kwargs)
-        
+            method_upper = method.upper()
+
+            if method_check == MethodCheks.PROACTIVE.value:
+                allowed = await self.get_allowed_methods(url)
+                if allowed and method_upper not in allowed:
+                    candidate = next((m for m in allowed if m.lower() in self.map), None)
+                    if candidate:
+                        logger_fetcher.debug(
+                            f"Proactif : {method_upper} non listé pour {url} (Allow: {allowed}), utilise {candidate}"
+                        )
+                        method_upper = candidate.upper()
+                    # allowed vide/aucun candidat connu -> on garde method tel quel
+                # allowed is None (OPTIONS a échoué/inconclusif) -> on ignore
+                # l'optimisation, on part sur `method` tel quel (comme demandé)
+
+            func = self.map.get(method_upper.lower(), self._fetch_get)
+            logger_fetcher.debug(f"Fetch {method_upper} {url}")
+            result = await func(url, session=self.session, *args, **kwargs)
+
+            if (
+                method_check == MethodCheks.REACTIVE.value
+                and result is not None
+                and getattr(result, "status_code", None) == 405
+            ):
+                allowed = await self.get_allowed_methods(url)
+                if allowed:
+                    candidate = next(
+                        (m for m in allowed if m.upper() != method_upper and m.lower() in self.map),
+                        None,
+                    )
+                    if candidate:
+                        logger_fetcher.debug(
+                            f"{method_upper} {url} -> 405, retry auto en {candidate} (Allow: {allowed})"
+                        )
+                        return await self.fetch(
+                            url, 
+                            method=candidate, 
+                            method_check="off",
+                            *args, 
+                            **kwargs
+                        )
+                    logger_fetcher.debug(
+                        f"{method_upper} {url} -> 405, mais aucune méthode de repli dans self.map (Allow: {allowed})"
+                    )
+
+            return result
+
         except RetryError as e:
             logger_fetcher.warning(f"Max essai de fetch atteint, erreur : {str(e)}")
             logger_fetcher.warning(f"Max attempts : {e.last_attempt.attempt_number}")
@@ -483,11 +628,11 @@ class Fetcher():
     async def fetch_once(
         self,
         url: str,
-        timeout: int = None,
+        timeout: int = 3,
         method: str = "GET",
-        headers: dict = None,
-        params: dict = None,
-        cookies: dict = None,
+        headers: dict | None = None,
+        params: dict | None = None,
+        cookies: dict | None = None,
         max_attempts: int = 1,
         wait_between: float = 0.0,
         **kwargs
@@ -502,13 +647,6 @@ class Fetcher():
     
         if not url.startswith("http"):
             url = "https://" + url
-        
-        headers = headers or self.headers
-        params = params or {}
-        cookies = cookies or {}
-        
-        if timeout is None:
-            timeout = self.config.TIMEOUT
     
         key = self._create_key(self._fetch_get, **{"url": url, "params": params})
         cached = CACHE.get(key)
@@ -517,7 +655,7 @@ class Fetcher():
             return cached
     
         _timeout = aiohttp.ClientTimeout(total=timeout)
-        _headers = headers
+        _headers = headers or self.headers
         _method  = getattr(self.session, method.lower(), self.session.get)
     
         for attempt in range(1, max_attempts + 1):
@@ -556,7 +694,7 @@ class Fetcher():
     
         return result
 
-    async def test(self, method:str = "GET"):
+    async def test(self, method:str = "GET", url: str | None = None):
         logger_fetcher.info("=" * 80)
         logger_fetcher.info("TEST")
         logger_fetcher.info("=" * 80)
@@ -571,20 +709,25 @@ class Fetcher():
             'https://httpbin.org/status/404',
             'https://invalid-url-that-does-not-exist.com'
         ]
-        url = choice(urls)
-        url = "http://localhost:5050/comments/cmdi-ping_host_shell_true"
-        
+        url = url or choice(urls)
         logger_fetcher.info(f"Test sur {url}")
         self.session = await self.create_session(None)
-        result = await self.fetch(url, method=method.upper())
-        print(result.body_length())
+        result = await self.fetch(
+            url,
+            method=method.upper(),
+            method_check="reactive"
+        )
         logger_fetcher.success(f"Résultat: {result.status_code} - {result.error}")
         logger_fetcher.info("=" * 80)
         logger_fetcher.info("FIN DES TESTS")
         logger_fetcher.info("=" * 80)
         await self.close()
+        return result
                 
 if __name__ == "__main__":
     apply()
     f = Fetcher()
-    asyncio.run(f.test())
+    url = "http://localhost:5050/api/v1/imports/insecupload-no_content_type_check" 
+    # url = "http://localhost:5050/comments/cmdi-ping_host_shell_true"
+    # url = "http://localhost:5050/api/v1/imports/insecupload-no_content_type_check"
+    r = asyncio.run(f.test(url=url))

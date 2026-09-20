@@ -6,33 +6,20 @@ Created on Mon Apr  6 10:57:00 2026
 @author: hounsousamuel
 """
 
-import os, sys
-from contextguard.main import start, app, close_api_atexit
-from config import IP, PORT
+import sys
+from contextguard.api.main_api import start, app
+from contextguard.api.config import IP, PORT
 import time
 import nest_asyncio
-from diskcache import Cache
-import shutil
 from modules_utils.signal_manager import signal_manager
 
 def run_api():
     thread, server = start(app, host=IP, port=PORT)
     thread.start()
     time.sleep(2)
-    TARGET = f'http://{IP}:{PORT}/api'
-    CLOSE_TARGET = TARGET + "/close"
-    close_api_atexit(CLOSE_TARGET)
     
     def signal_handler(sig, frame):
         print('Signal envoyé : ', sig)
-        if os.path.exists("./.user_cache"):
-            print("Suppression de .user_cache")
-            try:
-                shutil.rmtree(".user_cache" , ignore_errors=True)
-                # subprocess.run(["rm", "-rf", ".usercache"])
-            except Exception as e:
-                print("Erreur suppression de .user_cache :", str(e))
-                Cache(".user_cache").clear()
         server.should_exit = True
         thread.join(2)
         sys.exit(0)
@@ -53,15 +40,7 @@ def run_api():
             break
         except Exception:
             break
-        
-    if os.path.exists("./.user_cache"):
-        print("Suppression de .user_cache")
-        try:
-            shutil.rmtree(".user_cache" , ignore_errors=True)
-            # subprocess.run(["rm", "-rf", ".usercache"])
-        except Exception as e:
-            print("Erreur suppression de .user_cache :", str(e))
-            Cache(".user_cache").clear()
+    
     print('Fermeture API à : ', time.ctime())
     
 if __name__ == '__main__':

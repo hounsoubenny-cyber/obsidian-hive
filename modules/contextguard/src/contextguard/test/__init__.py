@@ -7,4 +7,4 @@ Created on Thu May  7 07:50:10 2026
 """
 
 __author__ = "HOUNSOU Samuel Benny"
-__version__ = "2.0.0"
+__version__ = "1.0.0"

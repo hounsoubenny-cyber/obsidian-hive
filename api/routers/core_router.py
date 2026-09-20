@@ -59,6 +59,11 @@ from obsidian_hive.api.api_utils.core_shared import (
     _server_error,
     _update_server_asset_field,
 )
+from obsidian_hive.api.api_utils.helpers import (
+    activate_prompt_checking as _activate_prompt_checking,
+    deactivate_prompt_checking as _deactivate_prompt_checking,
+    check_prompt, can_check_prompt
+)
 from obsidian_hive.core.assets.asset_types import ServerAsset
 
 router = APIRouter()
@@ -949,3 +954,13 @@ async def analyze_with_alex(request: Request, options: AlexAnalyzeData):
         )
 
     return result.report
+
+@limiter.limit(f"{LIMITE}/minute")
+@router.get("/agent/prompts/checking/activate")
+async def activate_prompt_checking(request: Request):
+    return _activate_prompt_checking()
+
+@limiter.limit(f"{LIMITE}/minute")
+@router.get("/agent/prompts/checking/deactivate")
+async def deactivate_prompt_checking(request: Request):
+    return _deactivate_prompt_checking()

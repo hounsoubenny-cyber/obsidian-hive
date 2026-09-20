@@ -17,15 +17,16 @@ import os
 import sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 
-import socket
 import json
 import time
+import dpkt
+import heapq
+import socket
+import joblib
 import asyncio
 import numpy as np
 from datetime import datetime
-
-import dpkt
-
+from collections import deque
 from ids_ips_ia.models.models import Models
 from ids_ips_ia.ids_ips_utils.suricata_integration import IPS
 from ids_ips_ia.reaction.reaction_module import React, GeoLocator
@@ -96,7 +97,6 @@ async def resolve_hostname(ip: str) -> str:
 
 class TextMonitor:
     def __init__(self, window_size=60):
-        from collections import deque
         self.scores = deque(maxlen=window_size)
         self.actions = deque(maxlen=window_size)
 
@@ -116,12 +116,69 @@ class TextMonitor:
         logger.print(f"{'='*150}")
         logger.print('\n \n \n')
 
+class BoundedIPStore:
+    """
+    Dict borné qui s'auto-nettoie au setitem.
+    - protected_fn(key, value) -> True si l'entrée ne doit JAMAIS être évincée
+    - evict_fn(store) -> logique de purge personnalisable (sinon, purge LRU par défaut)
+    """
+    def __init__(
+        self, max_size: int = 50_000,
+        evict_ratio: float = 0.1,
+        protected_fn: callable = None,
+        evict_fn: callable = None,
+        timestamp_key: str = "last_update_timestamp"
+    ):
+        self._data = {}
+        self.max_size = max_size
+        self.evict_ratio = evict_ratio
+        self.protected_fn = protected_fn or (lambda k, v: False)
+        self.evict_fn = evict_fn or self._default_evict
+        self.timestamp_key = timestamp_key
+        
+    def __setitem__(self, key, value):
+        if key not in self._data and len(self._data) >= self.max_size:
+            self.evict_fn(self)
+        self._data[key] = value
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __contains__(self, key):
+        return key in self._data
+
+    def __delitem__(self, key):
+        self._data.pop(key, None)
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def pop(self, key, default=None):
+        return self._data.pop(key, default)
+
+    def items(self):
+        return self._data.items()
+
+    def __len__(self):
+        return len(self._data)
+
+    def _default_evict(self, store):
+        n = max(1, int(store.max_size * store.evict_ratio))
+        candidates = (
+            (v.get(store.timestamp_key, 0), k)
+            for k, v in store._data.items()
+            if not store.protected_fn(k, v)
+        )
+        for _, k in heapq.nsmallest(n, candidates):
+            del store._data[k]
+            
+
+PROTECT_SCORE_THRESHOLD = THREAT_LEVELS['rate_limit']['score_range'][0]  # 125
 
 class AnomalyScorer:
     def __init__(self, React: React, Text: Text, loss_per_hour=5, reset_days=14):
         self.loss_per_hour = loss_per_hour
         self.reset_days = reset_days * 24 * 3600
-        self.ip_data = {}
         self.save_atexit()
         self.ip_score_dir = os.path.join(ip_score_dir, 'scores.pkl')
         self.load(self.ip_score_dir)
@@ -130,17 +187,37 @@ class AnomalyScorer:
         self.React = React
         self.Text = Text
         self.TextMonitor = TextMonitor()
-        self.ip_event_history = {}  # {ip: {'events': [...], 'last_update': time, 'escalation_level': 0}}
-        self.EVENT_WINDOW = 30  # Fenêtre temporelle en secondes
+        self.EVENT_WINDOW = 60  # Fenêtre temporelle en secondes
         self.ESCALATION_THRESHOLD = 3
         self.dangerous_localisation = CONFIG.CONFIG.get(DANGEROUS_LOCALISATION_KEY, {})
         self.last_save = time.time()
         self.save_interval = 300
-        logger.print(f"AnomalyScorer initialisé avec dossier de scores ip à : {self.ip_score_dir}")
+        self.ip_data = BoundedIPStore(
+            max_size=100_000,
+            timestamp_key="last_update_timestamp",
+            protected_fn=lambda ip, data: (
+                self.React.is_blocked(ip)
+                or data.get("score", 0) >= PROTECT_SCORE_THRESHOLD
+            )
+        )
+        self.ip_event_history = BoundedIPStore(
+            max_size=100_000,
+            timestamp_key="last_update",
+            protected_fn=lambda ip, data: (
+                self.React.is_blocked(ip)
+                or max((e.get("score", 0) for e in data.get("events", [])), default=0) >= PROTECT_SCORE_THRESHOLD
+                or data.get("escalation_level", 0) >= self.ESCALATION_THRESHOLD
+            )
+        ) # {ip: {'events': [...], 'last_update': time, 'escalation_level': 0}}
 
+        logger.print(f"AnomalyScorer initialisé avec dossier de scores ip à : {self.ip_score_dir}")
+    
+    def clear(self,):
+        self.cleanup_stale_data()
+        self.React.purge_expired_blocks()
+    
     def save(self, filename, value):
         try:
-            import joblib
             joblib.dump(value, filename, compress=5)
             os.chmod(filename, 0o644)
             logger.print(f'Fichier sauvegarder dans : {filename}')
@@ -259,9 +336,13 @@ class AnomalyScorer:
         }
 
     async def get_ia_preds_seq(self, features: dict | np.ndarray, models: dict, Model: Models, how, *args, **kwargs):
-        ae_seq, cnn_seq, if_seq, lof_seq, scaler = (models["ae_seq"], models["cnn_seq"], models["if_seq"],
-                                                      models["lof_seq"], models['scaler_seq'])
-
+        ae_seq, cnn_seq, if_seq, lof_seq, scaler = (
+            models["ae_seq"], 
+            models["cnn_seq"], 
+            models["if_seq"],
+            models["lof_seq"],
+            models['scaler_seq']
+        )
         de_func = await Model.apredict_sequence(ae_seq, cnn_seq, if_seq, lof_seq, scaler, features, method="decision_function", how=how)
         pred = await Model.apredict_sequence(ae_seq, cnn_seq, if_seq, lof_seq, scaler, features, method="predict", how=how)
         return {
@@ -428,7 +509,7 @@ class AnomalyScorer:
         self.ip_data[ip]["blocked_count"] = blocked_count
         return True
 
-    def get_message(self, action: str, duration: float, decision: dict, ip: str):
+    def get_message(self, action: str, duration: float, decision: dict, ip: str, show: bool = False):
         action = str(action).upper()
         date = datetime.now().strftime('%d/%m/%Y à %H:%M:%S')
         duration = duration if duration is not None else 'infini'
@@ -445,8 +526,8 @@ class AnomalyScorer:
         Données IP:
         {json.dumps(self.ip_data[ip], indent=2)}
         """
-
-        logger.print(message)
+        if show:
+            logger.print(message)
         return message
 
     def get_default(self, ip):
@@ -510,7 +591,7 @@ class AnomalyScorer:
                 if (current_time - last_update) > reset_seconds:
                     # ⚠️ RÈGLE D'OR : On ne supprime JAMAIS une IP si elle 
                     # est actuellement bloquée dans le pare-feu !
-                    if ip not in self.React.blocked:
+                    if not self.React.is_blocked(ip):
                         keys_to_delete_data.append(ip)
 
             for ip in keys_to_delete_data:
@@ -674,23 +755,24 @@ class AnomalyScorer:
         return THREAT_LEVELS['log_only']
 
     def get_list_blocked_ip(self, *args, **kwargs):
-        DATA = {}
+        blocked = {}
         if self.ip_data:
             for ip, data in self.ip_data.items():
                 if isinstance(data, dict):
                     if "geoloc" not in data:
                         data["geoloc"] = self.GeoLocator.locate(ip)
-                    DATA[ip] = data
+                    blocked[ip] = data
 
-        return DATA
+        return blocked
 
     def action(self, src, dst, decision: dict, block_input: bool | None = None):
         """
         Applique une action en fonction de la décision de l'IDS/IPS.
         Utilise UNIQUEMENT les règles nftables (pas de tc).
         """
-        if any(ip in ('::', '0.0.0.0', '255.255.255.255') or (ip and ip.startswith('ff'))
-               for ip in (src, dst) if ip):
+        if any(
+            ip in ('::', '0.0.0.0', '255.255.255.255') or (ip and ip.startswith('ff')) for ip in (src, dst) if ip
+        ):
             logger.print(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
             return
 
@@ -816,7 +898,10 @@ class AnomalyScorer:
 
         t = time.time()
         if t - self.last_save >= self.save_interval:
-            self.cleanup_stale_data()
-            await asyncio.to_thread(self.save, self.ip_score_dir, self.ip_data)
+            tasks = [
+                asyncio.create_task(asyncio.to_thread(self.clear)),
+                asyncio.create_task(asyncio.to_thread(self.save, self.ip_score_dir, self.ip_data))
+            ]
+            await asyncio.gather(*tasks, return_exceptions=True)
             self.last_save = time.time()
         return score_dangerous

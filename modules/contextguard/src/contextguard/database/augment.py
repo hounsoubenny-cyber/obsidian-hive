@@ -12,7 +12,6 @@ Lit depuis dataset_base.py, augmente jusqu'à TARGET_PER_CLASS par classe.
 """
 
 import os
-import sys
 import json
 import random
 import re
@@ -20,8 +19,7 @@ from collections import Counter
 from tqdm import tqdm
 
 # ── Import du dataset base ───────────────────────────────
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from dataset_base import SAFE, INJECTION, JAILBREAK, EXFILTRATION
+from contextguard.database.dataset_base import SAFE, INJECTION, JAILBREAK, EXFILTRATION
 
 # ── Config ───────────────────────────────────────────────
 TARGET_PER_CLASS = 5000
@@ -74,7 +72,7 @@ FRENCH_MARKERS = {
 }
 
 def detect_lang(text: str) -> str:
-    words = set(re.findall(r'\b\w+\b', text.lower()))
+    words = set(re.findall(r'\b\w+\b', text.lower(), flags=re.UNICODE))
     score = len(words & FRENCH_MARKERS)
     return "fr" if score >= 2 else "en"
 

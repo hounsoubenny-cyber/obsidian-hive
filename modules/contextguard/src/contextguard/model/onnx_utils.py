@@ -46,7 +46,7 @@ class ONNXUtils:
             raise FileNotFoundError(f"Modèle {file} introuvable")
             
         if self.file is None:
-            self.file == file
+            self.file = file
         
         if self.session:
             if file == self.file:

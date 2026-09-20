@@ -17,10 +17,7 @@ def run():
     thread, server = start(app, host=API_HOST, port=API_PORT)
     thread.start()
     time.sleep(2)
-    # TARGET = f'http://{API_HOST}:{API_PORT}/api'
-    # CLOSE_TARGET = TARGET + "/close"
-    # close_api_atexit(CLOSE_TARGET)
-    
+   
     def signal_handler(sig, frame):
         print('Signal envoyé : ', sig)
         server.should_exit = True
@@ -28,10 +25,6 @@ def run():
         sys.exit(0)
         
     signal_manager(signal_handler)
-    # signal.signal(signal.SIGINT, signal_handler)
-    # signal.signal(signal.SIGTERM, signal_handler)
-    # if sys.platform != "win32":
-    #     signal.signal(signal.SIGQUIT, signal_handler)
     
     print('API lancé à : ', time.ctime())
     start_time = time.time()

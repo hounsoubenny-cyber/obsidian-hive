@@ -1,0 +1,126 @@
+#!/usr/sbin/nft -f
+#
+# optional-syn-protection.nft.example
+# =============================================================================
+# Protection OPTIONNELLE anti-SYN-flood pour l'IDS/IPS.
+#
+# ⚠️  CE FICHIER N'EST PAS CHARGÉ AUTOMATIQUEMENT PAR L'APPLICATION.
+#    Il doit être calibré et activé manuellement par l'administrateur
+#    réseau, après avoir mesuré le trafic SYN légitime habituel.
+#
+# Un mauvais réglage peut bloquer du trafic partenaire légitime en cas
+# de pic de charge normal (campagne marketing, migration, forte affluence
+# API, etc.). Voir la procédure de calibration ci-dessous avant d'activer.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# ÉTAPE 0 — Prérequis : vérifier que les SYN cookies sont actifs (kernel)
+# -----------------------------------------------------------------------------
+# Cette protection est indépendante de nftables et n'a AUCUN risque de faux
+# positif — elle doit être activée dans tous les cas.
+#
+#   sysctl net.ipv4.tcp_syncookies
+#   # doit renvoyer : net.ipv4.tcp_syncookies = 1
+#
+# Si ce n'est pas le cas :
+#   sudo sysctl -w net.ipv4.tcp_syncookies=1
+#   # pour la rendre permanente : ajouter la ligne
+#   #   net.ipv4.tcp_syncookies = 1
+#   # dans /etc/sysctl.d/99-syn-cookies.conf, puis: sudo sysctl --system
+
+
+# -----------------------------------------------------------------------------
+# ÉTAPE 1 — Mesurer votre pic de SYN/s légitime AVANT de calibrer
+# -----------------------------------------------------------------------------
+# Exemple de capture sur quelques jours (adapter l'interface) :
+#
+#   sudo tcpdump -i <interface> 'tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0' \
+#       -w /tmp/syn_capture.pcap
+#
+# Puis analyse du débit maximum observé (SYN/s) avec tshark, par exemple :
+#
+#   tshark -r /tmp/syn_capture.pcap -q -z io,stat,1,"COUNT(tcp.flags.syn==1 && tcp.flags.ack==0)"
+#
+# Notez votre pic légitime observé (ex: 800 SYN/s un jour de forte charge),
+# puis appliquez une marge de sécurité x3 à x5 avant de fixer les valeurs
+# ci-dessous. Ne recopiez JAMAIS les valeurs de cet exemple telles quelles.
+
+
+# -----------------------------------------------------------------------------
+# ÉTAPE 2 — Règles à insérer dans la chaîne "input" existante
+# -----------------------------------------------------------------------------
+# Remplacer <NFT_TABLE_NAME> par la valeur réelle de votre config
+# (voir ids_ips_ia/reaction/config.py -> NFT_TABLE_NAME).
+#
+# ORDRE IMPORTANT : ces règles doivent être ajoutées APRÈS les règles de
+# whitelist et de blacklist existantes dans la chaîne "input", jamais avant.
+# Une règle "accept" court-circuite l'évaluation des règles suivantes : si
+# ce bloc passait avant la blacklist, une IP bloquée mais envoyant ses SYN
+# lentement pourrait être acceptée par erreur.
+
+table inet <NFT_TABLE_NAME> {
+    chain input {
+        # ... vos règles whitelist et blacklist existantes restent ici, avant ...
+
+        # --- Garde-fou global (tous SYN confondus, indépendant de l'IP source) ---
+        # Utile contre un flood DISTRIBUÉ (des milliers d'IPs spoofées envoyant
+        # chacune peu de paquets) : un rate-limit PAR IP ne détecte rien dans ce
+        # cas, car chaque IP individuelle reste sous son propre seuil.
+        # <SEUIL_GLOBAL> = calibré selon votre mesure de l'étape 1 (ex: pic mesuré x4)
+        tcp flags syn tcp flags != ack ct state new \
+            limit rate <SEUIL_GLOBAL>/second burst <BURST_GLOBAL> packets accept
+
+        # --- Garde-fou par IP source ---
+        # Utile contre UNE IP qui insiste (scan, brute-force de connexions).
+        # "size" borne la table dynamique du meter en mémoire noyau : sans ça,
+        # des milliers d'IPs sources différentes peuvent aussi faire grossir
+        # cette table indéfiniment.
+        # <SEUIL_PAR_IP> = ex: 20/second est un point de départ pour un usage
+        # web classique ; à ajuster si vous avez des clients qui ouvrent
+        # légitimement beaucoup de connexions courtes (ex: certains proxies,
+        # certains schedulers de tests de charge internes).
+        tcp flags syn tcp flags != ack ct state new \
+            meter syn_flood_meter size 65535 \
+            { ip saddr limit rate <SEUIL_PAR_IP>/second burst <BURST_PAR_IP> packets } \
+            accept
+
+        # --- Rejet de tout le reste des nouveaux SYN qui dépassent les seuils ---
+        tcp flags syn tcp flags != ack ct state new drop
+
+        # ... reste de vos règles existantes (accept par défaut, etc.) ...
+    }
+}
+
+
+# -----------------------------------------------------------------------------
+# ÉTAPE 3 — Déploiement progressif recommandé
+# -----------------------------------------------------------------------------
+# 1. Testez la syntaxe sans rien appliquer :
+#      sudo nft -c -f optional-syn-protection.nft.example
+#
+# 2. Dans un premier temps, remplacez "drop" par "log prefix \"SYN_WOULD_DROP \" accept"
+#    afin d'observer dans les logs ce qui SERAIT bloqué, sans réellement bloquer :
+#      tcp flags syn tcp flags != ack ct state new log prefix "SYN_WOULD_DROP " accept
+#
+# 3. Surveillez ces logs pendant plusieurs jours (couvrant vos pics normaux :
+#    fin de mois, campagnes, heures de pointe) :
+#      sudo journalctl -k -f | grep SYN_WOULD_DROP
+#
+# 4. Si aucun trafic légitime connu n'apparaît en "would drop", repassez la
+#    dernière règle en "drop" pour activer la protection réellement.
+#
+# 5. Ré-évaluez ces seuils périodiquement (croissance du trafic, nouveaux
+#    partenaires, changement d'infrastructure).
+
+
+# -----------------------------------------------------------------------------
+# Alternative pour les volumes importants
+# -----------------------------------------------------------------------------
+# Si votre trafic est conséquent ou critique, un rate-limiting nftables local
+# reste une protection de dernier recours. Pour une robustesse supérieure et
+# moins de risque de faux positif, envisagez plutôt :
+#   - un service anti-DDoS en amont (CDN, load-balancer avec protection intégrée)
+#   - un SYNPROXY dédié en frontal, avec gestion fine du conntrack
+# Ces solutions absorbent le trafic hostile avant même qu'il atteigne cette
+# machine, plutôt que de le filtrer localement une fois déjà reçu.

@@ -97,22 +97,43 @@ class ParseResult(Base):
         self.elapsed = 0.0
 
     def to_dict(self, deep:bool = False) -> Dict[str, Any]:
+        if not deep:
+            return {
+                'a': self.a,
+                'img': self.img,
+                'script': self.script,
+                'link': self.link,
+                'style': self.style,
+                'iframe': self.iframe,
+                'video': self.video,
+                'audio': self.audio,
+                'embed': self.embed,
+                'object': self.object,
+                'form': self.form,
+                'meta': self.meta,
+                'cite': self.cite,
+                'headers': self.headers,
+                "comments": self.comments,
+                "n_error": self.n_error,
+                "elapsed": self.elapsed
+            }
+        
         return {
-            'a': self.a if not deep else self.a.to_dict(),
-            'img': self.img if not deep else self.img.to_dict(),
-            'script': self.script if not deep else self.script.to_dict(),
-            'link': self.link if not deep else self.link.to_dict(),
-            'style': self.style if not deep else self.style.to_dict(),
-            'iframe': self.iframe if not deep else self.iframe.to_dict(),
-            'video': self.video if not deep else self.video.to_dict(),
-            'audio': self.audio if not deep else self.audio.to_dict(),
-            'embed': self.embed if not deep else self.embed.to_dict(),
-            'object': self.object if not deep else self.object.to_dict(),
-            'form': self.form if not deep else self.form.to_dict(),
-            'meta': self.meta if not deep else self.meta.to_dict(),
-            'cite': self.cite if not deep else self.cite.to_dict(),
-            'headers': self.headers if not deep else self.headers.to_dict(),
-            "comments": self.comments if not deep else self.comments.to_dict(),
+            'a': self.a.to_dict(),
+            'img': self.img.to_dict(),
+            'script': self.script.to_dict(),
+            'link': self.link.to_dict(),
+            'style':self.style.to_dict(),
+            'iframe': self.iframe.to_dict(),
+            'video': self.video.to_dict(),
+            'audio': self.audio.to_dict(),
+            'embed': self.embed.to_dict(),
+            'object': self.object.to_dict(),
+            'form': self.form.to_dict(),
+            'meta': self.meta.to_dict(),
+            'cite': self.cite.to_dict(),
+            'headers': self.headers.to_dict(),
+            "comments": self.comments.to_dict(),
             "n_error": self.n_error,
             "elapsed": self.elapsed
         }
@@ -130,7 +151,7 @@ class ParseResult(Base):
             chaine = pformat(self.to_dict(True), indent=2, width=100)
             chaine = chaine.replace(",", "")
             return chaine
-            
+    
 class ClassifyLinkResult(Base):
     __slots__ = ('url', 'ext', 'type')
     

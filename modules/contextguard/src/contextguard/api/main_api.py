@@ -8,14 +8,11 @@ Created on Mon Apr  6 10:56:52 2026
 
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, ".."))))
-import signal
+
 import atexit
 import asyncio
-import bcrypt
 import aiohttp
-import time
 import threading
-from datetime import datetime
 from uvicorn import Config, Server
 from fastapi import status, FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -23,11 +20,9 @@ from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
-from config import LIMITE as limite, IP, PORT
-from contextguard.core.limiter import limiter
-from contextguard.core.router import router
-import contextguard.core.router as r
+from contextguard.api.router import router
 from contextlib import asynccontextmanager
+import contextguard.api.router as r
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +34,11 @@ async def lifespan(app: FastAPI):
     # Shutdown
     print("👋 API fermée !")
     
-    
+INDEX_HTML = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..",
+    "FRONT_END_REACT", "build", "index.html"
+)
 server = None
 app = FastAPI(
     version="1.0",
@@ -68,8 +67,30 @@ app.add_middleware(
 REACT_URL = "/static"
 BUILD_URL = "/build"
 
-app.mount(BUILD_URL, StaticFiles(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "FRONT_END_REACT", "build")), name="build")
-app.mount(REACT_URL, StaticFiles(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "FRONT_END_REACT", "build", "static")), name="static")
+app.mount(
+    BUILD_URL, 
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ), "..",
+            "FRONT_END_REACT", "build"
+        )
+    ),
+    name="build"
+)
+app.mount(
+    REACT_URL, 
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ), "..",
+            "FRONT_END_REACT", "build", "static"
+        )
+    ),
+    name="static"
+)
 
 def __close_api():
     global server
@@ -103,18 +124,9 @@ def _test():
         "message": "Test de l'api !"
         }
 
-@app.get("/api/salt")
-@limiter.limit(f"{limite}/minute")
-def _get_salt(request: Request):
-    return {
-        "salt": bcrypt.gensalt().decode(),
-        "datetime": datetime.utcnow()
-    }
-
 @app.get("/")
 async def _home():
     try:
-        INDEX_HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "FRONT_END_REACT", "build", "index.html")
         return FileResponse(INDEX_HTML)
     except Exception:
         return {
@@ -134,10 +146,18 @@ async def catch_all(full_path: str):
     if any(full_path.startswith(prefix) for prefix in excluded_prefixes):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route non trouvée")
         
-        
+    return FileResponse(INDEX_HTML)
+ 
 def start(app, host, port):
     global server
-    conf = Config(app=app, workers=2, host=host, port=port, loop='uvloop', use_colors=True)
+    conf = Config(
+        app=app, 
+        workers=2,
+        host=host,
+        port=port,
+        loop='uvloop' if sys.platform != "win32" else "asyncio",
+        use_colors=True
+    )
     server = Server(config=conf)
     th = threading.Thread(target=server.run, daemon=True)
     return th, server

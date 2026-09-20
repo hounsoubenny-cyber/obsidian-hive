@@ -136,8 +136,8 @@ class TestAPI:
         response = client.post("/api/login", json=login_data)
         assert response.status_code == 200 or response.status_code == 226
         data = response.json()
-        assert data["state"] == "new user" or data["state"] == "Unknow"
-        if data["state"] == "Unknow":
+        assert data["state"] == "new user" or data["state"] == "Unknown"
+        if data["state"] == "Unknown":
             assert data["success"] is False
         else:
             assert data["success"] is True

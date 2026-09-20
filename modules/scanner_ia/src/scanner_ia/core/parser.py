@@ -17,7 +17,7 @@ from urllib.parse import urljoin, urlparse, urlunparse, urldefrag, parse_qs
 from urllib import robotparser
 from diskcache import Cache
 from lxml import html, etree
-from scanner_ia.core.fetcher import Fetcher, FetcherResult
+from scanner_ia.core.fetcher import Fetcher, FetcherResult, MethodCheks
 from datetime import datetime
 from scanner_ia.base_class.parser_base_class import (
     ParserResult, ClassifyLinkResult, GetAllLinkResult, 
@@ -162,7 +162,7 @@ class Parser:
             Détermine si il faut aussi envoyer la sortie du fetcher. The default is False.
         is_body: bool, default = False
             Indique directement que c'est un body html.
-        use_playwrigth: bool, default = False
+        use_playwright: bool, default = False
             Indique si il faut use playwright pour le fetch
 
         Returns
@@ -185,7 +185,7 @@ class Parser:
             return result
         
         # Donc url
-        method = "PLAYWRIGTH" if use_playwright else "GET"
+        method = "PLAYWRIGHT" if use_playwright else "GET"
         cache = CACHE.get(self.parse_html_key, {})
         if use_cache and cache.get(url_or_body, None):
             result.tree = html.fromstring(cache[url_or_body], parser=self.__parser)
@@ -194,7 +194,8 @@ class Parser:
             
             r = await self.fetcher.fetch(
                 url=url_or_body,
-                method=method
+                method=method,
+                method_check=MethodCheks.REACTIVE.value
             )
             result.response = r
             return result
@@ -202,7 +203,8 @@ class Parser:
         else:
             r = await self.fetcher.fetch(
                 url=url_or_body,
-                method=method
+                method=method,
+                method_check=MethodCheks.REACTIVE.value
             )
             if response:
                 result.response = r
@@ -350,6 +352,7 @@ class Parser:
                 r = await self.fetcher.fetch(
                     url,
                     method="GET",
+                    method_check=MethodCheks.REACTIVE.value
                 )
                 headers = r.headers
                 headers = {str(k).lower():v for k, v in headers.items()}
@@ -790,20 +793,20 @@ class Parser:
                 if not isinstance(tree, (html.HtmlElement, etree._ElementTree)):
                     return result
 
-                balise_imgs = tree.xpath("//img[@scr]")
+                balise_imgs = tree.xpath("//img[@src]")
                 if balise_imgs:
                     for balise_img in balise_imgs:
                         try:
-                            scr = balise_img.get("scr") if balise_img.get("scr") else ""
+                            src = balise_img.get("src") if balise_img.get("src") else ""
                             alt = balise_img.get('alt') if balise_img.get('alt') else ''
                             abs_link = url
-                            if scr and not scr.startswith("#"):
-                                abs_link_ = self.normalize_link(url, scr)
+                            if src and not src.startswith("#"):
+                                abs_link_ = self.normalize_link(url, src)
                                 if abs_link_:
                                     abs_link = abs_link_
                             to_add = {
                                 "base_url": url,
-                                "scr": scr,
+                                "src": src,
                                 "abs_link": abs_link,
                                 "alt": alt,
                                 "tag": balise_img.tag or "img",
@@ -849,7 +852,7 @@ class Parser:
                 if balises_script:
                     for balise_script in balises_script:
                         try:
-                            src = balise_script.get("scr") if balise_script.get("scr") else ""
+                            src = balise_script.get("src") if balise_script.get("src") else ""
                             abs_link = url
                             nature = "inline"
                             script_type = balise_script.get('type') if balise_script.get('type') else 'text/javascript'
@@ -863,15 +866,16 @@ class Parser:
                                 else:
                                     fetch_response = await self.fetcher.fetch(
                                         abs_link,
-                                        method="GET"
-                                        )
+                                        method="GET",
+                                        method_check=MethodCheks.REACTIVE.value
+                                    )
                                     contenu = fetch_response.body
                                     
                             else:
                                 contenu = balise_script.text_content()
                             to_add = {
                                 "base_url": url,
-                                "scr": src,
+                                "src": src,
                                 "type": script_type,
                                 "nature": nature,
                                 "abs_link": abs_link,
@@ -1376,23 +1380,14 @@ class Parser:
                 if not isinstance(tree, (html.HtmlElement, etree._ElementTree)):
                     return result
     
-                balises_cite = tree.xpath("//*[@cite]")
+                balises_cite = tree.xpath("//cite")
                 if balises_cite:
                     for balise in balises_cite:
                         try:
-                            cite = balise.get("cite") if balise.get("cite") else ""
-                            tag = balise.tag
                             text = balise.text_content().strip()[:100]  # Limiter la taille
-                            abs_link = url
-                            if cite and not cite.startswith("#"):
-                                abs_link_ = self.normalize_link(url, cite)
-                                if abs_link_:
-                                    abs_link = abs_link_
                             to_add = {
                                 "base_url": url,
-                                "tag": tag,
-                                "cite": cite,
-                                "abs_link": abs_link,
+                                "tag": balise.tag,
                                 "text": text,
                                 "error": ""
                             }
@@ -1402,8 +1397,6 @@ class Parser:
                             to_add = {
                                 "base_url": url,
                                 "tag": "",
-                                "cite": "",
-                                "abs_link": url,
                                 "text": "",
                                 "error": "Erreur : " + str(e)
                             }
@@ -1426,7 +1419,11 @@ class Parser:
         async with asyncio.Semaphore(semaphore):
             try:
                 if not headers:
-                    fetch_response:FetcherResult = await self.fetcher.fetch(url, method="HEAD") 
+                    fetch_response:FetcherResult = await self.fetcher.fetch(
+                        url,
+                        method="HEAD",
+                        method_check=MethodCheks.REACTIVE.value
+                    )
                     if not fetch_response or not fetch_response.headers:
                         return result
                     code = fetch_response.status_code
@@ -1572,14 +1569,14 @@ class Parser:
              
     async def parse(
         self,
-        url:str,
-        fetch:bool = True,
-        is_normalized:bool = False,
-        semaphore:int = 50,
-        restore:bool = False,
-        timeout:float|None = None,
-        parse_html_response:ParserResult = None,
-        silent:bool = True
+        url: str,
+        fetch: bool = True,
+        is_normalized: bool = False,
+        semaphore: int = 50,
+        restore: bool = False,
+        timeout: float | None = None,
+        parse_html_response: ParserResult = None,
+        silent: bool = True
     ):
         """
         Méthode de parsing totale.
@@ -1885,17 +1882,9 @@ if __name__ == "__main__":
     apply()
     parser = Parser(session=aiohttp.ClientSession())
     # print(parser.test_normalize_link(advanced=True))
-    # link = 'https://google.com'
-    # print("Domaine")
-    # print(parser.get_domain(link))
-    # print("Classify link")
-    # print(asyncio.run(parser.classify_link(link)))
-    # print("Robot allow")
-    print(asyncio.run(parser.robot_allow(url="https://google.com", agent="*")))
-    # print("TEST all links")
-    # print(asyncio.run(parser.get_all_links(link)))
+    # print(asyncio.run(parser.robot_allow(url="https://google.com", agent="*")))
     # url = ["http://example.com", "https://www.google.com", "https://wikipedia.org"]
     # url = "http://localhost:8080"
-    # # asyncio.run(test(restore=False, urls=url))
-    # print(parser.is_same_domain("http://localhost:8080/terms.html", "http://localhost:8080/"))
-    # print(asyncio.run(parser.get_all_links(url)))
+    url = "http://localhost:5050/api/v1/imports/insecupload-no_content_type_check"
+    print("get all link:", asyncio.run(parser.get_all_links(url)))
+    parse_result = asyncio.run(parser.parse(url))
