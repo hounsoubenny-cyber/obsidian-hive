@@ -33,7 +33,7 @@
 
 Obsidian Hive est une plateforme de cybersécurité autonome pilotée par IA. Ce n'est pas un scanner de plus, pas un firewall, pas un dashboard SIEM — c'est une **ruche** : un ensemble de modules de sécurité, chacun assez complet et autonome pour être considéré comme un projet à part entière, unifiés par deux agents centraux qui orchestrent, corrèlent et décident.
 
-Chaque module — scanner web, anti-phishing, IDS/IPS, sandbox comportementale, simulateur d'attaque — a sa propre intelligence embarquée (son propre agent, son propre pipeline ML/DL, parfois sa propre API). La Hive les relie, les fait parler entre eux, et garde un humain dans la boucle pour toute décision qui compte.
+Chaque module — scanner web, anti-phishing, IDS/IPS, sandbox comportementale, simulateur d'attaque — a sa propre intelligence embarquée : son propre pipeline ML/DL, parfois sa propre API, et pour le simulateur d'attaque, son propre orchestrateur autonome. La Hive les relie, les fait parler entre eux, et garde un humain dans la boucle pour toute décision qui compte.
 
 **Tu délègues. La Hive protège.**
 
@@ -62,6 +62,8 @@ Deux agents, deux rôles stricts, aucun flou entre les deux :
 | **Alex** | Analyste. Interprète les données techniques brutes, lit/corrige du code, cherche des patterns, propose des correctifs — doit toujours conclure par un rapport structuré |
 
 Les deux reçoivent leur `LLMManager` par injection de dépendance : un seul pool de clés/modèles est partagé entre agents concurrents, et chacun se teste avec un LLM mocké, sans base de données ni serveur réel à démarrer.
+
+Coralie et Alex sont les deux seuls agents LLM de la Hive. Les modules de sécurité n'embarquent pas d'agent chacun : ils exposent leurs pipelines ML/DL directement, à l'exception du simulateur d'attaque qui a son propre orchestrateur autonome (LangGraph) pour piloter sa kill-chain.
 
 ---
 
