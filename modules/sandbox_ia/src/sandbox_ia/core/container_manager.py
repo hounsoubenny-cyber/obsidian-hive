@@ -14,13 +14,19 @@ de code suspect.
 import os, sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 
+import io    
 import time
 import socket
 import docker
 import base64
+import shlex
+import shutil
+import tarfile
 import asyncio
+import tempfile
 import subprocess
 from datetime import datetime
+from uuid import uuid4
 from sandbox_ia.sandbox_utils.logger import get_logger
 logger = get_logger()
 Container = docker.models.containers.Container
@@ -47,15 +53,32 @@ class ContainerManager:
         Container Docker courant géré par cette instance.
     """
 
-    def __init__(self):
+    def __init__(self, shared_volume: bool = True):
+        """
+        shared_volume : True (défaut, comportement historique de l'orchestrator) crée
+        le dossier partagé hôte <-> container et le log strace. Mettre False pour un
+        container SANS aucun bind mount vers l'hôte (ex: workspace d'Alex).
+        """
         self.client = docker.from_env()
         self.image_name = None
         self.container: docker.models.containers.Container = None
         self._strace_file = self.generate_strace_log_file()
-        self.volume_dir = "/tmp/shield-sandbox/"
+        self.volume_dir = None
         self.volume_dir_on_container = "/container/shared"
-        os.makedirs(self.volume_dir, exist_ok=True)
-        os.chmod(self.volume_dir, 0o777)
+        if not shared_volume:
+            return
+        # Dossier partagé hôte <-> container : PRIVÉ à ce manager (nom imprévisible,
+        # pas de collision entre analyses). Le code analysé tourne avec un autre
+        # UID que l'hôte : le sticky bit (1777) l'empêche de supprimer/renommer un
+        # fichier créé par l'hôte, donc de remplacer le log strace par un lien
+        # symbolique vers un fichier de l'hôte (que `tail -F` suivrait).
+        self.volume_dir = tempfile.mkdtemp(prefix="shield-sandbox-") + os.sep
+        self.volume_dir_on_container = "/container/shared"
+        os.chmod(self.volume_dir, 0o1777)
+        strace_path = os.path.join(self.volume_dir, self._strace_file)
+        fd = os.open(strace_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o666)
+        os.close(fd)
+        os.chmod(strace_path, 0o666)
     
     @staticmethod
     def format_date():
@@ -165,6 +188,7 @@ class ContainerManager:
         user: str = "sandbox",
         workdir: str = "/sandbox/work",
         extra_env: dict | None = None,
+        cap_add: list[str] | None = None
     ) -> dict:
         """
         Génère un dictionnaire de configuration sécurisée pour le lancement
@@ -208,16 +232,26 @@ class ContainerManager:
             Dictionnaire de configuration prêt à être passé en **kwargs
             à client.containers.run().
         """
+        home_uid = user.split(":")[0] if ":" in user else user
         environment = {
             "SANDBOX_ID": "shieldai",
             "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONUNBUFFERED": "1",
-            "HOME": f"/home/{user}",
+            "HOME": "/root" if home_uid == "0" else f"/home/{home_uid}",
             "TERM": "xterm-256color",
+            "LC_ALL": "C.UTF-8", "LANG": "C.UTF-8",
+            "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"
         }
         if extra_env:
             environment.update(extra_env)
 
+        cap_add = list(
+            set(
+                list(cap_add) if cap_add else [
+                    "SYS_PTRACE",
+                ]
+            )
+        )
         return {
             # Comportement
             "detach": True,
@@ -234,7 +268,7 @@ class ContainerManager:
             "read_only": read_only,
             # Sécurité
             "cap_drop": ["ALL"],           # drop toutes les capabilities
-            "cap_add": ["SYS_PTRACE"],     # re-add uniquement pour strace
+            "cap_add": cap_add,     # re-add uniquement pour strace
             "security_opt": ["no-new-privileges"],
             # Utilisateur et workdir
             "user": user,  #"1500:1500"
@@ -248,7 +282,7 @@ class ContainerManager:
                     "bind": self.volume_dir_on_container,
                     "mode": "rw"
                 }
-            }
+            } if self.volume_dir else {}
         }
 
     def connect(self, name_img: str, name: str, **kwargs) -> Container:
@@ -649,6 +683,74 @@ class ContainerManager:
             except Exception as e:
                 logger.print(f"⚠️ Erreur stop: {e}")
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # ARCHIVES TAR + EXEC AVEC SORTIE PLAFONNÉE (utilisés par Workspace)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def put_archive_bytes(self, dest_dir: str, data: bytes, container=None) -> bool:
+        """Extrait une archive tar (bytes) dans dest_dir du container (via l'API Docker,
+        sans shell). Les propriétaires/permissions viennent des en-têtes du tar."""
+        container = container or self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+        return bool(container.put_archive(dest_dir, data))
+
+    def get_archive_bytes(self, src_path: str, max_bytes: int, container=None) -> bytes:
+        """Récupère src_path du container sous forme de tar (bytes), en abandonnant
+        (ValueError) si l'archive dépasse max_bytes — protège la RAM de l'hôte."""
+        container = container or self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+        stream, _stat = container.get_archive(src_path)
+        buf, size = bytearray(), 0
+        for chunk in stream:
+            size += len(chunk)
+            if size > max_bytes:
+                raise ValueError(f"Archive trop volumineuse (> {max_bytes} octets)")
+            buf += chunk
+        return bytes(buf)
+
+    def exec_capped(
+        self,
+        argv: list[str],
+        user: str = "1500:1500",
+        workdir: str | None = None,
+        max_output_bytes: int = 200_000,
+        container=None,
+    ) -> dict:
+        """
+        Exécute argv (liste, sans shell hôte) dans le container et renvoie
+        {"exit_code", "stdout", "stderr", "truncated"}.
+
+        La sortie est PLAFONNÉE par flux : au-delà, on continue de consommer (pour
+        récupérer le vrai code de sortie) mais on jette l'excédent. Le temps est borné
+        par l'appelant (préfixer argv par `timeout N`), pas ici.
+        """
+        container = container or self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+        api = self.client.api
+        exec_id = api.exec_create(
+            container.id, argv, stdout=True, stderr=True, user=user, workdir=workdir
+        )["Id"]
+        out, err, truncated = bytearray(), bytearray(), False
+        for chunk_out, chunk_err in api.exec_start(exec_id, stream=True, demux=True):
+            for buf, chunk in ((out, chunk_out), (err, chunk_err)):
+                if not chunk:
+                    continue
+                room = max_output_bytes - len(buf)
+                if room > 0:
+                    buf += chunk[:room]
+                if len(chunk) > max(room, 0):
+                    truncated = True
+        info = api.exec_inspect(exec_id)
+        return {
+            "exit_code": info.get("ExitCode"),
+            "stdout": out.decode("utf-8", errors="replace"),
+            "stderr": err.decode("utf-8", errors="replace"),
+            "truncated": truncated,
+        }
+
     def wait_for_exit(self, timeout: int = 30) -> tuple[bool, int | None, dict | None]:
         """
         Attend la fin naturelle du container.
@@ -763,7 +865,7 @@ class ContainerManager:
 
     def _exec_command(
         self,
-        cmd: str,
+        cmd: str | list[str],
         container: Container,
         user: str = "root",
         workdir: str | None = None
@@ -804,22 +906,40 @@ class ContainerManager:
             raise ValueError("Container invalide !")
 
         try:
+            if isinstance(cmd, str):
+                cmd = ["sh", "-c", cmd]
+            elif isinstance(cmd, list):
+                cmd = ["sh", "-c", shlex.join(cmd)]
+            else:
+                cmd = ["sh", "-c", str(cmd)]
             exit_code, (stdout, stderr) = (
-                container.exec_run(cmd, stdout=True, stderr=True, user=user, demux=True, workdir=workdir)
-                if workdir else
-                container.exec_run(cmd, stdout=True, stderr=True, user=user, demux=True)
+                container.exec_run(
+                    cmd, 
+                    stdout=True, 
+                    stderr=True,
+                    user=user,
+                    demux=True, 
+                    **(
+                        dict(
+                            workdir=workdir
+                        )
+                        if workdir 
+                        else {}
+                    )
+                )
             )
             stdout = (stdout or b"").decode("utf-8", errors="ignore")
             stderr = (stderr or b"").decode("utf-8", errors="ignore")
             logger.print()
-            logger.print("💻 Commande :", cmd[:200], verify=False)
+            shown = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+            logger.print("💻 Commande :", shown[:200], verify=False)
             logger.print("📤 Code retour :", exit_code)
             logger.print()
             return exit_code, stdout, stderr
 
         except Exception as e:
             logger.print(f"❌ Erreur exécution commande: {e}")
-            return 1, "", ""
+            return 1, "", f"Erreur exécution commande: {e}"
 
     def exec_command(
         self, cmd: str, user: str = "root", workdir: str | None = None
@@ -890,13 +1010,13 @@ class ContainerManager:
                 task = asyncio.wait_for(task, timeout=timeout)
             return await task
 
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
             logger.print(f"⏰ Timeout ({timeout}s) atteint pour la commande")
-            return 1, "", "Timeout atteint"
+            return -1, "", f"TIMEOUT: {e!r}"
 
         except Exception as e:
             logger.print(f"❌ Erreur async exec: {e}")
-            return 1, "", ""
+            return 1, "", f"Erreur async exec: {e}"
 
     async def exec_command_async(
         self, cmd: str, user: str = "root", workdir: str | None = None, timeout: int | None = 120
@@ -933,11 +1053,12 @@ class ContainerManager:
 
     def copy_in(
         self,
-        content: str,
+        content: str | bytes,
         dest_path: str,
         container: Container | None = None,
         use_subprocess: bool = True,
         user: str = "root",
+        chown_to: str | None = None
     ) -> tuple[int, str, str]:
         """
         Copie du contenu texte dans un fichier à l'intérieur du container.
@@ -979,34 +1100,150 @@ class ContainerManager:
         if container is None:
             raise ValueError("Container invalide !")
 
+        # Normalisation : accepte str OU bytes, tout est traité en bytes à
+        # partir d'ici — même principe que copy_out/copy_out_dir (jamais de
+        # decode UTF-8 forcé sur du contenu potentiellement binaire).
+        content_bytes = content.encode("utf-8") if isinstance(content, str) else content
+
         container_id = container.id
         dirname = os.path.dirname(dest_path)
         if dirname:
-            self._exec_command(f"mkdir -p {dirname}", container)
+            self._exec_command(["mkdir", "-p", dirname], container)
 
         if use_subprocess:
+            # Pas de shell côté hôte : dest_path est passé en argument positionnel ($1).
+            # Mode binaire (pas de text=True) : input attend des bytes désormais.
             result = subprocess.run(
-                f"""docker exec -i --user {user} {container_id} bash -c "cat > {dest_path}" """,
-                text=True,
+                ["docker", "exec", "-i", "--user", str(user), container_id,
+                 "bash", "-c", 'cat > "$1"', "_", dest_path],
                 capture_output=True,
-                input=content, 
-                shell=True
+                input=content_bytes,
             )
-            returncode, stdout, stderr = result.returncode, result.stdout, result.stderr
+            returncode = result.returncode
+            stdout = result.stdout.decode("utf-8", errors="ignore")
+            stderr = result.stderr.decode("utf-8", errors="ignore")
         else:
-            encoded = base64.b64encode(content.encode()).decode()
-            cmd = f"""bash -c "echo '{encoded}' | base64 -d > {dest_path}" """
+            encoded = base64.b64encode(content_bytes).decode()
+            cmd = ["bash", "-c", 'echo "$1" | base64 -d > "$2"', "_", encoded, dest_path]
             returncode, stdout, stderr = self._exec_command(cmd=cmd, container=container, user=user)
-
+        
+        if chown_to and returncode == 0:
+            self._exec_command(["chown", chown_to, dest_path], container, user="root")
+        
         logger.print(f"📁 copy_in → {dest_path} | code: {returncode}")
         return returncode, stdout, stderr
+    
+
+    def copy_in_dir(
+        self,
+        src_path: str,
+        dest_path: str,
+        container: "Container | None" = None,
+        chown_to: str | None = None
+    ) -> dict:
+        """Copie récursivement un dossier de l'hôte vers le container.
+    
+        Utilise directement l'API Docker native (container.put_archive), pas
+        d'exec/cat impliqué -> aucun risque de corruption binaire (contrairement
+        à copy_out_dir qui doit passer par le canal texte de _exec_command).
+    
+        Parameters
+        ----------
+        src_path : str
+            Dossier source sur l'hôte.
+        dest_path : str
+            Dossier de destination DANS le container (doit déjà exister —
+            put_archive extrait dedans, il ne le crée pas).
+    
+        Returns
+        -------
+        dict: {"success": bool, "error": str | None, "dest_path": str | None}
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+    
+        if not os.path.isdir(src_path):
+            return {"success": False, "error": f"{src_path} n'existe pas ou n'est pas un dossier sur l'hôte", "dest_path": None}
+    
+        if not self.is_dir(dest_path, container=container):
+            self.exec_command(
+                f"mkdir -p {dest_path}"
+            )
+            if not self.is_dir(dest_path, container=container):
+                return {"success": False, "error": f"{dest_path} n'existe pas ou n'est pas un dossier dans le container", "dest_path": None}
+    
+        try:
+            buf = io.BytesIO()
+            with tarfile.open(fileobj=buf, mode="w") as tar:
+                # arcname="." -> le CONTENU de src_path atterrit directement
+                # dans dest_path, pas dans un sous-dossier nommé comme src_path
+                tar.add(src_path, arcname=".")
+            buf.seek(0)
+    
+            ok = container.put_archive(path=dest_path, data=buf.getvalue())
+            if not ok:
+                return {"success": False, "error": "put_archive a renvoyé False (échec côté Docker)", "dest_path": None}
+            
+            if chown_to:
+                code, _, err = self._exec_command(
+                    ["chown", "-R", chown_to, dest_path], container, user="root"
+                )
+                if code != 0:
+                    return {"success": False, "error": f"chown post-copie échoué: {err}", "dest_path": None}
+
+        except Exception as e:
+            return {"success": False, "error": f"échec de la copie vers le container : {e}", "dest_path": None}
+    
+        return {"success": True, "error": None, "dest_path": dest_path}
+    
+    
+    def is_file(
+        self,
+        path: str,
+        container: "Container | None" = None,
+        user: str = "root",
+    ) -> bool:
+        """Vérifie que `path` existe dans le container ET est un fichier régulier.
+    
+        S'appuie sur `test -f`, standard POSIX : exit 0 = vrai, exit != 0 = faux
+        (chemin absent, dossier, symlink cassé...). Pas de parsing de sortie,
+        juste le code de retour.
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+    
+        exit_code, _, _ = self._exec_command(f"test -f {path}", container, user=user)
+        return exit_code == 0
+    
+    
+    def is_dir(
+        self,
+        path: str,
+        container: "Container | None" = None,
+        user: str = "root",
+    ) -> bool:
+        """Vérifie que `path` existe dans le container ET est un dossier.
+    
+        Même principe que is_file, avec `test -d`.
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+    
+        exit_code, _, _ = self._exec_command(f"test -d {path}", container, user=user)
+        return exit_code == 0
 
     def copy_out(
         self,
         src_path: str,
         container: Container | None = None,
         user: str = "root",
-    ) -> tuple[int, str, str]:
+    ) -> dict[str, bool | str | None]:
         """
         Lit le contenu d'un fichier depuis le container.
 
@@ -1023,9 +1260,11 @@ class ContainerManager:
 
         Returns
         -------
-        tuple[int, str, str]
-            (exit_code, contenu_fichier, stderr)
-            Le contenu du fichier est dans le second élément du tuple.
+        dict: {
+            "success": bool,
+            "error": str | None,
+            "content": str | None,
+        }
 
         Raises
         ------
@@ -1036,9 +1275,120 @@ class ContainerManager:
             container = self.container
         if container is None:
             raise ValueError("Container invalide !")
-
-        return self._exec_command(f"cat {src_path}", container, user=user)
-
+        
+        marker = str(uuid4())
+        code = (
+            f"import shutil, base64\n"
+            f"with open({src_path!r}, 'rb') as f:\n"
+            f"    payload = base64.b64encode(f.read()).decode('ascii')\n"
+            f"print({marker!r}, '=', payload, sep='', flush=True)\n"
+        )
+        cmd = f"python3 -c {shlex.quote(code)}"
+        
+        result = self._exec_command(cmd, container)
+        if result[0] != 0:
+            return {"content": None, "success": False, "error": f"Erreur de lecture du fichier: {result[2]!r}"}
+        
+        lines = [ln for ln in result[1].split("\n") if ln.startswith(f"{marker}=")]
+        if not lines:
+            return {"content": None, "success": False, "error": "marqueur de sortie introuvable dans stdout"}
+     
+        b64_payload = lines[0].removeprefix(f"{marker}=")
+    
+        try:
+            content = base64.b64decode(b64_payload)
+            return {"content": content, "success": True, "error": ""}
+        
+        except Exception as e:
+            return {"success": False, "error": f"payload base64 invalide : {e}", "content": None}
+     
+    
+    def copy_out_dir(
+        self,
+        src_path: str,
+        dest_path: str,
+        container: "Container | None" = None,
+    ) -> dict:
+        """Copie récursivement un dossier du container vers l'hôte.
+     
+        Version avec container.get_archive() — API Docker native, binaire de
+        bout en bout. Remplace la version exec+base64+make_archive : plus
+        simple, une seule opération, pas de risque de corruption puisqu'on ne
+        passe plus jamais par le canal texte de _exec_command pour du binaire.
+     
+        Returns
+        -------
+        dict: {"success": bool, "error": str | None, "dest_path": str | None}
+        """
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+     
+        if not self.is_dir(src_path, container=container):
+            return {"success": False, "error": f"{src_path} n'existe pas ou n'est pas un dossier dans le container", "dest_path": None}
+     
+        if not os.path.isdir(dest_path):
+            os.makedirs(dest_path, exist_ok=True)
+            # return {"success": False, "error": f"{dest_path} n'existe pas ou n'est pas un dossier sur l'hôte", "dest_path": None}
+     
+        try:
+            # "/." en suffixe = "le CONTENU du dossier", pas le dossier lui-même
+            # -> sans ça, get_archive enveloppe tout dans un dossier nommé
+            # d'après le basename de src_path (même convention que `docker cp`)
+            stream, _stat = container.get_archive(src_path.rstrip("/") + "/.")
+     
+            buf = io.BytesIO()
+            for chunk in stream:
+                buf.write(chunk)
+            buf.seek(0)
+     
+            with tarfile.open(fileobj=buf) as tar:
+                tar.extractall(dest_path, filter="data")
+        except Exception as e:
+            return {"success": False, "error": f"échec de la copie depuis le container : {e}", "dest_path": None}
+     
+        return {"success": True, "error": None, "dest_path": dest_path}
+ 
+    def exists_in_container(
+        self, 
+        path: str,
+        container: Container | None = None
+    ):
+        if container is None:
+            container = self.container
+        if container is None:
+            raise ValueError("Container invalide !")
+        return self._exec_command(f"test -e {path}", container)[0] == 0
+    
+    def read_file(
+        self, 
+        path: str,
+        container: Container | None = None
+    ):
+        return self.copy_out(path, container)
+    
+    # def content_is_greater_than(
+    #     self, 
+    #     path: str,
+    #     max_bytes_size: int,
+    #     container: Container | None = None
+    # ):
+    #     if container is None:
+    #         container = self.container
+    #     if container is None:
+    #         raise ValueError("Container invalide !")
+    #     result = self._exec_command(f"wc -c {path}", container)
+    #     if result[0] == 0:
+    #         stdout = result[1]
+    #         try:
+    #             return int(stdout.replace(path, "")) > max_bytes_size
+            
+    #         except ValueError:
+    #             return None
+        
+    #     return None
+    
     # ─────────────────────────────────────────────────────────────────────────
     # SURVEILLANCE — TRACEUR STRACE
     # ─────────────────────────────────────────────────────────────────────────
@@ -1193,6 +1543,9 @@ class ContainerManager:
         """
         if not file:
             return None
+        if os.path.islink(file):
+            logger.print(f"🚨 {file} est un lien symbolique — lecture refusée")
+            return None
         tail = subprocess.Popen(
             ["tail", "-n", "+1", "-F", file],
             text=True,
@@ -1223,6 +1576,9 @@ class ContainerManager:
             Process tail asyncio actif, ou None si le fichier est invalide.
         """
         if not file:
+            return None
+        if os.path.islink(file):
+            logger.print(f"🚨 {file} est un lien symbolique — lecture refusée")
             return None
         tail = await asyncio.create_subprocess_exec(
             "tail", "-n", "0", "-F", file,

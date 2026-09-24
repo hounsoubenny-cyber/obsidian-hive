@@ -10,11 +10,6 @@ Indépendant de FastAPI côté routing : routes.py appelle ces fonctions avec
 des données déjà validées par les schémas Pydantic (schemas.py).
 """
 
-import os
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-
-import time
 import threading
 import asyncio
 from datetime import datetime, timedelta
@@ -24,7 +19,7 @@ from jose import jwt, JWTError
 from jose.jwt import ExpiredSignatureError
 from fastapi import HTTPException, Request, status
 
-from ids_ips_ia.detection.mocks import _get_list_blocked_ip_mocked
+from ids_ips_ia.detection.mocks import _get_list_blocked_ip_mocked # noqa
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
 from ids_ips_ia.auth.auth import verify_password

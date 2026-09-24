@@ -18,10 +18,12 @@ Version: 1.0.0
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-
-from sklearn.base import clone
+import warnings
+import traceback
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, cross_validate, learning_curve
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import (
@@ -29,13 +31,6 @@ from sklearn.metrics import (
     jaccard_score, confusion_matrix, multilabel_confusion_matrix,
     classification_report, roc_auc_score
 )
-import numpy as np
-import traceback
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
-import joblib
 
 warnings.filterwarnings('ignore')
 pd.set_option("display.max_row", 111)
@@ -908,32 +903,33 @@ class ModelOptimization:
 
 
 if __name__ == '__main__':
-    from sklearn.datasets import make_classification, make_multilabel_classification
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.preprocessing import StandardScaler
-    from anti_phishing_ia.ml_model.modelstack import ModelStack
-    from sklearn.multioutput import MultiOutputClassifier as M
-    from tqdm import tqdm
+    pass
+    # from sklearn.datasets import make_classification, make_multilabel_classification # noqa
+    # from sklearn.linear_model import LogisticRegression
+    # from sklearn.ensemble import RandomForestClassifier
+    # from sklearn.preprocessing import StandardScaler
+    # from anti_phishing_ia.ml_model.modelstack import ModelStack # noqa
+    # from sklearn.multioutput import MultiOutputClassifier as M # noqa
+    # from tqdm import tqdm
 
-    sc = StandardScaler()
-    X, y = make_classification(n_samples=10000, n_features=10, random_state=42)
-    X = sc.fit_transform(X)
-    fn = [f"feature_{i}" for i in range(10)]
+    # sc = StandardScaler()
+    # X, y = make_classification(n_samples=10000, n_features=10, random_state=42)
+    # X = sc.fit_transform(X)
+    # fn = [f"feature_{i}" for i in range(10)]
 
-    lg = LogisticRegression(max_iter=1000)
-    rf = RandomForestClassifier(n_estimators=300, random_state=42)
+    # lg = LogisticRegression(max_iter=1000)
+    # rf = RandomForestClassifier(n_estimators=300, random_state=42)
 
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-    sys.path.append("/home/hounsousamuel/PROJET")
+    # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    # sys.path.append("/home/hounsousamuel/PROJET")
 
-    model = ModelOptimization(model=lg, X=X, y=y, random_state=42,
-                              scoring='accuracy', save_dir="test_result",
-                              cv=2, features_name=fn)
+    # model = ModelOptimization(model=lg, X=X, y=y, random_state=42,
+    #                           scoring='accuracy', save_dir="test_result",
+    #                           cv=2, features_name=fn)
 
-    for i in tqdm(range(1), desc="Lancement essai..."):
-        model_, x_, y_ = model.run(1e-5)
-
-    import joblib
-    joblib.dump(model_, 'model_test.joblib')
-    print('\n Score du modèle sur données de test :\n ', model_.score(x_, y_))
+    # for i in tqdm(range(1), desc="Lancement essai..."):
+    #     model_, x_, y_ = model.run(1e-5)
+    
+    # import joblib
+    # joblib.dump(model_, 'model_test.joblib')
+    # print('\n Score du modèle sur données de test :\n ', model_.score(x_, y_))

@@ -18,12 +18,8 @@ Version: 1.0.0
 """
 
 import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-
-from anti_phishing_ia.ml_model.phishing_ia import features_name as FEATURES_NAME
-
+from anti_phishing_ia.core.features_extractor import get_features_names
+FEATURES_NAME = get_features_names()
 # ============================================================================
 # CONFIGURATION RÉSEAU DE L'API
 # ============================================================================

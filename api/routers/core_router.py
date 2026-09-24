@@ -50,6 +50,7 @@ from modules_utils.cryto_utils import hashpw
 from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_server_agent_ws_manager,
+    build_workspace_manager,
     handle_web_asset_creating,
     handle_network_asset_creating,
     handle_server_asset_creating,
@@ -935,25 +936,41 @@ async def analyze_with_alex(request: Request, options: AlexAnalyzeData):
     llm_manager: LLMManager = request.app.state.llm_manager
     report_manager: ReportManager = request.app.state.report_manager
 
-    alex: Analyst = create_alex(llm_manager)
-    content = f"""
-    {options.base_prompt}\n\n{options.content}
-    """
+    workspace_manager = build_workspace_manager()
     try:
-        result: AnalystResult = await alex.analyze(
-            content, source=options.source
+        workspace_manager.init()
+        alex: Analyst = create_alex(
+            llm_manager,
+            workspace_manager=workspace_manager,
         )
-    except NoReportProducedError as e:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail={"error": str(e)})
+        content = f"""
+        {options.base_prompt}\n\n{options.content}
+        """
+        try:
+            result: AnalystResult = await alex.analyze(
+                content, source=options.source
+            )
+        except NoReportProducedError as e:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"error": str(e)},
+            )
 
-    if report_manager and result.report:
-        await report_manager.add_report(
-            asset_id=options.asset_id,
-            source=options.source,
-            report=result.report,
-        )
+        if report_manager and result.report:
+            await report_manager.add_report(
+                asset_id=options.asset_id,
+                source=options.source,
+                report=result.report,
+            )
 
-    return result.report
+        return result.report
+
+    finally:
+        try:
+            await asyncio.to_thread(workspace_manager.stop)
+        except Exception as e:
+            print(f"Cleanup workspace Alex échoué : {e!r}")
+            
 
 @limiter.limit(f"{LIMITE}/minute")
 @router.get("/agent/prompts/checking/activate")

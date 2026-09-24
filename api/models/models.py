@@ -274,6 +274,10 @@ class DeleteOldReportsData(BaseModel):
 class ListCriticalReportsData(BaseModel):
     limit: int = Field(default=100, ge=1, le=500, description="Nombre max de résultats")
 
+class ListAlertsData(BaseModel):
+    unread_only: bool = Field(default=False, description="Si True, ne renvoie que les alertes non lues")
+    limit: int = Field(default=100, ge=1, le=500, description="Nombre max de résultats")
+
 # =============================================================================
 # ConversationManager — modèles
 # (owner dérivé du token côté route, jamais fourni par le client)
@@ -363,4 +367,3 @@ class RotateSecretData(BaseModel):
 
 class ReactivateServerAssetData(BaseModel):
     asset_id: str = Field(description="Identifiant du ServerAsset")
-

@@ -16,7 +16,6 @@ __email__ = 'hounsounbenny@gmail.com'
 __projet_name__ = "AntiPhishing Based on IA and Static Analysis"
 
 
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from anti_phishing_ia.ml_model.phishing_ia import features_name 
-from anti_phishing_ia.config import *
+from anti_phishing_ia.core.features_extractor import get_features_names
+from anti_phishing_ia.config import * # noqa
+features_name = get_features_names()

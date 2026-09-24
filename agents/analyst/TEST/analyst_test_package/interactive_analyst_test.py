@@ -35,6 +35,7 @@ import textwrap
 # --- Adapte ce chemin d'import à ton arborescence réelle -----------------
 from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
 from obsidian_hive.agents.analyst.agent import Analyst, NoReportProducedError
+from obsidian_hive.api.api_utils.core_shared import build_workspace_manager
 # -------------------------------------------------------------------------
 
 SANDBOX_DIR = os.path.abspath(
@@ -47,20 +48,19 @@ SANDBOX_DIR = os.path.abspath(
 )
 FAKE_REPORT_PATH = os.path.join(SANDBOX_DIR, "fake_vuln_scan_report.txt")
 
-# ornith1.0-9b
+# ornith1.0-9b, qwen3.5-4b
 # --- Adapte selon ton serveur local / tes clés déjà configurées ----------
 LLAMA_SERVER  = "/home/hounsousamuel/llama-bin/llama-b9833/llama-server"
-LOCAL_MODEL_NAME = os.environ.get("ANALYST_TEST_MODEL", "qwen3.5-4b")
+LOCAL_MODEL_NAME = os.environ.get("ANALYST_TEST_MODEL", "ornith1.0-9b")
 LOCAL_API_KEY = os.environ.get("ANALYST_TEST_API_KEY", "local-dummy-key")
 LLAMA_SERVER_PATH = os.environ.get("LLAMA_SERVER_PATH", LLAMA_SERVER)  # chemin binaire llama-server si auto-start requis
 PROVIDER = None
 LOCAL_HOST = os.environ.get("ANALYST_TEST_HOST", "127.0.0.1")
 LOCAL_PORT = int(os.environ.get("ANALYST_TEST_PORT", "8080"))
-PROVIDER = "mistral"
-LOCAL_MODEL_NAME = "mistral-small-latest"
-LOCAL_API_KEY = "8HrfCnSQtoG9mLTcPiH6wBqClmlSotXh"
+# PROVIDER = "mistral"
+# LOCAL_MODEL_NAME = "mistral-small-latest"
+# LOCAL_API_KEY = "8HrfCnSQtoG9mLTcPiH6wBqClmlSotXh"
 # -------------------------------------------------------------------------
-
 
 def build_manager() -> LLMManager:
     """
@@ -188,7 +188,7 @@ def print_report(report: dict, index: int = 0) -> None:
     if not fix_output:
         print("\nAucun fix proposé pour ce rapport.")
     else:
-        applied = fix_output.get("applied")
+        applied = fix_output.get("all_fix_applied")
         print(f"\nFix proposé — appliqué : {'OUI' if applied else 'NON (proposition seule)'}")
         for f in fix_output.get("files", []):
             print(f"\n  📄 {f.get('path')}  [{f.get('language')}] via {f.get('method')}")
@@ -340,20 +340,47 @@ async def main() -> None:
         sys.exit(1)
 
     print("Construction du LLMManager (connexion au modèle local)...")
-    llm_manager = build_manager()
-
-    alex = Analyst(
-        llm_manager=llm_manager,
-        model_name=LOCAL_MODEL_NAME,
+    initial_paths = [
+        [
+            SANDBOX_DIR,
+            os.path.basename(SANDBOX_DIR)
+        ]
+    ]
+    wsm = build_workspace_manager(
+        network="none",
+        initial_paths=initial_paths
     )
-    # print(llm_manager)
-    # input()
-
-    await run_fixed_scenario(alex)
-    await interactive_loop(alex)
+    
+    try:
+        llm_manager = build_manager()
+        wsm.init(initial_paths)
+        alex = Analyst(
+            llm_manager=llm_manager,
+            model_name=LOCAL_MODEL_NAME,
+            workspace_manager=wsm,
+            max_iter=100
+        )
+        # print(llm_manager)
+        # input()
+    
+        await run_fixed_scenario(alex)
+        await interactive_loop(alex)
+    
+    except Exception as e:
+        print(f"Erreur: {e!r}")
+        import traceback
+        print("Traceback")
+        traceback.print_exc()
+            
+    finally:
+        if wsm:
+            await type(wsm.workspace).kill_proxy_container_async()
+            wsm.workspace.stop()
 
 
 if __name__ == "__main__":
     # pass
+    from nest_asyncio import apply
+    apply()
     asyncio.run(main())
     

@@ -6,7 +6,7 @@ Created on Sat Mar 21 08:34:38 2026
 @author: hounsousamuel
 """
 
-import os, sys, signal, threading
+import sys, signal, threading
 
 
 def ignore_termination_signals():
@@ -21,14 +21,14 @@ def ignore_termination_signals():
     if sys.platform != "win32":
         signal.signal(signal.SIGQUIT, signal.SIG_IGN)
 
-        
+
 def signal_manager(func, *args, **kwargs):
     def function(sig, frame):
         func(sig, frame, *args, **kwargs)
         # os.kill(os.getpid(), 9)
         # os._exit(0)
         sys.exit(0)
-
+    
     def make_chained(ancien):
         # "ancien" est capturé ici, une fois pour toutes, AVANT le remplacement
         def chained(sig, frame):

@@ -73,12 +73,12 @@ from obsidian_hive.api.ap_config import (
     REACT_EXISTS, INDEX_FILE, STATIC_DIR,
     BUILD_DIR, BUILD_URL, STATIC_URL,
 )
-
 from obsidian_hive.api.state import (
     _get_auth_manager, _get_contextguard_client, _get_conversation_manager,
     _get_extension_token_manager, _get_job_manager, _get_llm_manager,
     _get_report_manager
 )
+from obsidian_hive.agents.analyst.analayst_workspace.workspace import WorkSpace
 load_dotenv()
 
 logger = get_logger("main_shield_api")
@@ -125,6 +125,7 @@ async def lifespan_end(app: FastAPI):
     """
     
     await sim_lifespan_end(app)
+    await WorkSpace.kill_proxy_container_async()
     logger.success("API fermée")
 
 
@@ -444,3 +445,6 @@ def _routes():
         except Exception: 
             print("Methode : N/A")
         print()
+
+if __name__ == "__main__":
+    _routes()

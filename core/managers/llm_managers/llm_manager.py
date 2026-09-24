@@ -27,6 +27,7 @@ from obsidian_hive.core.managers.llm_managers.api_key_client_mapper import (
 from anthropic import Anthropic, AsyncAnthropic
 from obsidian_hive.core.managers.llm_managers.tool_builder import build_tools
 from modules_utils.loop_utils import _run_async
+from modules_utils.tool_formatters import to_xml_like
 
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 DEFAUlT_LLAMA_SERVER_DIR = os.path.join(
@@ -113,6 +114,9 @@ OnStreamMessage = Union[
     Callable[[dict, int], Awaitable[None]]
 ]  # (message complet reconstitué, iteration) — juste avant le traitement normal
 
+class ToolExecSpecialError(Exception):
+    """Erreur spécial que execute_tool verifie pour les callacks"""
+    pass
 
 # =============================================================================
 # 🔔 EVENT BUS — Bus d'événements générique
@@ -589,6 +593,10 @@ class LLMManager:
                 result = await result
             
             return result
+        
+        except ToolExecSpecialError as e:
+            raise e
+            
         except Exception as e:
             logger.warning(f"[Callback] Erreur: {e}")
 
@@ -657,31 +665,39 @@ class LLMManager:
         on_after: Optional[OnAfterTool] = None,
         on_error: Optional[OnToolError] = None,
     ) -> str:
-        await self._exec_callback(on_before, name, args, call_id)       
-        await self._fire_event("tool_exec_before", name, args, call_id)   
- 
-        if name not in tool_map:
-            result = f"❌ Outil inconnu : {name}"
-            await self._exec_callback(on_error, name, args, ValueError(result), call_id)
-            await self._fire_event("tool_exec_error", name, args, ValueError(result), call_id)
-            return result
- 
         try:
-            func = tool_map[name]
-            if asyncio.iscoroutinefunction(func):
-                result = await func(**args)
-            else:
-                result = func(**args)
-        except Exception as e:
-            result = f"❌ Erreur outil {name}: {e}"
-            await self._exec_callback(on_error, name, args, e, call_id)
-            await self._fire_event("tool_exec_error", name, args, e, call_id)
+            await self._exec_callback(on_before, name, args, call_id)       
+            await self._fire_event("tool_exec_before", name, args, call_id)   
+     
+            if name not in tool_map:
+                result = f"❌ Outil inconnu : {name}"
+                await self._exec_callback(on_error, name, args, ValueError(result), call_id)
+                await self._fire_event("tool_exec_error", name, args, ValueError(result), call_id)
+                return result
+     
+            try:
+                func = tool_map[name]
+                if asyncio.iscoroutinefunction(func):
+                    result = await func(**args)
+                else:
+                    result = func(**args)
+            except Exception as e:
+                result = f"❌ Erreur outil {name}: {e}"
+                await self._exec_callback(on_error, name, args, e, call_id)
+                await self._fire_event("tool_exec_error", name, args, e, call_id)
+                return result
+     
+            await self._exec_callback(on_after, name, args, result, call_id)
+            await self._fire_event("tool_exec_after", name, args, result, call_id)
+     
             return result
- 
-        await self._exec_callback(on_after, name, args, result, call_id)
-        await self._fire_event("tool_exec_after", name, args, result, call_id)
- 
-        return result
+        
+        except ToolExecSpecialError as e:
+            return f"Erreur spécial: {e!r}"
+        
+        except Exception as e:
+            raise e
+        
 
     
     # =========================================================================
@@ -1085,7 +1101,13 @@ class LLMManager:
         track_info["ended_at"] = time.time()
         track_info["duration"] = track_info["ended_at"] - track_info["started_at"]
         
-        message_res["content"] = json.dumps(tool_result, default=str)
+        try:
+            message_res["content"] = to_xml_like(tool_result)
+        except (TypeError, ValueError):
+            if isinstance(tool_result, str):
+                message_res["content"] = tool_result
+            else:
+                message_res["content"] = json.dumps(tool_result, default=str, ensure_ascii=False)
         
         return {"call_key": call_key, "track_info": track_info, "message": message_res}
     

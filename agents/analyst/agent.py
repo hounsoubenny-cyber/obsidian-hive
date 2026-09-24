@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul  7 21:17:39 2026
+Created on Tue Sep 22 10:01:56 2026
 
 @author: hounsousamuel
 """
+
 
 """
 agent.py — Agent Analyst (Alex) du système Obsidian.
 
-Alex ne connaît ni ne construit jamais son propre LLMManager : il en reçoit
-une instance déjà configurée (clés API, pool de modèles, serveur llama...)
-en injection de dépendance. Ça permet :
-    - de partager un seul LLMManager (donc un seul pool de clés / rotation
-      de modèles) entre plusieurs agents Obsidian tournant en parallèle ;
-    - de tester Alex facilement en injectant un LLMManager mocké, sans
-      jamais démarrer un vrai serveur ni valider de vraies clés API.
-
-@author: hounsousamuel
+Alex opère dans un sandbox container via un WorkSpaceManager qui expose
+un jeu réduit de tools shell-first. Ce module gère :
+    - la délégation au LLMManager pour l'exécution de l'agent
+    - l'interception des appels à create_report / export pour valider le
+      contrat comportemental (export AVANT report, slot_keys cohérents)
+    - l'enrichissement mécanique des fix_files avec les données d'export
+      (diff, modified/new/delete, applied) — jamais déclaratif
 """
 
-import json
+import copy
 import inspect
-import asyncio
 import logging
 from pydantic import BaseModel, Field
 from typing import Any, Awaitable, Callable, Optional, Union
 
-from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
+from obsidian_hive.core.managers.llm_managers.llm_manager import (
+    LLMManager, ToolExecSpecialError,
+)
 from obsidian_hive.config.config import ANALYST_CONFIG
 from obsidian_hive.agents.analyst.prompts.system import get_system_prompt
-from obsidian_hive.agents.analyst.tools.tools import MAPPING
+# from obsidian_hive.agents.analyst.analayst_workspace.workspace import (
+#     WorkSpace,
+# )
+from obsidian_hive.agents.analyst.tools.tools import WorkSpaceManager
 
 logger = logging.getLogger("obsidian_analyst")
 
@@ -52,27 +55,21 @@ class NoReportProducedError(Exception):
 class AnalystResult(BaseModel):
     """Résultat d'une analyse effectuée par Alex."""
 
-    #: Un ou plusieurs rapports capturés (normalement un seul, mais Alex
-    #: peut en théorie appeler create_report plusieurs fois sur un contenu
-    #: qui contient plusieurs findings distincts).
-    reports: list[dict] = Field(default_factory=list, description="Liste des raports")
-
-    #: Résultat brut renvoyé par LLMManager.run_agent (utile pour debug/logs :
-    #: nombre d'itérations, temps total, historique complet des messages...).
-    raw: dict = Field(default_factory=dict, description="Sortie brut dur llm manager")
-    
-    #: Réponse en texte libre d'Alex, uniquement pour le cas légitime où
-    #: aucun outil n'a été utilisé (petite conversation, salutation...).
-    #: Reste None dès qu'un tool a été appelé, même sans rapport final.
-    response_text: Optional[str] = Field(
-        default=None, 
-        description="Réponse en texte libre de Alex si conversation sans tool"
+    reports: list[dict] = Field(
+        default_factory=list,
+        description="Liste des rapports capturés (normalement un seul).",
     )
-    
-    #: Liste de tout les tools appelé pour cette réponse/analyse
+    raw: dict = Field(
+        default_factory=dict,
+        description="Sortie brute du LLMManager (debug/logs).",
+    )
+    response_text: Optional[str] = Field(
+        default=None,
+        description="Réponse en texte libre si conversation sans tool.",
+    )
     all_tools: Optional[list] = Field(
         default=None,
-        description="Liste des tools appelés"
+        description="Liste des tools appelés pour cette analyse.",
     )
 
     @property
@@ -83,19 +80,20 @@ class AnalystResult(BaseModel):
     @property
     def success(self) -> bool:
         return bool(self.reports)
-    
+
     @property
     def is_conversational(self) -> bool:
         """True si Alex a répondu en texte libre légitime (pas de tool
         utilisé), plutôt que d'avoir produit un rapport structuré."""
         return not self.success and self.response_text is not None
-    
+
     def model_dump(self, *args, **kwargs):
         result = super().model_dump(*args, **kwargs)
         result["success"] = self.success
         result["is_conversational"] = self.is_conversational
         result["report"] = self.report
         return result
+
 
 async def _maybe_await(callback: Optional[Callback], *args: Any) -> None:
     """Appelle callback(*args), qu'il soit sync ou async. No-op si None."""
@@ -110,53 +108,63 @@ class Analyst:
     """
     Agent Analyst (Alex) : traduit un résultat brut (scan de vulnérabilités,
     événement IDS/IPS, sortie sandbox, code source...) en rapport structuré,
-    avec proposition de fix si pertinent et si le code source est disponible.
+    avec proposition de fix si pertinent.
+
+    Le mapping des tools est **dérivé du WorkSpaceManager** — pas de dict
+    module-level. C'est le manager qui reste la source de vérité pour les
+    noms exposés et les fonctions à exécuter.
     """
 
-    #: Nom du tool qu'Alex DOIT appeler pour rendre sa réponse finale.
+    #: Nom du tool de conclusion obligatoire.
     REPORT_TOOL_NAME = "create_report"
 
-    #: Tools qui modifient un fichier et renvoient un diff mécaniquement
-    #: calculé (via difflib) dans leur résultat — ce diff est la seule
-    #: source de vérité, jamais celui qu'Alex pourrait écrire à la main.
-    DIFF_PRODUCING_TOOLS = {"replace_file_content", "modify_file_content"}
-    
-    MODIFIY_TOOL = "modify_file_content"
-    
-    #: Tools qui, s'ils réussissent, constituent une preuve mécanique qu'un
-    #: fichier a réellement été modifié/créé — pas seulement "déclaré" par Alex.
-    APPLIED_PRODUCING_TOOLS = {"create_file", "replace_file_content", "modify_file_content"}
-    
+    #: Nom du tool qui matérialise les modifications sur l'hôte. Doit être
+    #: appelé AVANT create_report si un fix est proposé.
+    EXPORT_TOOL_NAME = "export"
+
     def __init__(
         self,
         llm_manager: LLMManager,
+        workspace_manager: WorkSpaceManager,
         model_name: Optional[str] = None,
-        tool_mapping: Optional[dict[str, Callable]] = None,
         system_prompt: Optional[str] = None,
         max_iter: int = 20,
         max_retries: int = 2,
-        temperature: float = 0.8,
+        temperature: float = 0.6,
         max_tokens: int = 32768,
     ):
         if llm_manager is None:
             raise ValueError(
                 "llm_manager est requis — Analyst ne crée jamais le sien, "
-                "il doit être injecté (voir docstring du module)."
+                "il doit être injecté."
+            )
+        if workspace_manager is None:
+            raise ValueError(
+                "workspace_manager est requis — Analyst ne crée jamais le "
+                "sien, il doit être injecté (fournit tools + workspace)."
             )
 
         self.llm_manager = llm_manager
+        self.workspace_manager = workspace_manager
         self.model_name = model_name
-        self.tool_mapping = tool_mapping if tool_mapping is not None else MAPPING
         self.system_prompt = system_prompt or get_system_prompt(mode="full")
         self.max_iter = max_iter
         self.max_retries = max_retries
         self.temperature = temperature
         self.max_tokens = max_tokens
 
+        self._llm_tools = self.workspace_manager.get_llm_tools()
+        self.tool_mapping = {func.__name__: func for func in self._llm_tools}
+
         if self.REPORT_TOOL_NAME not in self.tool_mapping:
             raise ValueError(
-                f"tool_mapping doit contenir {self.REPORT_TOOL_NAME!r} — "
-                "Alex ne peut pas fonctionner sans son outil de rapport final."
+                f"Le WorkSpaceManager doit exposer {self.REPORT_TOOL_NAME!r} "
+                "— l'Analyst ne peut pas fonctionner sans son outil de rapport."
+            )
+        if self.EXPORT_TOOL_NAME not in self.tool_mapping:
+            raise ValueError(
+                f"Le WorkSpaceManager doit exposer {self.EXPORT_TOOL_NAME!r} "
+                "— l'Analyst ne peut pas matérialiser de fix sans lui."
             )
 
     async def analyze(
@@ -191,63 +199,96 @@ class Analyst:
         structuré(s) réellement produit(s) via l'outil create_report.
 
         Args:
-            content: Le résultat brut à analyser (sortie du scanner de
-                vulnérabilités, événement IDS/IPS, log, extrait de code...).
-            source: Étiquette optionnelle indiquant l'origine du contenu
-                (ex: "ids_ips", "scanner", "sandbox") — juste ajoutée
-                en tête du message pour donner du contexte à Alex.
-            on_tool_exec_after: callback optionnel de l'appelant — toujours
-                déclenché en plus de la capture interne du rapport, jamais
-                remplacé par elle.
+            content: Le résultat brut à analyser.
+            source: Étiquette optionnelle indiquant l'origine du contenu.
             **run_agent_kwargs: tout kwarg supplémentaire accepté par
-                LLMManager.run_agent (ex: seed, stop, api_key, messages...).
+                LLMManager.run_agent.
 
         Returns:
-            AnalystResult contenant le(s) rapport(s) capturé(s) en
-            interceptant l'appel réel à create_report — jamais le texte
-            libre final, qu'Alex n'est de toute façon pas censé produire.
+            AnalystResult contenant le(s) rapport(s) capturé(s) — jamais
+            le texte libre final.
 
         Raises:
             NoReportProducedError: si Alex termine sans avoir appelé
-            create_report — signale une divergence du modèle plutôt que
-            de renvoyer silencieusement un résultat vide.
-
+                create_report (après avoir utilisé au moins un tool).
         """
+        
+        call_report_without_export_error = ToolExecSpecialError(
+            "Tu dois appeler 'export' AVANT 'create_report'. "
+            "Le rapport final décrit les fix appliqués à l'hôte — "
+            "sans export préalable, aucun fichier n'a été écrit et "
+            "ton rapport serait sans effet. Appelle d'abord "
+            "export(all_slots=True) ou export(slot_keys=[...]) pour "
+            "matérialiser tes modifications."
+        )
+        # ── État de la session d'analyse ─────────────────────────
         captured_reports: list[dict] = []
-        # path -> diff calcule mecaniquement par le tool lui-meme (source de
-        # verite), a ne jamais remplacer par un diff qu'Alex aurait pu ecrire
-        # a la main dans son appel a create_report.
-        captured_diffs: dict[str, str] = {}
-        captured_lines: dict[str, dict[int, str]] = {}
         tools_used: set[str] = set()
-        applied_paths: set[str] = set()
+        # {slot_key: {filename: state}} — alimenté à chaque export réussi,
+        # consommé pour enrichir les fix_files.
+        files_state: dict[str, dict[str, dict]] = {}
+        # True dès qu'un export a réussi — bloquant pour create_report.
+        export_done = False
 
-        async def _on_tool_after(name: str, args: dict, result: Any, call_id = None) -> None:
+        # ── Callback BEFORE : garde-fou comportemental ───────────
+        async def _on_tool_before(
+            name: str, args: dict, call_id: str | None = None
+        ) -> None:
+            if name == self.REPORT_TOOL_NAME and not export_done:
+                raise call_report_without_export_error
+            await _maybe_await(on_tool_exec_before, name, args, call_id)
+
+        # ── Callback AFTER : capture + validation + enrichissement ──
+        async def _on_tool_after(
+            name: str, args: dict, result: Any, call_id: str | None = None
+        ) -> None:
+            nonlocal export_done
+
             if name:
                 tools_used.add(name)
-            
-            if name in self.APPLIED_PRODUCING_TOOLS and isinstance(result, dict) and result.get("success"):
-                path = result.get("path")
-                if path:
-                    applied_paths.add(path)
-            
-            if name == self.MODIFIY_TOOL and isinstance(result, dict) and result.get("success"):
-                path = result.get("path")
-                submitted_lines = args.get("lines")
-                if path and submitted_lines:
-                    captured_lines[path] = submitted_lines
+
+            # ── Export réussi : on rapatrie les states ─────────
+            if name == self.EXPORT_TOOL_NAME and isinstance(result, dict):
+                if result.get("success"):
+                    export_done = True
+                    # On parcourt workspace_manager.files_state
+                    # {slot_key: {fid: state}} et on reconstruit
+                    # {slot_key: {filename: state}} pour lookup rapide.
+                    for slot_key, slot_states in list((
+                        self.workspace_manager.files_state or {}
+                    ).items()):
+                        # print("Export")
+                        # print("slots states")
+                        # print(slot_states)
+                        if not isinstance(slot_states, dict):
+                            continue
+                        value = files_state.setdefault(slot_key, {})
+                        # print("Values")
+                        for state in slot_states.values():
+                            print(state)
+                            if not isinstance(state, dict):
+                                continue
+                            fname = state.get("filename")
+                            if fname:
+                                value[fname] = copy.deepcopy(state)
+
+            # ── create_report : validation + enrichissement ────
+            elif name == self.REPORT_TOOL_NAME and isinstance(result, dict):
+                if not export_done:
+                    raise call_report_without_export_error
+                else:
+                    fix_output = result.get("fix_output")
+                    if fix_output:
+                        error = self._validate_fix_output(fix_output, files_state)
+                        if error:
+                            raise ToolExecSpecialError(error)
+                        self._ensure_diff([result], files_state, add_diff=False)
+                    captured_reports.append(copy.deepcopy(result))
                     
-            if name == self.REPORT_TOOL_NAME and isinstance(result, dict):
-                captured_reports.append(result)
-                
-            elif name in self.DIFF_PRODUCING_TOOLS and isinstance(result, dict):
-                path = result.get("path")
-                diff = result.get("diff")
-                if path and diff is not None:
-                    captured_diffs[path] = diff
-            
+
             await _maybe_await(on_tool_exec_after, name, args, result, call_id)
 
+        # ── Exécution de l'agent ────────────────────────────────
         user_message = content if not source else f"[Source: {source}]\n\n{content}"
         tools = list(self.tool_mapping.values())
 
@@ -266,7 +307,7 @@ class Analyst:
             on_finish=on_finish,
             on_retry=on_retry,
             on_tool_call=on_tool_call,
-            on_tool_exec_before=on_tool_exec_before,
+            on_tool_exec_before=_on_tool_before,
             on_tool_exec_after=_on_tool_after,
             on_tool_exec_error=on_tool_exec_error,
             show_reasoning=show_reasoning,
@@ -279,16 +320,14 @@ class Analyst:
             **run_agent_kwargs,
         )
 
-        self._enforce_reliable_diffs(captured_reports, captured_diffs)
-        self._enforce_applied_state(captured_reports, applied_paths)
-        self._enforce_reliable_lines(captured_reports, captured_lines)
+        self._ensure_diff(captured_reports, files_state)
         tool_calls_made = raw_result.get("tool_calls", 0)
         result = AnalystResult(
-            reports=captured_reports, 
+            reports=captured_reports,
             raw=raw_result,
-            all_tools=list(tools_used) or None
+            all_tools=list(tools_used) or None,
         )
-        
+
         if not result.success and tool_calls_made == 0:
             # Aucun tool utilisé : cas légitime de texte libre (petite
             # conversation, salutation, question générale) — pas une
@@ -313,99 +352,140 @@ class Analyst:
                 f"(iterations={raw_result.get('iterations')}, "
                 f"success={raw_result.get('success')})."
             )
-        
+            
+
         return result
 
+    # ═══════════════════════════════════════════════════════════
+    # Helpers mécaniques
+    # ═══════════════════════════════════════════════════════════
+
     @staticmethod
-    def _enforce_reliable_diffs(
-        reports: list[dict], captured_diffs: dict[str, str]
+    def _validate_fix_output(
+        fix_output: dict,
+        files_state: dict[str, dict[str, dict]],
+    ) -> str | None:
+        """
+        Valide que chaque FixFile référence un slot_key connu et un
+        filename présent dans cet export.
+
+        Returns
+        -------
+        str | None
+            Message d'erreur à renvoyer au LLM, ou None si tout est bon.
+        """
+        if not fix_output:
+            return None
+        
+        files = fix_output.get("files") or []
+        if not files:
+            return None
+
+        valid_keys = sorted(files_state.keys())
+
+        for i, fix_file in enumerate(files):
+            slot_key = fix_file.get("slot_key")
+            if not slot_key:
+                return (
+                    f"fix_output.files[{i}] : 'slot_key' manquant. "
+                    f"Chaque fix doit préciser dans quel slot il s'applique. "
+                    f"Clés disponibles : {valid_keys}. "
+                    f"Récupère-les via list_slots() ou depuis les clés "
+                    f"retournées par export()."
+                )
+            if slot_key not in files_state:
+                return (
+                    f"fix_output.files[{i}] : slot_key {slot_key!r} inconnu. "
+                    f"Clés valides : {valid_keys}."
+                )
+            path = fix_file.get("path")
+            if not path:
+                return (
+                    f"fix_output.files[{i}] : 'path' manquant. "
+                    f"C'est le chemin relatif du fichier dans son slot "
+                    f"(ex: 'src/auth.py'), tel que retourné par export()."
+                )
+            if path not in files_state[slot_key]:
+                available = sorted(files_state[slot_key].keys())
+                return (
+                    f"fix_output.files[{i}] : path {path!r} introuvable dans "
+                    f"le slot {slot_key!r}. Chemins disponibles dans ce slot : "
+                    f"{available}. Utilise EXACTEMENT le 'filename' retourné "
+                    f"par export()."
+                )
+
+        return None
+
+    @staticmethod
+    def _ensure_diff(
+        captured_reports: list[dict],
+        files_state: dict[str, dict[str, dict]],
+        add_diff: bool = True
     ) -> None:
         """
-        Remplace, dans chaque rapport capturé, le diff que le champ
-        fix_output.files[i].diff pourrait contenir par le diff réellement
-        capturé lors de l'exécution des tools de modification.
+        Enrichit chaque FixFile avec les données mécaniques issues de
+        l'export — jamais ce que le LLM a pu écrire à la main :
 
-        C'est volontairement destructif envers ce qu'Alex a pu écrire lui-
-        même : le diff qu'il rédige à la main dans son tool call n'est
-        qu'indicatif et peut contenir des erreurs de retranscription (lignes
-        oubliées, contexte mal recopié...). Seul le diff calculé
-        mécaniquement (via difflib, au moment de l'écriture réelle du
-        fichier) fait foi.
+            - diff               : diff calculé par _export_slot (difflib)
+            - new_file           : fichier créé dans le sandbox
+            - delete_file        : fichier supprimé dans le sandbox
+            - modified_file      : fichier modifié dans le sandbox
+            - fix_applied_tofile : True si au moins un des trois ci-dessus
 
-        Ne modifie rien pour un fichier dont le path n'a pas été vu dans
-        captured_diffs (ex: fix proposé mais pas encore appliqué — dans ce
-        cas le diff écrit par Alex, même imparfait, reste la seule info
-        disponible et n'est donc pas touché ici).
+        Met aussi à jour ``fix_output.all_fix_applied`` : True s'il y a
+        au moins un fichier ET que tous les fichiers sont appliqués.
         """
-        if not captured_diffs:
-            return
-
-        for report in reports:
+        for report in captured_reports:
             fix_output = report.get("fix_output")
             if not fix_output:
                 continue
-
+            
             files = fix_output.get("files") or []
+            
             for fix_file in files:
+                slot_key = fix_file.get("slot_key")
                 path = fix_file.get("path")
-                if path in captured_diffs:
-                    fix_file["diff"] = captured_diffs[path]
     
-    @staticmethod
-    def _enforce_reliable_lines(reports: list[dict], captured_lines: dict[str, dict]) -> None:
-        if not captured_lines:
-            return
-        for report in reports:
-            fix_output = report.get("fix_output")
-            if not fix_output:
-                continue
-            for fix_file in fix_output.get("files") or []:
-                path = fix_file.get("path")
-                if path in captured_lines:
-                    fix_file["lines"] = captured_lines[path]
-                
-    @staticmethod
-    def _enforce_applied_state(reports: list[dict], applied_paths: set[str]) -> None:
-        """
-        Écrase fix_applied_tofile par la vérité mécanique (le chemin a-t-il
-        vraiment été vu dans un tool de modification qui a réussi ?), jamais
-        par ce qu'Alex a déclaré lui-même — même philosophie que
-        _enforce_reliable_diffs pour les diffs.
-        """
-        for report in reports:
-            fix_output = report.get("fix_output")
-            if not fix_output:
-                continue
+                state = (files_state.get(slot_key) or {}).get(path)
+                if state is None:
+                    fix_file["fix_applied_tofile"] = False
+                    continue
     
-            files = fix_output.get("files") or []
-            for fix_file in files:
-                fix_file["fix_applied_tofile"] = fix_file.get("path") in applied_paths
+                fix_file["diff"] = state.get("diff", None) if add_diff else None
+                fix_file["new_file"] = bool(state.get("new_file", False))
+                fix_file["delete_file"] = bool(state.get("deleted", False))
+                fix_file["modified_file"] = bool(state.get("modified", False))
+                fix_file["fix_applied_tofile"] = (
+                    fix_file["new_file"]
+                    or fix_file["delete_file"]
+                    or fix_file["modified_file"]
+                    or (bool(fix_file["diff"]) if add_diff else False)
+                )
     
             fix_output["all_fix_applied"] = bool(files) and all(
-                f["fix_applied_tofile"] for f in files
+                f.get("fix_applied_tofile", False) for f in files
             )
-            
-    def analyze_sync(self, content: str, **kwargs: Any) -> AnalystResult:
-        """
-        Version synchrone de analyze(), pratique hors d'un event loop
-        (script CLI, tests). Réutilise l'utilitaire déjà employé ailleurs
-        dans le projet pour exécuter une coroutine de façon synchrone.
-        """
-        from modules_utils.loop_utils import _run_async
+            report["have_proposed_fix"] = bool(fix_output)
 
+    def analyze_sync(self, content: str, **kwargs: Any) -> AnalystResult:
+        """Version synchrone de analyze(), pratique hors event loop."""
+        from modules_utils.loop_utils import _run_async
         return _run_async(self.analyze, content, **kwargs)
 
 
-
-def create_alex(llm_manager: LLMManager, overrides: dict = None) -> Analyst:
+def create_alex(
+    llm_manager: LLMManager,
+    workspace_manager: WorkSpaceManager,
+    overrides: dict = None,
+) -> Analyst:
     """Crée une instance d'Alex avec la configuration actuelle."""
     config = ANALYST_CONFIG.copy()
     if overrides:
         config.update(overrides)
-    
+
     return Analyst(
         llm_manager=llm_manager,
-        tool_mapping=MAPPING,
+        workspace_manager=workspace_manager,
         system_prompt=get_system_prompt(config["system_prompt_mode"]),
         max_iter=config["max_iter"],
         max_retries=config["max_retries"],

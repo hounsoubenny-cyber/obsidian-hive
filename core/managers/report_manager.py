@@ -58,6 +58,15 @@ class AnalysisReportDB(SQLModel, table=True):
         default=False,
         description="True si le rapport contient un fix proposé/appliqué"
     )
+    read_at: Optional[datetime] = Field(
+        default=None,
+        description="Date de lecture de l'alerte, None si non lue"
+    )
+    is_alert: bool = Field(
+        default=False,
+        index=True,
+        description="True si la sévérité franchissait le seuil d'alerte au moment de la création/mise à jour"
+    )
 
     
 class AnalysisReport(BaseModel):
@@ -160,14 +169,22 @@ class ReportManager:
         engine (AsyncEngine): Moteur SQLAlchemy asynchrone.
     """
     
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str, alert_threshold: Severity = Severity.HIGH.value):
         """Initialise le gestionnaire de rapports.
 
         Args:
             db_url (str): URL de connexion à la base de données.
                 Ex: "sqlite+aiosqlite:///reports.db"
+            alert_threshold (str, optional): Sévérité minimale à partir de
+                laquelle un rapport est marqué comme alerte (`is_alert=True`).
+                Par défaut "high".
         """
         self.db_url = db_url
+        try:
+            self.alert_threshold = Severity(alert_threshold).value
+        except ValueError:
+            self.alert_threshold = Severity.HIGH.value
+            
         db_path = db_url.removeprefix("sqlite+aiosqlite:///")
         if db_path and db_path != ":memory:":
             dirname = os.path.dirname(db_path)
@@ -210,7 +227,18 @@ class ReportManager:
             bool: True si le contenu contient des indicateurs de fix.
         """
         return any(c in content for c in ('"all_fix_applied": true', '"have_proposed_fix": true'))
-    
+
+    def _is_alert(self, severity: Severity) -> bool:
+        """Détermine si une sévérité franchit le seuil d'alerte.
+
+        Args:
+            severity (Severity): La sévérité à évaluer.
+
+        Returns:
+            bool: True si severity >= self.alert_threshold.
+        """
+        return SEVERITY_ORDER.get(getattr(severity, "value", None), 0) >= SEVERITY_ORDER.get(self.alert_threshold, 3)
+
     # =========================================================================
     # CRUD de base
     # =========================================================================
@@ -229,13 +257,15 @@ class ReportManager:
         """
         async with self.get_session() as session:
             dumps = json.dumps(report, default=str)
+            severity = Severity(report["severity"])
             entry = AnalysisReportDB(
                 asset_id=asset_id,
                 source=Source(source),
-                severity=Severity(report["severity"]),
+                severity=severity,
                 content=compress(content),
                 report_json=compress(dumps),
                 has_fix=self.has_fix(dumps),
+                is_alert=self._is_alert(severity),
             )
             session.add(entry)
             await session.commit()
@@ -287,28 +317,54 @@ class ReportManager:
 
             return entries
 
-    async def upsert_report(self, asset_id: str, source: str, content: str, report: dict) -> AnalysisReportDB:
+    async def upsert_report(
+        self,
+        asset_id: str,
+        source: str,
+        content: str,
+        report: dict,
+        report_id: int | None = None,
+    ) -> AnalysisReportDB:
         """Met à jour ou insère un rapport (merge).
+
+        Le caller est responsable de connaître le `report_id` d'un rapport
+        existant s'il veut le mettre à jour (même logique que
+        `AssetManager.upsert` avec `item_db_id`). Si `report_id` est None,
+        une nouvelle ligne est créée — `id` n'est volontairement pas passé
+        au constructeur dans ce cas pour éviter tout souci de validation
+        SQLModel/Pydantic sur un id explicite à None.
+
+        Une mise à jour (report_id fourni et existant) réinitialise aussi
+        `read_at` à None (l'alerte redevient non lue) et `created_at` prend
+        la valeur "maintenant" par défaut (le rapport reflète la dernière
+        occurrence, pas la première).
 
         Args:
             asset_id (str): L'ID de l'asset concerné.
             source (str): La source du rapport.
             content (str): Le prompt d'entrée.
             report (dict): Le rapport JSON à stocker.
+            report_id (int | None, optional): ID du rapport existant à
+                mettre à jour. None pour créer une nouvelle ligne.
 
         Returns:
             AnalysisReportDB: Le rapport après upsert.
         """
         async with self.get_session() as session:
             dumps = json.dumps(report, default=str)
-            entry = AnalysisReportDB(
+            severity = Severity(report["severity"])
+            fields = dict(
                 asset_id=asset_id,
                 source=Source(source),
-                severity=Severity(report["severity"]),
+                severity=severity,
                 report_json=compress(json.dumps(report, default=str)),
                 content=compress(content),
                 has_fix=self.has_fix(dumps),
+                is_alert=self._is_alert(severity),
             )
+            if report_id is not None:
+                fields["id"] = report_id
+            entry = AnalysisReportDB(**fields)
             merged = await session.merge(entry)
             await session.commit()
             await session.refresh(merged)
@@ -530,7 +586,43 @@ class ReportManager:
             list[AnalysisReportDB]: La liste des rapports critiques.
         """
         return await self.list_by_severity("critical", limit)
-    
+
+    @decompress_wrapper
+    async def list_alerts(self, unread_only: bool = False, limit: int = 100) -> list[AnalysisReportDB]:
+        """Liste les rapports marqués comme alertes (is_alert=True).
+
+        Args:
+            unread_only (bool, optional): Si True, ne renvoie que les
+                alertes non lues (read_at IS NULL). Par défaut False.
+            limit (int, optional): Nombre maximum de résultats. Par défaut 100.
+
+        Returns:
+            list[AnalysisReportDB]: Les alertes trouvées, les plus récentes d'abord.
+        """
+        async with self.get_session() as session:
+            conditions = [AnalysisReportDB.is_alert == True]
+            if unread_only:
+                conditions.append(AnalysisReportDB.read_at.is_(None))
+            statement = (
+                select(AnalysisReportDB)
+                .where(and_(*conditions))
+                .order_by(AnalysisReportDB.created_at.desc())
+                .limit(limit)
+            )
+            result = await session.execute(statement)
+            return list(result.scalars().all())
+
+    async def mark_as_read(self, report_id: int) -> bool:
+        """Marque une alerte comme lue.
+
+        Args:
+            report_id (int): L'ID du rapport à marquer comme lu.
+
+        Returns:
+            bool: True si la mise à jour a réussi (rapport trouvé), False sinon.
+        """
+        return await self.update_by_id(report_id, read_at=utcnow())
+
     @decompress_wrapper
     async def list_by_date_range(
         self,

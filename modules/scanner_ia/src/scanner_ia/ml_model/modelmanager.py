@@ -11,43 +11,39 @@ from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
 
 suppres_warnings()
 
-import optuna, json, io
+import io
+import json
+import optuna
+import joblib
 import traceback
+import numpy as np
+import pandas as pd
+import zstandard as zstd
 from matplotlib import pyplot as plt
 from optuna.importance import get_param_importances
 from optuna.visualization.matplotlib import (
     plot_optimization_history, plot_param_importances, 
     plot_parallel_coordinate, plot_terminator_improvement
 )
-import numpy as np
-import pandas as pd
-import joblib
 from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from sklearn.model_selection import train_test_split, cross_val_score, cross_validate, learning_curve
-from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
+from lightgbm import LGBMClassifier # noqa
+from sklearn.svm import SVC # noqa
+from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.multioutput import ClassifierChain
+from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression # noqa
+from sklearn.model_selection import train_test_split, cross_validate, learning_curve
 from sklearn.preprocessing import MultiLabelBinarizer, RobustScaler, PolynomialFeatures, OneHotEncoder
-from sklearn.datasets import make_classification, make_multilabel_classification
-from sklearn.experimental import enable_iterative_imputer
+from sklearn.experimental import enable_iterative_imputer # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier, StackingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import (
-    jaccard_score, accuracy_score, f1_score, 
+    jaccard_score, f1_score, 
     make_scorer, hamming_loss, classification_report, 
     multilabel_confusion_matrix, confusion_matrix
 )
-import zstandard as zstd
-import skops.io as skio
-from zipfile import ZIP_DEFLATED
-
-from scanner_ia.ml_model.mlsmote import MLSMOTE
 from scanner_ia.scanner_utils.logger import get_logger
 
 # Configuration des logs
@@ -840,6 +836,7 @@ class ModelManager:
 
 
 if __name__ == "__main__":
+    from sklearn.datasets import make_classification, make_multilabel_classification
     # ============================================================
     # TEST DE LA CLASSE ModelManager
     # ============================================================

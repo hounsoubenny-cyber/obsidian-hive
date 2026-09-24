@@ -31,7 +31,7 @@ from obsidian_hive.api.models.models import (
     CreateConversationData, ConversationRefData, ListConversationsData,
     SearchConversationsData, UpdateConversationTitleData, SetFavoriteData,
     SetArchivedData, GetMessagesData, GetLastMessageData, MessageIdData,
-    UpdateMessageContentData, ListCriticalReportsData
+    UpdateMessageContentData, ListCriticalReportsData, ListAlertsData
 )
 from modules_utils.limiter import limiter
 from obsidian_hive.api.ap_config import LIMITE
@@ -325,6 +325,35 @@ async def list_critical_reports(request: Request, options: ListCriticalReportsDa
         rm = get_report_manager(request)
         reports = await rm.list_critical(limit=options.limit)
         return {"reports": rm.reports_to_list(reports)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _server_error(e)
+
+
+@limiter.limit(f"{LIMITE}/minute")
+@router.post("/reports/list_alerts")
+async def list_alerts(request: Request, options: ListAlertsData):
+    try:
+        rm = get_report_manager(request)
+        reports = await rm.list_alerts(unread_only=options.unread_only, limit=options.limit)
+        return {"reports": rm.reports_to_list(reports)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _server_error(e)
+
+
+@limiter.limit(f"{LIMITE}/minute")
+@router.post("/reports/mark_as_read")
+async def mark_report_as_read(request: Request, options: ReportIdData):
+    try:
+        rm = get_report_manager(request)
+        async with resource_lock.acquire(f"report:{options.report_id}"):
+            success = await rm.mark_as_read(options.report_id)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Rapport introuvable"})
+        return {"success": True}
     except HTTPException:
         raise
     except Exception as e:

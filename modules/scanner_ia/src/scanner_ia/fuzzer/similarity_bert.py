@@ -8,16 +8,14 @@ Created on Thu Mar 19 06:50:54 2026
 
 import os
 import time
-import torch
 import hashlib
 import traceback
-from sentence_transformers import SentenceTransformer
-from sentence_transformers.util import pytorch_cos_sim
 from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
 from scanner_ia.fuzzer.config import BERT_SIMILARITY_MODEL
 from cachetools import TTLCache
 from threading import Lock, Semaphore
 from scanner_ia.scanner_utils.logger import get_logger
+from modules_utils.lazy_module import LazyModule
 
 suppres_warnings()
 similarity_logger = get_logger()
@@ -25,20 +23,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 TTLCACHE = TTLCache(maxsize=1000, ttl=60 * 10)
 
-try:
-    torch.set_num_threads(1)
-except Exception:
-    pass
-
-try:
-    torch.set_num_interop_threads(1)
-except Exception:
-    pass
-
 MAX_CONCURRENT = 8
+_sentence_transformers = LazyModule("sentence_transformers")
+_torch = LazyModule("torch")
 
 class CosineSimilarityBERT:
     def __init__(self, *args, **kwargs):
+        try:
+            _torch.set_num_threads(1)
+        except Exception:
+            pass
+
+        try:
+            _torch.set_num_interop_threads(1)
+        except Exception:
+            pass
+        
         self.model = None
         self.model_dir = os.path.join(BASE_DIR, BERT_SIMILARITY_MODEL)
         os.makedirs(self.model_dir, exist_ok=True)
@@ -68,7 +68,7 @@ class CosineSimilarityBERT:
             try:
                 if not self.model:
                     similarity_logger.debug("Modèle non trouvé en mémoire, tentative de chargement...")
-                    self.model = SentenceTransformer(self.model_dir)
+                    self.model = _sentence_transformers.SentenceTransformer(self.model_dir)
                 if not self.model:
                     raise ValueError("Model indisponible")
                 # similarity_logger.debug("✓ Modèle vérifié avec succès")
@@ -105,7 +105,7 @@ class CosineSimilarityBERT:
         # même URL — on cache son embedding pour éviter de le recalculer à chaque test.
         # X2 (la réponse au payload) change à chaque appel : pas de gain à le cacher.
         with self._encode_semaphore:
-            with torch.inference_mode():
+            with _torch.inference_mode():
                 x1_key = self._cache_key(X1)
                 with self._lock:
                     X1_vec = TTLCACHE.get(x1_key)
@@ -121,7 +121,7 @@ class CosineSimilarityBERT:
                 # similarity_logger.debug(f"   └─ X1 shape: {X1_vec.shape}")
                 # similarity_logger.debug(f"   └─ X2 shape: {X2_vec.shape}")
                 
-                sim_matrix = pytorch_cos_sim(X1_vec, X2_vec)
+                sim_matrix = _sentence_transformers.util.pytorch_cos_sim(X1_vec, X2_vec)
                 if sim_matrix.shape[0] == 1:
                     result = sim_matrix.item()
                     aggregation = "first element (1D)"
@@ -206,7 +206,6 @@ class CosineSimilarityBERT:
         
         # Test comparaison à baseline
         similarity_logger.info("\n📌 Test 4: Comparaison à baseline")
-        debug
         similarity_logger.info("\n📌 Test 5: Sauvegarde et chargement")
         test_model_dir = os.path.join(BASE_DIR, "test_similarity_model")
         self.save_model(self.model, test_model_dir)

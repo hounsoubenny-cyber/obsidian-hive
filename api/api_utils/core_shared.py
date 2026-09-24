@@ -26,6 +26,11 @@ from fastapi import HTTPException, status
 from pydantic import ValidationError
 
 from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+from sandbox_ia.core.container_manager import ContainerManager
+from obsidian_hive.agents.analyst.tools.tools import WorkSpaceManager
+from obsidian_hive.agents.analyst.analayst_workspace.workspace import (
+    WorkSpace, WorkspaceConfig,
+)
 from obsidian_hive.core.assets.asset_types import ObsidianValidationError, asset_id
 from obsidian_hive.core.engine import ObsidianEngine
 from obsidian_hive.core.managers.main_manager import ObsidianManager  # noqa: F401
@@ -77,6 +82,25 @@ _coralie: Coralie | None = None
 
 _server_asset_agent_ws_manager: ServerAgentWSManager | None = None
 
+
+def build_workspace_manager(
+    network: str | None = None,
+    start_on_init: bool = False,
+    initial_paths: list[list[str, str]] | None = None,
+) -> WorkSpaceManager:
+    if network:
+        if network not in ("none", "proxy"):
+            raise ValueError("network invalide, 'none' ou 'proxy'")
+    else:
+        network = "none"
+    return WorkSpaceManager(
+        workspace=WorkSpace(
+            config=WorkspaceConfig(network=network),
+            manager=ContainerManager(shared_volume=False),
+        ),
+        start_on_init=start_on_init,
+        initial_paths=initial_paths or None
+    )
 
 def get_engine() -> ObsidianEngine:
     """

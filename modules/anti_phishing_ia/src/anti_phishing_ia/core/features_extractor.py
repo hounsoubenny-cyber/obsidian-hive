@@ -8,7 +8,6 @@ Version: 2.0.0
 """
 
 import os
-import sys
 import aiohttp
 import asyncio
 import random
@@ -17,8 +16,6 @@ import pandas as pd
 import nest_asyncio
 from tldextract import extract
 from urllib.parse import urlparse, parse_qs
-
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", '..'))
 from anti_phishing_ia.core.generator import generate_legitimate_urls, generate_phishing_urls
 from anti_phishing_ia.phishing_utils.utils import parse_form, fetch_get
 from anti_phishing_ia.phishing_utils.utils import (

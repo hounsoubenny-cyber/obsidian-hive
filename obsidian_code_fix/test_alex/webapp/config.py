@@ -1,57 +1,42 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Configuration sécurisée de l'application.
+Configuration de l'application de test.
 
-Ce fichier a été corrigé par Alex (Obsidian) pour éliminer les vulnérabilités
-identifiées lors du scan de sécurité.
-
-IMPORTANT : Tous les secrets doivent être configurés via des variables d'environnement
-ou un gestionnaire de secrets (Vault, AWS Secrets Manager, etc.)
+/!\\ Ce fichier doit être chargé depuis un fichier .env ou des variables
+d'environnement en production. Ne jamais versionner les vrais secrets.
 """
 
 import os
 
-# --- Configuration sécurisée (secrets externalisés) ------------------------
-# Les clés API et secrets doivent être définis via des variables d'environnement
-# Exemple d'utilisation :
-#   export STRIPE_SECRET_KEY="sk_live_..."
-#   export AWS_ACCESS_KEY_ID="AKIA..."
-#   export JWT_SECRET="votre_secret_aleatoire_secure"
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-JWT_SECRET = os.getenv('JWT_SECRET')
-
-# --- Configuration de sécurité ---------------------------------------------
-# Mode debug désactivé par défaut pour éviter les fuites d'informations
-DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
-
-# CORS restreint aux origines autorisées uniquement
-# En production, définir une liste explicite d'origines autorisées
-CORS_ALLOWED_ORIGINS = [
-    os.getenv('FRONTEND_URL', 'http://localhost:3000'),
-    os.getenv('FRONTEND_URL_ALT', 'https://monapp.com')
-]
-
-DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///app.db')
-
-# --- Vérification des secrets critiques ------------------------------------
-def validate_config():
+def _load_secret(name: str, default: str = "") -> str:
     """
-    Vérifie que les secrets critiques sont bien configurés.
-    
-    En production, lever une exception si un secret obligatoire est manquant.
+    Charge un secret depuis une variable d'environnement.
+    Retourne la valeur de l'environnement ou la valeur par défaut
+    (qui est elle-même un placeholder — pas un vrai secret).
     """
-    required_secrets = ['JWT_SECRET']
-    missing = [secret for secret in required_secrets if not os.getenv(secret)]
-    
-    if missing:
-        raise EnvironmentError(
-            f"Secrets manquants : {', '.join(missing)}. "
-            "Veuillez les définir via des variables d'environnement."
-        )
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value
 
-# Valider la configuration au démarrage
-validate_config()
+
+# --- Secrets chargés depuis les variables d'environnement ---------------
+# En production, ces variables doivent être définies dans un fichier .env
+# ou via le secret manager de l'infrastructure.
+STRIPE_SECRET_KEY = _load_secret("STRIPE_SECRET_KEY")
+AWS_ACCESS_KEY_ID = _load_secret("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = _load_secret("AWS_SECRET_ACCESS_KEY")
+JWT_SECRET = _load_secret("JWT_SECRET")
+
+# --- Configuration de sécurité ------------------------------------------
+DEBUG = os.environ.get("DEBUG", "false").lower() in ("true", "1", "yes")
+
+# --- CORS restreint par défaut (à ajuster selon les besoins) -------------
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS",
+    "https://example.com,https://app.example.com",
+).split(",")
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///app.db")

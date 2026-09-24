@@ -14,6 +14,7 @@ load_dotenv()
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 API_HOST = "0.0.0.0"
 API_PORT = _get_config_manager().api_config.api_port
+ALERT_THRESHOLD = _get_config_manager().global_config.alert_threshold
 LIMITE = 25
 PORT = 8000
 API_IP = "127.0.0.1"

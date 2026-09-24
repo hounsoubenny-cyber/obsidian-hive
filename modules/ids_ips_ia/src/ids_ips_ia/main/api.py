@@ -38,9 +38,9 @@ from ids_ips_ia.ids_ips_utils.warnings_manager import suppres_warnings
 from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
 from modules_utils.limiter import limiter, get_remote_address
 
-from ids_ips_ia.main.routes import router, router_no_auth
+from ids_ips_ia.main.routes import router, router_no_auth # noqa: exporté
 from ids_ips_ia.main.orchestrator import IDS_IPS, graph
-from ids_ips_ia.main.server_state import start, stop
+from ids_ips_ia.main.server_state import start, stop # noqa
 from ids_ips_ia.main.services import _do_help
 
 warnings.filterwarnings("ignore")

@@ -57,6 +57,7 @@ from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStat
 from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_ws_manager,
+    build_workspace_manager,
     get_server_agent_ws_manager,
     get_confirmer,
     get_coralie,
@@ -449,73 +450,83 @@ async def _run_analyze(
         data (dict): Données de l'analyse (content, source, asset_id, base_prompt).
     """
     run_id = str(uuid4())
-
+    workspace_manager = None
     try:
-        options = AlexAnalyzeData(
-            **{
-                k: v
-                for k, v in data.items()
-                if k != "type" and k in AlexAnalyzeData.model_json_schema()["properties"].keys()
-            }
-        )
-    except ValidationError as e:
-        await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
-        return
-
-    content = f"{options.base_prompt}\n\n{options.content}"
-    if can_check_prompt():
-        message = content
-        is_safe, check_result = await check_prompt(message)
-    
-        if is_safe is False:
-            item = check_result.results[message]
-            msg = (
-                f"Prompt bloqué par ContextGuard : `{item.label}` "
-                f"({item.prob:.1%})"
+        try:
+            options = AlexAnalyzeData(
+                **{
+                    k: v
+                    for k, v in data.items()
+                    if k != "type" and k in AlexAnalyzeData.model_json_schema()["properties"].keys()
+                }
             )
-            await ws_manager.send_to(
-                username,
-                {"type": "injection_detected", "message": msg},
-            )
+        except ValidationError as e:
+            await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
             return
     
-        elif is_safe is None:
-            # ContextGuard indisponible — on laisse passer mais on trace
-            logger.warning(f"ContextGuard indisponible — prompt non vérifié : {message[:60]!r}")
-            await ws_manager.send_to(username, {
-                "type": "warning",
-                "message": "Vérification ContextGuard indisponible."
-            })
-    
-        # is_safe is True → on continue normalement
+        content = f"{options.base_prompt}\n\n{options.content}"
+        if can_check_prompt():
+            message = content
+            is_safe, check_result = await check_prompt(message)
         
-    alex = create_alex(llm_manager)
-    callbacks = _stream_callbacks(ws_manager, username, run_id)
-
-    ctx_token = current_confirm_username.set(username)
-    try:
-        result: AnalystResult = await alex.analyze(content, source=options.source, **callbacks)
-    except NoReportProducedError as e:
-        await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
-        return
-    except Exception as e:
-        await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
-        return
-    finally:
-        current_confirm_username.reset(ctx_token)
-
-    if report_manager and result.report:
+            if is_safe is False:
+                item = check_result.results[message]
+                msg = (
+                    f"Prompt bloqué par ContextGuard : `{item.label}` "
+                    f"({item.prob:.1%})"
+                )
+                await ws_manager.send_to(
+                    username,
+                    {"type": "injection_detected", "message": msg},
+                )
+                return
+        
+            elif is_safe is None:
+                # ContextGuard indisponible — on laisse passer mais on trace
+                logger.warning(f"ContextGuard indisponible — prompt non vérifié : {message[:60]!r}")
+                await ws_manager.send_to(username, {
+                    "type": "warning",
+                    "message": "Vérification ContextGuard indisponible."
+                })
+        
+            # is_safe is True → on continue normalement
+        
+        workspace_manager = build_workspace_manager()
+        workspace_manager.init()
+        alex = create_alex(llm_manager, workspace_manager=workspace_manager)
+        callbacks = _stream_callbacks(ws_manager, username, run_id)
+    
+        ctx_token = current_confirm_username.set(username)
         try:
-            await report_manager.add_report(
-                asset_id=options.asset_id,
-                source=options.source,
-                report=result.report,
-            )
+            result: AnalystResult = await alex.analyze(content, source=options.source, **callbacks)
+        except NoReportProducedError as e:
+            await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
+            return
         except Exception as e:
-            await ws_manager.send_to(username, {"type": "persist_error", "run": run_id, "error": str(e)})
-
-    await ws_manager.send_to(username, {"type": "report", "run": run_id, "report": result.report})
-
+            await ws_manager.send_to(username, {"type": "error", "run": run_id, "error": str(e)})
+            return
+        finally:
+            current_confirm_username.reset(ctx_token)
+    
+        if report_manager and result.report:
+            try:
+                await report_manager.add_report(
+                    asset_id=options.asset_id,
+                    source=options.source,
+                    report=result.report,
+                )
+            except Exception as e:
+                await ws_manager.send_to(username, {"type": "persist_error", "run": run_id, "error": str(e)})
+    
+        await ws_manager.send_to(username, {"type": "report", "run": run_id, "report": result.report})
+    
+    finally:
+        if workspace_manager:
+            # Nettoyage workspace : container + workdir interne
+            try:
+                await asyncio.to_thread(workspace_manager.stop)
+            except Exception as e:
+                logger.warning(f"Cleanup workspace Alex échoué (run={run_id}) : {e!r}")
 
 async def cancel_task(task: asyncio.Task):
     """Annule une tâche asynchrone de manière sécurisée.

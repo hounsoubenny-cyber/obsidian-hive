@@ -7,8 +7,8 @@ Created on Mon Apr 13 08:12:47 2026
 
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+import os
+import sys
 import json
 import time
 import distro
@@ -16,7 +16,6 @@ import socket
 import shutil
 import yaml
 import asyncio
-import signal
 import netifaces
 import ipaddress
 import subprocess

@@ -9,6 +9,7 @@ Created on Sat Jul 11 00:16:28 2026
 import os
 import socket
 import tomllib
+from obsidian_hive.core.assets.asset_types import Severity
 from pydantic import BaseModel, Field, field_validator, model_validator
 from dotenv import load_dotenv, find_dotenv
 
@@ -94,6 +95,10 @@ class GlobalConfig(BaseModel):
         default_factory=ids_conf_required_keys_func,
         description="Clés requises pour valider une configuration de l'IDS/IPS"
     )
+    alert_threshold: Severity = Field(
+        default=Severity.HIGH,
+        description="Seuil a partir duquel un report devient alert."
+    )
     
 
 class EngineConfig(BaseModel):
@@ -146,7 +151,7 @@ class LLMManagerConfig(BaseModel):
         ge=1,
         description="Nombre maximum de modèles chargés simultanément (défaut: 1)"
     )
-    api_keys: list[tuple[str, str]] = Field(
+    api_keys: list[tuple[str, str | None, str]] = Field(
         default_factory=lambda: _get_api_keys(
             name="API_KEY", 
             default=[("ornith1.0-9b", "local", "local-fake-key")]
@@ -181,7 +186,7 @@ class AnalystConfig(BaseModel):
     """Configuration de l'agent Analyst (Alex)."""
     
     max_iter: int = Field(
-        default=20,
+        default=40,
         ge=6,
         description="Nombre maximum d'itérations pour une analyse (défaut: 8)"
     )
@@ -307,12 +312,20 @@ class ConfigManager:
         self.validate_config()
         load_dotenv()
         
+        alert_threshold = self._raw_conf["global"].get("alert_threshold", None)
         self.global_config = GlobalConfig(
-            start_ids_on_start=self._raw_conf["global"]["start_ids_on_start"]
+            start_ids_on_start=self._raw_conf["global"]["start_ids_on_start"],
+            **(
+                {}
+                if alert_threshold == "null" or alert_threshold is None 
+                else dict(
+                    alert_threshold=alert_threshold,
+                )
+            )
         )
         
         self.api_config = ApiConfig(
-            api_port=self._raw_conf["api"]["api_port"]
+            api_port=self._raw_conf["api"]["api_port"],
         )
         
         self.engine_config = EngineConfig(

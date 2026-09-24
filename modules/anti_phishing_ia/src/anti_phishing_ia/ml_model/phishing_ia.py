@@ -18,43 +18,33 @@ Version: 1.0.0
 """
 
 import os
-import sys
-import numpy as np
 import json
-import gzip
-import pandas as pd
 import time
 import joblib
+import traceback
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from imblearn.over_sampling import SMOTE
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Supprime les logs TensorFlow
-
-import tensorflow as tf
-tf.get_logger().setLevel('ERROR')
 
 import warnings
 warnings.filterwarnings('ignore')
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
-from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import HistGradientBoostingRegressor, StackingClassifier
-from xgboost import XGBClassifier
 from skopt import BayesSearchCV
+from xgboost import XGBClassifier
+from sklearn.pipeline import Pipeline
 from skopt.space import Real, Integer, Categorical
 from sklearn.model_selection import StratifiedKFold
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import (
-    classification_report, confusion_matrix, multilabel_confusion_matrix,
-    f1_score, accuracy_score, precision_score, recall_score
-)
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import RobustScaler, LabelEncoder
-from tqdm import tqdm
+from sklearn.ensemble import HistGradientBoostingRegressor, StackingClassifier
+from sklearn.experimental import enable_iterative_imputer # noqa
+from sklearn.impute import IterativeImputer
+
 from anti_phishing_ia.ml_model.modeloptimize import ModelOptimization, compute_metrics_safe
 from anti_phishing_ia.ml_model.modelstack import ModelStack
 from anti_phishing_ia.core.features_extractor import get_features_names
-import traceback
 
 # Répertoire de base pour les données et modèles
 dir_ = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')

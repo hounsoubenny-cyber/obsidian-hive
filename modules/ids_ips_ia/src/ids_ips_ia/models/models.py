@@ -8,23 +8,24 @@ Created on Sat Oct 25 20:38:59 2025
 
 # models.py
 import os
-import sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-import time
-import threading
 import copy
-import warnings
+import time
 import optuna
 import asyncio
-import tensorflow as tf
-import pandas as pd
+import warnings
+import threading
 import numpy as np
+import pandas as pd
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-import matplotlib.pyplot as plt
-from sklearn.metrics import silhouette_score
-from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import (
     Input, LSTM, Dense, TimeDistributed,
     RepeatVector, Dropout, 
@@ -33,12 +34,8 @@ from tensorflow.keras.layers import (
     MultiHeadAttention, Add, Concatenate,
     BatchNormalization
 )
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
 from ids_ips_ia.config.config_ids import N_TRIAl
 from ids_ips_ia.ids_ips_utils.logger import get_logger
-from ids_ips_ia.ids_ips_utils.cacher import Cache
 
 logger = get_logger()
 

@@ -549,6 +549,7 @@ async def _test():
             name="DVWA Test",
             url="http://localhost:8080",
             every=3600,
+            conf_content="{}",  # requis par WebAsset — "{}" = on garde 100% des défauts de shieldai_scanner.config.json5
             run_config={
                 "limit_vuln_for_fuzzer": 2,
                 "max_test": 5,

@@ -13,11 +13,7 @@ server_state.py, pas ici — voir ce fichier pour le pourquoi.
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-
 import threading
-import time
 import queue
 import asyncio
 import traceback

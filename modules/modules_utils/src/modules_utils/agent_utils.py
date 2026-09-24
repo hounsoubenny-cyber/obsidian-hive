@@ -8,9 +8,10 @@ Created on Sun Jul 12 11:04:37 2026
 
 import os
 import time
-import functools
-import difflib
 import asyncio
+import difflib
+import functools
+import subprocess
 
 def timer(func):
     """
@@ -69,7 +70,7 @@ def _validate_confined(path: str) -> str:
     real = os.path.realpath(path)
     if not any(real == root or real.startswith(root + os.sep) for root in _get_allowed_roots()):
         raise ValueError(f"Accès refusé : {path!r} est hors du périmètre autorisé.")
-    return path
+    return real # path
 
 def _validate_path(path: str, check_exists: bool = True) -> str:
     """
@@ -85,10 +86,36 @@ def _validate_path(path: str, check_exists: bool = True) -> str:
         ValueError: Si le chemin est vide ou n'existe pas
     """
     if not path:
-        raise ValueError("The path is falsy")
+        raise ValueError("The path is falsy(empty or None, falsy)")
     
     if check_exists and (not os.path.exists(path)):
         raise ValueError("This path doesn't exist")
     
     return _validate_confined(path)
 
+
+def diff(path1: str, path2: str, timeout: int = 30) -> dict:
+    """Diff entre deux fichiers ou deux dossiers (récursif auto si besoin).
+
+    Returns:
+        dict: {
+            "identical": bool,       # True si aucune différence
+            "returncode": int,       # 0 = identique, 1 = différent, 2 = erreur
+            "diff": str,             # sortie texte de diff (vide si identique)
+            "error": str | None,     # stderr, si erreur (ex: chemin introuvable)
+        }
+    """
+    recursive = os.path.isdir(path1) and os.path.isdir(path2)
+    cmd = ["diff"] + (["-r"] if recursive else []) + [path1, path2]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"identical": False, "returncode": -1, "diff": "", "error": f"timeout après {timeout}s"}
+
+    return {
+        "identical": result.returncode == 0,
+        "returncode": result.returncode,
+        "diff": result.stdout,
+        "error": result.stderr if result.returncode == 2 else None,
+    }

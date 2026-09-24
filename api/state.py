@@ -22,7 +22,8 @@ from obsidian_hive.config.config import (
 from obsidian_hive.api.ap_config import (
     EXP, NOT_BEFORE,
     USER_ENV_KEY, PASSWD_ENV_KEY, 
-    SECRET_KEY_ENV_KEY, BASE_URL
+    SECRET_KEY_ENV_KEY, BASE_URL,
+    ALERT_THRESHOLD
 )
 
 _auth_manager: Optional[AuthManager] = None
@@ -38,7 +39,6 @@ _shared_report_manager_is_set: bool = False
 _shared_conversation_manager: Optional[ConversationManager] = None
 
 _shared_extension_token_manager: Optional[ExtensionTokenManager] = None
-
 
 _shared_job_manager: Optional[JobManager] = None
 
@@ -93,7 +93,10 @@ async def _get_report_manager():
     """
     global _shared_report_manager, _shared_report_manager_is_set
     if not _shared_report_manager:
-        _shared_report_manager = ReportManager(db_url=ENGINE_CONFIG["db_url"]) 
+        _shared_report_manager = ReportManager(
+            db_url=ENGINE_CONFIG["db_url"],
+            alert_threshold=ALERT_THRESHOLD
+        ) 
         await _shared_report_manager.init_db()
     if not _shared_report_manager_is_set:
         WorkflowBase.set_report_manager(_shared_report_manager)

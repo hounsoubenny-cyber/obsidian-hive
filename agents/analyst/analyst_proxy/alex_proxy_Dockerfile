@@ -1,0 +1,10 @@
+# Image du proxy de sortie d'Alex — Alpine + Squid, minimal.
+# squid.conf n'est PAS copié dans l'image (voir docker-compose / docker run) :
+# il est monté en volume, pour changer l'allowlist sans jamais rebuild.
+FROM alpine:latest
+
+RUN apk add --no-cache squid
+
+EXPOSE 8888
+
+CMD ["squid", "-N", "-f", "/etc/squid/squid.conf"]

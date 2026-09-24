@@ -10,10 +10,11 @@ import os, sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 
 import time
+import shlex
 import socket
 import docker
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from simulateur_attaque_ia.simulateur_utils.logger import get_logger
 
 logger = get_logger()
@@ -67,8 +68,21 @@ class DockerManager:
             name = f"container_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.image_name = name_img
         self.container_conf = kwargs
+        environment = {
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONUNBUFFERED": "1",
+            "TERM": "xterm-256color",
+            "LC_ALL": "C.UTF-8", "LANG": "C.UTF-8",
+            "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"
+        }
         kwargs.setdefault("labels", {"simatk": "true"})
         kwargs.setdefault("detach", True)
+        env = kwargs.setdefault(
+            "environment",
+            environment
+        )
+        if isinstance(env, dict):
+            env.update(environment)
         try:
             self.container = self.client.containers.get(name)
             self.container.reload()
@@ -290,7 +304,7 @@ class DockerManager:
         """Exécute commande dans le container"""
         if not self.container:
             raise ValueError("Container pas démarré!")
-
+            
         result = self.container.exec_run(cmd, stdout=True, stderr=True)
         if show:
             logger.print()
@@ -299,17 +313,14 @@ class DockerManager:
             # logger.print('Stderr : ', result.stderr)
             logger.print()
         return result.output.decode(), result
-
+    
     def exec_command_api(self, cmd):
-        print("IN API")
-        import shlex
         if isinstance(cmd, str):
             cmd = ["sh", "-c", cmd]
         elif isinstance(cmd, list):
             cmd = ["sh", "-c", shlex.join(cmd)]
         else:
             cmd = ["sh", "-c", str(cmd)]
-        print(cmd)
         
         result = self.container.exec_run(cmd, demux=True, stderr=True, stdout=True)
         stdout, stderr = result.output

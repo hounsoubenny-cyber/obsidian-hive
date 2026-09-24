@@ -1,0 +1,8 @@
+# Image du proxy de sortie d'Alex — Squid minimal, rien d'autre.
+# Complètement séparée de l'image Alex (Python/git/tests) : ce conteneur
+# n'a qu'un seul travail, relayer/filtrer des requêtes HTTP(S).
+FROM ubuntu/squid:latest
+
+COPY analyst_proxy_squid.conf /etc/squid/squid.conf
+
+EXPOSE 8888

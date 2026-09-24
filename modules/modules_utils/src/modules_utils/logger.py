@@ -175,13 +175,13 @@ class Logger:
         console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(ColoredFormatter())
         self.logger.addHandler(console_handler)
-        max_bytes = 0 # 100 * 1024 * 1024
-        backup_count = 0 # 30
+        max_bytes = 100 * 1024 * 1024 # 0
+        backup_count =  30 # 0
         # Fichier JSON structuré
         if self.structured:
             log_file = self.log_dir / f"{self.module_name}.json"
             fh = logging.handlers.RotatingFileHandler(
-                log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+                log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8', delay=True
             )
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(JsonFormatter())
@@ -190,7 +190,7 @@ class Logger:
         # Fichier texte lisible
         log_file = self.log_dir / f"{self.module_name}.log"
         fh = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+            log_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8', delay=True
         )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(logging.Formatter(
@@ -203,7 +203,7 @@ class Logger:
         # Fichier erreurs uniquement
         error_file = self.log_dir / f"errors_{self.module_name}.log"
         eh = logging.handlers.RotatingFileHandler(
-            error_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+            error_file, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8', delay=True
         )
         eh.setLevel(logging.ERROR)
         eh.setFormatter(logging.Formatter(

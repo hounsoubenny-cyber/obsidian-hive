@@ -6,7 +6,6 @@ Created on Sun Mar 15 07:17:18 2026
 @author: hounsousamuel
 """
 
-import random
 from scanner_ia.scanner_utils.warnings_manager import suppres_warnings
 
 suppres_warnings()

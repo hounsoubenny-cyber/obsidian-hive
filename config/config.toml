@@ -19,6 +19,7 @@
 #   - true  → L'IDS/IPS démarre avec l'API
 #   - false → L'IDS/IPS doit être démarré manuellement (via API ou CLI)
 start_ids_on_start = true
+alert_threshold="null"
 
 # =============================================================================
 # 2. CONFIGURATION DE L'API
@@ -103,9 +104,9 @@ wait_timeout = 120
 [analyst]
 # max_iter : Nombre maximum d'itérations pour une analyse
 #   - Minimum : 5 (en dessous, analyse incomplète)
-#   - Défaut : 20
+#   - Défaut : 40
 #   - Plus le nombre est élevé, plus l'analyse est approfondie (mais plus lente)
-max_iter = 20
+max_iter = 40
 
 # max_retries : Nombre de tentatives en cas d'échec
 #   - Défaut : 3
@@ -116,7 +117,7 @@ max_retries = 3
 #   - 0.0 → Déterministe, réponse précise
 #   - 0.8 → Équilibre créativité/précision (recommandé)
 #   - 1.0 → Plus créatif, moins précis
-temperature = 0.8
+temperature = 0.6
 
 # max_tokens : Nombre maximum de tokens par réponse
 #   - Défaut : 32768

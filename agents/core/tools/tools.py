@@ -13,8 +13,9 @@ import inspect
 from datetime import datetime, timedelta
 from modules_utils.pydantic_utils import entry_model
 from modules_utils.agent_utils import timer
-from obsidian_hive.agents.analyst.tools.tools import (
-    read_file, list_directory, path_exists
+from obsidian_hive.agents.shared.tools_shared.tools import (
+    read_file, list_directory, path_exists,
+    get_info_about_tool as analyst_get_info_about_tool
 )
 from obsidian_hive.core.engine import ObsidianEngine
 from obsidian_hive.core.managers.job_manager import JobManager
@@ -40,8 +41,6 @@ from obsidian_hive.core.assets.asset_types import (
     AssetStatus, AssetType, Priority, Source, Severity, utcnow,
     PRIORITY_MAPPING
 )
-
-from obsidian_hive.agents.analyst.tools.tools import get_info_about_tool as analyst_get_info_about_tool
 from modules_utils.keyed_lock import resource_lock
 
 class CoreTools:
@@ -72,11 +71,11 @@ class CoreTools:
                 self, name
             ) for name in dir(self) if str(name).endswith(self._tool_suffix)
         }
-        self._analyst_tools = ["list_directory", "read_file", "path_exits"]
+        self._analyst_tools = ["list_directory", "read_file", "path_exists"]
         self.tools.update({
             "list_directory": list_directory,
             "read_file": read_file,
-            "path_exits": path_exists,
+            "path_exists": path_exists,
         })
         
     def _return_asset_generic(self, kwargs_dump: dict, result):
