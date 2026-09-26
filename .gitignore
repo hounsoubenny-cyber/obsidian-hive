@@ -98,6 +98,8 @@ capture_backup.pkl
 *.sqlite
 *.sqlite3
 *.db-journal
+*.db-shm
+*.db-wal
 
 # --- Logs ---
 *.log
@@ -176,3 +178,4 @@ modules/scanner_ia/src/scanner_ia/build_dataset/dataset_chunks_backup/
 modules/scanner_ia/src/scanner_ia/build_dataset/*crawl_result*
 modules/scanner_ia/src/scanner_ia/build_dataset/crawl_final_result
 modules/ids_ips_ia/src/ids_ips_ia/ids_ips.txt
+web_asset_report_dir/

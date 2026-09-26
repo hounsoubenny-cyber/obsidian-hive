@@ -7,8 +7,9 @@ Created on Sat Jun 27 23:28:18 2026
 """
 
 import os
-import aiohttp
 import atexit
+import asyncio
+import aiohttp
 import uvicorn
 import threading
 import contextlib
@@ -76,7 +77,7 @@ from obsidian_hive.api.ap_config import (
 from obsidian_hive.api.state import (
     _get_auth_manager, _get_contextguard_client, _get_conversation_manager,
     _get_extension_token_manager, _get_job_manager, _get_llm_manager,
-    _get_report_manager
+    _get_report_manager, defer_context_guard_client_creation
 )
 from obsidian_hive.agents.analyst.analayst_workspace.workspace import WorkSpace
 load_dotenv()
@@ -91,6 +92,7 @@ async def lifespan_start(app: FastAPI):
     Args:
         app (FastAPI): L'application FastAPI.
     """
+    app.state.tasks = []
     _get_auth_manager().verify_env_utils()
     # app.state.ap_instance = get_ap_instance()
     
@@ -108,10 +110,14 @@ async def lifespan_start(app: FastAPI):
     app.state.job_manager = await _get_job_manager()
     app.state.conversation_manager = await _get_conversation_manager()
     app.state.extension_token_manager = await _get_extension_token_manager()
-    app.state.context_guard_client = await _get_contextguard_client()
+    signal = asyncio.Event()
+    task = await defer_context_guard_client_creation(app, signal)
+    app.state.tasks.append(task)
+    # app.state.context_guard_client = await _get_contextguard_client()
     
-    await sim_lifespan_start(app)
-    await app.state.core_engine.start()
+    # await sim_lifespan_start(app)
+    # await app.state.core_engine.start()
+    signal.set()
     
     logger.success("API démaré")
 
@@ -124,8 +130,18 @@ async def lifespan_end(app: FastAPI):
         app (FastAPI): L'application FastAPI.
     """
     
-    await sim_lifespan_end(app)
+    # await sim_lifespan_end(app)
     await WorkSpace.kill_proxy_container_async()
+    tasks = getattr(app.state, "tasks", []) or []
+    if tasks:
+        for task in tasks:
+            if isinstance(task, asyncio.Task):
+                task.cancel()
+                try:
+                    await asyncio.wait_for(asyncio.shield(task), timeout=2.0)
+                except Exception:
+                    pass
+                
     logger.success("API fermée")
 
 
@@ -188,7 +204,7 @@ _ROUTERS = [
     (sim_ws_router, "simulator", False),
     
     # ContextGuard
-    (contextguard_router, "contextguard", True),
+    (contextguard_router, "contextguard", False),
     
     # Core
     (core_router, "core", True),

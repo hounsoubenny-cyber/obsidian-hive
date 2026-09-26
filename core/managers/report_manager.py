@@ -87,6 +87,15 @@ class AnalysisReport(BaseModel):
         default=False,
         description="True si le rapport contient un fix proposé/appliqué"
     )
+    read_at: Optional[datetime] = Pydantic_Field(
+        default=None,
+        description="Date de lecture de l'alerte, None si non lue"
+    )
+    is_alert: bool = Pydantic_Field(
+        default=False,
+        index=True,
+        description="True si la sévérité franchissait le seuil d'alerte au moment de la création/mise à jour"
+    )
 
 
 def compress(data: str | bytes):

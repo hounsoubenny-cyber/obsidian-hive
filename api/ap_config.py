@@ -21,10 +21,12 @@ API_IP = "127.0.0.1"
 SCHEME = "http"
 BASE_URL = f"{SCHEME}://{API_IP}:{API_PORT}" if API_PORT is not None else  f"{SCHEME}://{API_IP}"
 ALLOWED_ORIGINS = [
-    BASE_URL,
-    f"{SCHEME}://localhost:{API_PORT}" if API_PORT is not None else f"{SCHEME}://localhost",
-    "{SCHEME}://localhost:3000",
-    "{SCHEME}://127.0.0.1:3000",
+    # BASE_URL,
+    # f"{SCHEME}://localhost:{API_PORT}" if API_PORT is not None else f"{SCHEME}://localhost",
+    # "{SCHEME}://localhost:3000",
+    # "{SCHEME}://127.0.0.1:3000",
+    
+    "*"
 ]
 NOT_BEFORE = 0.1
 EXP = 60 * 5

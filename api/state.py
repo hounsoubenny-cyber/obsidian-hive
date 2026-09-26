@@ -8,6 +8,7 @@ Created on Sat Sep 19 17:16:55 2026
 
 import asyncio
 from typing import Optional
+from fastapi import FastAPI
 from contextguard.sdk.client import ContextGuardClient
 from modules_utils.api_dependencies import AuthManager
 from obsidian_hive.core.managers.job_manager import JobManager
@@ -180,20 +181,31 @@ async def _get_contextguard_client():
     async with _context_guard_client_lock:
         if not _context_guard_client:
             _context_guard_client = build_contextguard_client()
-            conn = await _context_guard_client.connect(
+            conn = await _context_guard_client.connect_async(
                 intelligent=True
             )
             if not conn.success:
                 raise RuntimeError(f"ContextGuard : connexion impossible — {conn.errors}")
         
         if not _context_guard_client.connected:
-            conn = await _context_guard_client.connect(
+            conn = await _context_guard_client.connect_async(
                 intelligent=True
             )
-            conn = await _context_guard_client.connect(
+            conn = await _context_guard_client.connect_async(
                 intelligent=True
             )
             if not conn.success:
                 raise RuntimeError(f"ContextGuard : connexion impossible — {conn.errors}")
         
         return _context_guard_client
+
+async def defer_context_guard_client_creation(app: FastAPI, signal: asyncio.Event):
+    async def task():
+        await signal.wait()
+        await asyncio.sleep(1.5)
+        try:
+            app.state.context_guard_client = await _get_contextguard_client()
+        except Exception as e:
+            raise SystemExit(1) from e
+    
+    return asyncio.create_task(task())

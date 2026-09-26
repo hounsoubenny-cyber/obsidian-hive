@@ -3,40 +3,22 @@
 """
 Configuration de l'application de test.
 
-/!\\ Ce fichier doit être chargé depuis un fichier .env ou des variables
-d'environnement en production. Ne jamais versionner les vrais secrets.
+/!\\ Fichier volontairement vulnérable — sandbox de test pour Alex (Obsidian).
 """
 
-import os
+# --- Vulnérabilité 1 : secrets codés en dur dans le code source --------
+STRIPE_SECRET_KEY = "sk_live_51Hxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
+AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+JWT_SECRET = "changeme"
 
+# --- Vulnérabilité 2 : mode debug actif par défaut ---------------------
+# Si ce fichier est déployé tel quel en prod, Flask/Django afficheront
+# la stacktrace complète (chemins serveurs, variables, parfois secrets)
+# à la moindre exception non gérée.
+DEBUG = True
 
-def _load_secret(name: str, default: str = "") -> str:
-    """
-    Charge un secret depuis une variable d'environnement.
-    Retourne la valeur de l'environnement ou la valeur par défaut
-    (qui est elle-même un placeholder — pas un vrai secret).
-    """
-    value = os.environ.get(name)
-    if value is None:
-        return default
-    return value
+# --- Vulnérabilité 3 : CORS totalement ouvert --------------------------
+CORS_ALLOWED_ORIGINS = ["*"]
 
-
-# --- Secrets chargés depuis les variables d'environnement ---------------
-# En production, ces variables doivent être définies dans un fichier .env
-# ou via le secret manager de l'infrastructure.
-STRIPE_SECRET_KEY = _load_secret("STRIPE_SECRET_KEY")
-AWS_ACCESS_KEY_ID = _load_secret("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = _load_secret("AWS_SECRET_ACCESS_KEY")
-JWT_SECRET = _load_secret("JWT_SECRET")
-
-# --- Configuration de sécurité ------------------------------------------
-DEBUG = os.environ.get("DEBUG", "false").lower() in ("true", "1", "yes")
-
-# --- CORS restreint par défaut (à ajuster selon les besoins) -------------
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "https://example.com,https://app.example.com",
-).split(",")
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+DATABASE_URL = "sqlite:///app.db"

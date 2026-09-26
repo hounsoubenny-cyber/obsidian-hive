@@ -6,8 +6,6 @@ Created on Tue Aug 11 22:46:48 2026
 @author: hounsousamuel
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 test_agent_e2e.py — harness interactif pour tester le cœur de l'agent
 ServerAsset de bout en bout, sans dashboard.

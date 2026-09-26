@@ -103,7 +103,7 @@ DEFAULT_IGNORE_FILES = (
 
 _FALLBACK_IMAGE = "shieldai-sandbox:v2-light"
 
-PROXY_IMAGE: str = "analyst-proxy:latest"
+PROXY_IMAGE: str = "alex-proxy:latest"
 PROXY_CONTAINER_NAME: str = f"analyst-proxy_{str(uuid4())}"
 PROXY_CONF_FILE = os.path.abspath(
     os.path.join(
@@ -410,6 +410,7 @@ class WorkSpace:
         proxy_name: str = "analyst-proxy",
         internal_network: str = "workspace_internal",
         egress_network: str = "bridge",
+        squid_conf_path: str = PROXY_CONF_FILE,
     ) -> None:
         """Démarre le conteneur proxy s'il n'est pas déjà en cours d'exécution
         (idempotent — appelable à chaque démarrage d'un WorkSpace sans risque).
@@ -434,6 +435,7 @@ class WorkSpace:
             name=proxy_name,
             network=internal_network,
             detach=True,
+            volumes={squid_conf_path: {"bind": "/etc/squid/squid.conf", "mode": "ro"}},
             restart_policy={"Name": "unless-stopped"},
         )
         WorkSpace.set_proxy_container(container)

@@ -314,6 +314,7 @@ async def list_reports_by_filter(request: Request, options: ListReportsByFilterD
         return {"reports": rm.reports_to_list(reports)}
     except HTTPException:
         raise
+        
     except Exception as e:
         raise _server_error(e)
 

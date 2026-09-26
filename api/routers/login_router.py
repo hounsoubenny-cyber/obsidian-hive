@@ -51,7 +51,7 @@ async def login(request: Request, data: LoginData):
     try:
         from obsidian_hive.api.main_api import _get_auth_manager
         auth_manager = _get_auth_manager()
-        print(data, auth_manager.passwd, auth_manager.user)
+        # print(data, auth_manager.passwd, auth_manager.user)
         auth_manager.verify_username(data.username)
         auth_manager.verify_password(data.password)
         token = auth_manager.create_token({"username": data.username})

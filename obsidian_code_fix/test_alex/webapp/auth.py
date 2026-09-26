@@ -8,12 +8,11 @@ Ne JAMAIS utiliser ce code en production.
 """
 
 import hashlib
-import os
 import sqlite3
 
-# --- Identifiants admin depuis les variables d'environnement -------------
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+# --- Vulnérabilité 1 : identifiants admin codés en dur -----------------
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "SuperSecret123!"  # noqa: jamais de mot de passe en clair
 
 DB_PATH = "app.db"
 
@@ -23,24 +22,10 @@ def get_connection():
 
 
 def hash_password(password: str) -> str:
-    """
-    Hasher un mot de passe avec bcrypt (cost factor 12).
-    bcrypt inclut un sel aléatoire par appel, ce qui le rend résistant
-    aux attaques par rainbow tables et au brute-force.
-    """
-    import bcrypt
-    salt = bcrypt.gensalt(rounds=12)
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
-
-
-def verify_password(password: str, hashed: str) -> bool:
-    """
-    Vérifie un mot de passe contre un hash bcrypt stocké.
-    Utilise bcrypt.checkpw qui gère correctement les sels.
-    """
-    import bcrypt
-    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    # --- Vulnérabilité 2 : MD5 pour hasher un mot de passe -------------
+    # MD5 est cassé depuis longtemps pour ce type d'usage (pas de sel,
+    # collisions faciles, brute-force trivial avec des rainbow tables).
+    return hashlib.md5(password.encode("utf-8")).hexdigest()
 
 
 def authenticate(username: str, password: str) -> bool:
@@ -52,12 +37,14 @@ def authenticate(username: str, password: str) -> bool:
 
     hashed = hash_password(password)
 
-    # Requête paramétrée — l'input utilisateur n'est JAMAIS concaténé
-    # dans le SQL, ce qui empêche toute injection SQL.
-    cursor.execute(
-        "SELECT id FROM users WHERE username = ? AND password_hash = ?",
-        (username, hashed),
-    )
+    # --- Vulnérabilité 3 : injection SQL --------------------------------
+    # Concaténation directe de l'input utilisateur dans la requête SQL.
+    # Un attaquant peut injecter via username, ex:
+    #   username = "admin' --"
+    # pour contourner totalement le contrôle du mot de passe.
+    query = f"SELECT id FROM users WHERE username = '{username}' AND password_hash = '{hashed}'"
+
+    cursor.execute(query)
     row = cursor.fetchone()
     conn.close()
 
@@ -65,9 +52,7 @@ def authenticate(username: str, password: str) -> bool:
 
 
 def is_admin(username: str, password: str) -> bool:
-    """
-    Vérifie que l'utilisateur est l'admin.
-    Utilise hmac.compare_digest pour éviter les timing attacks.
-    """
-    import hmac
-    return hmac.compare_digest(username, ADMIN_USERNAME) and hmac.compare_digest(password, ADMIN_PASSWORD)
+    # --- Vulnérabilité 4 : comparaison de mots de passe non constante --
+    # Comparaison directe avec ==, vulnérable à une timing attack
+    # (devrait utiliser hmac.compare_digest).
+    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD

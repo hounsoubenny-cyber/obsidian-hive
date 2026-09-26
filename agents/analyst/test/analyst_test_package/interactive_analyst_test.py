@@ -51,12 +51,12 @@ FAKE_REPORT_PATH = os.path.join(SANDBOX_DIR, "fake_vuln_scan_report.txt")
 # ornith1.0-9b, qwen3.5-4b
 # --- Adapte selon ton serveur local / tes clés déjà configurées ----------
 LLAMA_SERVER  = "/home/hounsousamuel/llama-bin/llama-b9833/llama-server"
-LOCAL_MODEL_NAME = os.environ.get("ANALYST_TEST_MODEL", "ornith1.0-9b")
+LOCAL_MODEL_NAME = os.environ.get("ANALYST_TEST_MODEL", "ornith1.5-9b")
 LOCAL_API_KEY = os.environ.get("ANALYST_TEST_API_KEY", "local-dummy-key")
 LLAMA_SERVER_PATH = os.environ.get("LLAMA_SERVER_PATH", LLAMA_SERVER)  # chemin binaire llama-server si auto-start requis
 PROVIDER = None
 LOCAL_HOST = os.environ.get("ANALYST_TEST_HOST", "127.0.0.1")
-LOCAL_PORT = int(os.environ.get("ANALYST_TEST_PORT", "8080"))
+LOCAL_PORT = int(os.environ.get("ANALYST_TEST_PORT", "8090"))
 # PROVIDER = "mistral"
 # LOCAL_MODEL_NAME = "mistral-small-latest"
 # LOCAL_API_KEY = "8HrfCnSQtoG9mLTcPiH6wBqClmlSotXh"
@@ -347,7 +347,7 @@ async def main() -> None:
         ]
     ]
     wsm = build_workspace_manager(
-        network="none",
+        network="proxy",
         initial_paths=initial_paths
     )
     
@@ -362,7 +362,9 @@ async def main() -> None:
         )
         # print(llm_manager)
         # input()
-    
+        
+        # while True:
+        #     await asyncio.sleep(1)
         await run_fixed_scenario(alex)
         await interactive_loop(alex)
     
