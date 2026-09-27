@@ -40,7 +40,11 @@ curl -sSL -H "Authorization: Bearer $TOKEN" -o "$BIN_PATH" "$CENTRAL_HTTP_URL/ap
 chmod 700 "$BIN_PATH"
 
 echo "==> Application des permissions sur le dossier de l'agent..."
-chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+# STICKY BIT SUR LE DOSSIER
+chown root:"$SERVICE_USER" "$INSTALL_DIR"
+chmod 1775 "$INSTALL_DIR"
+chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/bin"
+chmod 755 "$INSTALL_DIR/bin"
 
 
 echo "==> Écriture de la configuration..."
@@ -52,6 +56,7 @@ register_path = "/api/core/assets/server_asset/register"
 download_tool_engine_path = "/api/download/agent/tool_engine"
 pending_token = "$TOKEN"
 CONF_EOF
+chown "$SERVICE_USER:$SERVICE_USER" "$CONFIG_PATH"
 chmod 600 "$CONFIG_PATH"
 
 echo "==> Écriture du script de désinstallation..."
@@ -100,7 +105,8 @@ Group=$SERVICE_USER
 Environment=OBSIDIAN_AGENT_CONFIG_PATH=$CONFIG_PATH
 Environment=LANG=C.UTF-8
 Environment=LC_ALL=C.UTF-8
-KillMode=process # ne tue QUE le PID principal (ExecStart), pas le cgroup entier
+# ne tue QUE le PID principal (ExecStart), pas le cgroup entier
+KillMode=process
 Restart=on-failure
 RestartSec=5
 

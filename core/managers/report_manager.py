@@ -15,13 +15,13 @@ import functools
 import asyncio
 from enum import Enum
 import zstandard as zstd
-from typing import Optional, List, Any
+from typing import Optional, List
 from sqlmodel import SQLModel, Field, select, func, or_, and_, String
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field as Pydantic_Field
-from obsidian_hive.core.assets.asset_types import utcnow, Severity, SEVERITY_ORDER, Source
+from obsidian_hive.core.assets.asset_types import utcnow, Severity, SEVERITY_ORDER, Source, ensure_naive
 from modules_utils.loop_utils import _run_async
 from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
 
@@ -652,9 +652,9 @@ class ReportManager:
         async with self.get_session() as session:
             conditions = []
             if start:
-                conditions.append(AnalysisReportDB.created_at >= start)
+                conditions.append(ensure_naive(AnalysisReportDB.created_at) >= ensure_naive(start))
             if end:
-                conditions.append(AnalysisReportDB.created_at <= end)
+                conditions.append(ensure_naive(AnalysisReportDB.created_at) <= ensure_naive(end))
 
             statement = select(AnalysisReportDB)
             if conditions:
@@ -711,9 +711,9 @@ class ReportManager:
                     ])
                 )
             if start_date:
-                conditions.append(AnalysisReportDB.created_at >= start_date)
+                conditions.append(ensure_naive(AnalysisReportDB.created_at) >= ensure_naive(start_date))
             if end_date:
-                conditions.append(AnalysisReportDB.created_at <= end_date)
+                conditions.append(ensure_naive(AnalysisReportDB.created_at) <= ensure_naive(end_date))
 
             statement = select(AnalysisReportDB)
             if conditions:
@@ -1015,7 +1015,7 @@ class ReportManager:
         cutoff = utcnow() - timedelta(days=days)
         async with self.get_session() as session:
             statement = select(AnalysisReportDB).where(
-                AnalysisReportDB.created_at < cutoff
+                ensure_naive(AnalysisReportDB.created_at) < ensure_naive(cutoff)
             )
             result = await session.execute(statement)
             to_delete = list(result.scalars().all())

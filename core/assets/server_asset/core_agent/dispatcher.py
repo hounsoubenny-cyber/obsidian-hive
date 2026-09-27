@@ -252,13 +252,15 @@ class AgentDispatcher:
             ws: La connexion WebSocket.
         """
         try:
-            os.chmod(UNINSTALL_SCRIPT_PATH, 0o755) # Rendre exécutable
-            await asyncio.create_subprocess_exec(
+            proc = await asyncio.create_subprocess_exec(
                 "sudo", UNINSTALL_SCRIPT_PATH,
                 start_new_session=True,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
+            print(f"uninstall.sh lancé (pid={proc.pid})")
+        except Exception as e:
+            print(f"Échec du lancement de uninstall.sh: {e!r}")
         finally:
             try:
                 await ws.send(json.dumps({"type": "self_destruct_ack"}))

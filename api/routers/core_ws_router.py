@@ -21,6 +21,7 @@ Modifié le Sun Jul 26 2026 : ajout du canal WebSocket multiplexé (chat
 Coralie en streaming, analyse Alex en streaming, confirmations humaines).
 """
 
+import time
 import asyncio
 from uuid import uuid4
 from fastapi import (
@@ -29,8 +30,8 @@ from fastapi import (
 )
 from pydantic import ValidationError
 from modules_utils.logger import get_logger
-from obsidian_hive.core.managers.conversation_manager import ConversationManager
 from obsidian_hive.api.models.models import AlexAnalyzeData
+from obsidian_hive.core.managers.conversation_manager import ConversationManager
 from obsidian_hive.agents.analyst.agent import (
     AnalystResult,
     NoReportProducedError, create_alex
@@ -53,7 +54,6 @@ from obsidian_hive.core.assets.server_asset.tools.tools import (
     tool_exists as server_tool_exists,
 )
 from obsidian_hive.core.assets.asset_types import ServerAsset, utcnow, AgentStatus as ServerAgentStatus
-
 from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_ws_manager,
@@ -66,7 +66,7 @@ from obsidian_hive.api.api_utils.core_shared import (
     _notify_agent_config_updated,
 )
 from obsidian_hive.api.api_utils.helpers import check_prompt, can_check_prompt
-
+from obsidian_hive.core.managers.tool_call_log import ToolCallLogManager, ToolCallCode
 
 logger = get_logger("core_ws")
 
@@ -549,6 +549,7 @@ async def manage_server_tool_call(
     confirmer: WSConfirmer,
     ws_manager: WSManager,
     server_agent_ws_manager: ServerAgentWSManager,
+    tool_call_log_manager: ToolCallLogManager
 ):
     """
     Gère l'exécution d'un tool call sur un asset serveur.
@@ -564,34 +565,55 @@ async def manage_server_tool_call(
         ws_manager (WSManager): Gestionnaire WebSocket.
         server_agent_ws_manager (ServerAgentWSManager): Gestionnaire WS des agents.
     """
+    async def _log(
+        success: bool, 
+        code: ToolCallCode, 
+        error: str | None = None, 
+        execution_time: float | None = None
+    ):
+        await tool_call_log_manager.log(
+            call_id=tool_call.call_id,
+            asset_id=asset_id,
+            tool_name=tool_call.tool_name,
+            tool_args=tool_call.tool_args,
+            caller=username,
+            success=success,
+            code=code,
+            error=error,
+            execution_time=execution_time,
+        )
+        
     asset_db = await (get_engine().asset_manager.get_by_identifier(identifier=asset_id, first=True))
     asset = get_engine().asset_manager.asset_item_db_to_asset_item(asset_db)
-
+    st = time.time()
     if not asset:
+        await _log(False, ToolCallCode.asset_not_found.value)
         await ws_manager.send_to(username, {
             "type": "tool_result",
             "message": f"Asset non trouvé {asset_id}",
             "call_id": tool_call.call_id,
-            "code": "asset_not_found",
+            "code": ToolCallCode.asset_not_found.value,
         })
         return
 
     if not server_tool_exists(tool_call.tool_name):
+        await _log(False, ToolCallCode.tool_not_found.value)
         await ws_manager.send_to(username, {
             "type": "tool_result",
             "message": "Tool inexistant",
             "result": None,
             "call_id": tool_call.call_id,
-            "code": "tool_not_found",
+            "code": ToolCallCode.tool_not_found.value,
         })
         return
 
     if tool_call.tool_name not in asset.allowed_tools:
+        await _log(False, ToolCallCode.tool_not_allowed.value)
         await ws_manager.send_to(username, {
             "type": "tool_result",
             "message": f"Tool {tool_call.tool_name!r} non autorisé sur cet asset",
             "call_id": tool_call.call_id,
-            "code": "tool_not_allowed",
+            "code": ToolCallCode.tool_not_allowed.value,
         })
         return
 
@@ -605,6 +627,11 @@ async def manage_server_tool_call(
                     args=tool_call.tool_args,
                 )
             except ConfirmationDenied as e:
+                await _log(
+                    False, 
+                    code=ToolCallCode.tool_confirmation_denied.value, 
+                    error=str(e)
+                )
                 await ws_manager.send_to(username, {
                     "type": "tool_result",
                     "message": (
@@ -618,13 +645,18 @@ async def manage_server_tool_call(
                 return
 
             except ConfirmationTimeout as e:
+                await _log(
+                    False, 
+                    ToolCallCode.tool_confirmation_timeout.value,
+                    error=str(e)
+                )
                 await ws_manager.send_to(username, {
                     "type": "tool_result",
                     "message": (
                         f"Délai d'approbation du tool call {e.too_name}, requête {e.req_id} dépassé."
                     ),
                     "result": None,
-                    "code": "tool_confirmation_timeout",
+                    "code": ToolCallCode.tool_confirmation_timeout.value,
                     "call_id": tool_call.call_id
                 })
                 return
@@ -634,14 +666,23 @@ async def manage_server_tool_call(
         )
 
         if tool_result is None:
+            await _log(False, ToolCallCode.tool_send_failed.value)
             await ws_manager.send_to(username, {
                 "type": "tool_result",
                 "message": "Echec de l'envoie du tool call ou de la résolution (timeout)",
                 "result": None,
                 "call_id": tool_call.call_id,
-                "code": "tool_send_failed",
+                "code": ToolCallCode.tool_send_failed.value,
             })
+            
         else:
+            execution_time = tool_result.result.get("execution_time", time.time() - st)
+            await _log(
+                success=tool_result.error is None,
+                code=ToolCallCode.tool_exec_successfuly.value,
+                error=tool_result.error,
+                execution_time=execution_time,
+            )
             await ws_manager.send_to(
                 username,
                 {
@@ -649,16 +690,17 @@ async def manage_server_tool_call(
                     "message": "Succès de l'éxécution du tool call",
                     "result": tool_result.model_dump(mode="json"),
                     "call_id": tool_call.call_id,
-                    "code": "tool_exec_successfuly"  # Possible erreur coté agent
+                    "code": ToolCallCode.tool_exec_successfuly.value,  # Possible erreur coté agent
                 }
             )
 
     else:
+        await _log(False, ToolCallCode.identity_theft.value)
         await ws_manager.send_to(username, {
             "type": "tool_result",
             "message": "Username incorrect ! (Possible tentation d'usurpation)",
             "call_id": tool_call.call_id,
-            "reason": "identity_theft",
+            "reason": ToolCallCode.identity_theft.value,
         })
 
 
@@ -922,7 +964,7 @@ async def agent_ws(ws: WebSocket, asset_id: str):
                     a_db = await engine.asset_manager.get_by_identifier(asset_id, first=True)
                     a = engine.asset_manager.asset_item_db_to_asset_item(a_db)
                     a.last_heartbeat = utcnow()
-                    asset.install_token = None
+                    a.install_token = None
                     await engine.asset_manager.upsert(a)
 
                 await ws_manager.send_to(asset_id, {"type": "heartbeat_ack"})

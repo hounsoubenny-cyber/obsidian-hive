@@ -20,7 +20,9 @@
 #   - false → L'IDS/IPS doit être démarré manuellement (via API ou CLI)
 start_ids_on_start = true
 alert_threshold="null"
-
+max_age_days_for_pending_deletion=3
+tool_log_archive_dir="/home/hounsousamuel/PROJET/obsidian_hive/.tool_log_calls"
+tool_log_max_age_days=90
 # =============================================================================
 # 2. CONFIGURATION DE L'API
 # =============================================================================

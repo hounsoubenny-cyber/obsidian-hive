@@ -11,7 +11,7 @@ import socket
 import tomllib
 from obsidian_hive.core.assets.asset_types import Severity
 from pydantic import BaseModel, Field, field_validator, model_validator
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 
 scanner_conf_required_keys_func = lambda: ['fetcher', 'crawler', 'parser', 'analyzer_helper', 'scanner']
 ids_conf_required_keys_func = lambda: [
@@ -25,6 +25,9 @@ ids_conf_required_keys_func = lambda: [
     'CAPTURE_CONFIG', 
     'GLOBAL_CONFIG'
 ]
+
+DEFAULT_TOOL_LOG_ARCHIVE_DIR =  "/var/lib/obsidian-hive/tool_call_archives"
+DEFAULT_TOOL_LOG_MAX_AGE_DAYS = 90
 
 def _get_llm_env(name: str, default, cast_to: callable = None, prefix:str = "OBSIDIAN_LLM_MANAGER_"):
     if not name:
@@ -99,8 +102,17 @@ class GlobalConfig(BaseModel):
         default=Severity.HIGH,
         description="Seuil a partir duquel un report devient alert."
     )
+    max_age_days_for_pending_deletion: int = Field(
+        default=3,
+        description="Nombre max de jours a garder les assets en pending deletion"
+    )
+    tool_log_archive_dir: str = Field(
+        default=DEFAULT_TOOL_LOG_ARCHIVE_DIR
+    )
+    tool_log_max_age_days: int = Field(
+        default=DEFAULT_TOOL_LOG_MAX_AGE_DAYS
+    )
     
-
 class EngineConfig(BaseModel):
     db_url: str = Field(
         description="URL de connexion à la base de données (ex: sqlite+aiosqlite:///./shieldai.db)"
@@ -312,16 +324,36 @@ class ConfigManager:
         self.validate_config()
         load_dotenv()
         
+        def _is_none(val):
+            return val == "null" or val is None
+        
         alert_threshold = self._raw_conf["global"].get("alert_threshold", None)
+        max_age_days_for_pending_deletion = self._raw_conf["global"].get("max_age_days_for_pending_deletion", None)
+        tool_log_archive_dir = self._raw_conf["global"].get("tool_log_archive_dir", DEFAULT_TOOL_LOG_ARCHIVE_DIR)
+        tool_log_max_age_days = self._raw_conf["global"].get("tool_log_max_age_days", DEFAULT_TOOL_LOG_MAX_AGE_DAYS)
+        
+        if _is_none(tool_log_archive_dir):
+            tool_log_archive_dir = DEFAULT_TOOL_LOG_ARCHIVE_DIR
+        
+        if _is_none(tool_log_max_age_days):
+            tool_log_max_age_days = DEFAULT_TOOL_LOG_MAX_AGE_DAYS
+            
+        os.makedirs(tool_log_archive_dir, exist_ok=True)
+        if _is_none(max_age_days_for_pending_deletion):
+            max_age_days_for_pending_deletion = 3
+            
         self.global_config = GlobalConfig(
             start_ids_on_start=self._raw_conf["global"]["start_ids_on_start"],
+            max_age_days_for_pending_deletion=max_age_days_for_pending_deletion,
+            tool_log_archive_dir=tool_log_archive_dir,
+            tool_log_max_age_days=tool_log_max_age_days,
             **(
                 {}
-                if alert_threshold == "null" or alert_threshold is None 
+                if _is_none(alert_threshold)
                 else dict(
                     alert_threshold=alert_threshold,
                 )
-            )
+            ),
         )
         
         self.api_config = ApiConfig(
@@ -338,7 +370,7 @@ class ConfigManager:
             host=self._raw_conf["llm_manager"]["host"],
             port=self._raw_conf["llm_manager"]["port"],
             models_preset=self._raw_conf["llm_manager"]["models_preset"],
-            log_file=log_file if log_file != "null" and log_file is not None else None,
+            log_file=log_file if not _is_none(log_file) else None,
             models_max=self._raw_conf["llm_manager"]["models_max"],
             wait_timeout=self._raw_conf["llm_manager"]["wait_timeout"],
         )
@@ -350,7 +382,7 @@ class ConfigManager:
             temperature=self._raw_conf["analyst"]["temperature"],
             max_tokens=self._raw_conf["analyst"]["max_tokens"],
             system_prompt_mode=self._raw_conf["analyst"]["system_prompt_mode"],
-            model_name=amodel_name if amodel_name is None else (None if amodel_name == "null" else amodel_name)
+            model_name=amodel_name if not _is_none(amodel_name) else None,
         )
         
         cmodel_name = self._raw_conf["core_agent"].get("model_name")
@@ -360,7 +392,7 @@ class ConfigManager:
             temperature=self._raw_conf["core_agent"]["temperature"],
             max_tokens=self._raw_conf["core_agent"]["max_tokens"],
             system_prompt_mode=self._raw_conf["core_agent"]["system_prompt_mode"],
-            model_name=cmodel_name if cmodel_name is None else (None if cmodel_name == "null" else cmodel_name)
+            model_name=cmodel_name if not _is_none(cmodel_name) else None
         )
         
         return self

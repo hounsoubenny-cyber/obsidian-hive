@@ -5,18 +5,16 @@ Created on Wed Jun 24 04:42:37 2026
 
 @author: hounsousamuel
 """
-import os, sys
-# sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
-
+import os
 import time
+import json5
 import asyncio
 import inspect
 from enum import Enum
-import json5
 from typing import Optional, get_type_hints, get_origin
 from sqlmodel import SQLModel, select, func, Field, or_, and_, String
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from obsidian_hive.core.assets.asset_types import (
     AssetStatus, 
@@ -25,7 +23,8 @@ from obsidian_hive.core.assets.asset_types import (
     utcnow, 
     AssetItem,
     ASSET_CLASS_MAPPING,
-    NetworkAsset
+    NetworkAsset,
+    ensure_naive
 )
 from modules_utils.loop_utils import _run_async
 from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
@@ -63,6 +62,8 @@ class AssetItemDB(SQLModel, table=True):
     asset_item_cls: str = Field(description="Classe de l'item")
     install_token: str | None = Field(default=None, index=True, description="Token d'install ServerAsset, NULL pour les autres types et une fois consommé")
     install_token_expires_at: datetime | None = Field(default=None)
+    pending_deletion: bool = Field(default=False, index=True)
+    pending_deletion_at: datetime | None = Field(default=None)
     
 
 def _json_default(o):
@@ -81,7 +82,71 @@ def _json_default(o):
         return o.isoformat()
     raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
 
+class PendingDeletionCleaner:
+    """Nettoie périodiquement les assets en pending_deletion depuis trop longtemps."""
 
+    def __init__(self, asset_manager: "AssetManager", max_age_days: int = 3, interval_seconds: int = 3600):
+        self.asset_manager = asset_manager
+        self.max_age_days = max_age_days
+        self.interval_seconds = interval_seconds
+        self._task: asyncio.Task | None = None
+        self._stop_event = asyncio.Event()
+
+    async def _run_once(self) -> int:
+        cutoff = ensure_naive(utcnow() - timedelta(days=self.max_age_days))
+        async with self.asset_manager.get_session() as session:
+            result = await session.execute(
+                select(AssetItemDB).where(
+                    and_(
+                        AssetItemDB.pending_deletion == True,
+                        AssetItemDB.pending_deletion_at.is_not(None),
+                        AssetItemDB.pending_deletion_at < ensure_naive(cutoff),
+                    )
+                )
+            )
+            stale = result.scalars().all()
+            for a in stale:
+                await session.delete(a)
+            await session.commit()
+        return len(stale)
+
+    async def _loop(self):
+        while not self._stop_event.is_set():
+            try:
+                n = await self._run_once()
+                if n:
+                    print(f"[cleanup] {n} asset(s) en pending_deletion expirés supprimés")
+            except Exception as e:
+                print(f"[cleanup] erreur : {e}")
+            try:
+                await asyncio.wait_for(self._stop_event.wait(), timeout=self.interval_seconds)
+            except asyncio.TimeoutError:
+                pass  # cycle normal, on relance
+
+    def start(self):
+        if self._task is None:
+            self._stop_event.clear()
+            self._task = asyncio.create_task(self._loop())
+
+    async def stop(self):
+        self._stop_event.set()
+        if self._task:
+            try:
+                await asyncio.wait_for(asyncio.shield(self._task), 2)
+            except asyncio.TimeoutError:
+                self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    pass
+            except asyncio.CancelledError:
+                # stop() lui-même a été annulé par son appelant — on nettoie
+                # quand même avant de laisser l'annulation remonter
+                self._task.cancel()
+                raise
+            finally:
+                self._task = None
+            
 class AssetManager:
     """Gestionnaire des assets avec persistance en base de données.
     
@@ -143,6 +208,8 @@ class AssetManager:
             asset_item_copy = AssetItem.model_validate_json(asset_item)
         elif isinstance(asset_item, AssetItem):
             asset_item_copy = asset_item.model_copy()
+        else:
+            raise ValueError(f"Type non accepté pour asset_item ({type(asset_item).__name__})")
             
         special_fields = asset_item_copy.special_fields
         extra_fields = asset_item_copy.extra_fields
@@ -186,6 +253,8 @@ class AssetManager:
             asset_item_db_copy = AssetItemDB.model_validate_json(asset_item_db)
         elif isinstance(asset_item_db, AssetItemDB):
             asset_item_db_copy = asset_item_db.model_copy()
+        else:
+            raise ValueError(f"Type non accepté pour asset_item_db ({type(asset_item_db).__name__})")
             
         special_fields = asset_item_db_copy.special_fields
         if special_fields:
@@ -219,7 +288,7 @@ class AssetManager:
         """
         asset_item, extra = AssetManager.normalize_asset_item(asset_item)
         cls_name = asset_item.__class__.__name__
-        asset_item_dict = asset_item.model_dump()
+        asset_item_dict = asset_item.model_dump(warnings=False)
         asset_item_dict["extra"] = extra
         # item_id -> id
         # id -> item_db_id
@@ -243,7 +312,7 @@ class AssetManager:
             ValueError: Si la classe de l'asset n'est pas enregistrée.
         """
         asset_item_db, extra = AssetManager.normalize_asset_item_db(asset_item_db)
-        asset_item_db_dict = asset_item_db.model_dump()
+        asset_item_db_dict = asset_item_db.model_dump(warnings=False)
         if extra and isinstance(extra, dict):
             for k, v in extra.items():
                 asset_item_db_dict[k] = v
@@ -283,6 +352,9 @@ class AssetManager:
         async with self.get_session() as session:
             if isinstance(asset, AssetItem):
                 asset_db = self.asset_item_to_asset_item_db(asset)
+            else:
+                asset_db = asset
+            
             session.add(asset_db)
             await session.commit()
             await session.refresh(asset_db)
@@ -1252,7 +1324,7 @@ async def test_asset_manager():
         }
     )
     assert updated is True, "La mise à jour a échoué"
-    print(f"   ✅ Mise à jour réussie")
+    print("   ✅ Mise à jour réussie")
     
     # Vérifier la mise à jour
     updated_asset = await manager.get_by_identifier(
@@ -1279,12 +1351,12 @@ async def test_asset_manager():
     
     # 17. Tester delete_by_identifier
     print("\n🔍 Test delete_by_identifier...")
-    deleted = await manager.delete_by_identifier(
+    await manager.delete_by_identifier(
         "Site Staging",
         include_name=True,
         first=True
     )
-    print(f"   ✅ Asset 'Site Staging' supprimé")
+    print("   ✅ Asset 'Site Staging' supprimé")
     
     # Vérifier la suppression
     deleted_asset = await manager.get_by_identifier(
@@ -1293,7 +1365,7 @@ async def test_asset_manager():
         first=True
     )
     assert not deleted_asset, "L'asset n'a pas été supprimé"
-    print(f"   ✅ Vérification: 'Site Staging' n'existe plus")
+    print("   ✅ Vérification: 'Site Staging' n'existe plus")
     
     # 18. Tester delete_by_identifier (multiple)
     print("\n🔍 Test delete_by_identifier (multiple)...")
@@ -1331,12 +1403,12 @@ async def test_asset_manager():
 
 if __name__ == "__main__":
     import warnings
+    import nest_asyncio
     warnings.filterwarnings("ignore")
     ai = AssetItem(type="web_site", item_db_id="12345")
     ain, extra = AssetManager.normalize_asset_item(ai)
     aidb = AssetManager.asset_item_to_asset_item_db(ai)
     aidbn, extra_aidb = AssetManager.normalize_asset_item_db(aidb)
     aidbt = AssetManager.asset_item_db_to_asset_item(aidb)
-    import nest_asyncio, asyncio
     nest_asyncio.apply()
     asyncio.run(test_asset_manager())

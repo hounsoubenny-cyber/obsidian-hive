@@ -9,19 +9,18 @@ ObsidianEngine — Point d'entrée principal du système ShieldAI.
 Instancie, relie et démarre tous les composants core.
 """
 
-import os, sys
-# sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
+import os
 import shutil
 import asyncio
 import traceback
-from obsidian_hive.core.managers.asset_manager import AssetManager
-from obsidian_hive.core.managers.task_manager import TaskManager
-from obsidian_hive.core.managers.workflow_manager import WorkflowManager
-from obsidian_hive.core.managers.main_manager import ObsidianManager
-from obsidian_hive.core.assets.asset_types import AssetItem, Priority, AssetStatus, AssetType
 from modules_utils.logger import get_logger
+from obsidian_hive.core.managers.task_manager import TaskManager
+from obsidian_hive.core.managers.main_manager import ObsidianManager
+from obsidian_hive.core.managers.workflow_manager import WorkflowManager
+from obsidian_hive.core.managers.asset_manager import AssetManager, PendingDeletionCleaner
+from obsidian_hive.core.assets.asset_types import AssetItem, Priority, AssetStatus, AssetType
 from obsidian_hive.agents.config import OBSIDIAN_SANDBOX_ROOTS
+from obsidian_hive.config.config import MAX_AGE_DAYS_FOR_PENDING_DELETION
 
 logger = get_logger("obsidian_engine")
 
@@ -79,6 +78,11 @@ class ObsidianEngine:
         self.queue = asyncio.PriorityQueue(maxsize=queue_maxsize)
         self.task_manager: TaskManager = TaskManager(debug=debug)
         self.asset_manager: AssetManager = AssetManager(db_url=self.db_url)
+        self.pending_deletion_cleaner = PendingDeletionCleaner(
+            asset_manager=self.asset_manager, 
+            max_age_days=MAX_AGE_DAYS_FOR_PENDING_DELETION,
+            interval_seconds=3600
+        )
         self.workflow_manager: WorkflowManager = WorkflowManager(
             task_manager=self.task_manager,
             do_silence=do_silence,
@@ -112,6 +116,7 @@ class ObsidianEngine:
 
         await self.init()
         result = await self.main_manager.start()
+        self.pending_deletion_cleaner.start()
         self._started = True
 
         logger.info(
@@ -148,7 +153,8 @@ class ObsidianEngine:
         # Annule toutes les tasks après
         for task_id in list(self.task_manager.tasks.keys()):
             await self.task_manager.suppress_task(task_id)
-    
+            
+        self.pending_deletion_cleaner.stop()
         self._started = False
         logger.info(message="ObsidianEngine arrêté")
 

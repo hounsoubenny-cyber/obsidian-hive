@@ -1,0 +1,2 @@
+Update le frontend au nouveua champs du rapport (is_alert, read_at) et fonction (make_as_read)
+pensé a add check mimetype aux fichiers avant sandbox

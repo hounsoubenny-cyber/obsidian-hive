@@ -6,9 +6,7 @@ Created on Sat Jul  4 15:49:33 2026
 @author: hounsousamuel
 """
 
-import os, sys
-# sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..")))
-
+import os
 from datetime import datetime
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -17,10 +15,11 @@ from obsidian_hive.core.assets.asset_types import (
     Source, FixId, PromptMapping, Severity, ServerAsset, AgentStatus,
     AgentCapabilities
 )
+from obsidian_hive.core.managers.tool_call_log import ToolCallCode
 from scanner_ia.api.api import (
-    ScanArgs, ScanInstanceArgs, DEFAULT_SCAN_PATH
+    ScanArgs, ScanInstanceArgs #, DEFAULT_SCAN_PATH
 )
-from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
+# from ids_ips_ia.config.config_manager import _config_path as DEFAULT_IDS_CONFIG_PATH
 
 class LoginData(BaseModel):
     username: str = Field(description="Username de login")
@@ -367,3 +366,14 @@ class RotateSecretData(BaseModel):
 
 class ReactivateServerAssetData(BaseModel):
     asset_id: str = Field(description="Identifiant du ServerAsset")
+
+class ListToolCallLogData(BaseModel):
+    asset_id: str | None = None
+    tool_name: str | None = None
+    caller: str | None = None
+    success: bool | None = None
+    code: ToolCallCode | None = None
+    since: datetime | None = None
+    until: datetime | None = None
+    limit: int = 100
+    offset: int = 0

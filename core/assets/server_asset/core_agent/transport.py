@@ -15,7 +15,7 @@ import aiofiles
 import websockets
 from tenacity import stop_after_attempt, retry_if_exception, wait_exponential, retry
 from obsidian_hive.core.assets.server_asset.core_agent.server_asset_types import (
-    RequestResponse, SendMsgType, ReceiveMsgType
+    RequestResponse, SendMsgType
 )
 from obsidian_hive.core.assets.server_asset.core_agent.utils import exec_func, cancel_tasks
 
@@ -270,7 +270,7 @@ class AgentHttpClient:
         params: dict | None = None,
         headers: dict | None = None,
         json_data: dict | None = None,
-        perm: int = 0o777
+        perm: int = 0o600
     ):
         """Télécharge un fichier avec retry automatique (méthode interne).
 
@@ -496,6 +496,9 @@ class AgentWSClient:
             except (websockets.ConnectionClosed, OSError, asyncio.TimeoutError) as e:
                 print(f"WS déconnecté ou injoignable : {e!r} — retry dans {backoff}s")
             
+            except Exception as e:
+                print(f"Erreur agent: {e!r}")
+                
             if self._revoked:
                 break
             

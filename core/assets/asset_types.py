@@ -256,6 +256,8 @@ class AssetItem(BaseModel):
         default=None,
         description="Expiration du token — None tant qu'aucun token n'est généré. Posé explicitement via `generate_install_token()`."
     )
+    pending_deletion: bool = Field(default=False)
+    pending_deletion_at: datetime | None = None
     
 
     def __lt__(self, other: "AssetItem"):
@@ -672,6 +674,26 @@ def list_agent_capabilities():
     }
 
 
+def ensure_aware(dt: datetime | None) -> datetime | None:
+    """Force un datetime à être timezone-aware (UTC), qu'il le soit déjà ou non.
+    
+    Utile pour comparer en toute sécurité un datetime venant de SQLite
+    (naïf après relecture) avec un datetime généré fraîchement (aware).
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+def ensure_naive(dt: datetime | None) -> datetime | None:
+    """Force un datetime à être naïf — utile pour comparer avec des valeurs SQLite."""
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
+
 class ServerAsset(AssetItem):
     """Asset représentant un serveur distant géré via un agent.
     
@@ -734,10 +756,12 @@ class ServerAsset(AssetItem):
     every: float = 0
     run_every: bool = False  # event-driven (canal WS agent), pas de tâche périodique
     pending_deletion: bool = Field(default=False)
+    pending_deletion_at: datetime | None = None
+    
     extra_fields: List[str] = Field(default_factory=lambda: [
-        "install_token", "install_token_expires_at", "agent_status",
-        "last_heartbeat", "agent_credential_hash", "capabilities", "installed_modules",
-        "system_info", "allowed_tools", "pending_deletion"
+        "agent_status", "last_heartbeat", "agent_credential_hash",
+        "capabilities", "installed_modules", "system_info",
+        "allowed_tools", # "install_token", "install_token_expires_at", 
     ])
     special_fields: List[str] = Field(
         default_factory=lambda: [
@@ -847,7 +871,8 @@ class ServerAsset(AssetItem):
             return False
         if self.install_token != token:
             return False
-        return utcnow() < self.install_token_expires_at
+        expires = ensure_aware(self.install_token_expires_at)
+        return ensure_aware(utcnow()) < expires
     
     @staticmethod
     def is_server_asset_token(token: str):

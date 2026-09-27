@@ -73,11 +73,13 @@ from obsidian_hive.api.ap_config import (
     ALLOWED_ORIGINS, LIMITE,
     REACT_EXISTS, INDEX_FILE, STATIC_DIR,
     BUILD_DIR, BUILD_URL, STATIC_URL,
+    START_ALL, FAVICON_FILE
 )
 from obsidian_hive.api.state import (
-    _get_auth_manager, _get_contextguard_client, _get_conversation_manager,
+    _get_auth_manager, _get_conversation_manager,
     _get_extension_token_manager, _get_job_manager, _get_llm_manager,
-    _get_report_manager, defer_context_guard_client_creation
+    _get_report_manager, defer_context_guard_client_creation,
+    _get_tool_call_log_manager
 )
 from obsidian_hive.agents.analyst.analayst_workspace.workspace import WorkSpace
 load_dotenv()
@@ -93,15 +95,22 @@ async def lifespan_start(app: FastAPI):
         app (FastAPI): L'application FastAPI.
     """
     app.state.tasks = []
+    app.state.ap_instance = None
+    app.state.shared_scanner_ia_instance = None
+    app.state.sandbox_orchestrator_instance = None
+    app.state.sandbox_models = None
+    app.state.tool_call_log_manager = None
     _get_auth_manager().verify_env_utils()
-    # app.state.ap_instance = get_ap_instance()
     
-    # app.state.shared_scanner_ia_instance = get_shared_scanner_ia()
-    
-    # app.state.sandbox_orchestrator_instance = get_orchestrator()
-    # app.state.sandbox_models = None
-    # if SANDBOX_ML_AVAILABLE:
-    #     app.state.sandbox_models = get_sandbox_models()   
+    if START_ALL:
+        app.state.ap_instance = get_ap_instance()
+        
+        app.state.shared_scanner_ia_instance = get_shared_scanner_ia()
+        
+        app.state.sandbox_orchestrator_instance = get_orchestrator()
+        app.state.sandbox_models = None
+        if SANDBOX_ML_AVAILABLE:
+            app.state.sandbox_models = get_sandbox_models()   
     
     app.state.core_engine = get_engine()
     app.state.llm_manager = _get_llm_manager()
@@ -110,16 +119,20 @@ async def lifespan_start(app: FastAPI):
     app.state.job_manager = await _get_job_manager()
     app.state.conversation_manager = await _get_conversation_manager()
     app.state.extension_token_manager = await _get_extension_token_manager()
+    app.state.tool_call_log_manager = await _get_tool_call_log_manager()
     signal = asyncio.Event()
     task = await defer_context_guard_client_creation(app, signal)
     app.state.tasks.append(task)
-    # app.state.context_guard_client = await _get_contextguard_client()
     
-    # await sim_lifespan_start(app)
-    # await app.state.core_engine.start()
-    signal.set()
+    if START_ALL:
+        await sim_lifespan_start(app)
+    await app.state.core_engine.start()
+    
     
     logger.success("API démaré")
+    return [
+        lambda: signal.set()
+    ]
 
 
 async def lifespan_end(app: FastAPI):
@@ -130,7 +143,14 @@ async def lifespan_end(app: FastAPI):
         app (FastAPI): L'application FastAPI.
     """
     
-    # await sim_lifespan_end(app)
+    if app.state.tool_call_log_manager:
+        await app.state.tool_call_log_manager.stop()
+    
+    if app.state.core_engine:
+        await app.state.core_engine.stop()
+        
+    if START_ALL:
+        await sim_lifespan_end(app)
     await WorkSpace.kill_proxy_container_async()
     tasks = getattr(app.state, "tasks", []) or []
     if tasks:
@@ -143,7 +163,15 @@ async def lifespan_end(app: FastAPI):
                     pass
                 
     logger.success("API fermée")
+    return 
 
+
+async def exec_func(func):
+    r = func()
+    if asyncio.iscoroutine(r):
+        r = await r
+    
+    return r
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -153,7 +181,11 @@ async def lifespan(app: FastAPI):
     Args:
         app (FastAPI): L'application FastAPI.
     """
-    await lifespan_start(app)
+    to_calls = await lifespan_start(app) # Retourne juste des truc simple à faire, pas de fonctions compliqués
+    if to_calls:
+        for to_call in to_calls:
+            await exec_func(to_call)   
+            
     yield
     await lifespan_end(app)
     
@@ -171,11 +203,15 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+if os.path.exists(FAVICON_FILE):
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon(request: Request):
+        return FileResponse(FAVICON_FILE)
+    
 app.mount("/api/scanner_reports", StaticFiles(directory=REPORT_DIR), name="reports")
 app.mount(MOUNT_PATH, StaticFiles(directory=WEB_ASSET_SCAN_REPORT_DIR), name="asset_scan_reports")
 
@@ -325,9 +361,8 @@ async def rate_limit_status(request: Request):
         "limit": f"{LIMITE}/minute"
     }
 
-
 @app.get("/")
-async def serve_react_app():
+async def serve_react_app(request: Request):
     """
     Sert l'application React - point d'entrée principal.
 
@@ -339,7 +374,6 @@ async def serve_react_app():
     else:
         return {
         }
-
     
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):

@@ -173,11 +173,11 @@ async def main():
         # await allow_tool(client, asset_id, "list_logged_in_users")
         # await allow_tool(client, asset_id, "last_logins")
         # await allow_tool(client, asset_id, "disk_usage")
-        asset_id = "sh_as-7936a940-73c6-402a-bf3e-d269377af082"
-        install_token = "obds_tok-b6308b9d-a587-4f35-8be8-e5e2f3f2a2cf"
+        asset_id = "sh_as-9f38fc6a-9b50-4a1c-8640-e810fc3ae082"
+        install_token = "obds_tok-c5990c2c-d788-4788-a047-cd7fe79ce7d4"
         # while True:
         #     await asyncio.sleep(10)
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory():
             # config_path = os.path.join(tmp, "config.toml")
             # write_agent_config(asset_id, install_token, config_path)
 

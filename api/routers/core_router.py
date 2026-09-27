@@ -18,17 +18,17 @@ humaines, server agent) vit maintenant dans core_ws_router.py.
 Les singletons et helpers partagés vivent dans core_shared.py.
 """
 
+import json
 import asyncio
-
 from fastapi import HTTPException, APIRouter, status, Request
-
-from obsidian_hive.core.assets.asset_types import list_agent_capabilities
+from obsidian_hive.core.assets.asset_types import list_agent_capabilities, utcnow
 from obsidian_hive.api.models.models import (
     WebAssetModel, NetworkAssetModel, ListAssetData, GetAssetData, RemoveAssetData,
     ResumeAssetData, PauseAssetData, UpdateAssetData, SyncSourceCodeData,
     AlexAnalyzeData, SearchAssetData, ServerAgentRegisterData, ServerAgentRevokeData,
     ServerAssetModel, ServerToolsData, ServerCapabilitiesData,
-    PauseAssetsData, ResumeAssetsData, RotateSecretData, ReactivateServerAssetData
+    PauseAssetsData, ResumeAssetsData, RotateSecretData, ReactivateServerAssetData,
+    ListToolCallLogData
 )
 from scanner_ia.api.api import _resolve_helpers
 from obsidian_hive.agents.analyst.agent import (
@@ -46,7 +46,7 @@ from obsidian_hive.core.assets.server_asset.tools.tools import (
     list_tools as server_list_tools
 )
 from modules_utils.cryto_utils import hashpw
-
+from obsidian_hive.api.state import _get_tool_call_log_manager
 from obsidian_hive.api.api_utils.core_shared import (
     get_engine,
     get_server_agent_ws_manager,
@@ -63,7 +63,6 @@ from obsidian_hive.api.api_utils.core_shared import (
 from obsidian_hive.api.api_utils.helpers import (
     activate_prompt_checking as _activate_prompt_checking,
     deactivate_prompt_checking as _deactivate_prompt_checking,
-    check_prompt, can_check_prompt
 )
 from obsidian_hive.core.assets.asset_types import ServerAsset
 
@@ -149,7 +148,7 @@ async def create_server_asset_route(request: Request, asset_data: ServerAssetMod
         if result["status"] != "error":
             token = result["asset_data"]["install_token"]
             result["install_command"] = (
-                f'curl -sSL -H "Authorization: Bearer {token}" https://host/api/download/agent/install.sh | bash'
+                f'curl -sSL -H "Authorization: Bearer {token}" https://{request.url.hostname}/api/download/agent/install.sh | bash'
             )
         return result
 
@@ -338,7 +337,6 @@ async def delete_asset(request: Request, options: RemoveAssetData):
                 return {"status": "error", "error": "Asset introuvable", "asset_id": options.asset_id}
 
             asset: AssetItem = asset_manager.asset_item_db_to_asset_item(asset)
-
             if not isinstance(asset, ServerAsset):
                 return await engine.remove_asset(delete=True, asset_id=options.asset_id)
 
@@ -347,6 +345,7 @@ async def delete_asset(request: Request, options: RemoveAssetData):
 
             if not conn:
                 asset.pending_deletion = True
+                asset.pending_deletion_at = utcnow()
                 await asset_manager.upsert(asset)
                 return {"status": "success", "pending_deletion": True}
 
@@ -356,6 +355,7 @@ async def delete_asset(request: Request, options: RemoveAssetData):
             if not sent:
                 server_agent_ws_manager.clear_pending_ack(options.asset_id)
                 asset.pending_deletion = True
+                asset.pending_deletion_at = utcnow()
                 await asset_manager.upsert(asset)
                 return {"status": "success", "pending_deletion": True}
 
@@ -694,16 +694,20 @@ async def rotate_secret(request: Request, data: RotateSecretData):
         if asset.is_revoked():
             return {"status": "error", "error": "Asset révoké !"}
 
+        
         new_secret = ServerAsset.generate_secret()
+        server_agent_ws_manager = get_server_agent_ws_manager()
+        conn = server_agent_ws_manager.get(data.asset_id)
+        if not conn:
+            return {"status": "error", "error": "Agent non connecté !"}
+        
+        is_send = await conn.send({"type": "secret_rotated", "secret": new_secret})
+        if not is_send:
+            return {"status": "error", "error": "Agent non connecté !"}
+        
         new_hash = hashpw(ServerAsset.hash_secret_input(new_secret)).decode()
         asset.agent_credential_hash = new_hash
         await asset_manager.upsert(asset)
-
-        server_agent_ws_manager = get_server_agent_ws_manager()
-        conn = server_agent_ws_manager.get(data.asset_id)
-        if conn:
-            await conn.send({"type": "secret_rotated", "secret": new_secret})
-
         return {"status": "success", "secret": new_secret}
 
     except HTTPException:
@@ -736,6 +740,7 @@ async def reactivate_server_asset(request: Request, data: ReactivateServerAssetD
         if not isinstance(asset, ServerAsset):
             return {"status": "error", "error": "L'asset n'est pas un asset serveur !"}
         
+        # On peut bien réactivé un agent non révoqué, échec de register initial, réseau, autre
         # if not asset.is_revoked():
         #     return {"status": "error", "error": "Asset non révoqué, réactivation inutile"}
         
@@ -912,7 +917,40 @@ async def list_server_tools(request: Request):
     except Exception as e:
         raise _server_error(e)
 
+@limiter.limit(f"{LIMITE}/minute")
+@router.post("/tool_call_logs/list")
+async def list_tool_call_logs(request: Request, options: ListToolCallLogData):
+    """
+    Liste l'historique des tool calls avec filtrage et pagination.
 
+    Args:
+        request (Request): La requête FastAPI.
+        options (ListToolCallLogData): Options de filtrage et pagination.
+
+    Returns:
+        dict: Liste des entrées de log correspondantes.
+    """
+    try:
+        log_manager = await _get_tool_call_log_manager()
+        logs = await log_manager.list_by_filter(**options.model_dump())
+        return {
+            "tool_call_logs": [
+                {
+                    **log.model_dump(mode="json", exclude={"tool_args"}),
+                    **(
+                        {"tool_args": json.loads(log.tool_args)} if isinstance(log.tool_args, str) else {}
+                    ),  # re-parsé pour le frontend
+                }
+                for log in logs
+            ]
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise _server_error(e)
+        
 # =============================================================================
 # Agent (HTTP, non-streamé — conservé pour usage batch/non-interactif)
 # =============================================================================

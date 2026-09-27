@@ -13,12 +13,14 @@ from contextguard.sdk.client import ContextGuardClient
 from modules_utils.api_dependencies import AuthManager
 from obsidian_hive.core.managers.job_manager import JobManager
 from obsidian_hive.core.managers.report_manager import ReportManager
+from obsidian_hive.core.managers.tool_call_log import ToolCallLogManager
 from obsidian_hive.core.assets.workflows.workflow_base import WorkflowBase
 from obsidian_hive.core.managers.llm_managers.llm_manager import LLMManager
 from obsidian_hive.core.managers.conversation_manager import ConversationManager
 from obsidian_hive.core.managers.extension_token_manager import ExtensionTokenManager
 from obsidian_hive.config.config import (
     LLM_MANAGER_CONFIG, ENGINE_CONFIG,
+    TOOL_LOG_ARCHIVE_DIR, TOOL_LOG_MAX_AGE_DAYS
 )
 from obsidian_hive.api.ap_config import (
     EXP, NOT_BEFORE,
@@ -42,6 +44,8 @@ _shared_conversation_manager: Optional[ConversationManager] = None
 _shared_extension_token_manager: Optional[ExtensionTokenManager] = None
 
 _shared_job_manager: Optional[JobManager] = None
+
+_shared_tool_call_log_manager: Optional[ToolCallLogManager] = None
 
 _context_guard_client: Optional[ContextGuardClient] = None
 
@@ -118,6 +122,23 @@ async def _get_job_manager():
         _shared_job_manager.start()
     return _shared_job_manager
 
+
+async def _get_tool_call_log_manager():
+    """
+    Retourne l'instance singleton du gestionnaire de jobs.
+
+    Returns:
+        JobManager: L'instance du gestionnaire de jobs.
+    """
+    global _shared_tool_call_log_manager
+    if not _shared_tool_call_log_manager:
+        _shared_tool_call_log_manager = ToolCallLogManager(
+            db_url=ENGINE_CONFIG["db_url"],
+            archive_dir=TOOL_LOG_ARCHIVE_DIR,
+            max_age_days=TOOL_LOG_MAX_AGE_DAYS,
+        ) 
+        await _shared_tool_call_log_manager.start()
+    return _shared_tool_call_log_manager
 
 async def _get_conversation_manager():
     """
