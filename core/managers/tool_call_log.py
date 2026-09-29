@@ -92,6 +92,7 @@ class ToolCallLogManager:
         self.interval_seconds = interval_seconds or 3600 * 10
         self.max_age_days = max_age_days
         self._stop_event = asyncio.Event()
+        self._n_run = 0
         self._task: asyncio.Task | None = None
         self._initialized = False
         _run_async(self.init_db)
@@ -191,9 +192,9 @@ class ToolCallLogManager:
         if code:
             conditions.append(ToolCallLog.code == ToolCallCode(code))
         if since:
-            conditions.append(ensure_naive(ToolCallLog.created_at) >= ensure_naive(since))
+            conditions.append(ToolCallLog.created_at >= ensure_naive(since))
         if until:
-            conditions.append(ensure_naive(ToolCallLog.created_at) <= ensure_naive(until))
+            conditions.append(ToolCallLog.created_at <= ensure_naive(until))
 
         limit = min(max(limit, 1), 500)   # borne dure — jamais de requête non bornée
         offset = max(offset, 0)
@@ -233,7 +234,7 @@ class ToolCallLogManager:
             if keep:
                 archive_path = os.path.join(
                     self.archive_dir,
-                    f"tool_calls_{cutoff.strftime('%Y%m%d')}.jsonl.gz",
+                    f"tool_calls_{cutoff.strftime('%Y_%m_%d_%H_%M_%s')}.jsonl.gz",
                 )
                 with gzip.open(archive_path, "at", encoding="utf-8") as f:
                     for row in rows:
@@ -252,6 +253,7 @@ class ToolCallLogManager:
                 n = await self.archive_and_delete_older_than(days=self.max_age_days, keep=False)
                 if n:
                     print(f"[cleanup] {n} tool_call(s) archivées")
+                self._n_run += 1
             except Exception as e:
                 print(f"[cleanup] erreur : {e}")
             try:
@@ -263,6 +265,8 @@ class ToolCallLogManager:
         if self._task is None:
             self._stop_event.clear()
             self._task = asyncio.create_task(self._loop())
+        
+        print("[tool_call_loger] Tâche de fond démarée")
     
     async def stop(self):
         self._stop_event.set()

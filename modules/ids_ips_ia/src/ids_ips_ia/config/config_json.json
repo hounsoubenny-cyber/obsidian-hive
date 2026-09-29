@@ -150,6 +150,7 @@
     whitelist: [],
     duration: 2,
     save_interval: 2,
+    max_n_paquets: 200000,
     mode: "full",
     packet_anomaly: 0.4,
     anomaly_dir: null,

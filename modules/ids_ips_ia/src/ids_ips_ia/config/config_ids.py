@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-IDS/IPS Configuration - Production Grade
-Scoring: 0-200+ (Normalized & Contextualized)
-Based on CVSS v3.1, NIST 800-53, FIRST research
+Created on Mon Apr 13 11:14:28 2026
+
+@author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+import os
 from dotenv import load_dotenv
 from ids_ips_ia.auth.auth import auth
-from ids_ips_ia.config.config_manager import *
+from ids_ips_ia.config.config_manager import * # noqa
 from ids_ips_ia.config.config_manager import (
     _config_path, Config, GLOBAL_CONFIG_KEY,
     CAPTURE_CONFIG_KEY, ANOMALY_CONFIG_KEY
 )
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 logger = get_logger()
+load_dotenv()
 
 THREAT_LEVELS = {
     'log_only': {
@@ -62,6 +62,7 @@ ADD_DATA_TO_CAPTURE_PATH = GLOBAL_CONFIG.get("add_data_to_capture_path") or ADD_
 FILTER = CAPTURE_CONFIG.get("FILTER", "tcp or udp or icmp")
 TIMEOUT_MS = CAPTURE_CONFIG.get("TIMEOUT_MS", 40)
 BUFFER_SIZE = int(CAPTURE_CONFIG.get("BUFFER_SIZE", "64")) * 1024 * 1024
+# Débloquer avec sudo sysctl -w net.core.rmem_max=wanted * 1024 * 1024
 SRC_IGNORED_IP = CAPTURE_CONFIG.get("SRC_IGNORED_IP", [])
 DST_IGNORED_IP = CAPTURE_CONFIG.get("DST_IGNORED_IP", [])
 N_TRIAl = GLOBAL_CONFIG.get("N_TRIALS", 10)

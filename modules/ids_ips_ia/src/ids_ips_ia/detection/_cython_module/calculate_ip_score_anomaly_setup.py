@@ -23,7 +23,7 @@ extensions = [
         name="calculate_ip_score_anomaly_cython",
         sources=["calculate_ip_score_anomaly_cython.pyx"],
         include_dirs=[np.get_include()],
-        extra_compile_args=["-O3", "-march=native", "-ffast-math"],
+        extra_compile_args=["-O3", "-march=x86-64-v2", "-ffast-math"],
         language="c",
     ),
 ]

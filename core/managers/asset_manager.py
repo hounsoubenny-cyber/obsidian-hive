@@ -90,6 +90,7 @@ class PendingDeletionCleaner:
         self.max_age_days = max_age_days
         self.interval_seconds = interval_seconds
         self._task: asyncio.Task | None = None
+        self._n_run = 0
         self._stop_event = asyncio.Event()
 
     async def _run_once(self) -> int:
@@ -100,7 +101,7 @@ class PendingDeletionCleaner:
                     and_(
                         AssetItemDB.pending_deletion == True,
                         AssetItemDB.pending_deletion_at.is_not(None),
-                        AssetItemDB.pending_deletion_at < ensure_naive(cutoff),
+                        AssetItemDB.pending_deletion_at < cutoff,
                     )
                 )
             )
@@ -116,6 +117,7 @@ class PendingDeletionCleaner:
                 n = await self._run_once()
                 if n:
                     print(f"[cleanup] {n} asset(s) en pending_deletion expirés supprimés")
+                self._n_run += 1
             except Exception as e:
                 print(f"[cleanup] erreur : {e}")
             try:
@@ -127,6 +129,8 @@ class PendingDeletionCleaner:
         if self._task is None:
             self._stop_event.clear()
             self._task = asyncio.create_task(self._loop())
+        
+        print("[pending_deletion_cleaner] Tâche de fond démarée")
 
     async def stop(self):
         self._stop_event.set()
@@ -374,8 +378,12 @@ class AssetManager:
             for asset in asset_list:
                 if isinstance(asset, AssetItem):
                     assets.append(self.asset_item_to_asset_item_db(asset))
-                else:
+                    
+                elif isinstance(asset, AssetItemDB):
                     assets.append(asset)
+                    
+                else:
+                    raise ValueError(f"Type invalide, AssetItem ou AssetItemDB accepté, reçu {type(asset).__name__}")
                     
             batch = 500
             taille = len(assets)
@@ -388,7 +396,7 @@ class AssetManager:
                 
             return assets
     
-    async def upsert(self, asset: AssetItem) -> AssetItemDB:
+    async def upsert(self, asset: AssetItem | AssetItemDB) -> AssetItemDB:
         """Met à jour ou insère un asset (merge).
 
         Args:
@@ -398,13 +406,16 @@ class AssetManager:
             AssetItemDB: L'asset après upsert.
         """
         async with self.get_session() as session:
-            asset_db = self.asset_item_to_asset_item_db(asset)
+            if isinstance(asset, AssetItem):
+                asset_db = self.asset_item_to_asset_item_db(asset)
+            else:
+                asset_db = asset
             merged = await session.merge(asset_db)
             await session.commit()
             await session.refresh(merged)
             return merged
     
-    async def upsert_many(self, assets: list[AssetItem]) -> list[AssetItemDB]:
+    async def upsert_many(self, assets: list[AssetItem | AssetItemDB]) -> list[AssetItemDB]:
         """Met à jour ou insère plusieurs assets (merge).
 
         Args:
@@ -416,7 +427,12 @@ class AssetManager:
         async with self.get_session() as session:
             results = []
             for asset in assets:
-                asset_db = self.asset_item_to_asset_item_db(asset)
+                if isinstance(asset, AssetItem):
+                    asset_db = self.asset_item_to_asset_item_db(asset)
+                elif isinstance(asset, AssetItemDB):
+                    asset_db = asset
+                else:
+                    raise ValueError(f"Type invalide, AssetItem ou AssetItemDB accepté, reçu {type(asset).__name__}")
                 merged = await session.merge(asset_db)
                 results.append(merged)
             await session.commit()

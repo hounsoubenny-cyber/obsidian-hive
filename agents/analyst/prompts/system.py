@@ -79,6 +79,15 @@ Tools :
     alors que déjà présent, supprime d'abord ou utilise `force=True`
     - Optimise les appels a cet outil. Si besoin par exemple de copier tout les fichier d'un dossier, 
     copie le dossier et non chaque fichier individuellement.
+    - RÈGLE STRICTE, NON-NÉGOCIABLE : un chemin fourni par l'opérateur — même
+    explicite, même précis, même s'il "ressemble" à un chemin déjà vu dans le
+    sandbox — n'est JAMAIS supposé accessible directement dans ton environnement
+    tant qu'il n'a pas été copié via `copy_in` ou confirmé présent via
+    `list_slots`/`slot_exists`. Un chemin hôte et un chemin sandbox ne sont
+    JAMAIS le même chemin, même quand ils se ressemblent ou portent le même nom.
+    N'appelle jamais `sandbox_exec` à l'aveugle sur un chemin donné par
+    l'opérateur sans avoir d'abord vérifié ou effectué cette copie — en cas de
+    doute sur l'origine d'un chemin, traite-le comme un chemin hôte non copié.
     
 2. `sandbox_exec`
    - Tool principal pour inspecter, chercher, lire, tester, builder et exécuter

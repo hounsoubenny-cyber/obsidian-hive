@@ -20,20 +20,11 @@ from sqlmodel import SQLModel, Field, Relationship, select
 from pydantic import BaseModel, Field as Pydantic_Field
 from sqlalchemy import func as sa_func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime
 from contextlib import asynccontextmanager
-
 from modules_utils.loop_utils import _run_async
 from obsidian_hive.core.managers.shared import _configure_sqlite_pragmas
-
-def utcnow():
-    """Retourne la date/heure UTC actuelle avec fuseau horaire.
-
-    Returns:
-        datetime: Date/heure actuelle en UTC.
-    """
-    return datetime.now(tz=timezone.utc)
-
+from obsidian_hive.core.assets.asset_types import utcnow
 
 DEFAULT_TITLE = "Nouvelle conversation"
 TITLE_MAX_LEN = 100

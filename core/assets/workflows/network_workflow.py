@@ -184,7 +184,7 @@ class NetworkWorkflow(WorkflowBase):
             mode = self.asset.deployment_mode
             if mode == NetworkDeploymentMode.BRIDGE.value:
                 conf = Config(self.asset.config_path)
-                interfaces = conf.CONFIG[GLOBAL_CONFIG_KEY].get("interfaces", [])
+                interfaces = conf.CONFIG[GLOBAL_CONFIG_KEY].get("interface", [])
                 if isinstance(interfaces, str):
                     interfaces = [interfaces]
                 

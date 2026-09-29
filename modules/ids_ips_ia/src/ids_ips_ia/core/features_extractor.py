@@ -6,13 +6,12 @@ Created on Sun Apr 12 17:17:18 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-import numpy as np
+import math
 import dpkt
-from typing import Any
 import socket
 import hashlib
+import numpy as np
+from typing import Any
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 logger = get_logger()
 
@@ -32,78 +31,46 @@ class FeatureExtractor:
     _USE_CYTHON = _USE_CYTHON
     @staticmethod
     def get_feature_name(to:str = "pkt"):
+        pkt_features_name = [
+            'length', 'time_sin', 'src_mac', 'dst_mac', 'ttl',
+            'protocol', 'src_ip0', 'src_ip1', 'src_ip2', 'src_ip3',
+            'dst_ip0', 'dst_ip1', 'dst_ip2', 'dst_ip3', 'sport', 'dport',
+            'SYN', 'ACK', 'FIN', 'RST', 'PSH', 'URG', 'icmp_type', 'icmp_code',
+            'payload_len', 'time_cos'
+        ]
         if to == "pkt":
-            return \
-                ['length',
-                 'time',
-                 'src_mac',
-                 'dst_mac',
-                 'ttl',
-                 'protocol',
-                 'src_ip0',
-                 'src_ip1',
-                 'src_ip2',
-                 'src_ip3',
-                 'dst_ip0',
-                 'dst_ip1',
-                 'dst_ip2',
-                 'dst_ip3',
-                 'sport',
-                 'dport',
-                 'SYN',
-                 'ACK',
-                 'FIN',
-                 'RST',
-                 'PSH',
-                 'URG',
-                 'icmp_type',
-                 'icmp_code',
-                 'payload_len']
+            return pkt_features_name
         else:
-            return \
-                ['length',
-                 'time',
-                 'src_mac',
-                 'dst_mac',
-                 'ttl',
-                 'protocol',
-                 'src_ip0',
-                 'src_ip1',
-                 'src_ip2',
-                 'src_ip3',
-                 'dst_ip0',
-                 'dst_ip1',
-                 'dst_ip2',
-                 'dst_ip3',
-                 'sport',
-                 'dport',
-                 'SYN',
-                 'ACK',
-                 'FIN',
-                 'RST',
-                 'PSH',
-                 'URG',
-                 'icmp_type',
-                 'icmp_code',
-                 'payload_len'] + \
-                    ['seq_length_mean',
-                     'seq_length_max',
-                     'seq_payload_mean',
-                     'seq_SYN_count',
-                     'seq_ACK_count',
-                     'seq_FIN_count',
-                     'seq_RST_count',
-                     'seq_PSH_count',
-                     'seq_URG_count',
-                     'seq_ICMP_count']
+            return (
+                pkt_features_name + [
+                    'seq_length_mean',
+                    'seq_length_max',
+                    'seq_payload_mean',
+                    'seq_SYN_count',
+                    'seq_ACK_count',
+                    'seq_FIN_count',
+                    'seq_RST_count',
+                    'seq_PSH_count',
+                    'seq_URG_count',
+                    'seq_ICMP_count'
+                ]
+            )
                 
         
     @staticmethod
-    def _extract_pack_features(eth:tuple[float, Any]|dpkt.ethernet.Ethernet):
+    def _time_cyclic(ts: float) -> tuple[float, float]:
+        """Encodage cyclique de l'heure du jour (période 24 h, UTC).
+        Remplace le timestamp brut (epoch) : borné dans [-1, 1] et stable dans le
+        temps, donc pas de dérive du scaler après le fit."""
+        angle = (float(ts) % 86400.0) * (2.0 * math.pi / 86400.0)
+        return math.sin(angle), math.cos(angle)
+
+    @staticmethod
+    def _extract_pack_features(eth: tuple[float, Any] | dpkt.ethernet.Ethernet):
         try:
             features = {
             'length': 0,
-            'time': 0.0,
+            'time_sin': 0.0,
             'src_mac': 0,
             'dst_mac': 0,
             'ttl': 0,
@@ -113,7 +80,8 @@ class FeatureExtractor:
             'sport': 0, 'dport': 0,
             'SYN': 0, 'ACK': 0, 'FIN': 0, 'RST': 0, 'PSH': 0, 'URG': 0,
             'icmp_type': 0, 'icmp_code': 0,
-            'payload_len': 0
+            'payload_len': 0,
+            'time_cos': 0.0
         }
             if not eth:
                 return np.array(list(features.values()))
@@ -124,7 +92,7 @@ class FeatureExtractor:
                 
             src_ip_bytes = []
             dst_ip_bytes = []
-            features['time'] = getattr(eth, 'ts', 0.0)
+            features['time_sin'], features['time_cos'] = FeatureExtractor._time_cyclic(getattr(eth, 'ts', 0.0))
             features['length'] = len(eth)
             max_mac = 281474976710655  # 2^48 - 1
             # features['src_mac'] = features['src_mac'] / max_mac

@@ -547,7 +547,7 @@ async def _test():
         do_silence=not True,
     ) as engine:
 
-        print(f"\n✅ Moteur démarré")
+        print("\n✅ Moteur démarré")
         print(f"   Status: {engine.status()}")
 
         # Ajouter un asset

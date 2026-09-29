@@ -13,11 +13,15 @@ from obsidian_hive.api.ap_config import API_HOST, API_PORT
 from modules_utils.signal_manager import signal_manager
 import nest_asyncio
 
+class DebugRun:
+    app = None
+
 def run():
     thread, server = start(app, host=API_HOST, port=API_PORT)
     thread.start()
     time.sleep(2)
-   
+    DebugRun.app = app
+    
     def signal_handler(sig, frame):
         print('Signal envoyé : ', sig)
         server.should_exit = True
@@ -47,8 +51,10 @@ def run():
         
     print('Fermeture API à : ', time.ctime())
     
+    return app
+    
 if __name__ == '__main__':
     nest_asyncio.apply()
-    run()
+    # run()
     
     

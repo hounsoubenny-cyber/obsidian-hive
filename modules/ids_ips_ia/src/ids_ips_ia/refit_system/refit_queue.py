@@ -6,19 +6,25 @@ Created on Tue Apr 14 21:16:21 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+import os
 import time
-import joblib
+import pickle
 import threading
 import multiprocessing as mp
 from collections import deque
-from ids_ips_ia.refit_system.config import FILE_PREFIX, REFIT_DIR
+from ids_ips_ia.core.capture import _save
 from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.refit_system.config import FILE_PREFIX, REFIT_DIR
+
 logger = get_logger()
 
 class RefitQueue:
-    def __init__(self, session_id:str, max_file_size:int = 100 * 1024 * 1024, save_interval:int|float = 3600):
+    def __init__(
+        self, 
+        session_id: str, 
+        max_file_size: int = 100 * 1024 * 1024, 
+        save_interval: int | float = 3600
+    ):
         self.session_id = session_id
         self.current_num = 0
         self.last_save_time = time.time()
@@ -87,7 +93,7 @@ class RefitQueue:
         ]
             
         for filename in filenames:
-            if not self.is_current_refit_queue_file():
+            if not self.is_current_refit_queue_file(filename):
                 os.remove(os.path.join(REFIT_DIR,filename))
     
     def save_periodic(self, save_interval):
@@ -104,7 +110,7 @@ class RefitQueue:
                 with self._lock:
                     data = list(self.queue)
                     self.queue.clear()
-                joblib.dump(data, filename, compress=5)
+                _save(data, filename)
                 
             else:
                 filename = os.path.join(REFIT_DIR, self.current_filename)
@@ -115,17 +121,19 @@ class RefitQueue:
                     with self._lock:
                         data = list(self.queue)
                         self.queue.clear()
-                    joblib.dump(data, filename, compress=5)
+                    _save(data, filename)
                     
                 else:
-                    data = joblib.load(self.current_filename)
+                    with open(self.current_filename, "rb") as f:
+                        data = pickle.load(f)
+                        
                     with self._lock:
                         data.extend(list(self.queue))
                         self.queue.clear()
-                    joblib.dump(data, filename, compress=5)
+                    _save(data, filename)
             
         except Exception as e:
-            logger.print("Erreur survenu lors de la sauegarde :", str(e))
+            logger.print("Erreur survenu lors de la sauvegarde :", str(e))
         
         self.last_save_time = time.time()
         

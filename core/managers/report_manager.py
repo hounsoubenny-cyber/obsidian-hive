@@ -652,9 +652,9 @@ class ReportManager:
         async with self.get_session() as session:
             conditions = []
             if start:
-                conditions.append(ensure_naive(AnalysisReportDB.created_at) >= ensure_naive(start))
+                conditions.append(AnalysisReportDB.created_at >= ensure_naive(start))
             if end:
-                conditions.append(ensure_naive(AnalysisReportDB.created_at) <= ensure_naive(end))
+                conditions.append(AnalysisReportDB.created_at <= ensure_naive(end))
 
             statement = select(AnalysisReportDB)
             if conditions:
@@ -711,9 +711,9 @@ class ReportManager:
                     ])
                 )
             if start_date:
-                conditions.append(ensure_naive(AnalysisReportDB.created_at) >= ensure_naive(start_date))
+                conditions.append(AnalysisReportDB.created_at >= ensure_naive(start_date))
             if end_date:
-                conditions.append(ensure_naive(AnalysisReportDB.created_at) <= ensure_naive(end_date))
+                conditions.append(AnalysisReportDB.created_at <= ensure_naive(end_date))
 
             statement = select(AnalysisReportDB)
             if conditions:
@@ -1015,7 +1015,7 @@ class ReportManager:
         cutoff = utcnow() - timedelta(days=days)
         async with self.get_session() as session:
             statement = select(AnalysisReportDB).where(
-                ensure_naive(AnalysisReportDB.created_at) < ensure_naive(cutoff)
+                AnalysisReportDB.created_at < ensure_naive(cutoff)
             )
             result = await session.execute(statement)
             to_delete = list(result.scalars().all())

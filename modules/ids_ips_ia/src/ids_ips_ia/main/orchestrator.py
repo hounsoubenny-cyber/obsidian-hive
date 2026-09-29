@@ -13,35 +13,37 @@ server_state.py, pas ici — voir ce fichier pour le pourquoi.
 """
 
 import os
-import threading
+import dill
 import queue
 import asyncio
 import traceback
+import threading
 import multiprocessing as mp
-import dill
-from datetime import datetime
 from uuid import uuid4
+from datetime import datetime
 from typing import Optional
-
-from ids_ips_ia.core.capture import collect_and_process, detect_all_ifaces, Capture
 from ids_ips_ia.models.models import Models
 from ids_ips_ia.models.config import MODEL_DIR
-from ids_ips_ia.detection.detection_module import AnomalyDetector
-from ids_ips_ia.ids_ips_utils.real_time_plot import RealTimePLot
-from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, state
-from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
-from ids_ips_ia.ids_ips_utils.model_file_validation import validate_model_file
-from ids_ips_ia.refit_system.refit_system import ModelRefitMonitor
-from ids_ips_ia.refit_system.refit_queue import RefitQueue
-from ids_ips_ia.ids_ips_utils.logger import get_logger
+from modules_utils.loop_utils import _run_async
 from ids_ips_ia.ids_ips_utils.loader import save
+from ids_ips_ia.main.server_state import close_api
+from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.refit_system.refit_queue import RefitQueue
+from ids_ips_ia.ids_ips_utils.real_time_plot import RealTimePLot
+from ids_ips_ia.detection.detection_module import AnomalyDetector
+from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
+from ids_ips_ia.refit_system.refit_system import ModelRefitMonitor
+from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, state
+from ids_ips_ia.ids_ips_utils.model_file_validation import validate_model_file
+from ids_ips_ia.ids_ips_utils.signal_manager import ignore_termination_signals
+from ids_ips_ia.core.capture import (
+    collect_and_process, detect_all_ifaces, Capture, build_capture_filename
+)
 from ids_ips_ia.config.config_ids import (
     GLOBAL_CONFIG as CONFIG, GRAPH,
     CAPTURE_FILENAME, ADD_DATA_TO_CAPTURE_PATH, FILTER,
+    DEFAULT_MAX_N_PAQUETS
 )
-from modules_utils.loop_utils import _run_async
-from ids_ips_ia.ids_ips_utils.signal_manager import ignore_termination_signals
-from ids_ips_ia.main.server_state import close_api
 
 try:
     mp.set_start_method('spawn')
@@ -72,7 +74,6 @@ else:
 # CLASSE IDS_IPS
 # =============================================================================
 def build_ifaces(ifaces: str | None | list) -> list[str]:
-    print('BUILD', ifaces)
     if not ifaces:
         return detect_all_ifaces()
 
@@ -126,7 +127,7 @@ class IDS_IPS:
 
     def _create_refit_monitor(self):
         self.ModelRefitMonitor = ModelRefitMonitor(
-            capture_path=CAPTURE_FILENAME,
+            capture_path=build_capture_filename(CAPTURE_FILENAME),
             session_id=self.session_id,
             model_path=self.model_file,
             mode=self.mode,
@@ -209,6 +210,7 @@ class IDS_IPS:
         self.mode = self.mode.lower()
         self.duration = int(self.duration)
         self.save_interval = int(self.save_interval)
+        self.max_n_paquets = int(self.max_n_paquets or 0)  # 0 = illimité
         self.combination_mode = self.combination_mode.lower()
         self.packet_anomaly = float(self.packet_anomaly)
         self.model_file = os.path.join(MODEL_DIR, self.model_file)
@@ -222,6 +224,7 @@ class IDS_IPS:
         self.anomaly_dir = input(f"Dossier pour anomalies (default: {DEFAULT_ANOMALY_DIR}/) : ").strip() or DEFAULT_ANOMALY_DIR
         self.duration = input(f"Durée collecte pour fit initial en secondes (default: {DEFAULT_DURATION}) : ").strip() or str(DEFAULT_DURATION)
         self.save_interval = input(f"Durée sauvegarde périodique en secondes (default: {DEFAULT_SAVE_INTERVAL}) : ").strip() or str(DEFAULT_SAVE_INTERVAL)
+        self.max_n_paquets = input(f"Nombre max de paquets pour le fit initial, 0 = illimité (default: {DEFAULT_MAX_N_PAQUETS}) : ").strip() or str(DEFAULT_MAX_N_PAQUETS)
         self.mode = input("Mode d'entraînement du modèle (full ou fast, par défaut full) : ").strip() or "full"
         self.combination_mode = input("Mode combinaison anomalies (or/and/weighted, default or) : ").strip() or "or"
         self.packet_anomaly = input("Seuil proportion anomalies packets (default 0.3) : ").strip() or "0.4"
@@ -232,7 +235,7 @@ class IDS_IPS:
         self.unlock_at_exit = input("Débloqué les ips bloqué à la sortie (1 ou 0, default 1)").strip().lower() == "1"
         self.do_not_fit = input(
             "Capturer le traffic pour fit un modèle ? Mettre 0 pour non, si vous avez un modèle, si il est imcompatible le fit sera quand même lancé (1/0, default 0)"
-        ).strip().lower() == "O"
+        ).strip().lower() == "1"
         self.whitelist = []
 
     def _file_config(self):
@@ -242,6 +245,7 @@ class IDS_IPS:
         self.mode = CONFIG.get("mode", "full")
         self.duration = CONFIG.get("duration", 1)
         self.save_interval = CONFIG.get("save_interval", 1)
+        self.max_n_paquets = CONFIG.get("max_n_paquets", DEFAULT_MAX_N_PAQUETS)
         self.combination_mode = CONFIG.get("combination_mode", "or")
         self.packet_anomaly = CONFIG.get("packet_anomaly", 0.4)
         self.ids_mode = CONFIG.get("ids_mode", "ids")
@@ -260,6 +264,7 @@ class IDS_IPS:
         logger.print("    -Mode de creation du model : ", self.mode)
         logger.print("    -Durée d'appretissage : ", self.duration)
         logger.print("    -Intervalle de sauvegarde : ", self.save_interval)
+        logger.print("    -Nombre max de paquets pour le fit initial : ", self.max_n_paquets or "illimité")
         logger.print("    -Mode de l'ids/ips : ", self.ids_mode)
         logger.print("    -Pourcentage d'anomaly suspecté : ", self.packet_anomaly)
         logger.print("    -Mode de combinaison pour prediction du model : ", self.combination_mode)
@@ -325,7 +330,8 @@ class IDS_IPS:
                 ifaces=self.interface,
                 maxsize=0,
                 filename=CAPTURE_FILENAME,
-                add_data_path=ADD_DATA_TO_CAPTURE_PATH
+                add_data_path=ADD_DATA_TO_CAPTURE_PATH,
+                max_n_paquets=self.max_n_paquets,
             )
             if X_sequences is None or X_packets is None:
                 logger.print("[ERROR] Échec de la collecte ou traitement")

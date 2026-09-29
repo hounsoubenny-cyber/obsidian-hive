@@ -126,8 +126,8 @@ async def lifespan_start(app: FastAPI):
     
     if START_ALL:
         await sim_lifespan_start(app)
+        
     await app.state.core_engine.start()
-    
     
     logger.success("API démaré")
     return [

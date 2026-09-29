@@ -137,7 +137,7 @@ async def _get_tool_call_log_manager():
             archive_dir=TOOL_LOG_ARCHIVE_DIR,
             max_age_days=TOOL_LOG_MAX_AGE_DAYS,
         ) 
-        await _shared_tool_call_log_manager.start()
+        _shared_tool_call_log_manager.start()
     return _shared_tool_call_log_manager
 
 async def _get_conversation_manager():

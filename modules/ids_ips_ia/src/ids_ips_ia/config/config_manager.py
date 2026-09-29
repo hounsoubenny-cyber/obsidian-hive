@@ -15,6 +15,9 @@ from ids_ips_ia.ids_ips_utils.logger import get_logger
 logger = get_logger()
 
 date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+# Nombre max de paquets utilisés pour le fit initial (0 ou None = illimité).
+# RAM approx. du fit (float64, pas de 1) : ~17 Ko par paquet -> 200 000 paquets ~ 3,5 Go.
+DEFAULT_MAX_N_PAQUETS = 200_000
 _dir_ = os.path.dirname(os.path.abspath(__file__))
 
 CLASS_CONFIG = {
@@ -175,6 +178,7 @@ CLASS_CONFIG = {
       "whitelist": [],
       "duration": 2,
       "save_interval": 2,
+      "max_n_paquets": DEFAULT_MAX_N_PAQUETS,
       "mode": "full",
       "packet_anomaly": 0.4,
       "anomaly_dir": None,
@@ -226,6 +230,7 @@ LIST = [
         DECAY_CONFIG_KEY,
         ANOMALY_RATE_THRESHOLDS_KEY
     ]
+
 LOCALS = locals()
 
 class Config:
@@ -256,6 +261,7 @@ class Config:
         self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("model_file", f"model_{date}.pkl")
         self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"] = self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"].replace("{date}", date)
         self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("capture_filename", f"capture_{date}.pkl")
+        self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("max_n_paquets", DEFAULT_MAX_N_PAQUETS)
     
     def get(self, *args, **kwargs):
         return self.CONFIG.get(*args, **kwargs)

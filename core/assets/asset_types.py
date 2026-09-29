@@ -30,7 +30,9 @@ def utcnow():
     Returns:
         datetime: Date/heure actuelle en UTC.
     """
-    return datetime.now(tz=timezone.utc)
+    dt = datetime.now(tz=timezone.utc)
+    dt.replace(tzinfo=None)
+    return dt
 
 
 def asset_id(tag: str = "sh_as-"):

@@ -148,7 +148,8 @@ async def create_server_asset_route(request: Request, asset_data: ServerAssetMod
         if result["status"] != "error":
             token = result["asset_data"]["install_token"]
             result["install_command"] = (
-                f'curl -sSL -H "Authorization: Bearer {token}" https://{request.url.hostname}/api/download/agent/install.sh | bash'
+                f'curl -sSL -H "Authorization: Bearer {token}" '
+                f'https://{request.url.hostname}/api/download/agent/install.sh | bash'
             )
         return result
 

@@ -284,7 +284,8 @@ class ImageEncoderDataset(torch.utils.data.Dataset):
         if not self._train_is_called:
             self.training = mode
             self._train_is_called = True
-        raise RuntimeError("self.train appelé plus d'une fois !")
+        else:
+            raise RuntimeError("self.train appelé plus d'une fois !")
     
     def __len__(self):
         return self.taille

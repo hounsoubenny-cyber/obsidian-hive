@@ -6,21 +6,21 @@ Created on Tue Apr 14 10:12:52 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+import os
 import time
 import dill
-import joblib
+import pickle
 import shutil
-import numpy as np
 import threading
+import numpy as np
 import multiprocessing as mp
+from ids_ips_ia.models.models import Models
 from sklearn.preprocessing import StandardScaler
+from ids_ips_ia.core.capture import load_pkt_file
 from sklearn.model_selection import train_test_split as tts
 from ids_ips_ia.core.features_extractor import FeatureExtractor
 from ids_ips_ia.config.config_ids import SEQ_LENGTH
 from ids_ips_ia.refit_system.config import FILE_PREFIX, REFIT_DIR
-from ids_ips_ia.models.models import Models
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 
 logger = get_logger()
@@ -110,15 +110,15 @@ def _evaluate_model(model_dict: dict, X_sequences: np.ndarray, X_packets: np.nda
 class ModelRefitMonitor:
     def __init__(
         self, 
-        capture_path:str,
-        session_id:str,
-        model_path:str,
-        mode:str = "full",
-        refit_delay:int|float = 7 * 24 * 3600,
-        epochs:int = 1,
-        batch_size:int = 32, 
-        verbose:int = 1,
-        min_new_packets:int = 1_000_000,
+        capture_path: str,
+        session_id: str,
+        model_path: str,
+        mode: str = "full",
+        refit_delay: int | float = 7 * 24 * 3600,
+        epochs: int = 1,
+        batch_size: int = 32, 
+        verbose: int = 1,
+        min_new_packets: int = 1_000_000,
      ):
         self.mode = mode
         self.event = threading.Event()
@@ -144,24 +144,46 @@ class ModelRefitMonitor:
             
         return [os.path.join(REFIT_DIR, filename) for filename in filenames]
     
-    def get_all_pkt_from_files(self, filenames:list):
-        all_pkt = []
-        for filename in filenames:
-            if os.path.exists(filename):
+    def get_all_pkt_from_files(self, filenames: list, len_only: bool = True):
+        if not len_only:
+            all_pkt = []
+            for filename in filenames:
+                if os.path.exists(filename):
+                    try:
+                        with open(filename, "rb") as f:
+                            all_pkt.extend(pickle.load(f))
+                    except Exception:
+                        pass
+            
+            if os.path.exists(self.capture_path):
                 try:
-                    all_pkt.extend(joblib.load(filename))
+                    for chunk in load_pkt_file(self.capture_path):
+                        all_pkt.extend(chunk)
                 except Exception:
                     pass
-        
-        if os.path.exists(self.capture_path):
-            try:
-                all_pkt.extend(joblib.load(self.capture_path))
-            except Exception:
-                pass
-            
-        return all_pkt
                 
-    def process_data(self, pkt_list:list):
+            return all_pkt
+        
+        else:
+            alen = 0
+            for filename in filenames:
+                if os.path.exists(filename):
+                    try:
+                        with open(filename, "rb") as f:
+                            alen += len(pickle.load(f))
+                    except Exception:
+                        pass
+            
+            if os.path.exists(self.capture_path):
+                try:
+                    for chunk in load_pkt_file(self.capture_path):
+                        alen += len(chunk)
+                except Exception:
+                    pass
+                
+            return alen
+                
+    def process_data(self, pkt_list: list):
         try:
             extractor = FeatureExtractor()
             X_packets = np.array([extractor.extract_pack_features(pkt) for pkt in pkt_list])
@@ -303,12 +325,12 @@ class ModelRefitMonitor:
     def _refit(self):
         while not self.event.is_set():
             if time.time() - self.last_refit_time > self.refit_delay:
-                all_pkt = self.get_all_pkt_from_files(self.get_filenames())
-                num_pkt = len(all_pkt)
+                num_pkt = self.get_all_pkt_from_files(self.get_filenames(), len_only=True)
                 if not num_pkt > self.min_new_packets:
                     self.last_refit_time = time.time()
                     continue
                 
+                all_pkt = self.get_all_pkt_from_files(self.get_filenames(), len_only=False)
                 self._perform_refit(all_pkt)
                 self.last_refit_time = time.time()
                 

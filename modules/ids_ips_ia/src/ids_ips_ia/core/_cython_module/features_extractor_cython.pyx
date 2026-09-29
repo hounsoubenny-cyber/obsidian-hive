@@ -11,6 +11,7 @@ Compilation : python setup.py build_ext --inplace
 
 import numpy as np
 cimport numpy as np
+from libc.math cimport sin, cos, fmod, M_PI
 import dpkt
 import socket
 import hashlib
@@ -39,14 +40,17 @@ cdef inline double mac_to_double(bytes mac):
 def extract_pack_features(object eth):
     """
     Extrait les caractéristiques d'un paquet.
-    Retourne un np.ndarray de 25 features (float64).
+    Retourne un np.ndarray de 26 features (float64).
+    Index 1 = time_sin, index 25 = time_cos (heure du jour, période 24 h) ;
+    tous les autres index sont inchangés.
     """
-    cdef np.ndarray[double, ndim=1] features = np.zeros(25, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1] features = np.zeros(26, dtype=np.float64)
     cdef bytes src_bytes, dst_bytes
     cdef object ip, transport
     cdef int i, flags
     cdef list src_parts, dst_parts
     cdef double ts = 0.0
+    cdef double angle = 0.0
     cdef int length = 0
     cdef bytes src = b'', dst = b''
     
@@ -67,7 +71,13 @@ def extract_pack_features(object eth):
         
         # Features de base
         features[0] = <double>length      # length
-        features[1] = ts                  # time
+        # Heure du jour encodée en cercle (remplace le timestamp brut)
+        angle = fmod(ts, 86400.0)
+        if angle < 0.0:
+            angle += 86400.0
+        angle = angle * (2.0 * M_PI / 86400.0)
+        features[1] = sin(angle)          # time_sin
+        features[25] = cos(angle)         # time_cos
         features[2] = mac_to_double(src)  # src_mac
         features[3] = mac_to_double(dst)  # dst_mac
         

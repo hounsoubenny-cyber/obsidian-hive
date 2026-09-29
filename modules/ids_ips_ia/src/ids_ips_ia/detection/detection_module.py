@@ -20,14 +20,13 @@ import sys
 import socket
 import queue as pyqueue
 import json
-import threading
-import signal
+import time
+import dpkt
 import dill
 import joblib
-import time
 import atexit
 import asyncio
-import dpkt
+import threading
 import traceback
 import numpy as np
 import multiprocessing as mp
@@ -36,7 +35,7 @@ from collections import deque
 
 from ids_ips_ia.core.features_extractor import FeatureExtractor
 from ids_ips_ia.models.models import Models
-from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, State, IPS
+from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, State, IPS # noqa
 from ids_ips_ia.reaction.reaction_module import React
 from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.config.config_ids import (

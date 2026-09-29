@@ -6,18 +6,16 @@ Created on Tue May  5 14:21:58 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
+import os
 import io
 import PIL.Image
 import torchvision as tvision
 import torch
-import torch.nn as nn
 import numpy as np
-import pandas as pd
+import torch.nn as nn
 import zstandard as zstd
-from transformers import AutoImageProcessor
 from random import shuffle
+from transformers import AutoImageProcessor
 from deepfake_detector.deepfake_utils.logger import get_logger
 
 logger = get_logger()

@@ -15,7 +15,7 @@ extensions = [
         "extract_ip_cython",
         sources=["extract_ip_cython.pyx"],
         include_dirs=[np.get_include()],
-        extra_compile_args=["-O3", "-march=native", "-ffast-math"],
+        extra_compile_args=["-O3", "-march=x86-64-v2", "-ffast-math"], #-march=native
     )
 ]
 

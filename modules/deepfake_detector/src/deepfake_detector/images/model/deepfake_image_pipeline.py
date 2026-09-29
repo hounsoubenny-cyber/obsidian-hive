@@ -8,17 +8,14 @@ Predict: DeepFakeDetectorImagePredict
 Auteurs : Sam Hounsou + Claude
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", "..", ".."))))
-
+import os
 import torch
+import joblib
 import numpy as np
 from PIL import Image
 from sklearn.preprocessing import RobustScaler
 from torch.utils.data import DataLoader
 import torchvision as tvision
-import joblib
-
 from deepfake_detector.deepfake_utils.logger import get_logger
 from deepfake_detector.images.model.image_encoder import ImageEncoder, ImageEncoderDataset
 from deepfake_detector.images.model.image_encoder_trainer import Trainer as ImageEncoderTrainer
