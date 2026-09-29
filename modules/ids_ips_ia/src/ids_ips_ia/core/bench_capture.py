@@ -5,8 +5,7 @@ Created on Tue Sep 29 09:26:42 2026
 
 @author: hounsousamuel
 """
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
 """
 Banc de test de la capture Python de l'IDS (root requis).
 
@@ -306,7 +305,7 @@ class Harness:
         self.mod = mod
         self.q = mod.BuffuredQueue(max_size=max_size, num_workers=workers)
         self.cap = mod.Capture(queue=self.q)
-        self.got = self.dropped = 0
+        self.got = self.dropped = self.k_seen = self.k_drops = 0
 
     def start(self):
         self.q.start()
@@ -314,6 +313,10 @@ class Harness:
         time.sleep(0.5)                  # laisse le socket s'ouvrir
 
     def finish(self):
+        # Capture agrège déjà les stats noyau en interne (rafraîchies chaque seconde par les
+        # threads de capture) : on les lit via stats(), pas en retouchant le socket depuis ici.
+        st = self.cap.stats()
+        self.k_seen, self.k_drops = st.get("k_seen", 0), st.get("k_drops", 0)
         self.cap.stop()
         self.got = self.q.num_items
         self.dropped = self.cap.dropped_packets
@@ -338,7 +341,7 @@ class Harness:
 
 # ------------------------------------------------------------- test charge
 
-HEADER = (" cible | réel Mb/s |    pkt/s |  envoyés | capturés | rej.queue | perte |  CPU | RAM Mo | disque Mo")
+HEADER = (" cible | réel Mb/s |    pkt/s |  envoyés | capturés | rej.queue | rej.noyau | perte |  CPU | RAM Mo | disque Mo")
 
 
 def run_level(mod, a, mbps, backend_cls):
@@ -364,7 +367,7 @@ def run_level(mod, a, mbps, backend_cls):
     loss = 100 * (sent - h.got) / sent if sent else 0.0
     cible = str(mbps) if mbps else "max"
     print(f"{cible:>6} | {sent * a.size * 8 / elapsed / 1e6:10.0f} | {sent / elapsed:8.0f} | "
-          f"{sent:8d} | {h.got:8d} | {h.dropped:9d} | {loss:4.1f}% | {cpu:3.0f}% | {peak:6.0f} | {disk:9.0f}")
+          f"{sent:8d} | {h.got:8d} | {h.dropped:9d} | {h.k_drops:9d} | {loss:4.1f}% | {cpu:3.0f}% | {peak:6.0f} | {disk:9.0f}")
 
 
 def load_mode(mod, a):
@@ -379,7 +382,9 @@ def load_mode(mod, a):
         print("   Débit plus faible et CPU plus élevé qu'avec pktgen.\n")
 
     print(f"Paquets de {a.size} octets, {a.duration}s par palier, {a.workers} workers, deque={a.max_size}")
-    print("perte = envoyés - capturés (noyau + application)\n")
+    print("rej.noyau = paquets jetés par le NOYAU (buffer socket plein, avant même Python)")
+    print("rej.queue = paquets jetés par BuffuredQueue (file de chunks pleine, ct app)")
+    print("perte = envoyés - capturés (= rej.noyau + rej.queue + ce qui traîne encore en RAM)\n")
     print(HEADER)
     with Veth():
         try:

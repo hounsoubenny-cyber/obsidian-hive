@@ -231,7 +231,7 @@ BPF_PROG = [
     ( 0x6, 0, 0, 0x00000000 ),
 ]
 SO_ATTACH_FILTER = 26
-SO_RCVBUFFORCE = 33
+SO_RCVBUFFORCE = 33 # pas SO_RCV qui peut siclencieusement être remplcé par le noyau
 SOL_PACKET = getattr(socket, "SOL_PACKET", 263)
 PACKET_STATISTICS = 6
 
@@ -304,18 +304,25 @@ class BuffuredQueue:
         max_size: int = 10_000,
         num_workers: int = 4,
         queue_max: int | None = None,
-        mem_budget_mb: int = 1024,
+        mem_budget_mb: int | None = None,
     ):
-        if max_size < 10_000:
-            raise ValueError("max_size doit être supérieur ou égal à 10_000")
+        # if max_size < 10_000:
+        #     raise ValueError("max_size doit être supérieur ou égal à 10_000")
 
         self.workers = []
         self.max_size = int(max_size)
         self.num_workers = int(num_workers) or 4
         if queue_max is None:
-            # nombre de chunks en attente déduit du budget mémoire
-            per_chunk = self.max_size * EST_PKT_BYTES
-            queue_max = int(mem_budget_mb * 1e6 // per_chunk) - self.num_workers - 1
+            # plan_memory() est LA fonction qui décide du budget mémoire (RAM dispo,
+            # conscient des cgroups/Docker via available_ram()) ; on la fait raisonner
+            # en "taille de chunk" plutôt qu'en paquets, donc on lui passe la taille
+            # réelle d'un chunk de cette queue (max_size x EST_PKT_BYTES).
+            plan = plan_memory(
+                budget_mb=mem_budget_mb,
+                chunk_mb=self.max_size * EST_PKT_BYTES / 1e6,
+                workers=self.num_workers,
+            )
+            queue_max = plan["queue_max"]
         self.queue_max = int(min(100, max(2, queue_max)))
 
         self._deque = deque(maxlen=self.max_size)
@@ -415,6 +422,9 @@ class BuffuredQueue:
         block = put_method == "put"
         chunk = None
         with self._lock:
+            # if self._finished:
+            #     return False
+            
             if len(self._deque) >= self.max_size:
                 if not block and self._queue.full():
                     return False           # tout est plein : le paquet est refusé (l'appelant le compte)
@@ -561,6 +571,11 @@ class Capture:
         self.dst_ignored_ip = dst_ignored_ip or DST_IGNORED_IP or {}
         self.dst_ignored_ip = set(ip for ip in self.dst_ignored_ip if _get_ip_type(ip) != "error")
         self._refresh_ignored()
+
+    def stats(self) -> dict:
+        """Copie thread-safe des compteurs cumulés (recv, kept, dropped, k_seen, k_drops...)."""
+        with self._stats_lock:
+            return dict(self._stats)
 
         if self.use_af_packet:
             logger.print("🐧 Linux détecté → AF_PACKET activé (performance maximale)")
@@ -1085,10 +1100,11 @@ def start_capture(
         logger.print("\n[INFO, start_capture] Erreur : ", str(e))
 
     finally:
-        cap_obj.stop()               # 1. plus aucun nouveau paquet
-        time.sleep(2)                # Attendre un peu les threads
-        queue.make_finished()        # 2. le dernier chunk partiel part sur disque
-        queue.wait()                 # 3. les workers vident la file (avec logs)
+        stopped = cap_obj.stop(timeout=2)               # 1. plus aucun nouveau paquet
+        if not stopped:
+            cap_obj.stop(timeout=5)
+        queue.make_finished()                           # 2. le dernier chunk partiel part sur disque
+        queue.wait()                                    # 3. les workers vident la file (avec logs)
         queue.stop(timeout=1)
         st = queue.stats()
         if st["failed_chunks"]:
