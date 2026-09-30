@@ -38,7 +38,7 @@ def run_ids_ips():
             time.sleep(1)
             # print("En cours...", end="\r")
             
-    except Exception as e:
+    except Exception:
         if GRAPH:
             graph.end()
     

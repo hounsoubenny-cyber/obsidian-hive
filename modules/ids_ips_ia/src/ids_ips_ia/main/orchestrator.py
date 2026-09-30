@@ -169,7 +169,7 @@ class IDS_IPS:
             model_ready = threading.Event()
             model_ready_mp = mp.Event()
 
-            detect_queue = queue.Queue(maxsize=100_000_000)
+            detect_queue = queue.Queue(maxsize=1_000_000)  # 100_000_000
             process = []
 
             self._create_refit_monitor()
@@ -261,6 +261,7 @@ class IDS_IPS:
         """Affiche la configuration courante."""
         logger.print("Configuration de l'ids/ips : ")
         logger.print("    -Fichier de sauvegarde du model : ", self.model_file)
+        logger.print("    -Skipper le fit : ", self.do_not_fit)
         logger.print("    -Mode de creation du model : ", self.mode)
         logger.print("    -Durée d'appretissage : ", self.duration)
         logger.print("    -Intervalle de sauvegarde : ", self.save_interval)
@@ -407,6 +408,7 @@ class IDS_IPS:
         try:
             logger.print("[INFO] Arret de Suricata...")
             state.stop()
+            self.Utils.clear_suricata_logs()
             self.Utils.stop_suricata()
         except Exception as e:
             logger.print("[ERREUR] Suricata task cancelling : ", e)
@@ -558,9 +560,20 @@ class IDS_IPS:
             logger.print("\n[INFO] Interruption détectée. Arrêt des threads...")
             self.stop()
             if self.detector:
-                print(self.detector.detect_start_time)
-                print(self.detector.detect_end_time)
-                print(self.detector.pkt_proccessed)
+                print("Detection start time:", self.detector.detect_start_time)
+                print("Detection end time:", self.detector.detect_end_time)
+                print("Detection processed paquets time:", self.detector.pkt_proccessed)
+                st = self.detector.detect_start_time
+                et = self.detector.detect_end_time
+                pkt = self.detector.pkt_proccessed
+                if st and et:
+                    e = et - st
+                    if not pkt:
+                        print(f"Detection: Aucun packet traité, durée={e}")
+                    
+                    else:
+                        print(f"Detection vitesse: {e/pkt}, duréé={e}, pkt={pkt}")
+                        
             self._cleanup(process or self.process, threads or self.threads)
             # sys.exit(0)
             # os._exit(0)
@@ -708,7 +721,7 @@ class IDS_IPS:
         try:
             self.detector.AnomalyScorer.save(
                 self.detector.AnomalyScorer.ip_score_dir,
-                self.detector.AnomalyScorer.ip_data
+                self.detector.AnomalyScorer.ip_data.to_dict()
             )
             logger.success("AnomalyScorer sauvegardé")
         except Exception as e:
