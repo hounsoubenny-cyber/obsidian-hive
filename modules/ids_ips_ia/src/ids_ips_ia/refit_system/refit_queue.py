@@ -39,10 +39,11 @@ class RefitQueue:
     
     def stop(self):
         self.stop_event.set()
-        try:
-            self.thread.join(1)
-        except Exception:
-            pass
+        if self.thread:
+            try:
+                self.thread.join(1)
+            except Exception:
+                pass
     
     def start(self):
         self.thread = threading.Thread(

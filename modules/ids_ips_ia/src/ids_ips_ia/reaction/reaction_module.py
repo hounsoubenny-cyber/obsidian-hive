@@ -28,7 +28,7 @@ from ids_ips_ia.ids_ips_utils.logger import get_logger
 from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
 
-
+_PREFIX = "OBSIDIAN"
 # =============================================================================
 # BACKEND NFTABLES : lib python-nftables (in-process, sans fork) si dispo,
 # sinon fallback automatique sur subprocess (comportement historique).
@@ -412,14 +412,18 @@ class React:
             return False
 
     def load_whitelist(self, filename: str):
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                whitelist = json.load(f)
-            
-            logger.print(f'Fichier whitelist chargé depuis : {filename}')
-            return whitelist
-        except Exception as e:
-            logger.print(f"Erreur lors du chargement du fichier whitelist : {str(e)}")
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r', encoding='utf-8') as f:
+                    whitelist = json.load(f)
+                
+                logger.print(f'Fichier whitelist chargé depuis : {filename}')
+                return whitelist
+            except Exception as e:
+                logger.print(f"Erreur lors du chargement du fichier whitelist : {str(e)}")
+                return []
+        else:
+            logger.print(f"Fichier inexistant: {filename}")
             return []
     
     def save_whitelist(self, filename, value):
@@ -439,14 +443,19 @@ class React:
             return False
 
     def load_history(self, filename):
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            logger.print(f'Fichier chargé depuis : {filename} avec {len(data)} entrées !')
-            self.blocked = data if isinstance(data, dict) else {}
-            return True
-        except Exception as e:
-            logger.print(f"Erreur lors du chargement du fichier historique : {str(e)}")
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                logger.print(f'Fichier chargé depuis : {filename} avec {len(data)} entrées !')
+                self.blocked = data if isinstance(data, dict) else {}
+                return True
+            except Exception as e:
+                logger.print(f"Erreur lors du chargement du fichier historique : {str(e)}")
+                return False
+        
+        else:
+            logger.print(f"Fichier inexistant: {filename}")
             return False
 
     @staticmethod
@@ -535,7 +544,7 @@ class React:
             
             # Règles INPUT IPv4
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip", "saddr", "@blacklist_input_ip4",
-             "log", "prefix", "SHIELD_IPS_BLACKLIST_IP4 ", "drop"],
+             "log", "prefix", f"{_PREFIX}_IPS_BLACKLIST_IP4 ", "drop"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip", "saddr", "@blacklist_rate_limite_data_input_ip4",
              "meter", "rate_data_in_ip4_meter", "{", "ip", "saddr", "limit", "rate", NFT_RATE_DATA_LIMITE, "}", "accept"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip", "saddr", "@blacklist_rate_limite_input_ip4",
@@ -543,7 +552,7 @@ class React:
             
             # Règles INPUT IPv6
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip6", "saddr", "@blacklist_input_ip6",
-             "log", "prefix", "SHIELD_IPS_BLACKLIST_IP6 ", "drop"],
+             "log", "prefix", f"{_PREFIX}_IPS_BLACKLIST_IP6 ", "drop"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip6", "saddr", "@blacklist_rate_limite_data_input_ip6",
              "meter", "rate_data_in_ip6_meter", "{", "ip6", "saddr", "limit", "rate", NFT_RATE_DATA_LIMITE, "}", "accept"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "input", "ip6", "saddr", "@blacklist_rate_limite_input_ip6",
@@ -551,7 +560,7 @@ class React:
             
             # Règles OUTPUT IPv4
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip", "daddr", "@blacklist_output_ip4",
-             "log", "prefix", "SHIELD_IPS_BLACKLIST_IP4 ", "drop"],
+             "log", "prefix", f"{_PREFIX}_IPS_BLACKLIST_IP4 ", "drop"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip", "daddr", "@blacklist_rate_limite_data_output_ip4",
              "meter", "rate_data_out_ip4_meter", "{", "ip", "daddr", "limit", "rate", NFT_RATE_DATA_LIMITE, "}", "accept"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip", "daddr", "@blacklist_rate_limite_output_ip4",
@@ -559,7 +568,7 @@ class React:
             
             # Règles OUTPUT IPv6
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip6", "daddr", "@blacklist_output_ip6",
-             "log", "prefix", "SHIELD_IPS_BLACKLIST_IP6 ", "drop"],
+             "log", "prefix", f"{_PREFIX}_IPS_BLACKLIST_IP6 ", "drop"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip6", "daddr", "@blacklist_rate_limite_data_output_ip6",
              "meter", "rate_data_out_ip6_meter", "{", "ip6", "daddr", "limit", "rate", NFT_RATE_DATA_LIMITE, "}", "accept"],
             ["nft", "add", "rule", "inet", NFT_TABLE_NAME, "output", "ip6", "daddr", "@blacklist_rate_limite_output_ip6",

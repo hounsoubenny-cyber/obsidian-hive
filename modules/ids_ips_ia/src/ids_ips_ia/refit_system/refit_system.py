@@ -346,10 +346,14 @@ class ModelRefitMonitor:
         self.refit()
         
     def stop(self):
-        if self.is_in_refit:
-            while self.is_in_refit:
-                time.sleep(1)
-                
-        self.event.set()
-        self.monitor_thread.join(1)
+        if self.monitor_thread:
+            if self.is_in_refit:
+                while self.is_in_refit:
+                    time.sleep(1)
+                    
+            self.event.set()
+            try:
+                self.monitor_thread.join(1)
+            except Exception:
+                pass
         

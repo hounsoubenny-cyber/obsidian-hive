@@ -76,7 +76,7 @@ ADMIN_DATA = {
     "key": "",
     "password": "",
     "is_exec": False
-    }
+}
 
 try:
     ADMIN_DATA = auth()

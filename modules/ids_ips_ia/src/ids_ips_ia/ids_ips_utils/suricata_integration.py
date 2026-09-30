@@ -11,22 +11,23 @@ import os
 import sys
 import json
 import time
+import yaml
+import psutil
 import distro
 import socket
 import shutil
-import yaml
 import asyncio
+import getpass
+import platform
+import traceback
+import threading
 import netifaces
 import ipaddress
 import subprocess
-import platform
-import traceback
-import getpass
-import threading
-import psutil
-from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
-from ids_ips_ia.ids_ips_utils.logger import get_logger
 from modules_utils.loop_utils import _run_async
+from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
+from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
 from modules_utils.stop_process import kill_process_group_async as kill_process
 
 logger = get_logger()
@@ -219,7 +220,7 @@ state = State()
 
 class Utils:
     def __init__(self):
-        self.suricata_table = "shieldai_ids_ipd_suricata_ips"
+        self.suricata_table = f"obsidian_ids_ips_suricata_ips__{INSTANCE_SUFFIX}"
         self.is_update = False
         
     def detect_os(self):
@@ -241,6 +242,8 @@ class Utils:
         paths = {}
         os_id = self.detect_os()
         paths['os_id'] = os_id
+        dir_keys = {"rules", "log"}
+        paths_keys = {"config"}
         
         if 'darwin' in os_id:
             # macOS avec Homebrew
@@ -249,28 +252,42 @@ class Utils:
             else:  # Intel
                 prefix = '/usr/local'
             
-            paths['config'] = f"{prefix}/etc/suricata/suricata.yaml"
-            paths['rules'] = f"{prefix}/var/lib/suricata/rules"
-            paths['log'] = f"{prefix}/var/log/suricata"
+            paths['config'] = f"{prefix}/etc/suricata/{INSTANCE_SUFFIX}/suricata.yaml"
+            paths['rules'] = f"{prefix}/var/lib/suricata/{INSTANCE_SUFFIX}/rules"
+            paths['log'] = f"{prefix}/var/log/suricata/{INSTANCE_SUFFIX}"
         
         elif 'linux' in os_id:
             # Linux (Debian, Ubuntu, Fedora, RHEL, Arch...)
             # Les chemins sont quasiment identiques sur toutes les distributions modernes
-            paths['config'] = "/etc/suricata/suricata.yaml"
-            paths['rules'] = "/var/lib/suricata/rules"
-            paths['log'] = "/var/log/suricata"
+            paths['config'] = f"/etc/suricata/{INSTANCE_SUFFIX}/suricata.yaml"
+            paths['rules'] = f"/var/lib/suricata/{INSTANCE_SUFFIX}/rules"
+            paths['log'] = f"/var/log/suricata/{INSTANCE_SUFFIX}"
         
         elif 'windows' in os_id:
             # Windows (installation par défaut)
             prog_files = os.environ.get('ProgramFiles', 'C:\\Program Files')
-            paths['config'] = f"{prog_files}\\Suricata\\suricata.yaml"
-            paths['rules'] = f"{prog_files}\\Suricata\\rules"
-            paths['log'] = f"{prog_files}\\Suricata\\log"
+            paths['config'] = f"{prog_files}\\Suricata\\{INSTANCE_SUFFIX}\\suricata.yaml"
+            paths['rules'] = f"{prog_files}\\Suricata\\{INSTANCE_SUFFIX}\\rules"
+            paths['log'] = f"{prog_files}\\Suricata\\{INSTANCE_SUFFIX}\\log"
         
         else:
             paths['config'] = None
             paths['rules'] = None
             paths['log'] = None
+        
+        for key in dir_keys:
+            try:
+                if paths[key]:
+                    os.makedirs(paths[key], exist_ok=True)
+            except Exception:
+                pass
+        
+        for key in paths_keys:
+            try:
+                if paths[key]:
+                    os.makedirs(os.path.dirname(paths[key]), exist_ok=True)
+            except Exception:
+                pass
             
         return paths
     
@@ -381,7 +398,7 @@ class Utils:
             traceback.print_exc()
             return paths
 
-    def clear_suricata_logs(self):
+    def clear_suricata_logs(self, show_lines: bool = False):
         """Vide les fichiers eve.json et fast.log après avoir affiché les dernières lignes."""
         paths = self.get_suricata_paths()
         eve_file = paths.get('eve_file')
@@ -395,8 +412,9 @@ class Utils:
         try:
             cmd = ['sudo', 'tail', '-n', '10', eve_file]
             result = subprocess.run(cmd, text=True, capture_output=True, check=False)
-            logger.print("📄 Dernières entrées eve.json :")
-            logger.print(result.stdout if result.stdout else "(vide)")
+            if show_lines:
+                logger.print("📄 Dernières entrées eve.json :")
+                logger.print(result.stdout if result.stdout else "(vide)")
         except Exception as e:
             logger.print(f"⚠️ Impossible de lire eve.json : {e}")
         

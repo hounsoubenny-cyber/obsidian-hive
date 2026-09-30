@@ -5,13 +5,14 @@ Created on Mon Apr 13 11:14:28 2026
 
 @author: hounsousamuel
 """
-import os
 
+import os
 import json5
 import threading
 from copy import deepcopy
 from datetime import datetime
 from ids_ips_ia.ids_ips_utils.logger import get_logger
+
 logger = get_logger()
 
 date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
@@ -189,13 +190,13 @@ CLASS_CONFIG = {
       "API_CONFIG": {
           "port": 8080,
           "host": "0.0.0.0"
-          },
+      },
       "REQUEST_LIMIT": 30,
       "GRAPHS": True,
       "N_TRIALS": 2,
       "clear_sets_at_exit": True,
       "unlock_at_exit": True,
-      "capture_filename": "capture.pkl",
+      "capture_filename": f"capture_{date}.pkl",
       "add_data_to_capture_path": None,
       "do_not_fit": not True,
     }
@@ -222,14 +223,14 @@ ANOMALY_RATE_THRESHOLDS = CLASS_CONFIG[ANOMALY_RATE_THRESHOLDS_KEY]
 SCORING_CONFIG = CLASS_CONFIG[SCORING_CONFIG_KEY]
 
 LIST = [
-        SEUIL_KEY,
-        SCORING_CONFIG_KEY,
-        CRITICAL_PORT_KEY,
-        DANGEROUS_LOCALISATION_KEY,
-        ANOMALY_CONFIG_KEY,
-        DECAY_CONFIG_KEY,
-        ANOMALY_RATE_THRESHOLDS_KEY
-    ]
+    SEUIL_KEY,
+    SCORING_CONFIG_KEY,
+    CRITICAL_PORT_KEY,
+    DANGEROUS_LOCALISATION_KEY,
+    ANOMALY_CONFIG_KEY,
+    DECAY_CONFIG_KEY,
+    ANOMALY_RATE_THRESHOLDS_KEY
+]
 
 LOCALS = locals()
 
@@ -257,12 +258,23 @@ class Config:
             self._save(self.CONFIG)
         else:  
             self.CONFIG = data
-            
+        
         self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("model_file", f"model_{date}.pkl")
-        self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"] = self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"].replace("{date}", date)
+        self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"] = (
+            self.CONFIG[GLOBAL_CONFIG_KEY]["model_file"].replace("{date}", date)
+        )
         self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("capture_filename", f"capture_{date}.pkl")
+        self.CONFIG[GLOBAL_CONFIG_KEY]["capture_filename"] = (
+            self.CONFIG[GLOBAL_CONFIG_KEY]["capture_filename"].replace("{date}", date)
+        )
         self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("max_n_paquets", DEFAULT_MAX_N_PAQUETS)
-    
+        self.CONFIG[GLOBAL_CONFIG_KEY].setdefault("ids_mode", "ids")
+        self.CONFIG[GLOBAL_CONFIG_KEY]["ids_mode"] = (
+            str(self.CONFIG[GLOBAL_CONFIG_KEY]["ids_mode"]).lower()
+        )
+        if self.CONFIG[GLOBAL_CONFIG_KEY]["ids_mode"] not in ("ids", "ips"):
+            self.CONFIG[GLOBAL_CONFIG_KEY]["ids_mode"] = "ids"
+            
     def get(self, *args, **kwargs):
         return self.CONFIG.get(*args, **kwargs)
     
@@ -506,194 +518,197 @@ class Config:
     """
     
 if __name__ == "__main__":
-    import tempfile
-    logger.print("🧪 DÉBUT DES TESTS UNITAIRES - Classe Config")
-    logger.print("=" * 50)
-    
-    # === TEST 1: Initialisation ===
-    logger.print("\n1. TEST d'initialisation")
-    logger.print("-" * 30)
-    
-    # Créer un fichier temporaire pour les tests
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
-        temp_config_path = tmp.name
+    def test():
+        import tempfile
+        logger.print("🧪 DÉBUT DES TESTS UNITAIRES - Classe Config")
+        logger.print("=" * 50)
         
-        # Tester l'initialisation
-        config = Config(config_path=temp_config_path)
-        # Vérifier que la configuration est chargée
-        assert config.CONFIG is not None, "❌ CONFIG non initialisé"
-        assert isinstance(config.CONFIG, dict), "❌ CONFIG n'est pas un dict"
+        # === TEST 1: Initialisation ===
+        logger.print("\n1. TEST d'initialisation")
+        logger.print("-" * 30)
         
-        # Vérifier toutes les catégories
+        # Créer un fichier temporaire pour les tests
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+            temp_config_path = tmp.name
+            
+            # Tester l'initialisation
+            config = Config(config_path=temp_config_path)
+            # Vérifier que la configuration est chargée
+            assert config.CONFIG is not None, "❌ CONFIG non initialisé"
+            assert isinstance(config.CONFIG, dict), "❌ CONFIG n'est pas un dict"
+            
+            # Vérifier toutes les catégories
+            for category in LIST:
+                assert category in config.CONFIG, f"❌ Catégorie manquante: {category}"
+            
+            logger.print("✅ Initialisation OK")
+        
+        # === TEST 2: Validation des catégories ===
+        logger.print("\n2. TEST de validation")
+        logger.print("-" * 30)
+        
+        # Test SEUIL
+        valid_seuil = {"decision": -0.5}
+        invalid_seuil = {"decision": 1.5}  # Hors range
+        assert config.validate("SEUIL", valid_seuil), "❌ Validation SEUIL valide échouée"
+        assert not config.validate("SEUIL", invalid_seuil), "❌ Validation SEUIL invalide réussie"
+        
+        # Test CRITICAL_PORT
+        valid_port = {"22": 40, "80": 20}
+        invalid_port_key = {"99999": 40}  # Port invalide
+        assert config.validate("CRITICAL_PORT", valid_port), "❌ Validation PORT valide échouée"
+        assert not config.validate("CRITICAL_PORT", invalid_port_key), "❌ Validation PORT invalide réussie"
+        
+        # Test SCORING_CONFIG
+        valid_scoring = {"ml_predict": 20, "port_weight": 40}
+        invalid_scoring = {"ml_predict": 400}  # Valeur trop haute
+        assert config.validate("SCORING_CONFIG", valid_scoring), "❌ Validation SCORING valide échouée"
+        assert not config.validate("SCORING_CONFIG", invalid_scoring), "❌ Validation SCORING invalide réussie"
+        
+        logger.print("✅ Validation OK")
+        
+        # === TEST 3: Méthode update() ===
+        logger.print("\n3. TEST de update()")
+        logger.print("-" * 30)
+        
+        # Sauvegarder les valeurs originales pour restauration
+        original_config = deepcopy(config.CONFIG)
+        
+        # Test update valide
+        update_result = config.update("SEUIL", {"decision": -0.3})
+        assert update_result["success"] == True, "❌ Update valide échoué"
+        assert update_result["rejected"] == [], "❌ Clés rejetées alors que valides"
+        assert config.CONFIG["SEUIL"]["decision"] == -0.3, "❌ Valeur non mise à jour"
+        
+        # Test update avec clés mixtes (valides + invalides)
+        mixed_result = config.update("CRITICAL_PORT", {"22": 45, "INVALID": 100, "80": 25})
+        assert mixed_result["success"] == True, "❌ Update mixte échoué"
+        assert "INVALID" in mixed_result["rejected"], "❌ Clé invalide non rejetée"
+        assert "22" not in mixed_result["rejected"], "❌ Clé valide rejetée"
+        assert config.CONFIG["CRITICAL_PORT"]["22"] == 45, "❌ Valeur port 22 non mise à jour"
+        assert config.CONFIG["CRITICAL_PORT"]["80"] == 25, "❌ Valeur port 80 non mise à jour"
+        
+        # Test update complètement invalide
+        invalid_result = config.update("SEUIL", {"invalid_key": 123})
+        assert invalid_result["success"] == False, "❌ Update invalide réussi"
+        assert invalid_result["rejected"] == ["invalid_key"] or "invalid_key" in invalid_result["errors"], "❌ Pas d'erreur pour clé invalide"
+        
+        logger.print("✅ Update() OK")
+        
+        # === TEST 4: Persistance (sauvegarde/chargement) ===
+        logger.print("\n4. TEST de persistance")
+        logger.print("-" * 30)
+        
+        # Modifier une valeur
+        config.update("SCORING_CONFIG", {"ml_predict": 25})
+        
+        # Créer une nouvelle instance qui va charger depuis le fichier
+        config2 = Config(config_path=temp_config_path)
+        
+        # Vérifier que la valeur modifiée est persistée
+        assert config2.CONFIG["SCORING_CONFIG"]["ml_predict"] == 25, \
+            f"❌ Persistance échouée. Attendu: 25, Reçu: {config2.CONFIG['SCORING_CONFIG']['ml_predict']}"
+        
+        # Vérifier que le fichier existe
+        assert os.path.exists(temp_config_path), "❌ Fichier de config non créé"
+        
+        # Vérifier le contenu du fichier
+        with open(temp_config_path, 'r') as f:
+            saved_data = json5.load(f)
+            assert saved_data["SCORING_CONFIG"]["ml_predict"] == 25, "❌ Données incorrectes dans le fichier"
+        
+        logger.print("✅ Persistance OK")
+        
+        # === TEST 5: Thread safety (simulation) ===
+        logger.print("\n5. TEST de thread safety")
+        logger.print("-" * 30)
+        
+        import time
+        
+        # Fonction pour simuler des accès concurrents
+        def concurrent_update(thread_id):
+            for i in range(5):
+                # Chaque thread modifie une valeur différente
+                config.update("SCORING_CONFIG", {"ml_predict": thread_id * 10 + i})
+                time.sleep(0.01)
+        
+        # Lancer plusieurs threads
+        threads = []
+        for i in range(3):
+            t = threading.Thread(target=concurrent_update, args=(i,))
+            threads.append(t)
+            t.start()
+        
+        # Attendre la fin des threads
+        for t in threads:
+            t.join()
+        
+        # Vérifier qu'aucune corruption ne s'est produite
+        final_value = config.CONFIG["SCORING_CONFIG"]["ml_predict"]
+        assert isinstance(final_value, (int, float)), "❌ Corruption des données"
+        assert 0 <= final_value <= 300, "❌ Valeur hors limites après updates concurrents"
+        
+        logger.print("✅ Thread safety OK")
+        
+        # === TEST 6: Validation edge cases ===
+        logger.print("\n6. TEST des cas limites")
+        logger.print("-" * 30)
+        
+        # Test avec données vides
+        empty_result = config.update("SEUIL", {})
+        assert empty_result["success"] == False, "❌ Update vide réussi"
+        
+        # Test avec catégorie inexistante
+        invalid_category_result = config.update("CATEGORIE_INEXISTANTE", {"key": "value"})
+        assert "errors" in invalid_category_result and len(invalid_category_result["errors"]) > 0, \
+            "❌ Catégorie inexistante non détectée"
+        
+        # Test avec None au lieu de dict
+        none_result = config.update("SEUIL", None)
+        assert none_result["success"] == False, "❌ None accepté comme paramètre"
+        
+        # Test avec string au lieu de dict
+        string_result = config.update("SEUIL", "not a dict")
+        assert string_result["success"] == False, "❌ String accepté comme paramètre"
+        
+        logger.print("✅ Cas limites OK")
+        
+        # === TEST 7: Restauration des valeurs originales ===
+        logger.print("\n7. TEST de restauration")
+        logger.print("-" * 30)
+        
+        # Restaurer la config originale
+        config.CONFIG = original_config
+        config._save(config.CONFIG)
+        
+        # Vérifier la restauration
         for category in LIST:
-            assert category in config.CONFIG, f"❌ Catégorie manquante: {category}"
+            assert config.CONFIG[category] == original_config[category], \
+                f"❌ Restauration échouée pour {category}"
         
-        logger.print("✅ Initialisation OK")
+        logger.print("✅ Restauration OK")
+        
+        # === TEST 8: Méthode _help() ===
+        logger.print("\n8. TEST de la méthode _help()")
+        logger.print("-" * 30)
+        
+        help_text = config._help()
+        assert help_text is not None, "❌ _help() retourne None"
+        assert isinstance(help_text, str), "❌ _help() ne retourne pas une string"
+        assert len(help_text) > 100, "❌ _help() trop courte"
+        
+        # Vérifier que les catégories sont mentionnées
+        for category in LIST:
+            assert category in help_text.upper(), f"❌ Catégorie {category} non mentionnée dans _help()"
+        
+        logger.print("✅ _help() OK")
+        
+        # Nettoyage
+        os.unlink(temp_config_path)
+        
+        logger.print("\n" + "=" * 50)
+        logger.print("🎉 TOUS LES TESTS PASSÉS AVEC SUCCÈS !")
+        logger.print(f"✅ {8} groupes de tests validés")
+        logger.print("=" * 50)
     
-    # === TEST 2: Validation des catégories ===
-    logger.print("\n2. TEST de validation")
-    logger.print("-" * 30)
-    
-    # Test SEUIL
-    valid_seuil = {"decision": -0.5}
-    invalid_seuil = {"decision": 1.5}  # Hors range
-    assert config.validate("SEUIL", valid_seuil), "❌ Validation SEUIL valide échouée"
-    assert not config.validate("SEUIL", invalid_seuil), "❌ Validation SEUIL invalide réussie"
-    
-    # Test CRITICAL_PORT
-    valid_port = {"22": 40, "80": 20}
-    invalid_port_key = {"99999": 40}  # Port invalide
-    assert config.validate("CRITICAL_PORT", valid_port), "❌ Validation PORT valide échouée"
-    assert not config.validate("CRITICAL_PORT", invalid_port_key), "❌ Validation PORT invalide réussie"
-    
-    # Test SCORING_CONFIG
-    valid_scoring = {"ml_predict": 20, "port_weight": 40}
-    invalid_scoring = {"ml_predict": 400}  # Valeur trop haute
-    assert config.validate("SCORING_CONFIG", valid_scoring), "❌ Validation SCORING valide échouée"
-    assert not config.validate("SCORING_CONFIG", invalid_scoring), "❌ Validation SCORING invalide réussie"
-    
-    logger.print("✅ Validation OK")
-    
-    # === TEST 3: Méthode update() ===
-    logger.print("\n3. TEST de update()")
-    logger.print("-" * 30)
-    
-    # Sauvegarder les valeurs originales pour restauration
-    original_config = deepcopy(config.CONFIG)
-    
-    # Test update valide
-    update_result = config.update("SEUIL", {"decision": -0.3})
-    assert update_result["success"] == True, "❌ Update valide échoué"
-    assert update_result["rejected"] == [], "❌ Clés rejetées alors que valides"
-    assert config.CONFIG["SEUIL"]["decision"] == -0.3, "❌ Valeur non mise à jour"
-    
-    # Test update avec clés mixtes (valides + invalides)
-    mixed_result = config.update("CRITICAL_PORT", {"22": 45, "INVALID": 100, "80": 25})
-    assert mixed_result["success"] == True, "❌ Update mixte échoué"
-    assert "INVALID" in mixed_result["rejected"], "❌ Clé invalide non rejetée"
-    assert "22" not in mixed_result["rejected"], "❌ Clé valide rejetée"
-    assert config.CONFIG["CRITICAL_PORT"]["22"] == 45, "❌ Valeur port 22 non mise à jour"
-    assert config.CONFIG["CRITICAL_PORT"]["80"] == 25, "❌ Valeur port 80 non mise à jour"
-    
-    # Test update complètement invalide
-    invalid_result = config.update("SEUIL", {"invalid_key": 123})
-    assert invalid_result["success"] == False, "❌ Update invalide réussi"
-    assert invalid_result["rejected"] == ["invalid_key"] or "invalid_key" in invalid_result["errors"], "❌ Pas d'erreur pour clé invalide"
-    
-    logger.print("✅ Update() OK")
-    
-    # === TEST 4: Persistance (sauvegarde/chargement) ===
-    logger.print("\n4. TEST de persistance")
-    logger.print("-" * 30)
-    
-    # Modifier une valeur
-    config.update("SCORING_CONFIG", {"ml_predict": 25})
-    
-    # Créer une nouvelle instance qui va charger depuis le fichier
-    config2 = Config(config_path=temp_config_path)
-    
-    # Vérifier que la valeur modifiée est persistée
-    assert config2.CONFIG["SCORING_CONFIG"]["ml_predict"] == 25, \
-        f"❌ Persistance échouée. Attendu: 25, Reçu: {config2.CONFIG['SCORING_CONFIG']['ml_predict']}"
-    
-    # Vérifier que le fichier existe
-    assert os.path.exists(temp_config_path), "❌ Fichier de config non créé"
-    
-    # Vérifier le contenu du fichier
-    with open(temp_config_path, 'r') as f:
-        saved_data = json5.load(f)
-        assert saved_data["SCORING_CONFIG"]["ml_predict"] == 25, "❌ Données incorrectes dans le fichier"
-    
-    logger.print("✅ Persistance OK")
-    
-    # === TEST 5: Thread safety (simulation) ===
-    logger.print("\n5. TEST de thread safety")
-    logger.print("-" * 30)
-    
-    import time
-    
-    # Fonction pour simuler des accès concurrents
-    def concurrent_update(thread_id):
-        for i in range(5):
-            # Chaque thread modifie une valeur différente
-            config.update("SCORING_CONFIG", {"ml_predict": thread_id * 10 + i})
-            time.sleep(0.01)
-    
-    # Lancer plusieurs threads
-    threads = []
-    for i in range(3):
-        t = threading.Thread(target=concurrent_update, args=(i,))
-        threads.append(t)
-        t.start()
-    
-    # Attendre la fin des threads
-    for t in threads:
-        t.join()
-    
-    # Vérifier qu'aucune corruption ne s'est produite
-    final_value = config.CONFIG["SCORING_CONFIG"]["ml_predict"]
-    assert isinstance(final_value, (int, float)), "❌ Corruption des données"
-    assert 0 <= final_value <= 300, "❌ Valeur hors limites après updates concurrents"
-    
-    logger.print("✅ Thread safety OK")
-    
-    # === TEST 6: Validation edge cases ===
-    logger.print("\n6. TEST des cas limites")
-    logger.print("-" * 30)
-    
-    # Test avec données vides
-    empty_result = config.update("SEUIL", {})
-    assert empty_result["success"] == False, "❌ Update vide réussi"
-    
-    # Test avec catégorie inexistante
-    invalid_category_result = config.update("CATEGORIE_INEXISTANTE", {"key": "value"})
-    assert "errors" in invalid_category_result and len(invalid_category_result["errors"]) > 0, \
-        "❌ Catégorie inexistante non détectée"
-    
-    # Test avec None au lieu de dict
-    none_result = config.update("SEUIL", None)
-    assert none_result["success"] == False, "❌ None accepté comme paramètre"
-    
-    # Test avec string au lieu de dict
-    string_result = config.update("SEUIL", "not a dict")
-    assert string_result["success"] == False, "❌ String accepté comme paramètre"
-    
-    logger.print("✅ Cas limites OK")
-    
-    # === TEST 7: Restauration des valeurs originales ===
-    logger.print("\n7. TEST de restauration")
-    logger.print("-" * 30)
-    
-    # Restaurer la config originale
-    config.CONFIG = original_config
-    config._save(config.CONFIG)
-    
-    # Vérifier la restauration
-    for category in LIST:
-        assert config.CONFIG[category] == original_config[category], \
-            f"❌ Restauration échouée pour {category}"
-    
-    logger.print("✅ Restauration OK")
-    
-    # === TEST 8: Méthode _help() ===
-    logger.print("\n8. TEST de la méthode _help()")
-    logger.print("-" * 30)
-    
-    help_text = config._help()
-    assert help_text is not None, "❌ _help() retourne None"
-    assert isinstance(help_text, str), "❌ _help() ne retourne pas une string"
-    assert len(help_text) > 100, "❌ _help() trop courte"
-    
-    # Vérifier que les catégories sont mentionnées
-    for category in LIST:
-        assert category in help_text.upper(), f"❌ Catégorie {category} non mentionnée dans _help()"
-    
-    logger.print("✅ _help() OK")
-    
-    # Nettoyage
-    os.unlink(temp_config_path)
-    
-    logger.print("\n" + "=" * 50)
-    logger.print("🎉 TOUS LES TESTS PASSÉS AVEC SUCCÈS !")
-    logger.print(f"✅ {8} groupes de tests validés")
-    logger.print("=" * 50)
+    # test()

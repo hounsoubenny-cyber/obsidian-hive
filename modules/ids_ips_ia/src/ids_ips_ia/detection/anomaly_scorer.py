@@ -135,7 +135,10 @@ class BoundedIPStore:
         self.protected_fn = protected_fn or (lambda k, v: False)
         self.evict_fn = evict_fn or self._default_evict
         self.timestamp_key = timestamp_key
-        
+    
+    def to_dict(self):
+        return dict(self._data)
+    
     def __setitem__(self, key, value):
         if key not in self._data and len(self._data) >= self.max_size:
             self.evict_fn(self)
@@ -155,7 +158,10 @@ class BoundedIPStore:
 
     def pop(self, key, default=None):
         return self._data.pop(key, default)
-
+    
+    def popitem(self):
+        return self._data.popitem()
+    
     def items(self):
         return self._data.items()
 
@@ -181,7 +187,7 @@ class AnomalyScorer:
         self.reset_days = reset_days * 24 * 3600
         self.save_atexit()
         self.ip_score_dir = os.path.join(ip_score_dir, 'scores.pkl')
-        self.load(self.ip_score_dir)
+        # self.load(self.ip_score_dir)
         self.critical_port = CONFIG.CONFIG.get(CRITICAL_PORT_KEY, {})
         self.GeoLocator = GeoLocator()
         self.React = React
@@ -228,10 +234,11 @@ class AnomalyScorer:
                 os.chmod(filename.replace('.pkl', '.json'), 0o644)
             except Exception:
                 pass
+            
             return True
 
         except Exception as e:
-            logger.print("Erreur lord de la sauvegarde du fichier historique : ", e)
+            logger.print("Erreur lors de la sauvegarde du fichier historique : ", e)
             return False
 
     def save_whitelist(self, filename, value):
@@ -243,7 +250,7 @@ class AnomalyScorer:
             return True
 
         except Exception as e:
-            logger.print("Erreur lord de la sauvegarde du fichier historique : ", e)
+            logger.print("Erreur lors de la sauvegarde du fichier whitelist : ", e)
             return False
 
     def load(self, filename):
@@ -262,7 +269,7 @@ class AnomalyScorer:
         import atexit
 
         def _save():
-            self.save(self.ip_score_dir, self.ip_data)
+            self.save(self.ip_score_dir, self.ip_data.to_dict())
             logger.print('Fin sauvegarde !')
         atexit.register(_save)
 
@@ -879,6 +886,7 @@ class AnomalyScorer:
             score_dangerous = score_dangerous_correlated
 
         decision = self.decide_action(score_dangerous)
+        self.ip_data[target]['score'] = score_dangerous
         self.ip_data[target]['decision'] = decision
         self.ip_data[target]['input'] = block_input
         self.ip_data[target]['ip'] = target
@@ -900,7 +908,7 @@ class AnomalyScorer:
         if t - self.last_save >= self.save_interval:
             tasks = [
                 asyncio.create_task(asyncio.to_thread(self.clear)),
-                asyncio.create_task(asyncio.to_thread(self.save, self.ip_score_dir, self.ip_data))
+                asyncio.create_task(asyncio.to_thread(self.save, self.ip_score_dir, self.ip_data.to_dict()))
             ]
             await asyncio.gather(*tasks, return_exceptions=True)
             self.last_save = time.time()

@@ -177,5 +177,8 @@ modules/scanner_ia/src/scanner_ia/serveurs/safeserver/manifest.json
 modules/scanner_ia/src/scanner_ia/build_dataset/dataset_chunks_backup/
 modules/scanner_ia/src/scanner_ia/build_dataset/*crawl_result*
 modules/scanner_ia/src/scanner_ia/build_dataset/crawl_final_result
+modules/ids_ips_ia/src/ids_ips_ia/models/data/models/
+modules/ids_ips_ia/src/ids_ips_ia/reaction/data/
+modules/ids_ips_ia/src/ids_ips_ia/detection/data/
 modules/ids_ips_ia/src/ids_ips_ia/ids_ips.txt
 web_asset_report_dir/

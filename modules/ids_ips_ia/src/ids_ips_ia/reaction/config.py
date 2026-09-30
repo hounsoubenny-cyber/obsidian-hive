@@ -8,7 +8,7 @@ Created on Sun Apr 12 22:25:14 2026
 
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
 
-NFT_TABLE_NAME = f"shieldai_ids_ips_table_{INSTANCE_SUFFIX}"
+NFT_TABLE_NAME = f"obsidian_ids_ips_table_{INSTANCE_SUFFIX}"
 DEFAULT_RULE_TIMEOUT = 60
 DEFAULT_RULE_UNIT = "m"
 

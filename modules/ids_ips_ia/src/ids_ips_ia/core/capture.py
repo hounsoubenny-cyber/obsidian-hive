@@ -60,7 +60,9 @@ os.makedirs(DATADIR, exist_ok=True)
 # 1e6 = Mb decimal
 FIT_MAX_SIZE = 20_000         # paquets par chunk (taille d'un deque)
 FIT_WORKERS = 4               # threads qui écrivent les chunks sur disque
-EST_PKT_BYTES = 1200          # estimation RAM par paquet (payload + objets Python)
+EST_PKT_BYTES = 1200          # estimation RAM par paquet, sert à traduire max_size en octets
+PKT_OVERHEAD = 120            # octets Python d'un paquet en plus du payload (tuple + float + objet bytes)
+MIN_CHUNK_BYTES = 256_000     # plancher d'un chunk : en dessous, trop de petits fichiers
 
 # En AF_PACKET, garde seulement les trames IPv4/IPv6 (ARP, STP, LLDP... ignorés),
 # comme le fait déjà le filtre BPF 'tcp or udp or icmp' du mode pcap.
@@ -192,22 +194,65 @@ def extract_ip(data: tuple | dpkt.ethernet.Ethernet) -> tuple:
 
     return _extract_ip_cython(data)
 
-def available_ram():
-    with open("/proc/meminfo") as f:
-        avail = next(int(l.split()[1]) * 1024 for l in f if l.startswith("MemAvailable"))
-    try:   # limite cgroup v2 (Docker...)
-        lim = open("/sys/fs/cgroup/memory.max").read().strip()
-        if lim != "max":
-            avail = min(avail, int(lim) - int(open("/sys/fs/cgroup/memory.current").read()))
-    except OSError:
-        pass
-    return avail
+def _read_int(path: str) -> int | None:
+    try:
+        with open(path) as f:
+            txt = f.read().strip()
+        return None if txt == "max" else int(txt)
+    except (OSError, ValueError):
+        return None
 
-def plan_memory(budget_mb=None, frac=0.15, chunk_mb=32, workers=2):
-    budget = budget_mb * 1e6 if budget_mb else available_ram() * frac
-    chunk = min(chunk_mb * 1e6, budget / (workers + 4))   # au moins 4 places de file
-    queue_max = int(budget // chunk) - workers - 1        # 1 chunk se remplit, les workers en écrivent
-    return {"chunk_bytes": int(chunk), "queue_max": queue_max}
+
+def available_ram() -> int:
+    """RAM réellement disponible (octets), en respectant la limite cgroup v2 (Docker, systemd)."""
+    try:
+        with open("/proc/meminfo") as f:
+            avail = next(int(l.split()[1]) * 1024 for l in f if l.startswith("MemAvailable"))
+    except (OSError, StopIteration):
+        return 2 * 1024 ** 3          # mesure impossible (pas Linux) : valeur prudente
+    limit, used = _read_int("/sys/fs/cgroup/memory.max"), _read_int("/sys/fs/cgroup/memory.current")
+    if limit is not None and used is not None:
+        avail = min(avail, limit - used)
+    return max(avail, 0)
+
+
+def plan_memory(max_size: int, workers: int, budget: int, allow_over_budget: bool = False) -> dict:
+    """Décide de la taille des chunks et de la file pour que la RAM max tienne dans `budget` (octets).
+
+    Le budget est la contrainte dure : si besoin on RÉDUIT le chunk, on ne lève jamais d'erreur.
+    Avec allow_over_budget=True l'appelant impose sa taille de chunk : rien n'est réduit,
+    mais `warning` est renseigné si la RAM max dépasse le budget.
+
+    Places en mémoire : 1 chunk se remplit + `workers` en cours d'écriture + `queue_max` en attente.
+    """
+    wanted = int(max_size) * EST_PKT_BYTES                   # taille de chunk voulue (octets)
+    slots = workers + 1 + 2                                  # minimum : 2 chunks en attente
+    if allow_over_budget:
+        chunk = wanted
+    else:
+        chunk = max(MIN_CHUNK_BYTES, min(wanted, budget // slots))
+    queue_max = max(2, budget // chunk - workers - 1)
+    ram_max = (queue_max + workers + 1) * chunk
+    warning = None
+    if ram_max > budget:
+        warning = f"RAM max {ram_max / 1e6:.1f} Mo > budget {budget / 1e6:.1f} Mo"
+    return {
+        "max_size": max(100, chunk // EST_PKT_BYTES),        # paquets par chunk réellement appliqués
+        "chunk_bytes": int(chunk),
+        "queue_max": int(queue_max),
+        "ram_max": int(ram_max),
+        "budget": int(budget),
+        "warning": warning,
+    }
+
+
+def _item_bytes(item) -> int:
+    """Poids mémoire approximatif d'un paquet (ts, octets)."""
+    try:
+        return len(item[1]) + PKT_OVERHEAD
+    except Exception:
+        return EST_PKT_BYTES
+
 
 # ------------------------------------------------------------ socket / BPF
 
@@ -305,27 +350,42 @@ class BuffuredQueue:
         num_workers: int = 4,
         queue_max: int | None = None,
         mem_budget_mb: int | None = None,
+        mem_frac: float = 0.18,
+        allow_over_budget: bool = False,
+        max_n_paquets: int | None = None,
     ):
-        # if max_size < 10_000:
-        #     raise ValueError("max_size doit être supérieur ou égal à 10_000")
-
+        """
+        max_size          : paquets par chunk VOULUS (peut être réduit pour respecter le budget)
+        queue_max         : chunks en attente ; None = déduit du budget
+        mem_budget_mb     : budget RAM en Mo ; None = mem_frac x RAM disponible (cgroups pris en compte)
+        allow_over_budget : True = on garde max_size tel quel même si ça dépasse le budget (avertissement)
+        """
+        if max_n_paquets is None or max_n_paquets == 0:
+            max_n_paquets = float("inf")
+        
+        self.max_n_paquets = max_n_paquets
         self.workers = []
-        self.max_size = int(max_size)
         self.num_workers = int(num_workers) or 4
-        if queue_max is None:
-            # plan_memory() est LA fonction qui décide du budget mémoire (RAM dispo,
-            # conscient des cgroups/Docker via available_ram()) ; on la fait raisonner
-            # en "taille de chunk" plutôt qu'en paquets, donc on lui passe la taille
-            # réelle d'un chunk de cette queue (max_size x EST_PKT_BYTES).
-            plan = plan_memory(
-                budget_mb=mem_budget_mb,
-                chunk_mb=self.max_size * EST_PKT_BYTES / 1e6,
-                workers=self.num_workers,
+        budget = int(mem_budget_mb * 1e6) if mem_budget_mb else int(available_ram() * mem_frac)
+        plan = plan_memory(int(max_size), self.num_workers, budget, allow_over_budget)
+        self.max_size = plan["max_size"]            # paquets par chunk réellement appliqués
+        self.chunk_bytes = plan["chunk_bytes"]      # plafond d'octets d'un chunk (garantit le budget)
+        self.queue_max = int(min(100, max(2, queue_max or plan["queue_max"])))
+        self.budget = budget
+        self.ram_max = (self.queue_max + self.num_workers + 1) * self.chunk_bytes
+        if self.ram_max > budget:
+            logger.print(
+                f"⚠️ BuffuredQueue : RAM max {self.ram_max / 1e6:.1f} Mo > budget "
+                f"{budget / 1e6:.1f} Mo (allow_over_budget={allow_over_budget})"
             )
-            queue_max = plan["queue_max"]
-        self.queue_max = int(min(100, max(2, queue_max)))
+        elif self.max_size < int(max_size):
+            logger.print(
+                f"ℹ️ BuffuredQueue : chunks réduits de {int(max_size)} à {self.max_size} paquets "
+                f"pour tenir dans le budget de {budget / 1e6:.0f} Mo"
+            )
 
         self._deque = deque(maxlen=self.max_size)
+        self._deque_bytes = 0                   # poids estimé du deque en cours de remplissage
         self._dt = datetime.now().strftime(BuffuredQueue.DT_FORMAT)
         self._save_dir = os.path.abspath(os.path.join(
             DATADIR, f"captures_file_{self._dt}"
@@ -347,6 +407,15 @@ class BuffuredQueue:
         self.failed_items = 0
         os.makedirs(self._save_dir, exist_ok=True)
 
+    def set_max_n_paquets(self, max_n_paquets: int | None = None):
+        with self._lock:
+            if max_n_paquets is None or max_n_paquets == 0:
+                max_n_paquets = float("inf")
+            
+            self.max_n_paquets = max_n_paquets
+        
+        return
+    
     @property
     def save_dir(self):
         return self._save_dir
@@ -411,46 +480,73 @@ class BuffuredQueue:
             self._end_event[worker_id].set()
 
     def is_full(self):
-        return len(self._deque) >= self.max_size
+        return len(self._deque) >= self.max_size or self._deque_bytes >= self.chunk_bytes
 
     def build_new_deque(self):
         with self._lock:
             self._deque = deque(maxlen=self.max_size)
+            self._deque_bytes = 0
 
     def _put(self, data: Any, put_method: str = "put") -> bool:
         """put = bloquant si la file de chunks est pleine ; put_nowait = refuse et renvoie False."""
         block = put_method == "put"
         chunk = None
-        with self._lock:
-            # if self._finished:
-            #     return False
-            
-            if len(self._deque) >= self.max_size:
-                if not block and self._queue.full():
-                    return False           # tout est plein : le paquet est refusé (l'appelant le compte)
+        max_n_paquets_reached = False
+        try:
+            with self._lock:
+                if self._finished:
+                    return True
                 
-                item = (self._deque, self._next_filename())
-                if block:
-                    chunk = item
+                if self.num_items >= self.max_n_paquets:
+                    max_n_paquets_reached = True
+                    logger.info(
+                        f"Nombre max de paquets demandé atteint: (demandé={self.max_n_paquets}, actuel={self.num_items})"
+                    )
+                    return True
+                
+                size = _item_bytes(data)
+                # le chunk part quand il a max_size paquets OU quand le prochain le ferait dépasser chunk_bytes
+                if (
+                    self._deque and (
+                        len(self._deque) >= self.max_size
+                        or self._deque_bytes + size > self.chunk_bytes
+                    )
+                ):
+                    if not block and self._queue.full():
+                        return False           # tout est plein : le paquet est refusé (l'appelant le compte)
                     
-                else:
-                    try:
-                        self._queue.put_nowait(item)
-                    except queue.Full:
-                        return False
-                    
-                self._deque = deque(maxlen=self.max_size)
-            self._deque.append(data)
-            self.num_items += 1
+                    item = (self._deque, self._next_filename())
+                    if block:
+                        chunk = item
+                        
+                    else:
+                        try:
+                            self._queue.put_nowait(item)
+                        except queue.Full:
+                            return False
+                        
+                    self._deque = deque(maxlen=self.max_size)
+                    self._deque_bytes = 0
+                self._deque.append(data)
+                self._deque_bytes += size
+                self.num_items += 1
+                
+        finally:
+            if max_n_paquets_reached:
+                self.make_finished()
+                
         if chunk is not None:
             self._queue.put(chunk)         # bloquant, hors verrou
         return True
 
     def _get(self):
-        try:
-            return self._deque.popleft()
-        except IndexError as e:
-            raise QueueEmpty(*e.args) from e
+        with self._lock:
+            try:
+                item = self._deque.popleft()
+            except IndexError as e:
+                raise QueueEmpty(*e.args) from e
+            self._deque_bytes = max(0, self._deque_bytes - _item_bytes(item))
+            return item
 
     def put(self, data: Any):
         return self._put(data, "put")
@@ -474,6 +570,7 @@ class BuffuredQueue:
             if self._deque:
                 chunk = (self._deque, self._next_filename())
                 self._deque = deque(maxlen=self.max_size)
+                self._deque_bytes = 0
         if chunk is not None:
             self._queue.put(chunk)
         self._finish_event.set()
@@ -498,11 +595,11 @@ class BuffuredQueue:
             th.start()
             self.workers.append(th)
         self._started = True
-        est = (self.queue_max + self.num_workers + 1) * self.max_size * EST_PKT_BYTES / 1e6
         logger.print(
-            f"💾 BuffuredQueue prête : chunks de {_fmt_n(self.max_size)} paquets, "
-            f"{self.queue_max} chunks en attente max, {self.num_workers} workers, "
-            f"RAM max estimée ≈ {est:.0f} Mo → {self._save_dir}"
+            f"💾 BuffuredQueue prête : chunks de {_fmt_n(self.max_size)} paquets max "
+            f"(≤ {self.chunk_bytes / 1e6:.1f} Mo), {self.queue_max} chunks en attente max, "
+            f"{self.num_workers} workers, RAM max ≈ {self.ram_max / 1e6:.0f} Mo "
+            f"(budget {self.budget / 1e6:.0f} Mo) → {self._save_dir}"
         )
 
     def wait(self, timeout: float | None = None, log_every: float = 2.0) -> bool:
@@ -524,9 +621,10 @@ class BuffuredQueue:
         self._stop_event.set()
         for th in list(self.workers):
             try:
-                th.join(timeout)
-                if not th.is_alive():
-                    self.workers.remove(th)
+                if th:
+                    th.join(timeout)
+                    if not th.is_alive():
+                        self.workers.remove(th)
             except Exception:
                 pass
 
@@ -712,17 +810,19 @@ class Capture:
 
         for th in tasks:
             try:
-                th.join(timeout)
+                if th:
+                    th.join(timeout)
             except Exception:
                 pass
 
-        for th in tasks:
-            if th.is_alive():
-                logger.print(f"⚠️ {th.name} tourne encore après {timeout}s")
+        alive = [th for th in tasks if th and th.is_alive()]
+        for th in alive:
+            logger.print(f"⚠️ {th.name} tourne encore après {timeout}s")
 
         if not self._summary_logged:
             self._summary_logged = True
             logger.print(self.summary())
+        return not alive     # True = tous les threads sont arrêtés
 
     def _put(self, q, item: Any) -> bool:
         """Dépose un paquet sans jamais bloquer. False = refusé (file pleine)."""
@@ -915,8 +1015,10 @@ class Capture:
                     last_flush = now
 
         except Exception as e:
-            logger.print(f"❌ Erreur globale dans _socket_capture, thread_name={thread_name} : "
-                         f"{type(e).__name__}: {e}")
+            logger.print(
+                f"❌ Erreur globale dans _socket_capture, thread_name={thread_name} : "
+                f"{type(e).__name__}: {e}"
+            )
             logger.print(traceback.format_exc())
 
         finally:
@@ -955,8 +1057,8 @@ class Capture:
             th.start()
             tasks.append(th)
 
-        for t in tasks:
-            logger.print(t.name, t.is_alive(), self.event.is_set())
+        # for t in tasks:
+        #     logger.print(t.name, t.is_alive(), self.event.is_set())
         self.threads = tasks
 
         if self.log_interval:
@@ -991,7 +1093,6 @@ class Capture:
         path: str | None = None
     ) -> mp.Process | None:
 
-        logger.print("Capture reçue")
         if in_process:
             process = mp.Process(
                 target=self._capture,
@@ -1014,14 +1115,21 @@ def _count_items(path: str) -> int:
     return sum(len(c) for c in load_pkt_file(path))
 
 
-def _merge_chunks(save_dir: str, path: str) -> int:
+def _merge_chunks(save_dir: str, path: str, delete: bool = False) -> int:
     """Fusionne les chunks (dans l'ordre) à la fin de `path`, un chunk en RAM à la fois.
     Ne supprime les chunks que si le nombre de paquets relu est exact."""
     files = sorted(glob.glob(os.path.join(save_dir, "*.pkl")))
     if not files:
         logger.print("ℹ️ Aucun chunk à fusionner")
         return 0
-
+    
+    if delete:
+        if os.path.exists(path):
+            try:
+                os.unlink(path)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+            except Exception:
+                pass
     before = _count_items(path)          # `path` peut déjà contenir des données : on ajoute à la suite
     t0, total = time.time(), 0
     for i, file in enumerate(files, 1):
@@ -1056,6 +1164,7 @@ def start_capture(
     if max_n_paquets is None or max_n_paquets == 0:
         max_n_paquets = float("inf")
 
+    queue.set_max_n_paquets(max_n_paquets)
     queue.start()
     ifaces = ifaces or []
     cap_obj = Capture(queue=queue)
@@ -1109,7 +1218,7 @@ def start_capture(
         st = queue.stats()
         if st["failed_chunks"]:
             logger.print(f"❌ {st['failed_chunks']} chunk(s) non écrits ({_fmt_n(st['failed_items'])} paquets perdus)")
-        _merge_chunks(queue.save_dir, path)
+        _merge_chunks(queue.save_dir, path, delete=True)
         return
 
 
@@ -1152,6 +1261,9 @@ async def collect_and_process(
     max_size: int = FIT_MAX_SIZE,
     n_workers: int = FIT_WORKERS,
     max_n_paquets: int | None = None,
+    budget_mb: int | None = None,
+    mem_frac: float = 0.15,
+    allow_over_budget: bool = False,
     *args, **kwargs
 ):
     try:
@@ -1159,6 +1271,10 @@ async def collect_and_process(
         cap_queue = BuffuredQueue(
             max_size=max_size,
             num_workers=n_workers,
+            mem_budget_mb=budget_mb,
+            mem_frac=mem_frac,
+            allow_over_budget=allow_over_budget,
+            max_n_paquets=max_n_paquets
         )
         path = build_capture_filename(filename)
         start_capture(

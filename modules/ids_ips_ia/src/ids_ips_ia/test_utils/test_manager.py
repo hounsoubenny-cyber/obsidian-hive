@@ -6,8 +6,6 @@ Created on Fri Apr 17 20:54:48 2026
 @author: hounsousamuel
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Test de partage d'instance de classe via multiprocessing.Manager().dict()
 """

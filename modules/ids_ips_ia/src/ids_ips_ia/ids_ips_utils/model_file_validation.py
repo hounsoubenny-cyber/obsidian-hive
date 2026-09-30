@@ -56,13 +56,14 @@ def _features_compatibles(data: dict) -> bool:
         print(f"Erreur dans la vérification du nombre de features: {e!r}")
         return False
     
-def validate_model_file(model_path_or_dict:str|dict):
+def validate_model_file(model_path_or_dict: str | dict):
     try:
         if isinstance(model_path_or_dict, dict):
             data = model_path_or_dict
         else:
             if isinstance(model_path_or_dict, str):
                 if not os.path.exists(model_path_or_dict):
+                    print("[model valdator] Chemin inexistant !")
                     return False
             
             data = {}
