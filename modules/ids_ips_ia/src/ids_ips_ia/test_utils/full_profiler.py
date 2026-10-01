@@ -24,17 +24,13 @@ import time
 import json
 import shutil
 import signal
-import socket
 import sqlite3
 import cProfile
 import pstats
 import argparse
 import threading
 import subprocess
-import traceback
 import tracemalloc
-import multiprocessing as mp
-from io import StringIO
 from datetime import datetime
 from pathlib import Path
 
@@ -68,7 +64,7 @@ def ensure_tool(pip_name, import_name=None, apt_name=None):
 def ensure_binary(name, apt_pkg):
     if shutil.which(name):
         return True
-    print(f"📦 Tentative d'installation de {name} ({apt_pkg})...")
+    print("📦 Tentative d'installation de {name} ({apt_pkg})...")
     r = subprocess.run(["sudo", "apt-get", "install", "-y", apt_pkg], capture_output=True, text=True)
     return shutil.which(name) is not None
 
