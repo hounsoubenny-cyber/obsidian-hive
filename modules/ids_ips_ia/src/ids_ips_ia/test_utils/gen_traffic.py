@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 29 21:52:41 2026
-
-@author: hounsousamuel
-"""
-
+# Created on Tue Sep 29 21:52:41 2026
+# @author: hounsousamuel
 """
 Générateur de trafic normal + attaque via Scapy + veth + tcpreplay.
 
 - Génère deux PCAPs : normal.pcap (trafic varié légitime) et attack.pcap (scan, flood, malformed).
 - Crée une paire veth (veth_tx <-> veth_rx).
-- Lance tcpreplay à pleine vitesse sur veth_tx.
-- Écoute stdin en permanence : sur "attack" -> bascule sur attack.pcap,
-  sur "normal" -> rebascule sur normal.pcap.
+- Lance tcpreplay en boucle sur veth_tx, au débit choisi (--rate).
+- Écoute stdin en permanence :
+    attack            -> bascule sur attack.pcap
+    normal            -> rebascule sur normal.pcap
+    rate <spec>       -> change le débit À CHAUD (ex. "rate pps=20000", "rate topspeed")
+    rate              -> affiche le débit courant
+    status | quit
+
+Débit (--rate, ou commande "rate" sur stdin) :
+    topspeed          pleine vitesse (défaut)
+    pps=N             N paquets/s   (suffixes k / M : pps=50k, pps=1M)
+    mbps=X            X mégabits/s  (1 Mo/s = 8 mbps)
+    gbps=X            X gigabits/s
+Le préfixe "--" est toléré : --rate=--pps=1000 et --rate pps=1000 sont équivalents.
 """
 
 import os
+import re
 import sys
 import time
 import random
+import shutil
 import subprocess
 import threading
 import argparse
@@ -39,7 +48,8 @@ PCAP_NORMAL = "/tmp/ids_normal.pcap"
 PCAP_ATTACK = "/tmp/ids_attack.pcap"
 NORMAL_PKT_COUNT = 10_000          # paquets dans le pcap normal
 ATTACK_PKT_COUNT = 5_000           # paquets dans le pcap d'attaque
-REPLAY_RATE = "--topspeed"         # ou "--pps=50000", "--mbps=1000"
+REPLAY_RATE = "topspeed"           # ou "pps=50000", "mbps=1000" (voir --help)
+TCPREPLAY_LOG = "/tmp/ids_tcpreplay.log"   # stderr de tcpreplay (avant : jeté dans /dev/null)
 
 # --------------------------------------------------------------------------
 # Génération des paquets
@@ -175,6 +185,73 @@ def veth_down():
 
 
 # --------------------------------------------------------------------------
+# Débit de replay (--rate / commande "rate")
+# --------------------------------------------------------------------------
+
+RATE_HELP = ("topspeed | pps=N (suffixes k/M : pps=50k) | mbps=X | gbps=X "
+             "(le préfixe -- est toléré)")
+
+_RATE_RE = re.compile(r"(pps|mbps|gbps)\s*[=:]\s*(\d+(?:\.\d+)?)\s*([km]?)")
+
+
+def parse_rate(spec):
+    """Normalise une spec de débit.
+
+    Retourne ('topspeed',) | ('pps', int) | ('mbps', float).
+    Accepte : topspeed, pps=10000, pps=50k, mbps=100, gbps=1, "pps 1000",
+    avec ou sans '--' devant. Lève ValueError avec un message clair sinon.
+    """
+    s = str(spec).strip().lower().lstrip("-")
+    s = re.sub(r"^(pps|mbps|gbps)\s+(?=\d)", r"\1=", s)       # "pps 1000" -> "pps=1000"
+    if s in ("topspeed", "top", "max"):
+        return ("topspeed",)
+    if s in ("pps", "mbps", "gbps"):
+        raise ValueError(f"« {s} » sans valeur : écris {s}=<nombre> (ex. {s}=1000)")
+    m = _RATE_RE.fullmatch(s)
+    if not m:
+        raise ValueError(f"débit invalide {spec!r}. Formats : {RATE_HELP}")
+    kind, num, suffix = m.groups()
+    value = float(num)
+    if suffix:
+        if kind != "pps":
+            raise ValueError("le suffixe k/M n'est valable que pour pps (ex. pps=50k)")
+        value *= 1_000 if suffix == "k" else 1_000_000
+    if value <= 0:
+        raise ValueError("le débit doit être > 0")
+    if kind == "pps":
+        return ("pps", int(round(value)))
+    if kind == "gbps":
+        value *= 1000
+    return ("mbps", value)
+
+
+def _fmt(x):
+    """Nombre sans notation scientifique ni zéros inutiles (100.0 -> '100')."""
+    return format(x, "f").rstrip("0").rstrip(".")
+
+
+def rate_args(rate):
+    """Arguments tcpreplay correspondant à un débit normalisé."""
+    if rate[0] == "topspeed":
+        return ["--topspeed"]
+    if rate[0] == "pps":
+        return [f"--pps={rate[1]}"]
+    return [f"--mbps={_fmt(rate[1])}"]
+
+
+def rate_label(rate):
+    return "topspeed" if rate[0] == "topspeed" else f"{rate[0]}={_fmt(rate[1])}"
+
+
+def _rate_arg(text):
+    """Type argparse : valide --rate dès le parsing."""
+    try:
+        return parse_rate(text)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+
+
+# --------------------------------------------------------------------------
 # Lecteur stdin non bloquant
 # --------------------------------------------------------------------------
 
@@ -187,75 +264,121 @@ class StdinReader(threading.Thread):
     def __init__(self, on_signal):
         super().__init__(daemon=True, name="StdinReader")
         self.on_signal = on_signal
-        self._stop = threading.Event()
+        # NB : ne surtout pas l'appeler `_stop` -> ça écrase Thread._stop() de la stdlib
+        self._stop_evt = threading.Event()
 
     def run(self):
         try:
             for line in sys.stdin:
-                if self._stop.is_set():
+                if self._stop_evt.is_set():
                     break
                 cmd = line.strip().lower()
-                if cmd:
+                if not cmd:
+                    continue
+                try:
                     self.on_signal(cmd)
+                except Exception as e:           # une commande ratée ne doit pas tuer le lecteur
+                    print(f"❌ commande {cmd!r} : {e}")
         except Exception:
             pass
 
     def stop(self):
-        self._stop.set()
+        self._stop_evt.set()
 
 
 # --------------------------------------------------------------------------
 # Replay tcpreplay
 # --------------------------------------------------------------------------
 
-class ReplayManager:
-    """Lance tcpreplay en boucle sur un pcap, et permet de basculer entre pcaps."""
+def _err_tail(n=5):
+    try:
+        with open(TCPREPLAY_LOG, encoding="utf-8", errors="replace") as f:
+            return "\n".join(f.read().strip().splitlines()[-n:])
+    except OSError:
+        return ""
 
-    def __init__(self, iface, pcap_normal, pcap_attack, rate=REPLAY_RATE):
+
+class ReplayManager:
+    """Lance tcpreplay en boucle sur un pcap ; permet de changer de pcap ET de débit à chaud."""
+
+    def __init__(self, iface, pcap_normal, pcap_attack, rate=("topspeed",)):
         self.iface = iface
         self.pcap_normal = pcap_normal
         self.pcap_attack = pcap_attack
-        self.rate = rate
+        self.rate = rate                       # tuple normalisé (voir parse_rate)
         self._proc = None
+        self._err = None
         self._lock = threading.Lock()
         self._current = None
+        self._started_at = 0.0
 
+    # -- interne (verrou déjà pris) ------------------------------------------
+    def _kill_locked(self):
+        p = self._proc
+        if p and p.poll() is None:
+            p.terminate()
+            try:
+                p.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait()
+        if self._err:
+            self._err.close()
+            self._err = None
+
+    def _launch_locked(self, pcap_path):
+        self._kill_locked()
+        # Les options AVANT le fichier pcap (tcpreplay lit le pcap en dernier)
+        cmd = ["tcpreplay", "-q", "-i", self.iface, "--loop=0",
+               *rate_args(self.rate), pcap_path]
+        print(f"🚀 tcpreplay sur {self.iface} : {pcap_path} ({rate_label(self.rate)})")
+        self._err = open(TCPREPLAY_LOG, "w", encoding="utf-8")
+        self._proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=self._err)
+        self._current = pcap_path
+        self._started_at = time.monotonic()
+
+    # -- API -----------------------------------------------------------------
     def start(self, pcap_path):
         with self._lock:
-            if self._proc and self._proc.poll() is None:
-                self._proc.terminate()
-                try:
-                    self._proc.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    self._proc.kill()
-                    self._proc.wait()
-
-            cmd = ["tcpreplay", "-q", "-i", self.iface,
-                   "--loop=0", "--topspeed", pcap_path]
-            # Remplace --topspeed si un autre rate est fourni
-            if self.rate != "--topspeed":
-                cmd = [c for c in cmd if c != "--topspeed"]
-                cmd.append(self.rate)
-
-            print(f"🚀 tcpreplay lancé sur {self.iface} : {pcap_path} ({self.rate})")
-            self._proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                                          stderr=subprocess.DEVNULL)
-            self._current = pcap_path
+            self._launch_locked(pcap_path)
 
     def switch(self, pcap_path):
-        if self._current == pcap_path:
-            print(f"ℹ️  Déjà en cours : {pcap_path}")
-            return
-        self.start(pcap_path)
+        with self._lock:
+            if self._current == pcap_path:
+                print(f"ℹ️  Déjà en cours : {pcap_path}")
+                return
+            self._launch_locked(pcap_path)
+
+    def set_rate(self, rate):
+        """Change le débit à chaud (relance tcpreplay sur le pcap courant)."""
+        with self._lock:
+            if rate == self.rate:
+                print(f"ℹ️  Débit déjà à {rate_label(rate)}")
+                return
+            self.rate = rate
+            if self._current:
+                self._launch_locked(self._current)
+            print(f"🎚️  Débit → {rate_label(rate)}")
+
+    def poll(self):
+        """None si tcpreplay tourne ; sinon (code_retour, durée_de_vie_s, fin_de_stderr)."""
+        with self._lock:
+            p = self._proc
+            if p is None:
+                return None
+            rc = p.poll()
+            if rc is None:
+                return None
+            return rc, time.monotonic() - self._started_at, _err_tail()
+
+    def restart(self):
+        with self._lock:
+            if self._current:
+                self._launch_locked(self._current)
 
     def stop(self):
         with self._lock:
-            if self._proc and self._proc.poll() is None:
-                self._proc.terminate()
-                try:
-                    self._proc.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    self._proc.kill()
+            self._kill_locked()
 
 
 # --------------------------------------------------------------------------
@@ -263,17 +386,20 @@ class ReplayManager:
 # --------------------------------------------------------------------------
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--normal-count", type=int, default=NORMAL_PKT_COUNT)
     ap.add_argument("--attack-count", type=int, default=ATTACK_PKT_COUNT)
-    ap.add_argument("--rate", default=REPLAY_RATE,
-                    help="--topspeed, --pps=N, ou --mbps=N")
+    ap.add_argument("--rate", type=_rate_arg, default=REPLAY_RATE, metavar="SPEC",
+                    help="débit initial : " + RATE_HELP + ". Défaut : topspeed")
     ap.add_argument("--no-veth", action="store_true",
                     help="Ne crée pas de veth (utilise l'existant)")
     a = ap.parse_args()
 
     if os.geteuid() != 0:
         sys.exit("Root requis : sudo -E $(which python) ce_script.py")
+    if not shutil.which("tcpreplay"):
+        sys.exit("tcpreplay introuvable : sudo apt install tcpreplay")
 
     # 1. Génération des pcaps
     print(f"📦 Génération du pcap normal ({a.normal_count} paquets)...")
@@ -296,40 +422,63 @@ def main():
 
     # 3. Replay
     mgr = ReplayManager(VETH_TX, PCAP_NORMAL, PCAP_ATTACK, a.rate)
+    stop_evt = threading.Event()
 
     def on_signal(cmd):
-        if cmd == "attack":
+        verb, _, arg = cmd.partition(" ")
+        arg = arg.strip()
+        if verb == "attack":
             mgr.switch(PCAP_ATTACK)
-        elif cmd == "normal":
+        elif verb == "normal":
             mgr.switch(PCAP_NORMAL)
-        elif cmd in ("quit", "exit", "q"):
+        elif verb == "rate":
+            if not arg:
+                print(f"🎚️  Débit actuel : {rate_label(mgr.rate)}")
+                return
+            try:
+                new_rate = parse_rate(arg)
+            except ValueError as e:
+                print(f"❌ {e}")
+                return
+            mgr.set_rate(new_rate)
+        elif verb in ("quit", "exit", "q"):
             print("👋 Arrêt demandé")
-            mgr.stop()
-            raise SystemExit(0)
-        elif cmd == "status":
-            print(f"📊 État actuel : {mgr._current}")
+            stop_evt.set()      # (avant : SystemExit dans le thread stdin => ne quittait pas le programme)
+        elif verb == "status":
+            print(f"📊 pcap : {mgr._current} | débit : {rate_label(mgr.rate)}")
         else:
-            print(f"❓ Commande inconnue : {cmd!r} (essaie : normal, attack, status, quit)")
+            print(f"❓ Commande inconnue : {cmd!r} "
+                  f"(essaie : normal, attack, rate <spec>, status, quit)")
 
     reader = StdinReader(on_signal)
     reader.start()
 
     # 4. Boucle de vie
     mgr.start(PCAP_NORMAL)
+    # NB : profile_run.py attend la chaîne « Commandes disponibles » pour savoir que tout est prêt
     print("\n🎮 Commandes disponibles :")
-    print("   attack   → bascule sur le trafic d'attaque")
-    print("   normal   → revient au trafic normal")
-    print("   status   → affiche le pcap en cours")
-    print("   quit     → arrête tout\n")
+    print("   attack        → bascule sur le trafic d'attaque")
+    print("   normal        → revient au trafic normal")
+    print("   rate <spec>   → change le débit à chaud (topspeed | pps=N | mbps=X)")
+    print("   status        → affiche le pcap et le débit en cours")
+    print("   quit          → arrête tout\n")
 
+    failed = False
     try:
-        while True:
-            time.sleep(1)
-            if mgr._proc and mgr._proc.poll() is not None:
-                # tcpreplay s'est arrêté (fin de boucle ou erreur)
-                print("⚠️  tcpreplay s'est arrêté, redémarrage...")
-                mgr.start(mgr._current)
-    except (KeyboardInterrupt, SystemExit):
+        while not stop_evt.wait(1):
+            dead = mgr.poll()
+            if dead is None:
+                continue
+            rc, lived, err = dead
+            if lived < 2:
+                # Mort immédiate = mauvaise option / interface absente : inutile de boucler
+                print(f"❌ tcpreplay quitte aussitôt (code {rc}) :\n{err or '(stderr vide)'}")
+                print(f"   (détail : {TCPREPLAY_LOG})")
+                failed = True
+                break
+            print(f"⚠️  tcpreplay s'est arrêté (code {rc}), redémarrage...")
+            mgr.restart()
+    except KeyboardInterrupt:
         pass
     finally:
         reader.stop()
@@ -337,6 +486,7 @@ def main():
         if not a.no_veth:
             veth_down()
         print("🏁 Terminé")
+    sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":

@@ -24,6 +24,11 @@ Ce que fait le script :
 Usage (root requis, comme run.sh) :
   sudo -E $(which python3) profile_run.py --traffic --duration 90
   sudo -E $(which python3) profile_run.py --traffic --attack-after 40 --duration 120
+  # débit fixe (au lieu de topspeed) :
+  sudo -E $(which python3) profile_run.py --traffic --traffic-rate pps=20000 --duration 90
+  # débit dynamique : t (s après le début du profil) : débit
+  sudo -E $(which python3) profile_run.py --traffic --duration 150 \\
+        --rate-switch "30:pps=10000,60:pps=50000,90:topspeed"
   sudo -E $(which python3) profile_run.py --analyze-only profile_out_XXXX/profile.speedscope.json
 
 Dépendance : pip install py-spy
@@ -55,6 +60,41 @@ TRAFFIC_READY = "Commandes disponibles"
 # Lecture du flux de sortie d'un process (log + marqueurs + compteurs horodatés)
 # --------------------------------------------------------------------------------------
 RE_STATS = re.compile(r"\|\s*([\d\s]+?)\s*pkt \(([\d\s]+)/s\)\s*\|\s*perdus : noyau ([\d\s]+?)\s*·\s*app ([\d\s]+?)\s*\(([\d.]+) %\)")
+
+
+# --------------------------------------------------------------------------------------
+# Débit du générateur : validation (miroir léger de gen_traffic.parse_rate — à garder synchro)
+# --------------------------------------------------------------------------------------
+RATE_FORMATS = "topspeed | pps=N (suffixes k/M) | mbps=X | gbps=X"
+
+
+def check_rate(spec: str) -> str:
+    """Valide une spec de débit et la renvoie normalisée (sans '--'). ValueError sinon."""
+    s = str(spec).strip().lower().lstrip("-")
+    s = re.sub(r"^(pps|mbps|gbps)\s+(?=\d)", r"\1=", s)
+    if s in ("topspeed", "top", "max"):
+        return "topspeed"
+    m = re.fullmatch(r"(pps|mbps|gbps)[=:](\d+(?:\.\d+)?)([km]?)", s)
+    if not m or float(m[2]) <= 0 or (m[3] and m[1] != "pps"):
+        raise ValueError(f"débit invalide {spec!r} (formats : {RATE_FORMATS})")
+    return s
+
+
+def parse_rate_switch(text: str):
+    """'30:pps=10000,60:topspeed' -> [(30.0, 'pps=10000'), (60.0, 'topspeed')] trié par temps."""
+    plan = []
+    for item in filter(None, (x.strip() for x in (text or "").split(","))):
+        t, sep, spec = item.partition(":")
+        if not sep:
+            raise ValueError(f"« {item} » : format attendu  <secondes>:<débit>  (ex. 30:pps=10000)")
+        try:
+            t = float(t)
+        except ValueError:
+            raise ValueError(f"« {item} » : « {t} » n'est pas un nombre de secondes")
+        if t < 0:
+            raise ValueError(f"« {item} » : le temps doit être >= 0")
+        plan.append((t, check_rate(spec)))
+    return sorted(plan, key=lambda x: x[0])
 
 
 def _num(s: str) -> int:
@@ -419,6 +459,29 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     return "\n".join(L), folded
 
 
+def phase_table(timeline, ttap, t_start: float, t_end: float) -> str:
+    """Une ligne par phase de trafic (changement de pcap ou de débit) avec le débit mesuré par l'IDS.
+
+    timeline : [(t_relatif_s, "normal @ pps=10000"), ...] trié ; ttap.stats : (t, kept, rate, kdrop, adrop, loss%)
+    """
+    total = max(t_end - t_start, 0.0)
+    bounds = [t for t, _ in timeline] + [total]
+    L = ["", "## 🎚️ Phases de trafic (débit mesuré par l'IDS)\n",
+         "| Début | Fin | Trafic injecté | Relevés | pkt/s moyen | pkt/s max | Perte cumulée (fin de phase) |",
+         "|---|---|---|---|---|---|---|"]
+    for i, (t0, label) in enumerate(timeline):
+        t1 = min(bounds[i + 1], total)
+        rows = [s for s in ttap.stats if t0 <= s[0] - t_start < t1]
+        if rows:
+            rates = [s[2] for s in rows]
+            L.append(f"| {t0:.0f}s | {t1:.0f}s | `{label}` | {len(rows)} | {sum(rates) / len(rates):,.0f} | "
+                     f"{max(rates):,.0f} | {rows[-1][5]:.2f} % |".replace(",", " "))
+        else:
+            L.append(f"| {t0:.0f}s | {t1:.0f}s | `{label}` | 0 | – | – | – |")
+    L.append("")
+    return "\n".join(L)
+
+
 # --------------------------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------------------------
@@ -440,12 +503,28 @@ def main():
     ap.add_argument("--traffic", action="store_true", help="démarre gen_traffic.py avant la cible")
     ap.add_argument("--traffic-script", default=str(DEFAULT_TRAFFIC))
     ap.add_argument("--attack-after", type=int, default=0, help="envoie 'attack' au générateur N s après le début du profil")
+    ap.add_argument("--traffic-rate", default="topspeed", metavar="SPEC",
+                    help="débit initial du générateur : " + RATE_FORMATS + " (défaut : topspeed). "
+                         "Ne pas confondre avec --rate = fréquence d'échantillonnage py-spy")
+    ap.add_argument("--rate-switch", default="", metavar="T:SPEC,...",
+                    help="change le débit du générateur EN COURS de profil, ex. \"30:pps=10000,60:topspeed\" "
+                         "(T = secondes après le début du profil). Sans cette option : débit fixe = --traffic-rate")
     ap.add_argument("--project-marker", default="ids_ips_ia", help="chemin identifiant TON code dans les piles")
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--out-dir", default="")
     ap.add_argument("--quiet", action="store_true", help="n'affiche pas les logs de la cible/du générateur")
     ap.add_argument("--analyze-only", metavar="SPEEDSCOPE_JSON", help="ne lance rien : analyse un profil existant")
     a = ap.parse_args()
+    try:
+        initial_rate = check_rate(a.traffic_rate)
+        rate_plan = parse_rate_switch(a.rate_switch)
+    except ValueError as e:
+        ap.error(str(e))
+    if rate_plan and not a.traffic:
+        ap.error("--rate-switch nécessite --traffic")
+    late = [f"{t:g}s" for t, _ in rate_plan if t >= a.duration]
+    if late:
+        print(f"⚠️  --rate-switch : {', '.join(late)} >= --duration ({a.duration}s) : jamais atteint")
 
     if a.analyze_only:
         jp = Path(a.analyze_only)
@@ -472,16 +551,17 @@ def main():
 
     traffic = target = spy = None
     ttap = gtap = None
-    timer = None
+    timers = []
+    stdin_lock = threading.Lock()
+    state = {"mode": "normal", "rate": initial_rate}
+    timeline = [(0.0, f"normal @ {initial_rate}")]      # (t relatif, trafic injecté)
     t_start = t_end = 0.0
     spy_json = out / "profile.speedscope.json"
     try:
         # 1) générateur de trafic (le veth doit exister AVANT que l'IDS capture dessus)
         if a.traffic:
             print("🚦 Démarrage du générateur de trafic (génération des pcaps : ça peut prendre un moment)...")
-            rate_ = "--topspeed"
-            # rate_ = "--pps=10000"
-            traffic = subprocess.Popen([a.python, "-u", a.traffic_script, f"--rate={rate_}"], stdin=subprocess.PIPE,
+            traffic = subprocess.Popen([a.python, "-u", a.traffic_script, f"--rate={initial_rate}"], stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                        env=env, start_new_session=True)
             gtap = LineTap(traffic, out / "traffic.log", "traffic", markers=(TRAFFIC_READY,), echo=not a.quiet)
@@ -513,16 +593,28 @@ def main():
         print("🔬", " ".join(cmd))
         ttap.recording = True
         t_start = time.time()
-        if traffic is not None and a.attack_after > 0:
-            def _attack():
+        if traffic is not None:
+            def _send(line, mode=None, rate=None):
+                """Envoie une commande au générateur et note la phase dans la timeline."""
                 try:
-                    traffic.stdin.write("attack\n")
-                    traffic.stdin.flush()
-                    print("⚔️  'attack' envoyé au générateur")
+                    with stdin_lock:
+                        traffic.stdin.write(line + "\n")
+                        traffic.stdin.flush()
+                    state["mode"] = mode or state["mode"]
+                    state["rate"] = rate or state["rate"]
+                    timeline.append((time.time() - t_start, f"{state['mode']} @ {state['rate']}"))
+                    print(f"{'⚔️ ' if mode == 'attack' else '🎚️ '} '{line}' envoyé au générateur "
+                          f"(t+{timeline[-1][0]:.0f}s)")
                 except Exception as e:
-                    print(f"⚠️  impossible d'envoyer 'attack' : {e}")
-            timer = threading.Timer(a.attack_after, _attack)
-            timer.start()
+                    print(f"⚠️  impossible d'envoyer '{line}' : {e}")
+
+            if a.attack_after > 0:
+                timers.append(threading.Timer(a.attack_after, _send, ("attack", "attack")))
+            for t_, spec_ in rate_plan:
+                timers.append(threading.Timer(t_, _send, (f"rate {spec_}", None, spec_)))
+            for tm in timers:
+                tm.daemon = True
+                tm.start()
         spy = subprocess.Popen(cmd)
         try:
             spy.wait(timeout=a.duration + 60)
@@ -537,8 +629,8 @@ def main():
     except Exception as e:
         print(f"❌ {e}")
     finally:
-        if timer:
-            timer.cancel()
+        for tm in timers:
+            tm.cancel()
         if spy is not None and spy.poll() is None:
             spy.send_signal(signal.SIGINT)
         print("🧹 Arrêt de l'IDS (SIGINT, comme Ctrl-C)...")
@@ -556,6 +648,8 @@ def main():
         sys.exit(f"❌ Pas de profil écrit. Voir {out}/target.log (py-spy a-t-il pu s'attacher ? ptrace_scope ?)")
     wall = (t_end - t_start) if t_end else a.duration
     report, folded = analyze(spy_json, a.project_marker, a.top, ttap, wall)
+    if traffic is not None and ttap is not None:
+        report += "\n" + phase_table(timeline, ttap, t_start, t_end or (t_start + wall))
     (out / "report.md").write_text(report, encoding="utf-8")
     (out / "folded.txt").write_text("".join(f"{k} {int(v * 1000)}\n" for k, v in folded.items()))
     print("\n" + report)
