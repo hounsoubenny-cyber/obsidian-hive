@@ -66,7 +66,7 @@ def _positive_int(value, default: int) -> int:
 
 _ANOMALY_CFG = CONFIG.CONFIG.get(ANOMALY_CONFIG_KEY, {})
 # Pas de la fenêtre glissante : nb de paquets entre deux séquences évaluées (live) / construites (fit, refit)
-SEQ_STRIDE = _positive_int(_ANOMALY_CFG.get('seq_stride', 10), 10)
+SEQ_STRIDE = _positive_int(_ANOMALY_CFG.get('seq_stride', 20), 20)
 SEQ_STRIDE_FIT = _positive_int(_ANOMALY_CFG.get('seq_stride_fit', 1), 1)
 # Nb max de paquets scorés en un seul appel modèle côté détection
 DETECT_BATCH_SIZE = _positive_int(_ANOMALY_CFG.get('detect_batch_size', 256), 256)

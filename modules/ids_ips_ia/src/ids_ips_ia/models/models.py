@@ -35,6 +35,7 @@ from tensorflow.keras.layers import (
     BatchNormalization
 )
 from ids_ips_ia.config.config_ids import N_TRIAl
+from ids_ips_ia.models.fast_iforest import FastIForest
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 
 logger = get_logger()
@@ -118,6 +119,8 @@ def _run_bucketed(fn, model, *arrays):
     return outs[0] if len(outs) == 1 else np.concatenate(outs, axis=0)
 
 class Models:
+    use_fast_iforest = True      # False -> sklearn pur (utile pour comparer / en cas de doute)
+    
     def __init__(self, lock=None):
         self.mse_mean = 0.15
         self.verbose = 0
@@ -1150,14 +1153,40 @@ class Models:
             self._cnn_bottleneck_for = id(cnn_seq)
         return self.cnn_bottleneck_model
 
-    def _score_batch(self, Z, if_model, lof_model, method, how, who):
-        """IF + LOF sur une matrice Z (n, d) -> tableau de n scores (ou de n prédictions -1/1)."""
+    def _fast_if(self, m):
+        """FastIForest vérifié pour le modèle `m` (cache par modèle, reconstruit après un refit), sinon `m`."""
+        cache = self.__dict__.setdefault("_fast_if_cache", {})
+        ent = cache.get(id(m))
+        if ent is None or ent[0] is not m:
+            if len(cache) > 8:
+                cache.clear()
+            ent = cache[id(m)] = (m, FastIForest.try_build(m) if self.use_fast_iforest else None)
+        return ent[1] or m                       # None (non supporté / écart sklearn) -> repli sklearn
+
+    def _score_batch(self, Z, if_model, lof_model, method, how, who, return_pred=False):
+        """
+        IF + LOF sur une matrice Z (n, d) -> tableau de n scores (ou de n prédictions -1/1).
+
+        return_pred=True (method='decision_function' uniquement) -> (scores, preds) : preds est le même vote
+        -1/1 que method='predict', calculé depuis les MÊMES décisions brutes (sklearn : predict() == -1
+        <=> decision_function() < 0, pour IsolationForest et LOF novelty) -> aucun appel de modèle en plus.
+        Sert à AnomalyScorer, qui avait besoin de 'decision_function' ET de 'predict' et ré-inférait en unitaire.
+        """
         how = (how or "any").lower().strip()
+        if_model = self._fast_if(if_model)       # même API (decision_function / score_samples / predict, norm_*_)
+        if return_pred and method != 'decision_function':
+            raise ValueError("return_pred ne s'applique qu'à method='decision_function'")
         if method == 'decision_function':
-            return self._normalize_decision_function(
-                if_model.decision_function(Z), lof_model.decision_function(Z),
-                who=who, if_model=if_model, lof_model=lof_model
+            if_dec = if_model.decision_function(Z)
+            lof_dec = lof_model.decision_function(Z)
+            scores = self._normalize_decision_function(
+                if_dec, lof_dec, who=who, if_model=if_model, lof_model=lof_model
             )
+            if not return_pred:
+                return scores
+            anomalous = np.stack([if_dec < 0, lof_dec < 0])          # (2, n)
+            flag = anomalous.all(axis=0) if how == 'all' else anomalous.any(axis=0)
+            return scores, np.where(flag, -1, 1)
         if method in ('score_sample', 'score_samples'):
             return (if_model.score_samples(Z) + lof_model.score_samples(Z)) / 2.0
         anomalous = np.stack([if_model.predict(Z), lof_model.predict(Z)]) == -1   # (2, n)
@@ -1165,7 +1194,8 @@ class Models:
         return np.where(flag, -1, 1)
 
     def predict_packet_batch(
-        self, ae_pkt, if_pkt, lof_pkt, scaler, pkt_features_list, method='decision_function', how='any'
+        self, ae_pkt, if_pkt, lof_pkt, scaler, pkt_features_list, method='decision_function', how='any',
+        return_pred=False
     ):
         """
         Version vectorisée de `predict_packet` : n paquets d'un coup.
@@ -1184,18 +1214,20 @@ class Models:
             mse = np.mean(diff ** 2, axis=1, keepdims=True)
             mae = np.mean(np.abs(diff), axis=1, keepdims=True)
             Z = np.concatenate((X_pred, mse, mae), axis=1)
-            return self._score_batch(Z, if_pkt, lof_pkt, method, how, who='pkt')
+            return self._score_batch(Z, if_pkt, lof_pkt, method, how, who='pkt', return_pred=return_pred)
         except Exception as e:
             logger.print("Erreur predict_packet_batch:", e)
             import traceback
             logger.print(traceback.format_exc())
-            return np.ones(n)   # même valeur de repli que predict_packet (normal)
+            # même valeur de repli que predict_packet (normal)
+            return (np.ones(n), np.ones(n, dtype=int)) if return_pred else np.ones(n)
 
     async def apredict_packet_batch(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_packet_batch, *args, **kwargs)
 
     def predict_sequence_batch(
-        self, ae_seq, cnn_seq, if_seq, lof_seq, scaler, X_seqs, method='decision_function', how='any'
+        self, ae_seq, cnn_seq, if_seq, lof_seq, scaler, X_seqs, method='decision_function', how='any',
+        return_pred=False
    ):
         """
         Version vectorisée de `predict_sequence` : m séquences d'un coup.
@@ -1220,10 +1252,10 @@ class Models:
                 np.mean(diff ** 2, axis=(1, 2)).reshape(-1, 1), np.mean(np.abs(diff), axis=(1, 2)).reshape(-1, 1),
                 np.mean(diff_cnn ** 2, axis=(1, 2)).reshape(-1, 1), np.mean(np.abs(diff_cnn), axis=(1, 2)).reshape(-1, 1),
             ), axis=1)
-            return self._score_batch(X_flat, if_seq, lof_seq, method, how, who='seq')
+            return self._score_batch(X_flat, if_seq, lof_seq, method, how, who='seq', return_pred=return_pred)
         except Exception as e:
             logger.print("Erreur predict_sequence_batch:", e)
-            return np.ones(m)
+            return (np.ones(m), np.ones(m, dtype=int)) if return_pred else np.ones(m)
 
     async def apredict_sequence_batch(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_sequence_batch, *args, **kwargs)

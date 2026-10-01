@@ -479,7 +479,9 @@ def main():
         # 1) générateur de trafic (le veth doit exister AVANT que l'IDS capture dessus)
         if a.traffic:
             print("🚦 Démarrage du générateur de trafic (génération des pcaps : ça peut prendre un moment)...")
-            traffic = subprocess.Popen([a.python, "-u", a.traffic_script], stdin=subprocess.PIPE,
+            rate_ = "--topspeed"
+            # rate_ = "--pps=10000"
+            traffic = subprocess.Popen([a.python, "-u", a.traffic_script, f"--rate={rate_}"], stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                        env=env, start_new_session=True)
             gtap = LineTap(traffic, out / "traffic.log", "traffic", markers=(TRAFFIC_READY,), echo=not a.quiet)

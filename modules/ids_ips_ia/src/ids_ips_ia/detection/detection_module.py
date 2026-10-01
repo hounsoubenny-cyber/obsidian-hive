@@ -726,15 +726,15 @@ class AnomalyDetector:
                         continue
 
                     # C) UN SEUL appel modèles pour tout le lot (AE + IF + LOF vectorisés)
-                    pkt_scores = await self.Models.apredict_packet_batch(
+                    pkt_scores, pkt_ia_preds = await self.Models.apredict_packet_batch(
                         ae_pkt, if_pkt, lof_pkt, scaler_pkt, feats,
-                        how=how, method="decision_function"
+                        how=how, method="decision_function", return_pred=True
                     )
                     thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
 
                     # D) logique par paquet (décision, alertes) ; on repère au passage les fenêtres à évaluer
                     seq_jobs = []
-                    for (pkt, alert, from_alert), pkt_fea, score_pkt in zip(batch, feats, pkt_scores):
+                    for (pkt, alert, from_alert), pkt_fea, score_pkt, ia_pred in zip(batch, feats, pkt_scores, pkt_ia_preds):
                         buffer_pkt.append(pkt)
                         buffer_fea.append(pkt_fea)
                         pkt_pred = -1 if score_pkt < thr else 1
@@ -759,7 +759,8 @@ class AnomalyDetector:
                                 scores = await self.AnomalyScorer.detect_pkt(
                                     pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
                                     pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
-                                    event_timestamp=alert.get("eve_timestamp")
+                                    event_timestamp=alert.get("eve_timestamp"),
+                                    ia_preds={"decision_function": float(score_pkt), "predict": int(ia_pred)}
                                 )
                                 if self.enable_graphe:
                                     scores_deque.append(scores)
@@ -781,7 +782,8 @@ class AnomalyDetector:
                             pkt_rate.append(1)
                             scores = await self.AnomalyScorer.detect_pkt(
                                 pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
-                                pkt_rate=sum(pkt_rate), features=pkt_fea, how=how
+                                pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                                ia_preds={"decision_function": float(score_pkt), "predict": int(ia_pred)}
                             )
                             if self.enable_graphe:
                                 scores_deque.append(scores)
@@ -822,12 +824,12 @@ class AnomalyDetector:
 
                     # E) UN SEUL appel modèles pour toutes les séquences du lot (CNN + AE + IF + LOF)
                     if seq_jobs:
-                        seq_scores = await self.Models.apredict_sequence_batch(
+                        seq_scores, seq_ia_preds = await self.Models.apredict_sequence_batch(
                             ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq,
                             np.stack([job[0] for job in seq_jobs]),
-                            how=how, method="decision_function"
+                            how=how, method="decision_function", return_pred=True
                         )
-                        for (seq_fea, last_pkt, prop_anom), score_pred in zip(seq_jobs, seq_scores):
+                        for (seq_fea, last_pkt, prop_anom), score_pred, ia_pred_seq in zip(seq_jobs, seq_scores, seq_ia_preds):
                             pred_seq = -1 if score_pred <= thr else 1
                             if combination_mode == "or":
                                 combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
@@ -844,7 +846,8 @@ class AnomalyDetector:
                                 seq_rate.append(1)
                                 await self.AnomalyScorer.detect_pkt(
                                     pkt=last_pkt, pkt_rate=prop_anom, features=seq_fea, models=_mod,
-                                    Model=self.Models, seq_anomaly=True, mode=mode, how=how
+                                    Model=self.Models, seq_anomaly=True, mode=mode, how=how,
+                                    ia_preds={"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
                                 )
                                 if verbose:
                                     logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")

@@ -853,7 +853,12 @@ class AnomalyScorer:
         mode: str = 'ids',
         how: str = "all",
         event_timestamp: float | None = None,
+        ia_preds: dict | None = None,
     ):
+        """
+        ia_preds : {"decision_function": float, "predict": -1|1} DÉJÀ calculés en lot par detect().
+        Si fourni, on ne ré-infère pas (avant : 2 inférences unitaires complètes AE+IF+LOF par anomalie).
+        """
         mode = mode.lower().strip()
         src, dst = self._get_ip(pkt, with_dst=True)
         if any(ip in ('::', '0.0.0.0', '255.255.255.255') or (ip and ip.startswith('ff'))
@@ -873,10 +878,11 @@ class AnomalyScorer:
             logger.print("Ip présente dans whitelist !")
             return 0.0
 
-        if not seq_anomaly:
-            ia_preds = await self.get_ia_preds_pkt(features, models, Model, how=how)
-        else:
-            ia_preds = await self.get_ia_preds_seq(features, models, Model, how=how)
+        if ia_preds is None:
+            if not seq_anomaly:
+                ia_preds = await self.get_ia_preds_pkt(features, models, Model, how=how)
+            else:
+                ia_preds = await self.get_ia_preds_seq(features, models, Model, how=how)
 
         score = self.calculate_ip_score_anomaly(
             ia_preds=ia_preds, pkt=pkt,

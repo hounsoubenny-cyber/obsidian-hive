@@ -25,12 +25,14 @@ print(f"config lue : SEQ_LENGTH={L} SEQ_STRIDE={STRIDE} DETECT_BATCH_SIZE={BATCH
 
 class FakeModels:
     def __init__(self): self.pkt_calls = []; self.seq_calls = []
-    async def apredict_packet_batch(self, *a, how, method):
+    async def apredict_packet_batch(self, *a, how, method, return_pred=False):
         feats = a[4]; self.pkt_calls.append(len(feats))
-        return np.array([-1.0 if f[0] > 5 else 1.0 for f in feats])      # f[0] > 5 -> anomalie paquet
-    async def apredict_sequence_batch(self, *a, how, method):
+        sc = np.array([-1.0 if f[0] > 5 else 1.0 for f in feats])        # f[0] > 5 -> anomalie paquet
+        return (sc, np.where(sc < 0, -1, 1)) if return_pred else sc
+    async def apredict_sequence_batch(self, *a, how, method, return_pred=False):
         X = a[5]; self.seq_calls.append(len(X)); assert X.shape[1:] == (L, 3), X.shape
-        return np.ones(len(X))                                             # séquences normales
+        sc = np.ones(len(X))                                               # séquences normales
+        return (sc, np.ones(len(X), dtype=int)) if return_pred else sc
 
 class FakeFE:
     @staticmethod
@@ -38,9 +40,10 @@ class FakeFE:
     @staticmethod
     def extract_seq_features(arr): return np.asarray(arr)
 
-alerts, scored = [], []
+alerts, scored, ia_seen = [], [], []
 class FakeScorer:
-    async def detect_pkt(self, **kw): scored.append(kw["seq_anomaly"]); return 0.5
+    async def detect_pkt(self, **kw):
+        scored.append(kw["seq_anomaly"]); ia_seen.append(kw.get("ia_preds")); return 0.5
     @staticmethod
     def _get_ip(pkt, with_dst=False): return ("1.1.1.1", "2.2.2.2")
 
@@ -87,5 +90,10 @@ n_pkt_alerts = sum(1 for a in alerts if a[0] == "alert")
 assert n_pkt_alerts == len(anom), (n_pkt_alerts, anom)
 assert scored.count(None) == len(anom)
 print("alertes paquet :", n_pkt_alerts, "OK ; reaction appelée", len(scored), "fois")
+# le scorer reçoit les prédictions DÉJÀ calculées en lot -> aucune ré-inférence unitaire (le goulot de result003)
+assert len(ia_seen) == len(scored) and all(p is not None for p in ia_seen), ia_seen
+assert all(set(p) == {"decision_function", "predict"} for p in ia_seen)
+assert all(p["predict"] == -1 and p["decision_function"] == -1.0 for p in ia_seen), ia_seen
+print("ia_preds transmis au scorer (decision_function + predict) :", len(ia_seen), "fois OK")
 print("AVANT (stride 1, un-par-un) :", N, "appels paquet +", N - L + 1, "appels séquence")
 print("APRÈS :", len(fm.pkt_calls), "appel(s) paquet +", len(fm.seq_calls), "appel(s) séquence")

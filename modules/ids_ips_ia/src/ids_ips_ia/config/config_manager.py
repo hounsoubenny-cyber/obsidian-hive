@@ -166,7 +166,7 @@ CLASS_CONFIG = {
         'max_anomalies_per_file': 10000,
         'anomaly_file_prefix': 'anomalies',
         'seq_length': 60,
-        'seq_stride': 10,          # live : une séquence évaluée tous les N paquets
+        'seq_stride': 20,          # live : une séquence évaluée tous les N paquets
         'seq_stride_fit': 1,       # fit / refit : pas de la fenêtre glissante (1 = toutes les fenêtres)
         'detect_batch_size': 256,  # live : nb max de paquets scorés d'un coup
     },
