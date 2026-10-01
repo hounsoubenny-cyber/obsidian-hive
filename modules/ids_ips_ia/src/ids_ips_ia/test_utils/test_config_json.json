@@ -136,7 +136,10 @@
   "ANOMALY_CONFIG": {
     "max_anomalies_per_file": 10000,
     "anomaly_file_prefix": "anomalies",
-    "seq_length": 60
+    "seq_length": 60,
+    "seq_stride": 10,
+    "seq_stride_fit": 1,
+    "detect_batch_size": 256
   },
   "CAPTURE_CONFIG": {
     "FILTER": "tcp or udp or icmp",

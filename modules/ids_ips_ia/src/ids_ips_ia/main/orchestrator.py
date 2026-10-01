@@ -55,7 +55,7 @@ logger = get_logger()
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-SEQ_LENGTH = 60
+from ids_ips_ia.config.config_ids import SEQ_LENGTH  # noqa : une seule source de vérité (config)
 DEFAULT_DURATION = 3600 * 7 * 24
 DEFAULT_SAVE_INTERVAL = 36000
 DEFAULT_ANOMALY_DIR = "anomalies"
@@ -572,7 +572,7 @@ class IDS_IPS:
                         print(f"Detection: Aucun packet traité, durée={e}")
                     
                     else:
-                        print(f"Detection vitesse: {e/pkt}, duréé={e}, pkt={pkt}")
+                        print(f"Detection vitesse: {pkt/e}, durée={e}, pkt={pkt}")
                         
             self._cleanup(process or self.process, threads or self.threads)
             # sys.exit(0)

@@ -6,7 +6,7 @@ Created on Tue Apr 14 22:54:15 2026
 @author: hounsousamuel
 """
 
-import os, sys
+import os
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))

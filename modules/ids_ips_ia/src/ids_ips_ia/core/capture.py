@@ -36,7 +36,7 @@ from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
 from ids_ips_ia.core.config import (
     BUFFER_SIZE, TIMEOUT_MS, FILTER,
     SEQ_LENGTH, SRC_IGNORED_IP,
-    DST_IGNORED_IP
+    DST_IGNORED_IP, SEQ_STRIDE_FIT, n_windows
 )
 
 logger = get_logger()
@@ -1313,20 +1313,21 @@ async def collect_and_process(
 
         X_packets = np.array(feats)
         del feats
-        n_seq = X_packets.shape[0] - SEQ_LENGTH + 1  # Comme nombre d'éléments, fin - debut + 1
+        n_seq = n_windows(X_packets.shape[0], SEQ_LENGTH, SEQ_STRIDE_FIT)  # (N - L) // stride + 1
         if n_seq <= 0:
             raise ValueError("Pas assez de paquets pour une séquence !")
 
         t0 = time.time()
         seq_lis = []
-        # Extraire les features de séquences
-        for i in range(n_seq):
+        # Extraire les features de séquences (fenêtre glissante, pas = SEQ_STRIDE_FIT)
+        for k in range(n_seq):
+            i = k * SEQ_STRIDE_FIT
             try:
                 seq_lis.append(extractor.extract_seq_features(X_packets[i: i + SEQ_LENGTH]))
             except Exception as e:
                 logger.print("Erreur extraction sequence :", str(e))
-            if (i + 1) % 50_000 == 0:
-                logger.print(f"⚙️ Séquences : {_fmt_n(i + 1)}/{_fmt_n(n_seq)}")
+            if (k + 1) % 50_000 == 0:
+                logger.print(f"⚙️ Séquences : {_fmt_n(k + 1)}/{_fmt_n(n_seq)}")
         if not seq_lis:
             raise ValueError("Aucune séquence exploitable !")
         logger.print(f"Séquences prêtes : {_fmt_n(len(seq_lis))} en {_fmt_dur(time.time() - t0)}")

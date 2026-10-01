@@ -36,7 +36,8 @@ from ids_ips_ia.models.models import Models
 from ids_ips_ia.reaction.reaction_module import React
 from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.config.config_ids import (
-    CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH
+    CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH,
+    SEQ_STRIDE, DETECT_BATCH_SIZE
 )
 from ids_ips_ia.ids_ips_utils.loader import load
 from ids_ips_ia.ids_ips_utils.logger import get_logger
@@ -82,7 +83,8 @@ class AnomalyDetector:
     ]
 
     def __init__(
-        self, enable_graph: bool,
+        self, 
+        enable_graph: bool,
         Models_instance: Models,
         queue: pyqueue.Queue | MemoryManager,
         nom: str = 'Admin',
@@ -602,6 +604,40 @@ class AnomalyDetector:
             self._monitor_task = None
         return
     
+    def _drain_entries(self, max_items: int) -> list:
+        """
+        Vide la file SANS attendre, jusqu'à `max_items` éléments.
+
+        Retourne une liste ordonnée de `(pkt, alert, from_alert)` :
+          - paquet capturé : (pkt, None, False)
+          - paquet issu d'une alerte Suricata (fake_pkt, alert) : (fake_pkt, alert, True)
+        Un élément illisible est loggué puis ignoré, il ne fait pas perdre le reste du lot.
+        """
+        entries = []
+        while len(entries) < max_items:
+            try:
+                item = self.q.get_nowait()
+            except pyqueue.Empty:
+                break
+            try:
+                if self.skipper.should_skip(item):
+                    # Penser a remonter les ip blocké sinon ils pourront pas évoluer vers block_perm
+                    continue
+                self.pkt_proccessed += 1
+                if isinstance(item, tuple) and isinstance(item[1], bytes):
+                    ts, raw_bytes = item
+                    pkt = dpkt.ethernet.Ethernet(raw_bytes)
+                    pkt.ts = ts
+                    item = pkt
+                if isinstance(item, tuple):
+                    fake_pkt, alert = item
+                    entries.append((fake_pkt, alert, True))
+                else:
+                    entries.append((item, None, False))
+            except Exception as e:
+                logger.print(f"Erreur lecture paquet : {e}")
+        return entries
+
     async def detect(
         self, path: str,
         combination_mode: str = "or",
@@ -631,6 +667,8 @@ class AnomalyDetector:
         logger.print(f"   Mode combinaison : {combination_mode}")
         logger.print(f"   Seuil anomalie   : {packet_anomaly}")
         logger.print(f"   Verbose          : {verbose}")
+        logger.print(f"   Batch max        : {DETECT_BATCH_SIZE} paquets")
+        logger.print(f"   Stride séquence  : {SEQ_STRIDE} paquets (fenêtre = {SEQ_LENGTH})")
         logger.print("=" * 60)
         logger.print()
         self.detect_start_time = time.time()
@@ -651,6 +689,9 @@ class AnomalyDetector:
         comptes_seq = 0
         comptes_pkt = 0
 
+        how = 'all' if combination_mode == "and" else "any"
+        since_seq = 0   # paquets reçus depuis la dernière séquence évaluée (stride)
+        
         try:
             while not self.stop_event.is_set():
                 refs = self._model_refs
@@ -663,99 +704,85 @@ class AnomalyDetector:
                 _mod = dict(zip(self.KEYS, refs))
                 mode = self.mode
                 try:
-                    item = self.q.get_nowait()
-                    if self.skipper.should_skip(item):
-                        # Penser a remonter les ip blocké sinon ils pourront pas évoluer vers block_perm
+                    # A) on vide la file d'un coup (jusqu'à DETECT_BATCH_SIZE) : sous charge le lot se remplit,
+                    #    au repos on traite ce qui est là sans attendre -> pas de latence ajoutée.
+                    entries = self._drain_entries(DETECT_BATCH_SIZE)
+                    if not entries:
+                        await asyncio.sleep(0.1)
                         continue
-                    self.pkt_proccessed += 1
-                    if isinstance(item, tuple):
-                        if isinstance(item[1], bytes):
-                            ts, raw_bytes = item
-                            pkt = dpkt.ethernet.Ethernet(raw_bytes)
-                            pkt.ts = ts
-                            item = pkt
+
+                    # B) features par paquet (peu coûteux), en gardant l'ordre d'arrivée
+                    #  si ça dure je penses a aller a task + gather + to_thread
+                    batch, feats = [], []
                     
-                    
-                    if isinstance(item, tuple):
-                        fake_pkt, alert = item
-                        buffer_pkt.append(fake_pkt)
-                        pkt_fea = self.FeatureExtractor.extract_pack_features(fake_pkt)
-                        buffer_fea.append(pkt_fea)
-                        score_pkt = await self.Models.apredict_packet(
-                            ae_pkt, if_pkt, lof_pkt, scaler_pkt, pkt_fea,
-                            how='all' if combination_mode == "and" else "any",
-                            method="decision_function"
-                        )
-                        is_ano_pred_ = score_pkt < CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
-                        pkt_pred = -1 if is_ano_pred_ else 1
-                        buffer_pred_pkt.append(pkt_pred)
+                    for entry in entries:
+                        try:
+                            feats.append(self.FeatureExtractor.extract_pack_features(entry[0]))
+                            batch.append(entry)
+                        except Exception as e:
+                            logger.print(f"Erreur extraction features : {e}")
+                            
+                    if not batch:
+                        continue
 
-                        if combination_mode == "or":
-                            pkt_combined_pred = -1 if (pkt_pred == -1 or alert) else 1
-                        elif combination_mode == "and":
-                            pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
-                        elif combination_mode == "weighted":
-                            ia_score = 1 if pkt_pred == 1 else 0
-                            snort_score = 1 if not alert else 0
-                            score = 0.6 * ia_score + 0.4 * snort_score
-                            pkt_combined_pred = -1 if score < 0.5 else 1
-                        else:
-                            pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
+                    # C) UN SEUL appel modèles pour tout le lot (AE + IF + LOF vectorisés)
+                    pkt_scores = await self.Models.apredict_packet_batch(
+                        ae_pkt, if_pkt, lof_pkt, scaler_pkt, feats,
+                        how=how, method="decision_function"
+                    )
+                    thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
 
-                        if pkt_combined_pred == -1:
-                            pkt_rate.append(1)
-                            scores = await self.AnomalyScorer.detect_pkt(
-                                pkt=fake_pkt,
-                                seq_anomaly=False,
-                                models=_mod,
-                                Model=self.Models,
-                                mode=mode,
-                                pkt_rate=sum(pkt_rate),
-                                features=pkt_fea,
-                                how='all' if combination_mode == "and" else "any",
-                                event_timestamp=alert.get("eve_timestamp")
-                            )
-
-                            if self.enable_graphe:
-                                scores_deque.append(scores)
-                                self.graph.add_data3(scores)
-
-                            source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
-                            if verbose:
-                                scr_ip_resolution = await resolve_hostname(alert['src_ip'])
-                                logger.print(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
-
-                            self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
-                            self._add_alert(
-                                {
-                                    **self._to_alert_entry(pkt_fea, pkt_combined_pred, source=source),
-                                    **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(fake_pkt, with_dst=True))))
-                                }
-                            )
-
-                    else:
-                        pkt = item
+                    # D) logique par paquet (décision, alertes) ; on repère au passage les fenêtres à évaluer
+                    seq_jobs = []
+                    for (pkt, alert, from_alert), pkt_fea, score_pkt in zip(batch, feats, pkt_scores):
                         buffer_pkt.append(pkt)
-                        pkt_fea = self.FeatureExtractor.extract_pack_features(pkt)
                         buffer_fea.append(pkt_fea)
-                        score = await self.Models.apredict_packet(
-                            ae_pkt, if_pkt, lof_pkt, scaler_pkt, pkt_fea,
-                            how='all' if combination_mode == "and" else "any",
-                            method="decision_function"
-                        )
-                        pkt_pred = -1 if score < CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6) else 1
+                        pkt_pred = -1 if score_pkt < thr else 1
                         buffer_pred_pkt.append(pkt_pred)
-                        if pkt_pred == -1:
+                        since_seq += 1
+
+                        if from_alert:   # voie Suricata : paquet fabriqué depuis une alerte (fake_pkt, alert)
+                            if combination_mode == "or":
+                                pkt_combined_pred = -1 if (pkt_pred == -1 or alert) else 1
+                            elif combination_mode == "and":
+                                pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
+                            elif combination_mode == "weighted":
+                                ia_score = 1 if pkt_pred == 1 else 0
+                                snort_score = 1 if not alert else 0
+                                w_score = 0.6 * ia_score + 0.4 * snort_score
+                                pkt_combined_pred = -1 if w_score < 0.5 else 1
+                            else:
+                                pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
+
+                            if pkt_combined_pred == -1:
+                                pkt_rate.append(1)
+                                scores = await self.AnomalyScorer.detect_pkt(
+                                    pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
+                                    pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                                    event_timestamp=alert.get("eve_timestamp")
+                                )
+                                if self.enable_graphe:
+                                    scores_deque.append(scores)
+                                    self.graph.add_data3(scores)
+
+                                source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
+                                if verbose:
+                                    scr_ip_resolution = await resolve_hostname(alert['src_ip'])
+                                    logger.print(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
+
+                                self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
+                                self._add_alert(
+                                    {
+                                        **self._to_alert_entry(pkt_fea, pkt_combined_pred, source=source),
+                                        **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(pkt, with_dst=True))))
+                                    }
+                                )
+                        elif pkt_pred == -1:
                             pkt_rate.append(1)
                             scores = await self.AnomalyScorer.detect_pkt(
-                                pkt=item, seq_anomaly=None, models=_mod,
-                                Model=self.Models,
-                                mode=mode,
-                                pkt_rate=sum(pkt_rate),
-                                features=pkt_fea,
-                                how='all' if combination_mode == "and" else "any"
+                                pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
+                                pkt_rate=sum(pkt_rate), features=pkt_fea, how=how
                             )
-
                             if self.enable_graphe:
                                 scores_deque.append(scores)
                                 self.graph.add_data3(scores)
@@ -771,64 +798,69 @@ class AnomalyDetector:
                                 }
                             )
 
-                    if self.enable_graphe:
-                        num = sum(pkt_rate)
-                        if num == SEQ_LENGTH:
-                            comptes_pkt += 1
-
-                        if comptes_pkt >= 10:
-                            pkt_rate.clear()
+                        if self.enable_graphe:
                             num = sum(pkt_rate)
-                            comptes_pkt = 0
+                            if num == SEQ_LENGTH:
+                                comptes_pkt += 1
 
-                        self.graph.add_data1(num)
+                            if comptes_pkt >= 10:
+                                pkt_rate.clear()
+                                num = sum(pkt_rate)
+                                comptes_pkt = 0
 
-                    if len(buffer_fea) == SEQ_LENGTH:
-                        seq_fea = self.FeatureExtractor.extract_seq_features(np.array(buffer_fea))
-                        score_pred = await self.Models.apredict_sequence(
-                            ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq, seq_fea,
-                            how='all' if combination_mode == "and" else "any",
-                            method="decision_function"
+                            self.graph.add_data1(num)
+
+                        # Fenêtre glissante : pleine ET `SEQ_STRIDE` paquets écoulés depuis la dernière évaluation.
+                        # (avant : len == SEQ_LENGTH était vrai à CHAQUE paquet -> 4 modèles par paquet)
+                        if len(buffer_fea) == SEQ_LENGTH and since_seq >= SEQ_STRIDE:
+                            since_seq = 0
+                            seq_jobs.append((
+                                self.FeatureExtractor.extract_seq_features(np.array(buffer_fea)),
+                                pkt,
+                                sum(1 for x in buffer_pred_pkt if x == -1) / SEQ_LENGTH,
+                            ))
+
+                    # E) UN SEUL appel modèles pour toutes les séquences du lot (CNN + AE + IF + LOF)
+                    if seq_jobs:
+                        seq_scores = await self.Models.apredict_sequence_batch(
+                            ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq,
+                            np.stack([job[0] for job in seq_jobs]),
+                            how=how, method="decision_function"
                         )
-                        prop_anom = sum(1 for x in buffer_pred_pkt if x == -1) / SEQ_LENGTH
-                        is_ano_pred = score_pred <= CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
-                        pred_seq = -1 if is_ano_pred else 1
-                        if combination_mode == "or":
-                            combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
-                        elif combination_mode == "and":
-                            combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
-                        elif combination_mode == "weighted":
-                            seq_score = 1 if not pred_seq == -1 else 0
-                            score = 0.5 * seq_score + 0.5 * (1 - prop_anom)
-                            combined_pred = -1 if score < 0.5 else 1
-                        else:
-                            combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
+                        for (seq_fea, last_pkt, prop_anom), score_pred in zip(seq_jobs, seq_scores):
+                            pred_seq = -1 if score_pred <= thr else 1
+                            if combination_mode == "or":
+                                combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
+                            elif combination_mode == "and":
+                                combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
+                            elif combination_mode == "weighted":
+                                seq_score = 1 if not pred_seq == -1 else 0
+                                w_score = 0.5 * seq_score + 0.5 * (1 - prop_anom)
+                                combined_pred = -1 if w_score < 0.5 else 1
+                            else:
+                                combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
 
-                        if combined_pred == -1:
-                            seq_rate.append(1)
-                            await self.AnomalyScorer.detect_pkt(
-                                pkt=list(buffer_pkt)[-1],
-                                pkt_rate=prop_anom,
-                                features=seq_fea,
-                                models=_mod,
-                                Model=self.Models,
-                                seq_anomaly=True,
-                                mode=mode,
-                                how='all' if combination_mode == "and" else "any"
-                            )
+                            if combined_pred == -1:
+                                seq_rate.append(1)
+                                await self.AnomalyScorer.detect_pkt(
+                                    pkt=last_pkt, pkt_rate=prop_anom, features=seq_fea, models=_mod,
+                                    Model=self.Models, seq_anomaly=True, mode=mode, how=how
+                                )
+                                if verbose:
+                                    logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
+                                self.log_anomaly(seq_fea, combined_pred, source="IA")
+                                self._add_alert(
+                                    {
+                                        **self._to_alert_entry(seq_fea, combined_pred, source="IA"),
+                                        **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(last_pkt, with_dst=True))))
+                                    }
+                                )
+
                             if verbose:
-                                logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
-                            self.log_anomaly(seq_fea, combined_pred, source="IA")
-                            self._add_alert(
-                                {
-                                    **self._to_alert_entry(seq_fea, combined_pred, source="IA"),
-                                    **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(list(buffer_pkt)[-1], with_dst=True))))
-                                }
-                            )
-
-                        if verbose:
-                            logger.print(f"[SÉQUENCE] {prop_anom} ({sum(1 for x in buffer_pred_pkt if x == -1)} / {SEQ_LENGTH}) paquets anormaux")
-                            logger.print(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
+                                n_anom = round(prop_anom * SEQ_LENGTH)
+                                logger.print(f"[SÉQUENCE] {prop_anom} ({n_anom} / {SEQ_LENGTH}) paquets anormaux")
+                                if combined_pred != -1:
+                                    logger.print(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
 
                     if self.enable_graphe:
                         num = sum(seq_rate)
@@ -843,10 +875,6 @@ class AnomalyDetector:
 
                         self.graph.add_data2(num)
                         self.graph.add_data3(sum(scores_deque) / (len(scores_deque) or 1))
-
-                except pyqueue.Empty:
-                    await asyncio.sleep(0.1)
-                    continue
 
                 except Exception as e:
                     logger.print(f"Erreur détection : {e}")

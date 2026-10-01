@@ -150,21 +150,32 @@ LEAF_CATEGORIES = [
 ]
 
 # Étapes du pipeline, en INCLUSIF : (label, noms de fonctions, sous-chaîne de fichier ou None)
+_PKT = {"predict_packet", "apredict_packet", "predict_packet_batch", "apredict_packet_batch"}
+_SEQ = {"predict_sequence", "apredict_sequence", "predict_sequence_batch", "apredict_sequence_batch"}
+_IF = ({"decision_function"}, "_iforest")
+_LOF = ({"decision_function", "score_samples", "kneighbors"}, "_lof")
+STAGE_PKT = "predict_packet (AE + IF + LOF)"
+STAGE_SEQ = "predict_sequence (CNN + AE + IF + LOF)"
+# (label, noms de fonctions, sous-chaîne de fichier ou None, fonctions "parent" exigées dans la pile ou None)
+# Les lignes "dont" exigent leur parent : avant, "dont IsolationForest" mélangeait paquet ET séquence
+# (et pouvait dépasser son parent).
 PIPELINE_STAGES = [
-    ("detect() — boucle consommateur (total)", {"detect"}, "detection_module"),
-    ("extract_pack_features (par paquet)", {"extract_pack_features"}, None),
-    ("predict_packet (AE + IF + LOF, batch=1)", {"predict_packet", "apredict_packet"}, None),
-    ("extract_seq_features", {"extract_seq_features"}, None),
-    ("predict_sequence (CNN + AE + IF + LOF)", {"predict_sequence", "apredict_sequence"}, None),
-    ("  dont Keras predict()", {"predict", "predict_function", "predict_step"}, "keras"),
-    ("  dont IsolationForest.decision_function", {"decision_function"}, "_iforest"),
-    ("  dont LOF.decision_function", {"decision_function", "score_samples", "kneighbors"}, "_lof"),
-    ("AnomalyScorer.detect_pkt (voie lente)", {"detect_pkt"}, None),
-    ("log_anomaly / _add_alert", {"log_anomaly", "_add_alert"}, None),
-    ("persistance joblib/pickle (dump)", {"dump"}, None),
-    ("logger.print", {"print"}, "logger"),
-    ("blocage nft (_run_command / block)", {"_run_command", "block"}, None),
-    ("graphes (add_data*)", {"add_data1", "add_data2", "add_data3"}, None),
+    ("detect() — boucle consommateur (total)", {"detect"}, "detection_module", None),
+    ("extract_pack_features (par paquet)", {"extract_pack_features"}, None, None),
+    (STAGE_PKT, _PKT, None, None),
+    ("  dont IsolationForest (paquet)", _IF[0], _IF[1], _PKT),
+    ("  dont LOF (paquet)", _LOF[0], _LOF[1], _PKT),
+    ("extract_seq_features", {"extract_seq_features"}, None, None),
+    (STAGE_SEQ, _SEQ, None, None),
+    ("  dont IsolationForest (séquence)", _IF[0], _IF[1], _SEQ),
+    ("  dont LOF (séquence)", _LOF[0], _LOF[1], _SEQ),
+    ("  dont Keras predict()", {"predict", "predict_function", "predict_step"}, "keras", None),
+    ("AnomalyScorer.detect_pkt (voie lente)", {"detect_pkt"}, None, None),
+    ("log_anomaly / _add_alert", {"log_anomaly", "_add_alert"}, None, None),
+    ("persistance joblib/pickle (dump)", {"dump"}, None, None),
+    ("logger.print", {"print"}, "logger", None),
+    ("blocage nft (_run_command / block)", {"_run_command", "block"}, None, None),
+    ("graphes (add_data*)", {"add_data1", "add_data2", "add_data3"}, None, None),
 ]
 
 
@@ -184,6 +195,24 @@ PY_IDLE = {("wait", "threading.py"), ("get", "queue.py"), ("_worker", "thread.py
 BLOCK_LINE = re.compile(r"(time\.sleep|asyncio\.sleep|\.wait|\.join|\.get\(\s*(block|timeout))\s*\(?")
 
 
+def read_seq_stride() -> int:
+    """Stride configuré (ANOMALY_CONFIG.seq_stride), lu dans le JSON de config SANS importer le package
+    (son import exige des variables d'environnement et écrit des logs). 1 si introuvable."""
+    path = os.environ.get("IDS_CONFIG_PATH") or str(Path(__file__).resolve().parent.parent / "config" / "config_json.json")
+    try:
+        try:
+            import json5 as _json
+        except ImportError:
+            _json = json
+        with open(path, encoding="utf-8") as fh:
+            return max(1, int(_json.load(fh).get("ANOMALY_CONFIG", {}).get("seq_stride", 1)))
+    except Exception:
+        return 1
+
+
+SEQ_STRIDE = read_seq_stride()
+
+
 def short(fr: dict) -> str:
     return f"{fr['name']} ({os.path.basename(fr.get('file') or '?')})"
 
@@ -192,6 +221,12 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     d = json.loads(Path(json_path).read_text())
     frames = d["shared"]["frames"]
     profiles = d["profiles"]
+    if not wall:   # --analyze-only : la durée de la fenêtre est dans le profil lui-même (unité = secondes)
+        try:   # durée la plus fréquente parmi les threads durables (un thread mal attribué par py-spy peut doubler)
+            durs = [round(p["endValue"] - p["startValue"]) for p in profiles if p["endValue"] - p["startValue"] > 1]
+            wall = Counter(durs).most_common(1)[0][0] if durs else 0
+        except Exception:
+            wall = 0
     fkey = [(f["name"], f.get("file") or "?") for f in frames]
     fpath = [(f.get("file") or "").lower() for f in frames]
     # frames synthétiques ajoutées par py-spy (--threads/--subprocesses) : "process N", "thread (N)" -> sans fichier
@@ -200,6 +235,7 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
 
     total = 0.0
     idle_all = 0.0
+    src_missing = 0.0
     idle_tot = {}
     thread_tot = {}
     thread_leaf = defaultdict(Counter)
@@ -223,6 +259,8 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
             leaf_idle = (lf["name"], lbase) in PY_IDLE
             if not leaf_idle and lf.get("file") and lf.get("line"):
                 src_line = linecache.getline(lf["file"], lf["line"])
+                if not src_line:
+                    src_missing += w      # source illisible ici -> les time.sleep/wait ne peuvent pas être repérés
                 leaf_idle = bool(src_line and BLOCK_LINE.search(src_line))
             if leaf_idle or any(k in n for n in tail for k in IDLE_NAMES):
                 idle_tot[pname] = idle_tot.get(pname, 0.0) + w
@@ -250,8 +288,9 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
                             if lab in generic and any(x in fpath[stack[-1]] for x in subs)), "Python pur (ton code / autre)")
             leaf_cat[cat] += w
             # étapes inclusives
-            for label, names, fsub in PIPELINE_STAGES:
-                if any(frames[i]["name"] in names and (fsub is None or fsub in fpath[i]) for i in stack):
+            for label, names, fsub, parents in PIPELINE_STAGES:
+                if any(frames[i]["name"] in names and (fsub is None or fsub in fpath[i]) for i in stack) \
+                        and (parents is None or any(frames[i]["name"] in parents for i in stack)):
                     stage_incl[label] += w
             stacks[tuple(stack[-7:])] += w
             folded[";".join([pname.replace(";", ",").replace(" ", "_")] +
@@ -267,22 +306,33 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     add(f"- Temps **actif** (hors attentes) : **{total:.1f} s** cumulés sur {len(profiles)} thread(s)/process"
         + (f" pour **{wall:.0f} s** de fenêtre" if wall else "")
         + f" · attentes ignorées (wait/sleep/queue.get/epoll…) : {idle_all:.1f} s")
+    if src_missing > 0.05 * (total + idle_all):
+        add("- ⚠️ Fichiers source introuvables pour une partie des frames : les `time.sleep`/`wait` ne peuvent pas être "
+            "détectés, des threads au repos seront comptés comme actifs. Relance l'analyse sur la machine qui a profilé.")
     add("- Les pourcentages sont relatifs au temps actif total. "
         "⚠️ `--native` en mode bloquant ralentit fortement la cible : fie-toi aux PROPORTIONS, pas au débit absolu.\n")
 
     # --- verdict ---
     add("## 🎯 Verdict automatique\n")
     cats = leaf_cat.most_common()
+    cats_named = [(k, v) for k, v in cats if k not in generic] or cats   # le fourre-tout n'est pas un "coupable"
     stage_nodetect = [(k, v) for k, v in stage_incl.most_common() if not k.startswith("detect()") and not k.startswith("  ")]
-    add(f"- Bibliothèque qui consomme le plus (feuille) : **{cats[0][0]}** ({pct(cats[0][1]).strip()})")
+    add(f"- Bibliothèque qui consomme le plus (feuille) : **{cats_named[0][0]}** ({pct(cats_named[0][1]).strip()})")
     if stage_nodetect:
         add(f"- Étape du pipeline la plus coûteuse : **{stage_nodetect[0][0]}** ({pct(stage_nodetect[0][1]).strip()})")
+    if wall:
+        infer = stage_incl.get(STAGE_PKT, 0) + stage_incl.get(STAGE_SEQ, 0)
+        busy = infer / wall
+        add(f"- Inférence (paquet + séquence) active **{infer:.0f} s sur {wall:.0f} s** de fenêtre ({100 * busy:.0f} %)"
+            + (" → 🚨 **consommateur SATURÉ** : le débit max est celui de l'inférence, la capture/la file débordent."
+               if busy >= 0.8 else " → le consommateur n'est pas saturé."))
     hints = []
     s = lambda label: stage_incl.get(label, 0) / total
-    if s("predict_sequence (CNN + AE + IF + LOF)") > 0.25:
-        hints.append("`predict_sequence` pèse lourd → l'appeler toutes les N paquets (stride), pas à chaque paquet.")
-    if s("predict_packet (AE + IF + LOF, batch=1)") > 0.15:
-        hints.append("`predict_packet` en batch=1 → regrouper 128-512 paquets par appel.")
+    if s(STAGE_SEQ) > 0.25:
+        hints.append("`predict_sequence` pèse lourd → augmenter `seq_stride` (config) : une séquence tous les N paquets.")
+    if s(STAGE_PKT) > 0.15:
+        hints.append("`predict_packet` pèse lourd → vérifier la taille des lots (`detect_batch_size`) ; "
+                     "sinon réduire `n_estimators` / `n_neighbors`.")
     if leaf_cat.get("TensorFlow / Keras", 0) / total > 0.30:
         hints.append("Keras domine → `model(x, training=False)` ou `tf.function` à signature fixe au lieu de `model.predict` par petit lot.")
     if leaf_cat.get("scikit-learn", 0) / total > 0.20:
@@ -305,7 +355,7 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
         add("## 📈 Débit mesuré pendant la fenêtre\n")
         seq = len(tap.times["sequences"])
         add(f"- Séquences évaluées : **{seq}** → {seq / wall:.2f}/s "
-            f"(≈ {seq / wall:.2f} paquets/s traités si stride=1)")
+            f"(≈ {seq * SEQ_STRIDE / wall:.2f} paquets/s traités, stride={SEQ_STRIDE})")
         add(f"- Anomalies paquet : {len(tap.times['pkt_anomalies'])} · blocages nft : {len(tap.times['blocks'])}")
         if tap.stats:
             a, b = tap.stats[0], tap.stats[-1]
@@ -316,7 +366,7 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     # --- étapes ---
     add("## 🧱 Étapes du pipeline (temps inclusif)\n")
     add("| Étape | % temps actif | secondes |\n|---|---:|---:|")
-    for label, _, _ in PIPELINE_STAGES:
+    for label, *_ in PIPELINE_STAGES:
         v = stage_incl.get(label, 0)
         if v:
             add(f"| {label} | {pct(v)} | {v:.1f} |")

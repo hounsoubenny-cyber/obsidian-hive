@@ -55,6 +55,29 @@ GLOBAL_CONFIG = CONFIG.CONFIG[GLOBAL_CONFIG_KEY]
 CAPTURE_CONFIG = CONFIG.CONFIG[CAPTURE_CONFIG_KEY]
 SEQ_LENGTH =  CONFIG.CONFIG.get(ANOMALY_CONFIG_KEY, {}).get('seq_length', 60)
 
+
+def _positive_int(value, default: int) -> int:
+    """Entier >= 1, sinon la valeur par défaut (une config cassée ne doit pas planter la détection)."""
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        return default
+
+
+_ANOMALY_CFG = CONFIG.CONFIG.get(ANOMALY_CONFIG_KEY, {})
+# Pas de la fenêtre glissante : nb de paquets entre deux séquences évaluées (live) / construites (fit, refit)
+SEQ_STRIDE = _positive_int(_ANOMALY_CFG.get('seq_stride', 10), 10)
+SEQ_STRIDE_FIT = _positive_int(_ANOMALY_CFG.get('seq_stride_fit', 1), 1)
+# Nb max de paquets scorés en un seul appel modèle côté détection
+DETECT_BATCH_SIZE = _positive_int(_ANOMALY_CFG.get('detect_batch_size', 256), 256)
+
+
+def n_windows(n_items: int, length: int = SEQ_LENGTH, stride: int = 1) -> int:
+    """Nombre de fenêtres de taille `length` avec un pas `stride` sur `n_items` éléments."""
+    if n_items < length:
+        return 0
+    return (n_items - length) // stride + 1
+
 CAPTURE_FILENAME = GLOBAL_CONFIG.get("capture_filename", "capture.pkl")
 ADD_DATA_TO_CAPTURE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core", "data", "capture_backup.pkl"))
 ADD_DATA_TO_CAPTURE_PATH = GLOBAL_CONFIG.get("add_data_to_capture_path") or ADD_DATA_TO_CAPTURE_PATH

@@ -86,6 +86,37 @@ def __predict_cnn_memory(model, x):
 def _predict_cnn_memory(model, x):
     return __predict_cnn_memory(model, x).numpy()
 
+
+# --- Batching ------------------------------------------------------------------------------
+# Les fonctions ci-dessus sont compilées avec XLA (jit_compile=True) : XLA exige des formes statiques,
+# donc chaque taille de lot DIFFÉRENTE déclencherait une nouvelle compilation (lent + mémoire).
+# On pad donc les lots à une taille "bucket" fixe (puissances de 2) puis on coupe le surplus :
+# au plus 9 compilations par modèle, quelle que soit la charge.
+_MAX_N = 10
+_BATCH_BUCKETS = tuple([2 ** i for i in range(_MAX_N + 1)])
+
+
+def _bucket_size(n: int) -> int:
+    for b in _BATCH_BUCKETS:
+        if n <= b:
+            return b
+    return _BATCH_BUCKETS[-1]
+
+
+def _run_bucketed(fn, model, *arrays):
+    """fn(model, *arrays) sur des lots de taille fixe ; renvoie exactement len(arrays[0]) lignes."""
+    n = len(arrays[0])
+    max_b = _BATCH_BUCKETS[-1]
+    outs = []
+    for start in range(0, n, max_b):
+        chunk = [a[start:start + max_b] for a in arrays]
+        m = len(chunk[0])
+        b = _bucket_size(m)
+        if b != m:  # on répète la dernière ligne : inférence (training=False) -> les lignes sont indépendantes
+            chunk = [np.concatenate([c, np.repeat(c[-1:], b - m, axis=0)], axis=0) for c in chunk]
+        outs.append(fn(model, *chunk)[:m])
+    return outs[0] if len(outs) == 1 else np.concatenate(outs, axis=0)
+
 class Models:
     def __init__(self, lock=None):
         self.mse_mean = 0.15
@@ -889,10 +920,11 @@ class Models:
         
         # Crer les graphes
         logger.print("Création des graphe XLA")
-        _predict_ae_pkt(ae_pkt, X_packets[:1])
-        cnn_memory_test = _predict_cnn_memory(cnn_bottleneck_model, X_sequences[:1])
-        _predict_cnn_seq(cnn_seq, X_sequences[:1])
-        _predict_ae_seq(ae_seq, X_sequences[:1], cnn_memory_test)
+        for b in _BATCH_BUCKETS:
+            _predict_ae_pkt(ae_pkt, X_packets[:b])
+            cnn_memory_test = _predict_cnn_memory(cnn_bottleneck_model, X_sequences[:b])
+            _predict_cnn_seq(cnn_seq, X_sequences[:b])
+            _predict_ae_seq(ae_seq, X_sequences[:b], cnn_memory_test)
         
         if_pkt.set_params(n_jobs=1)
         lof_pkt.set_params(n_jobs=1)
@@ -902,7 +934,7 @@ class Models:
         logger.print("Fin de la création !")
         return ae_seq, cnn_seq, if_seq, lof_seq, ae_pkt, if_pkt, lof_pkt
 
-    def _normalize_decision_function(self, if_score: float, lof_score: float, who:str, if_model, lof_model):
+    def _normalize_decision_function(self, if_score: float, lof_score: float, who: str, if_model, lof_model):
         """
         Normalise les deux scores dans [-1, +1]
 
@@ -949,7 +981,8 @@ class Models:
         lof_normalized = ((lof_score - (lof_min)) / (lof_max - (lof_min))) * 2 - 1
         avg = 0.5 * if_normalized + 0.5 * lof_normalized
         
-        return float(np.clip(avg, -1, 1))
+        out = np.clip(avg, -1, 1)
+        return float(out) if np.ndim(out) == 0 else out  # scalaire -> float (inchangé), lot -> ndarray
 
 
     def _get_decision_confidence(self, norm_score: float):
@@ -1003,14 +1036,7 @@ class Models:
             self.seq_scaler = scaler
             X_scaled = scaler.transform(X_seq)
             new = X_scaled[np.newaxis, :, :]  # Ajouter une dimension, car (n_sequences(ici 1), n_pkt, n_features)
-            if self.cnn_bottleneck_model is not None:
-                cnn_bottleneck_model = self.cnn_bottleneck_model
-            else:
-                self.cnn_bottleneck_model = Model(
-                    inputs=cnn_seq.input,
-                    outputs=cnn_seq.get_layer("cnn_mha_encoder").input[0]  # query input
-                )
-                cnn_bottleneck_model = self.cnn_bottleneck_model
+            cnn_bottleneck_model = self._get_cnn_bottleneck(cnn_seq)
             
             
             # cnn_memory = cnn_bottleneck_model.predict(new)
@@ -1111,6 +1137,96 @@ class Models:
     
     async def apredict_packet(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_packet, *args, **kwargs)
+
+    # ------------------------------------------------------------------ batching
+    def _get_cnn_bottleneck(self, cnn_seq):
+        """Modèle 'bottleneck' du CNN, recréé si le CNN a changé (refit / rechargement du modèle)."""
+        cached = getattr(self, "_cnn_bottleneck_for", None)
+        if self.cnn_bottleneck_model is None or cached != id(cnn_seq):
+            self.cnn_bottleneck_model = Model(
+                inputs=cnn_seq.input,
+                outputs=cnn_seq.get_layer("cnn_mha_encoder").input[0]  # query input
+            )
+            self._cnn_bottleneck_for = id(cnn_seq)
+        return self.cnn_bottleneck_model
+
+    def _score_batch(self, Z, if_model, lof_model, method, how, who):
+        """IF + LOF sur une matrice Z (n, d) -> tableau de n scores (ou de n prédictions -1/1)."""
+        how = (how or "any").lower().strip()
+        if method == 'decision_function':
+            return self._normalize_decision_function(
+                if_model.decision_function(Z), lof_model.decision_function(Z),
+                who=who, if_model=if_model, lof_model=lof_model
+            )
+        if method in ('score_sample', 'score_samples'):
+            return (if_model.score_samples(Z) + lof_model.score_samples(Z)) / 2.0
+        anomalous = np.stack([if_model.predict(Z), lof_model.predict(Z)]) == -1   # (2, n)
+        flag = anomalous.all(axis=0) if how == 'all' else anomalous.any(axis=0)
+        return np.where(flag, -1, 1)
+
+    def predict_packet_batch(
+        self, ae_pkt, if_pkt, lof_pkt, scaler, pkt_features_list, method='decision_function', how='any'
+    ):
+        """
+        Version vectorisée de `predict_packet` : n paquets d'un coup.
+
+        pkt_features_list : liste/array de n vecteurs de features (ou dicts)
+        Retourne un ndarray de n scores (même sémantique que predict_packet, ligne par ligne).
+        """
+        n = len(pkt_features_list)
+        try:
+            rows = [list(f.values()) if isinstance(f, dict) else f for f in pkt_features_list]
+            X = np.asarray(rows, dtype=float)
+            self.pkt_scaler = scaler
+            X_scaled = scaler.transform(X)
+            X_pred = _run_bucketed(_predict_ae_pkt, ae_pkt, X_scaled)
+            diff = X_scaled - X_pred
+            mse = np.mean(diff ** 2, axis=1, keepdims=True)
+            mae = np.mean(np.abs(diff), axis=1, keepdims=True)
+            Z = np.concatenate((X_pred, mse, mae), axis=1)
+            return self._score_batch(Z, if_pkt, lof_pkt, method, how, who='pkt')
+        except Exception as e:
+            logger.print("Erreur predict_packet_batch:", e)
+            import traceback
+            logger.print(traceback.format_exc())
+            return np.ones(n)   # même valeur de repli que predict_packet (normal)
+
+    async def apredict_packet_batch(self, *args, **kwargs):
+        return await asyncio.to_thread(self.predict_packet_batch, *args, **kwargs)
+
+    def predict_sequence_batch(
+        self, ae_seq, cnn_seq, if_seq, lof_seq, scaler, X_seqs, method='decision_function', how='any'
+   ):
+        """
+        Version vectorisée de `predict_sequence` : m séquences d'un coup.
+
+        X_seqs : array (m, SEQ_LENGTH, n_features) (sortie de extract_seq_features, empilée)
+        Retourne un ndarray de m scores.
+        """
+        m = len(X_seqs)
+        try:
+            X_seqs = np.asarray(X_seqs, dtype=float)
+            _, L, F = X_seqs.shape
+            self.seq_scaler = scaler
+            new = scaler.transform(X_seqs.reshape(m * L, F)).reshape(m, L, F)
+            cnn_memory = _run_bucketed(_predict_cnn_memory, self._get_cnn_bottleneck(cnn_seq), new)
+            X_pred = _run_bucketed(_predict_ae_seq, ae_seq, new, cnn_memory)
+            X_pred_cnn = _run_bucketed(_predict_cnn_seq, cnn_seq, new)
+
+            diff = new - X_pred
+            diff_cnn = new - X_pred_cnn
+            X_flat = np.concatenate((
+                X_pred.reshape(m, -1), X_pred_cnn.reshape(m, -1),
+                np.mean(diff ** 2, axis=(1, 2)).reshape(-1, 1), np.mean(np.abs(diff), axis=(1, 2)).reshape(-1, 1),
+                np.mean(diff_cnn ** 2, axis=(1, 2)).reshape(-1, 1), np.mean(np.abs(diff_cnn), axis=(1, 2)).reshape(-1, 1),
+            ), axis=1)
+            return self._score_batch(X_flat, if_seq, lof_seq, method, how, who='seq')
+        except Exception as e:
+            logger.print("Erreur predict_sequence_batch:", e)
+            return np.ones(m)
+
+    async def apredict_sequence_batch(self, *args, **kwargs):
+        return await asyncio.to_thread(self.predict_sequence_batch, *args, **kwargs)
     
     def plot_history_and_evaluate(self, tf_model, history, X_test, name='Autoencoder', plot=False, cnn_bottleneck = None):
 

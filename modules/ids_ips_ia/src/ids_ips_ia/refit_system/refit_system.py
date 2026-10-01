@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from ids_ips_ia.core.capture import load_pkt_file
 from sklearn.model_selection import train_test_split as tts
 from ids_ips_ia.core.features_extractor import FeatureExtractor
-from ids_ips_ia.config.config_ids import SEQ_LENGTH
+from ids_ips_ia.config.config_ids import SEQ_LENGTH, SEQ_STRIDE_FIT, n_windows
 from ids_ips_ia.refit_system.config import FILE_PREFIX, REFIT_DIR
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 
@@ -187,10 +187,10 @@ class ModelRefitMonitor:
         try:
             extractor = FeatureExtractor()
             X_packets = np.array([extractor.extract_pack_features(pkt) for pkt in pkt_list])
-            n_seq = X_packets.shape[0] - SEQ_LENGTH + 1 # Comme nombre d'éléments, fin - debut + 1
+            n_seq = n_windows(X_packets.shape[0], SEQ_LENGTH, SEQ_STRIDE_FIT)  # (N - L) // stride + 1
             if n_seq <= 0:
                 raise ValueError("Pas assez de paquets pour une séquence !")
-            seq_pkt = [X_packets[i : i + SEQ_LENGTH] for i in range(n_seq)]
+            seq_pkt = [X_packets[k * SEQ_STRIDE_FIT : k * SEQ_STRIDE_FIT + SEQ_LENGTH] for k in range(n_seq)]
             seq_lis = []
             #Extraire les features de sequances
             for seq in seq_pkt:
