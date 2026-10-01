@@ -32,6 +32,7 @@ pour le flamegraph interactif), folded.txt (pour flamegraph.pl / inferno), targe
 """
 import argparse
 import json
+import linecache
 import os
 import re
 import shutil
@@ -173,6 +174,16 @@ IDLE_NAMES = ("epoll_wait", "epoll_pwait", "futex_abstimed_wait", "futex_wait", 
               "uv__io_poll", "PyThread_acquire_lock_timed", "_do_waitpid", "select (")
 
 
+# Attentes côté Python (sans --native, py-spy ne voit que la frame Python qui appelle le C bloquant)
+PY_IDLE = {("wait", "threading.py"), ("get", "queue.py"), ("_worker", "thread.py"), ("select", "selectors.py"),
+           ("run", "runners.py"), ("_run_once", "base_events.py"), ("_run_once", "nest_asyncio.py"),
+           ("acquire", "threading.py"), ("join", "threading.py"), ("_wait_for_tstate_lock", "threading.py"),
+           ("sleep", "tasks.py")}
+# Ligne source de la frame feuille qui contient un appel dormant/attendant (recv volontairement exclu :
+# sous charge réseau saturée, recv_into = vrai travail de capture)
+BLOCK_LINE = re.compile(r"(time\.sleep|asyncio\.sleep|\.wait|\.join|\.get\(\s*(block|timeout))\s*\(?")
+
+
 def short(fr: dict) -> str:
     return f"{fr['name']} ({os.path.basename(fr.get('file') or '?')})"
 
@@ -207,7 +218,13 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
             if not stack:
                 continue
             tail = [frames[i]["name"] + (" (" if "selectors" in fpath[i] else "") for i in stack[-8:]]
-            if any(k in n for n in tail for k in IDLE_NAMES):
+            lf = frames[stack[-1]]
+            lbase = os.path.basename(lf.get("file") or "")
+            leaf_idle = (lf["name"], lbase) in PY_IDLE
+            if not leaf_idle and lf.get("file") and lf.get("line"):
+                src_line = linecache.getline(lf["file"], lf["line"])
+                leaf_idle = bool(src_line and BLOCK_LINE.search(src_line))
+            if leaf_idle or any(k in n for n in tail for k in IDLE_NAMES):
                 idle_tot[pname] = idle_tot.get(pname, 0.0) + w
                 idle_all += w
                 continue
@@ -249,7 +266,7 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     add(f"# Rapport de profilage IDS/IPS — {datetime.now():%Y-%m-%d %H:%M:%S}\n")
     add(f"- Temps **actif** (hors attentes) : **{total:.1f} s** cumulés sur {len(profiles)} thread(s)/process"
         + (f" pour **{wall:.0f} s** de fenêtre" if wall else "")
-        + f" · attentes ignorées (epoll/futex/sleep/wait) : {idle_all:.1f} s")
+        + f" · attentes ignorées (wait/sleep/queue.get/epoll…) : {idle_all:.1f} s")
     add("- Les pourcentages sont relatifs au temps actif total. "
         "⚠️ `--native` en mode bloquant ralentit fortement la cible : fie-toi aux PROPORTIONS, pas au débit absolu.\n")
 

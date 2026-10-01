@@ -11,43 +11,42 @@ AnomalyDetector : orchestre la boucle de détection temps réel
 (monitoring Suricata, scoring des paquets/séquences, sauvegardes).
 Extrait de detection_module.py.
 
-@author: hounsousamuel
 """
 
-import os
-import sys
 
-import socket
-import queue as pyqueue
+import os
 import json
 import time
-import dpkt
 import dill
+import dpkt
 import joblib
 import atexit
+import socket
 import asyncio
 import threading
 import traceback
 import numpy as np
+import queue as pyqueue
 import multiprocessing as mp
 from datetime import datetime
 from collections import deque
 
 from ids_ips_ia.core.features_extractor import FeatureExtractor
 from ids_ips_ia.models.models import Models
-from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, State, IPS # noqa
 from ids_ips_ia.reaction.reaction_module import React
 from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.config.config_ids import (
     CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH
 )
+from ids_ips_ia.ids_ips_utils.loader import load
+from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.detection.blocked_skip import BlockedSkipper
+from ids_ips_ia.detection.anomaly_logger import AnomalyLogger
 from ids_ips_ia.ids_ips_utils.real_time_plot import RealTimePLot
 from ids_ips_ia.ids_ips_utils.warnings_manager import suppres_warnings
 from ids_ips_ia.ids_ips_utils.model_file_validation import validate_model_file
-from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.ids_ips_utils.suricata_integration import Utils, State, IPS # noqa
 from ids_ips_ia.memory_managers.shared_memory_packet_manager import MemoryManager
-from ids_ips_ia.ids_ips_utils.loader import load
-
 from ids_ips_ia.detection.anomaly_scorer import AnomalyScorer, resolve_hostname
 from modules_utils.stop_process import kill_process_group_async as kill_process
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
@@ -66,7 +65,7 @@ os.makedirs(ANOM_DIR, exist_ok=True)
 ANOMALY_CONF = CONFIG.CONFIG.get(ANOMALY_CONFIG_KEY, {})
 MAX_ANOMALIES = ANOMALY_CONF.get("max_anomalies_per_file", 10000)
 ANOMALY_FILE_PREFIX = ANOMALY_CONF.get("anomaly_file_prefix", "anomalies")
-
+ANOMALY_BATCH_SIZE = 256
 
 class AnomalyDetector:
     # Ordre aligné avec le déballage : ae_pkt, if_pkt, lof_pkt, scaler_pkt, ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq
@@ -99,12 +98,26 @@ class AnomalyDetector:
         if isinstance(interfaces, str):
             interfaces = [interfaces]
 
-        self.interfaces = interfaces or self.detect_all_interfaces()
         self.q = queue
         self.mod = {}
-        self.anomalies, self.current_file = self.load_anomalies()
-        self.last_anomalies_queue: deque = deque(maxlen=int(MAX_ANOMALIES) * 5)
         self.whitelist = []
+        self.interfaces = interfaces or self.detect_all_interfaces()
+        self.last_anomalies_queue: deque = deque(maxlen=int(MAX_ANOMALIES) * 3)
+        self.anomaly_logger_stats = {}
+        def after_write(logger: AnomalyLogger, *args, **kwargs):
+            self.anomaly_logger_stats = logger.stats()
+            return
+        
+        self.anomaly_logger = AnomalyLogger(
+            directory=ANOM_DIR, 
+            prefix=ANOMALY_FILE_PREFIX, 
+            max_per_file=int(MAX_ANOMALIES),
+            on_warning=logger.print,
+            batch_size=ANOMALY_BATCH_SIZE,
+            flush_interval=10.0,
+            on_write=None,
+            after_write=after_write,
+        )
         self.React = React(
             whitelist=whitelist,
             clear_sets_at_exit=clear_sets_at_exit,
@@ -112,6 +125,7 @@ class AnomalyDetector:
         )
         self.whitelist = self.React.whitelist
         self.white_file = self.React.whitelist_filename
+        self.skipper = BlockedSkipper(self.React)
         self.pkt_rate_to_plot = deque(maxlen=100000)
         self.seq_reat_to_plot = deque(maxlen=100000)
 
@@ -201,6 +215,7 @@ class AnomalyDetector:
 
     def _stop(self):
         self.stop_event.set()
+        self.anomaly_logger.close()
 
     def stop(self, *args, **kwargs):
         self._stop()
@@ -235,12 +250,6 @@ class AnomalyDetector:
             self.save(self.white_file, self.whitelist)
             logger.print('Fin sauvegarde !')
         atexit.register(_save)
-
-    def next_anomaly_file(self):
-        i = 0
-        while os.path.exists(os.path.join(ANOM_DIR, f"{ANOMALY_FILE_PREFIX}_{i}.pkl")):
-            i += 1
-        return os.path.join(ANOM_DIR, f"{ANOMALY_FILE_PREFIX}_{i}.pkl")
 
     def load_anomalies(self):
         try:
@@ -280,20 +289,23 @@ class AnomalyDetector:
             "seq_length": len(array),
             "features": array.tolist()
         }
-
+    
     def log_anomaly(self, array, pred, source="IA"):
-        try:
-            anomaly_entry = self._to_alert_entry(array, pred, source)
-            self.anomalies.append(anomaly_entry)
-            if len(self.anomalies) >= int(MAX_ANOMALIES):
-                self.current_file = self.next_anomaly_file()
-                joblib.dump(self.anomalies, self.current_file)
-                self.anomalies = []
-            else:
-                joblib.dump(self.anomalies, self.current_file)
+        self.anomaly_logger.log(array, pred, source)
+        
+    # def log_anomaly(self, array, pred, source="IA"):
+    #     try:
+    #         anomaly_entry = self._to_alert_entry(array, pred, source)
+    #         self.anomalies.append(anomaly_entry)
+    #         if len(self.anomalies) >= int(MAX_ANOMALIES):
+    #             self.current_file = self.next_anomaly_file()
+    #             joblib.dump(self.anomalies, self.current_file)
+    #             self.anomalies = []
+    #         else:
+    #             joblib.dump(self.anomalies, self.current_file)
 
-        except Exception as e:
-            logger.print(f"Erreur log_anomaly : {e}")
+    #     except Exception as e:
+    #         logger.print(f"Erreur log_anomaly : {e}")
 
     def _is_ipv6(self, ip_str):
         """Détecte si une string est une IPv6 valide"""
@@ -652,6 +664,9 @@ class AnomalyDetector:
                 mode = self.mode
                 try:
                     item = self.q.get_nowait()
+                    if self.skipper.should_skip(item):
+                        # Penser a remonter les ip blocké sinon ils pourront pas évoluer vers block_perm
+                        continue
                     self.pkt_proccessed += 1
                     if isinstance(item, tuple):
                         if isinstance(item[1], bytes):
@@ -849,13 +864,8 @@ class AnomalyDetector:
 
             if refit_task:
                 await self.stop_refit_task()
-                # if not refit_task.done():
-                #     refit_task.cancel()
-                #     try:
-                #         await refit_task
-                #     except asyncio.CancelledError:
-                #         pass
-
+            
+            self.anomaly_logger.close()
             self.stop()
 
 if __name__ == "__main__":

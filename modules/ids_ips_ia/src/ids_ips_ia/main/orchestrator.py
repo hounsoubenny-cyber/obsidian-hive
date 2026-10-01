@@ -644,6 +644,7 @@ class IDS_IPS:
             logger.debug("Arrêt du detector...")
             try:
                 self.detector.stop()
+                self.detector.anomaly_logger.close()
                 logger.success("Detector arrêté")
             except Exception as e:
                 logger.error(f"detector.stop a échoué : {e!r}")

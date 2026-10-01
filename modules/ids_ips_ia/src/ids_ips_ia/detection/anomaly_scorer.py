@@ -772,7 +772,7 @@ class AnomalyScorer:
 
         return blocked
 
-    def action(self, src, dst, decision: dict, block_input: bool | None = None):
+    def action(self, src, dst, target_ip, decision: dict, block_input: bool | None = None):
         """
         Applique une action en fonction de la décision de l'IDS/IPS.
         Utilise UNIQUEMENT les règles nftables (pas de tc).
@@ -782,7 +782,8 @@ class AnomalyScorer:
         ):
             logger.print(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
             return
-
+        
+        block_input_has_been_none = block_input is None
         if block_input is None:
             src_is_local = src in IPS if src else False
             dst_is_local = dst in IPS if dst else False
@@ -797,7 +798,13 @@ class AnomalyScorer:
         else:
             direction = "ENTRANT" if block_input else "SORTANT"
 
-        target_ip = src if src else dst
+        # target_ip = src if src else dst
+        if block_input_has_been_none:
+            target_ip = src if block_input else dst # Si entrant bloquer la source, sinon la destination
+        if not target_ip:
+            logger.print(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target_ip}")
+            return
+            
         if target_ip in self.React.whitelist:
             logger.print(f"✅ {target_ip} - Whitelistée, aucune action")
             return
@@ -810,7 +817,7 @@ class AnomalyScorer:
             logger.print(f"📊 {target_ip} - Score {score} - Surveillance ({direction})")
 
         elif action_type == 'rate_limit':
-            self.React.block(ip=target_ip, rule="rate_limit_data", input=block_input, timeout=duration, unit="s")
+            self.React.block(ip=target_ip, rule="rate_limit", input=block_input, timeout=duration, unit="s")
             logger.print(f"🐌 {target_ip} - Nombre de connexion limitée ({direction})")
             self.make_blocked(target_ip)
 
@@ -853,11 +860,15 @@ class AnomalyScorer:
                for ip in (src, dst) if ip):
             logger.print(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
             return 0.0
-
-        target = src if src else dst
+        
         src_is_local = src in IPS if src else False
         dst_is_local = dst in IPS if dst else False
         block_input = False if (src_is_local and not dst_is_local) else True
+        target = src if block_input else dst # Si entrant bloquer la source, sinon la destination
+        if not target:
+            logger.print(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target}")
+            return
+        
         if target in self.React.whitelist:
             logger.print("Ip présente dans whitelist !")
             return 0.0
@@ -900,7 +911,7 @@ class AnomalyScorer:
         self.TextMonitor.update(score_dangerous, action=decision.get('level', 'log_only'), ip=target)
 
         if mode == 'ips':
-            await asyncio.to_thread(self.action, src, dst, decision, block_input=block_input)
+            await asyncio.to_thread(self.action, src, dst, target, decision, block_input=block_input)
         else:
             logger.print(f"[MODE IDS] Aurait exécuté: {decision}")
 
