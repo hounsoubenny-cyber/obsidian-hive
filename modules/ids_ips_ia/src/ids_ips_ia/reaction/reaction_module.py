@@ -6,17 +6,20 @@ Created on Sun Apr 12 22:12:11 2026
 @author: hounsousamuel
 """
 
-import os, sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-import json
+import os
 import time
-import asyncio
+import json
 import socket
 import atexit
+import asyncio
 import threading
 import ipaddress
 import subprocess
 from geoip2.database import Reader
+from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
+from ids_ips_ia.reaction.block_batcher import BlockBatcher
+from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
 from ids_ips_ia.ids_ips_utils.signal_manager import signal_manager
 from ids_ips_ia.ids_ips_utils.suricata_integration import get_all_locals_ip
 from ids_ips_ia.reaction.config import (
@@ -24,9 +27,8 @@ from ids_ips_ia.reaction.config import (
     DEFAULT_RULE_UNIT,
     NFT_RATE_DATA_LIMITE, NFT_RATE_LIMITE
 )
-from ids_ips_ia.ids_ips_utils.logger import get_logger
-from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
-from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
+
+_BLOCKER_LOCK = threading.Lock()
 
 _PREFIX = "OBSIDIAN"
 # =============================================================================
@@ -642,7 +644,46 @@ class React:
     # =========================================================================
     # ACTIONS DE BLOCAGE/DÉBLOCAGE
     # =========================================================================
-    def block(self, ip, rule: str = "drop", input: bool = False, timeout: int | None = None, unit: str = "m", *args, **kwargs):
+    
+    def _record_blocked(self, meta: dict):
+        """Appelé par le BlockBatcher une fois le blocage réellement appliqué dans nftables."""
+        with self._blocked_lock:
+            self.blocked[meta['ip']] = {**meta, 'blocked_at': time.time()}
+
+    def _get_blocker(self) -> BlockBatcher:
+        b = self.__dict__.get("_blocker_obj")
+        if b is None:
+            with _BLOCKER_LOCK:
+                b = self.__dict__.get("_blocker_obj")
+                if b is None:
+                    b = self._blocker_obj = BlockBatcher(
+                        table=NFT_TABLE_NAME, 
+                        run_cmd=self._run_command,
+                        on_blocked=self._record_blocked,
+                        on_warning=logger.print,
+                        flush_interval=0.03,
+                        queue_max=1_000_000   # Eviter de rater des blocage, catastrophique, mais eviter de OOM la ram -> échec
+                    )
+        return b
+    
+    def block(
+        self, 
+        ip: str, 
+        rule: str = "drop", 
+        input: bool = False,
+        timeout: int | None = None,
+        unit: str = "m",
+        nowait: bool = False,
+        *args, **kwargs
+    ):
+        if nowait:
+            return self.block_nowait(
+                ip=ip,
+                rule=rule,
+                input=input,
+                timeout=timeout,
+                unit=unit,
+            )
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
             return False
@@ -676,6 +717,43 @@ class React:
             return True
         return False
     
+    def block_nowait(
+        self, 
+        ip: str, 
+        rule: str = "drop",
+        input: bool = False, 
+        timeout: int | None = None,
+        unit: str = "m", 
+        *args, **kwargs
+     ) -> bool:
+        """
+        Comme block() mais NON BLOQUANT : la demande est enfilée et regroupée avec les autres en UNE commande nft
+        (voir block_batcher.py). self.blocked est mis à jour quand nft a réellement appliqué le blocage.
+        Retourne True si la demande est acceptée (le résultat nft arrive ensuite), False si l'IP est invalide.
+        """
+        ip_type = self.get_ip_type(ip)
+        if ip_type == "error":
+            return False
+        type_dir = "input" if input else "output"
+        set_name = f'blacklist_{type_dir}_{ip_type}'
+        if rule == "rate_limit":
+            set_name = f'blacklist_rate_limite_{type_dir}_{ip_type}'
+        elif rule == "rate_limit_data":
+            set_name = f'blacklist_rate_limite_data_{type_dir}_{ip_type}'
+        if timeout:
+            tok = "never" if abs(timeout) == float("inf") else f"{timeout}{unit}"
+        else:
+            tok = None
+        meta = {
+            'ip': ip, 
+            'rule': rule, 
+            'set_name': set_name,
+            'duration': timeout, 
+            'unit': unit, 
+            "input": input
+        }
+        return self._get_blocker().submit(ip, set_name, tok, meta)
+
     def is_blocked(self, ip: str) -> bool:
         """
         Vérifie si une IP est bloquée. Purge automatiquement (paresseusement)
@@ -834,6 +912,8 @@ class React:
                 self.unlock(**data)
         else:
             self.save_nft_conf()
+        
+        self._get_blocker().close()
             
     def at_exit_handle(self):
         def sig_manager(*args, **kwargs):

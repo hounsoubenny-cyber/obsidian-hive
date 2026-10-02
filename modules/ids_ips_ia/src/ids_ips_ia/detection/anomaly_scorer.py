@@ -801,6 +801,7 @@ class AnomalyScorer:
         # target_ip = src if src else dst
         if block_input_has_been_none:
             target_ip = src if block_input else dst # Si entrant bloquer la source, sinon la destination
+            
         if not target_ip:
             logger.print(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target_ip}")
             return
@@ -817,26 +818,38 @@ class AnomalyScorer:
             logger.print(f"📊 {target_ip} - Score {score} - Surveillance ({direction})")
 
         elif action_type == 'rate_limit':
-            self.React.block(ip=target_ip, rule="rate_limit", input=block_input, timeout=duration, unit="s")
+            self.React.block(
+                ip=target_ip, rule="rate_limit", input=block_input,
+                timeout=duration, unit="s", nowait=True
+            )
             logger.print(f"🐌 {target_ip} - Nombre de connexion limitée ({direction})")
             self.make_blocked(target_ip)
 
         elif action_type == 'rate_limit_data':
-            self.React.block(ip=target_ip, rule="rate_limit_data", input=block_input, timeout=duration, unit="s")
+            self.React.block(
+                ip=target_ip, rule="rate_limit_data", input=block_input, 
+                timeout=duration, unit="s", nowait=True
+            )
             logger.print(f"🐌 {target_ip} - Bande passante limitée ({direction})")
             if target_ip in self.ip_data:
                 logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
             self.make_blocked(target_ip)
 
         elif action_type == 'block_temp':
-            self.React.block(ip=target_ip, rule="drop", input=block_input, timeout=duration, unit="s")
+            self.React.block(
+                ip=target_ip, rule="drop", input=block_input, 
+                timeout=duration, unit="s", nowait=True
+            )
             self.make_blocked(target_ip)
             logger.print(f"🔒 {target_ip} - Bloqué temporairement ({duration}s, {direction})")
             if target_ip in self.ip_data:
                 logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
 
         elif action_type == 'block_perm':
-            self.React.block(ip=target_ip, rule="drop", input=block_input, timeout=float("inf"))
+            self.React.block(
+                ip=target_ip, rule="drop", input=block_input,
+                timeout=float("inf"), nowait=True
+            )
             logger.print(f"🚨 {target_ip} - BLOQUÉ DÉFINITIVEMENT ({direction})")
             if target_ip in self.ip_data:
                 logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))

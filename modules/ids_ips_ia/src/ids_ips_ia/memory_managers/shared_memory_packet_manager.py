@@ -6,8 +6,6 @@ Created on Thu Apr 16 16:09:17 2026
 @author: hounsousamuel
 """
 
-import os, sys
-
 import time
 import struct
 import multiprocessing as mp

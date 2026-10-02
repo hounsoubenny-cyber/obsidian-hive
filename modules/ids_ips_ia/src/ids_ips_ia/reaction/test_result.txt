@@ -1,0 +1,59 @@
+~/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/reaction main !3 ?2 ❯ sudo_pyrun0 test_batcher_real_nft.py                                                                                                      pyglobal0 11:07:59
+[sudo] Mot de passe de hounsousamuel : 
+Désolé, essayez de nouveau.
+[sudo] Mot de passe de hounsousamuel : 
+Backend : lib — python-nftables (libnftables) — table de test : inet ids_batch_test_189369
+
+━━ S1  Sémantique de nft sur set INTERVAL (ce que ton batch peut rencontrer)
+   ok  ajout simple (timeout 60s)
+   ok  ré-ajout IDENTIQUE
+   ok  ré-ajout avec un AUTRE timeout (escalade -> never)
+   ok  syntaxe « timeout never » sur une nouvelle IP
+   ok  IP sans timeout (défaut du set : 60m)
+   ok  lot = 1 IP déjà présente + 2 nouvelles
+   état de 10.0.0.0 après escalade vers never : {"elem": {"val": "10.0.0.0", "timeout": 60, "expires": 60}}
+   (si 'expires' est absent/très long -> nft a MIS À JOUR le timeout ; sinon il l'a ignoré)
+   ℹ️ un lot avec une IP déjà présente passe : pas de repli nécessaire pour les re-blocages.
+
+━━ S2  Exactitude via le batcher (3000 IPv4 + 300 IPv6, timeouts variés)
+   submit() total 16 ms ; 42 commandes pour 3300 IP ; stats={'submitted': 3300, 'committed': 3300, 'commands': 42, 'failed': 0, 'dropped': 0, 'deduped': 0, 'queued': 0}
+   ✅ toutes les IP sont présentes dans le vrai set (manquantes : v4=0 v6=0)
+   ✅ committed == submitted == 3300, failed == 0
+
+━━ S3  Re-blocage : 50 % d'IP déjà présentes dans le set
+   3000 IP (1500 déjà présentes) -> 6 commandes dont 0 en ÉCHEC (lots échoués : 0)
+   ✅ les 1500 nouvelles IP sont bien présentes malgré les doublons (manquantes : 0)
+   ✅ aucune IP définitivement perdue (failed=0)
+
+━━ S4  Latence d'une commande selon la taille du lot, puis selon la taille du set
+   taille du lot |  ms / commande |  µs / IP
+               1 |          16.09 |    16092
+              16 |          15.50 |      969
+              64 |          15.81 |      247
+             256 |          16.15 |       63
+            1024 |          24.79 |       24
+   coût d'un lot de 256 IP selon la taille ACTUELLE du set (hypothèse : le coût grandit avec le set) :
+      set ≈    8588 éléments ->    30.3 ms pour 256 IP
+      set ≈    8844 éléments ->    29.5 ms pour 256 IP
+      set ≈   20000 éléments ->    90.6 ms pour 256 IP
+
+━━ S5  Un par un vs batcher
+   600 IP : un par un = 56677 ms (94.46 ms/IP) | batcher = 259 ms (0.432 ms/IP) -> ×218.4
+   ✅ toutes les IP du batcher sont présentes
+
+━━ S6  IP invalide / mauvaise famille dans un lot
+   stats={'submitted': 42, 'committed': 40, 'commands': 43, 'failed': 2, 'dropped': 0, 'deduped': 0, 'queued': 0}
+   ✅ les 40 IP valides sont toutes présentes (manquantes : 0)
+   ✅ exactement 2 IP perdues (l'invalide et la mauvaise famille) : failed=2
+
+━━ S7  Concurrence : 8 threads, doublons croisés
+   stats={'submitted': 1500, 'committed': 1500, 'commands': 6, 'failed': 0, 'dropped': 0, 'deduped': 10500, 'queued': 0}
+   ✅ aucune demande refusée
+   ✅ aucune IP perdue (failed=0) ; 1500/1500 IP du pool vues (au hasard des tirages)
+
+🧹 table inet ids_batch_test_189369 supprimée
+
+━━ BILAN : 700 commandes nft, 3 en échec (dont 1 LOTS), assertions échouées : 0
+   Envoie-moi toute cette sortie : je lis surtout S1 (doublons / timeout), S3 (lots échoués) et S4 (coût vs taille).
+~/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/reaction main !3 ?2 ❯                                                                                                                                   5m 10s  pyglobal0 11:13:35
+

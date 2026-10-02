@@ -232,7 +232,7 @@ PY_IDLE = {("wait", "threading.py"), ("get", "queue.py"), ("_worker", "thread.py
            ("sleep", "tasks.py")}
 # Ligne source de la frame feuille qui contient un appel dormant/attendant (recv volontairement exclu :
 # sous charge réseau saturée, recv_into = vrai travail de capture)
-BLOCK_LINE = re.compile(r"(time\.sleep|asyncio\.sleep|\.wait|\.join|\.get\(\s*(block|timeout))\s*\(?")
+BLOCK_LINE = re.compile(r"(time\.sleep|asyncio\.sleep|\.wait|\.join|\.poll|\.get\(\s*(block|timeout))\s*\(?")
 
 
 def read_seq_stride() -> int:
