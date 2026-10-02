@@ -14,6 +14,7 @@ import optuna
 import asyncio
 import warnings
 import threading
+import traceback
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -126,6 +127,7 @@ class Models:
         self.verbose = 0
         self.n_trial = N_TRIAl
         self.lock = lock or threading.Lock()
+        self.last_batch_error = None
         self.if_dec_func_max_pkt = None
         self.if_dec_func_min_pkt = None
         self.lof_dec_func_max_pkt = None
@@ -1134,7 +1136,6 @@ class Models:
 
         except Exception as e:
             logger.print("Erreur predict_packet:", e)
-            import traceback
             logger.print(traceback.format_exc())
             return 1
     
@@ -1162,8 +1163,19 @@ class Models:
                 cache.clear()
             ent = cache[id(m)] = (m, FastIForest.try_build(m) if self.use_fast_iforest else None)
         return ent[1] or m                       # None (non supporté / écart sklearn) -> repli sklearn
+    
+    def _batch_failed(self, stage: str, exc: Exception, n: int, return_pred: bool):
+        """
+        Échec d'inférence sur un lot : FAIL-LOUD. On renvoie NaN ("inconnu") et NON 1 ("normal"), sinon un modèle
+        cassé rend l'IDS aveugle sans que personne ne le sache. detect() traite NaN comme inconnu (ni alerte IA,
+        ni blocage) et compte les échecs consécutifs ; l'erreur est exposée dans `last_batch_error`.
+        preds : 0 = inconnu (ni -1 ni 1).
+        """
+        self.last_batch_error = {"stage": stage, "type": type(exc).__name__, "message": str(exc)[:500], "at": time.time()}
+        scores = np.full(n, np.nan)
+        return (scores, np.zeros(n, dtype=int)) if return_pred else scores
 
-    def _score_batch(self, Z, if_model, lof_model, method, how, who, return_pred=False):
+    def _score_batch(self, Z, if_model, lof_model, method, how, who, return_pred: bool = False):
         """
         IF + LOF sur une matrice Z (n, d) -> tableau de n scores (ou de n prédictions -1/1).
 
@@ -1194,8 +1206,8 @@ class Models:
         return np.where(flag, -1, 1)
 
     def predict_packet_batch(
-        self, ae_pkt, if_pkt, lof_pkt, scaler, pkt_features_list, method='decision_function', how='any',
-        return_pred=False
+        self, ae_pkt, if_pkt, lof_pkt, scaler, pkt_features_list, 
+        method: str = 'decision_function', how: str = 'any', return_pred: bool = False
     ):
         """
         Version vectorisée de `predict_packet` : n paquets d'un coup.
@@ -1204,6 +1216,7 @@ class Models:
         Retourne un ndarray de n scores (même sémantique que predict_packet, ligne par ligne).
         """
         n = len(pkt_features_list)
+        self.last_batch_error = None
         try:
             rows = [list(f.values()) if isinstance(f, dict) else f for f in pkt_features_list]
             X = np.asarray(rows, dtype=float)
@@ -1217,17 +1230,15 @@ class Models:
             return self._score_batch(Z, if_pkt, lof_pkt, method, how, who='pkt', return_pred=return_pred)
         except Exception as e:
             logger.print("Erreur predict_packet_batch:", e)
-            import traceback
             logger.print(traceback.format_exc())
-            # même valeur de repli que predict_packet (normal)
-            return (np.ones(n), np.ones(n, dtype=int)) if return_pred else np.ones(n)
+            return self._batch_failed("packet", e, n, return_pred)
 
     async def apredict_packet_batch(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_packet_batch, *args, **kwargs)
 
     def predict_sequence_batch(
-        self, ae_seq, cnn_seq, if_seq, lof_seq, scaler, X_seqs, method='decision_function', how='any',
-        return_pred=False
+        self, ae_seq, cnn_seq, if_seq, lof_seq, scaler, X_seqs,
+        method: str = 'decision_function', how: str = 'any', return_pred: bool = False
    ):
         """
         Version vectorisée de `predict_sequence` : m séquences d'un coup.
@@ -1236,6 +1247,7 @@ class Models:
         Retourne un ndarray de m scores.
         """
         m = len(X_seqs)
+        self.last_batch_error = None
         try:
             X_seqs = np.asarray(X_seqs, dtype=float)
             _, L, F = X_seqs.shape
@@ -1255,13 +1267,12 @@ class Models:
             return self._score_batch(X_flat, if_seq, lof_seq, method, how, who='seq', return_pred=return_pred)
         except Exception as e:
             logger.print("Erreur predict_sequence_batch:", e)
-            return (np.ones(m), np.ones(m, dtype=int)) if return_pred else np.ones(m)
+            return self._batch_failed("sequence", e, m, return_pred)
 
     async def apredict_sequence_batch(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_sequence_batch, *args, **kwargs)
     
     def plot_history_and_evaluate(self, tf_model, history, X_test, name='Autoencoder', plot=False, cnn_bottleneck = None):
-
         shape = X_test.shape
         if len(shape) > 2:
             axis = (1,2)

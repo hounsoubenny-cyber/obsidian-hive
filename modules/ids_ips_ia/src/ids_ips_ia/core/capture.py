@@ -747,6 +747,23 @@ class Capture:
     def snapshot(self) -> dict:
         with self._stats_lock:
             return dict(self._stats)
+    
+    def metrics(self) -> dict:
+        """snapshot() + valeurs dérivées (durée, débit moyen, % de pertes) ; mêmes formules que summary()."""
+        s = self.snapshot()
+        elapsed = (time.monotonic() - self._t0) if self._t0 else 0.0
+        lost = s["k_drops"] + s["dropped"]
+        seen = s["k_seen"] or (s["recv"] + s["dropped"])
+        pct = lambda part: round(100 * part / seen, 3) if seen else 0.0   # noqa: E731
+        return {
+            **s,
+            "elapsed_s": round(elapsed, 1),
+            "kept_per_s": round(s["kept"] / elapsed, 1) if elapsed > 0 else 0.0,
+            "lost_total": lost,
+            "loss_pct": pct(lost),
+            "kernel_loss_pct": pct(s["k_drops"]),
+            "app_loss_pct": pct(s["dropped"]),
+        }
 
     def _status_line(self, s: dict, rate: float, elapsed: float, new_loss: int = 0) -> str:
         lost = s["k_drops"] + s["dropped"]

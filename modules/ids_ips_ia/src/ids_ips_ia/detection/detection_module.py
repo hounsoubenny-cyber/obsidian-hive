@@ -37,7 +37,7 @@ from ids_ips_ia.reaction.reaction_module import React
 from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.config.config_ids import (
     CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH,
-    SEQ_STRIDE, DETECT_BATCH_SIZE
+    SEQ_STRIDE, DETECT_BATCH_SIZE, MODEL_ERROR_THRESHOLD
 )
 from ids_ips_ia.ids_ips_utils.loader import load
 from ids_ips_ia.ids_ips_utils.logger import get_logger
@@ -81,7 +81,8 @@ class AnomalyDetector:
         'lof_seq',     # [7]
         'scaler_seq'   # [8]
     ]
-
+    MAX_SYSTEM_ALERTS = 200
+    
     def __init__(
         self, 
         enable_graph: bool,
@@ -106,6 +107,11 @@ class AnomalyDetector:
         self.interfaces = interfaces or self.detect_all_interfaces()
         self.last_anomalies_queue: deque = deque(maxlen=int(MAX_ANOMALIES) * 3)
         self.anomaly_logger_stats = {}
+        # Alertes SYSTEME (≠ alertes d'attaque) : ex. inférence en panne. {id: entrée complète}
+        self.system_alerts: dict[str, dict] = {}
+        self._system_alerts_lock = threading.Lock()
+        self._infer_fail = {s: {"consecutive": 0, "alert_id": None} for s in ("packet", "sequence")}
+        
         def after_write(logger: AnomalyLogger, *args, **kwargs):
             self.anomaly_logger_stats = logger.stats()
             return
@@ -138,7 +144,11 @@ class AnomalyDetector:
         self.AnomalyScorer = AnomalyScorer(React=self.React, Text=self.Text)
         self.FeatureExtractor = FeatureExtractor()
         self.enable_graphe = enable_graph
-        self.log_path = self.Utils.detect_os_and_path()["log"] or "/var/log/suricata"
+        self.log_path = self.Utils.detect_os_and_path()["log"] or f"/var/log/suricata{INSTANCE_SUFFIX}"
+        try:
+            os.makedirs(self.log_path, exist_ok=True)
+        except Exception:
+            pass
         self.stop_event = mp.Event()
         self.model_lock = threading.Lock()
         self.current_model_path = ""
@@ -164,6 +174,12 @@ class AnomalyDetector:
         self.detect_start_time = None
         self.detect_end_time = None
         self.pkt_proccessed = 0
+        self._started_at = time.monotonic()
+        # compteurs de la boucle de détection (un seul écrivain : le thread detect) ; lus par stats()
+        self.stat_batches = 0        # nb de lots scorés
+        self.stat_scored = 0         # nb de paquets scorés (somme des tailles de lots)
+        self.stat_last_batch = 0     # taille du dernier lot
+        self.stat_sequences = 0      # nb de séquences évaluées
         logger.print()
         logger.print("=" * 60)
         logger.print("🛡️  ANOMALY DETECTOR INITIALISÉ")
@@ -184,12 +200,80 @@ class AnomalyDetector:
 
     def _add_alert(self, data: dict):
         self.last_anomalies_queue.append(data)
+    
+    def _get_system_alerts(self, n: int = 50, status: str | None = None) -> list[dict]:
+        """Les n dernières alertes système (plus récentes en dernier), filtrables par statut 'open'/'resolved'."""
+        if not (isinstance(n, int) and n > 0):
+            return []
+        
+        with self._system_alerts_lock:
+            items = [dict(v) for v in self.system_alerts.values()]
+        if status:
+            items = [a for a in items if a["status"] == status]
+        return items[-n:]
+
+    def _track_inference(self, stage: str, scores, n_items: int):
+        """
+        Suit les échecs d'inférence d'un étage ("packet" | "sequence"). Un lot est en échec si TOUS ses scores
+        sont NaN. Au bout de MODEL_ERROR_THRESHOLD échecs consécutifs : UNE entrée complète est ajoutée dans
+        `system_alerts` (la détection continue, rien n'est bloqué ni arrêté) ; elle est mise à jour tant que la
+        panne dure, puis passée en 'resolved' au premier lot sain.
+        """
+        st = self._infer_fail[stage]
+        now = time.time()
+        failed = n_items > 0 and bool(np.isnan(scores).all())
+        with self._system_alerts_lock:
+            entry = self.system_alerts.get(st["alert_id"]) if st["alert_id"] else None
+            if not failed:
+                if entry is not None:
+                    entry.update(
+                        status="resolved", 
+                        resolved_at=datetime.fromtimestamp(now).isoformat(timespec="seconds"),
+                        resolved_epoch=now
+                    )
+                st["consecutive"], st["alert_id"] = 0, None
+                return
+            st["consecutive"] += 1
+            err = getattr(self.Models, "last_batch_error", None) or {
+                "stage": stage, "type": "NaNScores", "message": "scores tous NaN (features invalides ?)", "at": now
+            }
+            if entry is not None:
+                entry["consecutive_failures"] = st["consecutive"]
+                entry["items_unscored"] += n_items
+                entry.update(last_failure_at=datetime.fromtimestamp(now).isoformat(timespec="seconds"), last_error=err)
+                return
+            if st["consecutive"] < MODEL_ERROR_THRESHOLD:
+                return
+            alert_id = f"sys-{int(now * 1000)}-{stage}"
+            iso = datetime.fromtimestamp(now).isoformat(timespec="seconds")
+            self.system_alerts[alert_id] = {
+                "id": alert_id,
+                "type": "model_inference_failure",
+                "severity": "critical",
+                "status": "open",
+                "stage": stage,
+                "message": (f"Inférence '{stage}' en échec sur {st['consecutive']} lots consécutifs : "
+                            "les éléments concernés ne sont PAS analysés par l'IA (ni alerte IA, ni blocage)."),
+                "threshold": MODEL_ERROR_THRESHOLD,
+                "consecutive_failures": st["consecutive"],
+                "items_unscored": n_items,
+                "detection_continues": True,
+                "mode": self.mode,
+                "opened_at": iso, "opened_epoch": now,
+                "last_failure_at": iso,
+                "resolved_at": None, "resolved_epoch": None,
+                "last_error": err,
+            }
+            st["alert_id"] = alert_id
+            while len(self.system_alerts) > self.MAX_SYSTEM_ALERTS:            # borne mémoire : on purge les plus anciennes
+                self.system_alerts.pop(next(iter(self.system_alerts)))
+        logger.print(f"🚨 ALERTE SYSTEME {alert_id} : inférence '{stage}' en panne ({st['consecutive']} échecs) - {err}")
 
     def _change_mode(self, mode):
         mode = str(mode).lower().strip()
         if mode in ("ids", "ips"):
             self.mode = mode
-
+        
     def _update_model_refs(self, with_lock: bool = True):
         """Crée un NOUVEAU tuple immuable contenant toutes les références."""
         ae_pkt = self.mod.get('ae_pkt')
@@ -221,6 +305,33 @@ class AnomalyDetector:
 
     def stop(self, *args, **kwargs):
         self._stop()
+    
+    def stats(self) -> dict:
+        """Instantané des compteurs du détecteur (lecture seule, sans verrou : ce sont des entiers)."""
+        up = time.monotonic() - self._started_at
+        qsize = self.q.qsize() if hasattr(self.q, "qsize") else None
+        qmax = getattr(self.q, "maxsize", 0) or 0
+        return {
+            "mode": self.mode,
+            "uptime_s": round(up, 1),
+            "packets_processed": self.pkt_proccessed,
+            "processed_per_s": round(self.pkt_proccessed / up, 1) if up > 0 else 0.0,
+            "queue": {
+                "size": qsize, "max": qmax or None,
+                "fill_pct": round(100 * qsize / qmax, 1) if qmax and qsize is not None else None,
+            },
+            "batches": self.stat_batches,
+            "last_batch_size": self.stat_last_batch,
+            "avg_batch_size": round(self.stat_scored / self.stat_batches, 1) if self.stat_batches else 0.0,
+            "sequences_evaluated": self.stat_sequences,
+            "config": {"seq_length": SEQ_LENGTH, "seq_stride": SEQ_STRIDE, "batch_size": DETECT_BATCH_SIZE},
+            "anomalies_in_memory": len(self.last_anomalies_queue),
+            "inference": {
+                stage: {"consecutive_failures": st["consecutive"], "failing": st["alert_id"] is not None}
+                for stage, st in self._infer_fail.items()
+            },
+            "system_alerts_open": len(self._get_system_alerts(self.MAX_SYSTEM_ALERTS, "open")),
+        }
 
     def save(self, filename, value):
         try:
@@ -724,20 +835,32 @@ class AnomalyDetector:
                             
                     if not batch:
                         continue
-
+                    
+                    self.stat_batches += 1
+                    self.stat_scored += len(batch)
+                    self.stat_last_batch = len(batch)
+                    
                     # C) UN SEUL appel modèles pour tout le lot (AE + IF + LOF vectorisés)
                     pkt_scores, pkt_ia_preds = await self.Models.apredict_packet_batch(
                         ae_pkt, if_pkt, lof_pkt, scaler_pkt, feats,
                         how=how, method="decision_function", return_pred=True
                     )
                     thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
+                    asyncio.create_task(
+                        asyncio.to_thread(
+                            self._track_inference,
+                            stage="packet", scores=pkt_scores, n_items=len(batch)
+                        )
+                    )
 
                     # D) logique par paquet (décision, alertes) ; on repère au passage les fenêtres à évaluer
                     seq_jobs = []
                     for (pkt, alert, from_alert), pkt_fea, score_pkt, ia_pred in zip(batch, feats, pkt_scores, pkt_ia_preds):
                         buffer_pkt.append(pkt)
                         buffer_fea.append(pkt_fea)
-                        pkt_pred = -1 if score_pkt < thr else 1
+                        unknown = bool(np.isnan(score_pkt))     # inférence en échec : ni anomalie ni "normal certifié"
+                        pkt_pred = 1 if unknown else (-1 if score_pkt < thr else 1)
+                        pkt_ia = None if unknown else {"decision_function": float(score_pkt), "predict": int(ia_pred)}
                         buffer_pred_pkt.append(pkt_pred)
                         since_seq += 1
 
@@ -760,7 +883,7 @@ class AnomalyDetector:
                                     pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
                                     pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
                                     event_timestamp=alert.get("eve_timestamp"),
-                                    ia_preds={"decision_function": float(score_pkt), "predict": int(ia_pred)}
+                                    ia_preds=pkt_ia
                                 )
                                 if self.enable_graphe:
                                     scores_deque.append(scores)
@@ -783,7 +906,7 @@ class AnomalyDetector:
                             scores = await self.AnomalyScorer.detect_pkt(
                                 pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
                                 pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
-                                ia_preds={"decision_function": float(score_pkt), "predict": int(ia_pred)}
+                                ia_preds=pkt_ia
                             )
                             if self.enable_graphe:
                                 scores_deque.append(scores)
@@ -824,13 +947,21 @@ class AnomalyDetector:
 
                     # E) UN SEUL appel modèles pour toutes les séquences du lot (CNN + AE + IF + LOF)
                     if seq_jobs:
+                        self.stat_sequences += len(seq_jobs)
                         seq_scores, seq_ia_preds = await self.Models.apredict_sequence_batch(
                             ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq,
                             np.stack([job[0] for job in seq_jobs]),
                             how=how, method="decision_function", return_pred=True
                         )
+                        asyncio.create_task(
+                            asyncio.to_thread(
+                                self._track_inference,
+                                stage="sequence", scores=seq_scores, n_items=len(seq_jobs)
+                            )
+                        )
                         for (seq_fea, last_pkt, prop_anom), score_pred, ia_pred_seq in zip(seq_jobs, seq_scores, seq_ia_preds):
-                            pred_seq = -1 if score_pred <= thr else 1
+                            seq_unknown = bool(np.isnan(score_pred))
+                            pred_seq = 1 if seq_unknown else (-1 if score_pred <= thr else 1)
                             if combination_mode == "or":
                                 combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
                             elif combination_mode == "and":
@@ -847,7 +978,7 @@ class AnomalyDetector:
                                 await self.AnomalyScorer.detect_pkt(
                                     pkt=last_pkt, pkt_rate=prop_anom, features=seq_fea, models=_mod,
                                     Model=self.Models, seq_anomaly=True, mode=mode, how=how,
-                                    ia_preds={"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
+                                    ia_preds=None if seq_unknown else {"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
                                 )
                                 if verbose:
                                     logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")

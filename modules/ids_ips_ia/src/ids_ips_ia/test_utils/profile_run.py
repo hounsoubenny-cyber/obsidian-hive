@@ -662,6 +662,7 @@ if __name__ == "__main__":
         'sudo env "PATH=$PATH" /home/hounsousamuel/pyglobal0/bin/python3.11 '
         '/home/hounsousamuel/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/test_utils/profile_run.py '
         '--rate 70 --python /home/hounsousamuel/pyglobal0/bin/python3.11 --duration 365 --settle 15 --idle '
+        '--traffic-rate pps=1000 --rate-switch "60:pps=5000,120:pps=10000,200:pps=15000,300:pps=20000" '
         '--traffic --attack-after 60 --out-dir /home/hounsousamuel/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/test_utils/'
     )
     main()

@@ -169,6 +169,7 @@ CLASS_CONFIG = {
         'seq_stride': 20,          # live : une séquence évaluée tous les N paquets
         'seq_stride_fit': 1,       # fit / refit : pas de la fenêtre glissante (1 = toutes les fenêtres)
         'detect_batch_size': 256,  # live : nb max de paquets scorés d'un coup
+        'model_error_threshold': 5,  # nb de lots d'inférence consécutifs en échec avant d'ouvrir une alerte système
     },
     "CAPTURE_CONFIG": {
         "FILTER": "tcp or udp or icmp",

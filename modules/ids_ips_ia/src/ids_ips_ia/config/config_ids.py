@@ -70,7 +70,7 @@ SEQ_STRIDE = _positive_int(_ANOMALY_CFG.get('seq_stride', 20), 20)
 SEQ_STRIDE_FIT = _positive_int(_ANOMALY_CFG.get('seq_stride_fit', 1), 1)
 # Nb max de paquets scorés en un seul appel modèle côté détection
 DETECT_BATCH_SIZE = _positive_int(_ANOMALY_CFG.get('detect_batch_size', 256), 256)
-
+MODEL_ERROR_THRESHOLD = _positive_int(_ANOMALY_CFG.get('model_error_threshold', 5), 5)
 
 def n_windows(n_items: int, length: int = SEQ_LENGTH, stride: int = 1) -> int:
     """Nombre de fenêtres de taille `length` avec un pas `stride` sur `n_items` éléments."""

@@ -13,13 +13,10 @@ qui gère déjà l'auth en amont). Les routes restent fines : elles parsent la
 requête puis délèguent tout à services.py.
 """
 
-import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 from typing import Optional
-
 from fastapi import APIRouter, Depends, Request
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from modules_utils.limiter import limiter
 from ids_ips_ia.config.config_ids import REQUEST_LIMIT as REQUEST, Config, _config_path as DEFAULT_IDS_CONFIG_PATH
@@ -72,6 +69,40 @@ async def get_alerts(
 ):
     return await svc._do_get_alerts(ids_ips, n)
 
+@router.get("/system-alerts")
+async def get_system_alerts(
+    n: int = 50,
+    status: Optional[str] = None,
+    ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips),
+    creds: HTTPAuthorizationCredentials = Depends(barer)
+):
+    """Alertes système (JWT Bearer requis) (ex. inférence IA en panne). `status` = open | resolved (optionnel)."""
+    svc.verify_token(creds.credentials)
+    return await svc._do_get_system_alerts(ids_ips, n, status)
+
+
+@router.get("/anomaly-files")
+async def get_anomaly_files(
+    name: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 100,
+    include_features: bool = False,
+    ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips),
+    creds: HTTPAuthorizationCredentials = Depends(barer)
+):
+    """(JWT Bearer requis) Sans `name` : liste des fichiers d'anomalies. Avec `name` (ex. anomalies_1.pkl) : contenu paginé."""
+    svc.verify_token(creds.credentials)
+    return await svc._do_get_anomaly_files(ids_ips, name, offset, limit, include_features)
+
+
+@router.get("/stats")
+async def get_stats(
+    ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips),
+    creds: HTTPAuthorizationCredentials = Depends(barer)
+):
+    """(JWT Bearer requis) Statistiques de la capture, du détecteur, de l'anomaly logger et du blocked skipper."""
+    svc.verify_token(creds.credentials)
+    return await svc._do_get_stats(ids_ips)
 
 @router.get("/stop")
 async def _stop(request: Request):
@@ -231,6 +262,34 @@ async def get_alerts_no_auth(
     ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips)
 ):
     return await svc._do_get_alerts(ids_ips, n)
+
+
+@router_no_auth.get("/system-alerts")
+async def get_system_alerts_no_auth(
+    n: int = 50,
+    status: Optional[str] = None,
+    ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips)
+):
+    """Alertes système (ex. inférence IA en panne). `status` = open | resolved (optionnel)."""
+    return await svc._do_get_system_alerts(ids_ips, n, status)
+
+
+@router_no_auth.get("/anomaly-files")
+async def get_anomaly_files_no_auth(
+    name: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 100,
+    include_features: bool = False,
+    ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips)
+):
+    """Sans `name` : liste des fichiers d'anomalies. Avec `name` (ex. anomalies_1.pkl) : contenu paginé."""
+    return await svc._do_get_anomaly_files(ids_ips, name, offset, limit, include_features)
+
+
+@router_no_auth.get("/stats")
+async def get_stats_no_auth(ids_ips: Optional["IDS_IPS"] = Depends(get_ids_ips)):
+    """Statistiques de la capture, du détecteur, de l'anomaly logger et du blocked skipper."""
+    return await svc._do_get_stats(ids_ips)
 
 
 @router_no_auth.get("/stop")

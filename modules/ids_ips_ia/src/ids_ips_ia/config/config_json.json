@@ -140,6 +140,7 @@
     seq_stride: 20,
     seq_stride_fit: 1,
     detect_batch_size: 256,
+    model_error_threshold: 5
   },
   CAPTURE_CONFIG: {
     FILTER: "tcp or udp or icmp",

@@ -10,19 +10,22 @@ Indépendant de FastAPI côté routing : routes.py appelle ces fonctions avec
 des données déjà validées par les schémas Pydantic (schemas.py).
 """
 
-import threading
+import os
+import re
 import asyncio
-from datetime import datetime, timedelta
+import threading
 from typing import Optional
+from datetime import datetime, timedelta
 
 from jose import jwt, JWTError
 from jose.jwt import ExpiredSignatureError
 from fastapi import HTTPException, Request, status
 
-from ids_ips_ia.detection.mocks import _get_list_blocked_ip_mocked # noqa
+from ids_ips_ia.auth.auth import verify_password
 from ids_ips_ia.ids_ips_utils.logger import get_logger
 from ids_ips_ia.ids_ips_utils.utils import _get_ip_type
-from ids_ips_ia.auth.auth import verify_password
+from ids_ips_ia.detection.anomaly_logger import iter_anomalies
+from ids_ips_ia.detection.mocks import _get_list_blocked_ip_mocked # noqa
 from ids_ips_ia.detection.detection_module import CONFIG as CONFIG_DET
 from ids_ips_ia.reaction.reaction_module import GeoLocator
 from ids_ips_ia.config.config_ids import (
@@ -35,7 +38,7 @@ from ids_ips_ia.config.config_ids import (
 )
 
 from ids_ips_ia.main.schemas import (
-    Data, Conf, UnlockData, WhitelistData, BasicData,
+    Conf, UnlockData, WhitelistData, BasicData,
     ChangeModeData, BlockIPData, IgnoreIPData,
 )
 from ids_ips_ia.main.orchestrator import IDS_IPS, graph
@@ -175,6 +178,133 @@ async def _do_get_alerts(ids_ips: Optional["IDS_IPS"], n: int):
         "ids_running": True
     }
 
+async def _do_get_system_alerts(ids_ips: Optional["IDS_IPS"], n: int, status: Optional[str]):
+    """Alertes SYSTEME (ex. inférence en panne), distinctes des alertes d'attaque de /alerts."""
+    if ids_ips is None or ids_ips.detector is None:
+        return {"system_alerts": [], "total": 0, "open": 0, "detail": "IDS non démarré"}
+    
+    if status not in (None, "open", "resolved"):
+        raise HTTPException(status_code=400, detail="status doit être 'open' ou 'resolved'")
+        
+    n = max(1, min(int(n), 200))
+    items = ids_ips.detector._get_system_alerts(n, status)
+    return {
+        "system_alerts": items,
+        "total": len(items),
+        "open": sum(1 for a in ids_ips.detector._get_system_alerts(200, "open")),
+    }
+
+
+def _read_anomaly_file(path: str, offset: int, limit: int, include_features: bool):
+    """Bloquant (pickle) : à lancer dans un thread. Lit [offset, offset+limit[ sans tout charger en mémoire."""
+    out, total = [], 0
+    for i, e in enumerate(iter_anomalies(path)):
+        total = i + 1
+        if i < offset or len(out) >= limit:
+            continue                                  # on continue de compter pour renvoyer le total
+        feats = e.get("features")
+        row = {k: v for k, v in e.items() if k != "features"}
+        row["index"] = i
+        row["features_shape"] = list(getattr(feats, "shape", []))
+        if include_features and feats is not None:
+            row["features"] = feats.tolist()
+        out.append(row)
+    return out, total
+
+
+def _format_time(t):
+    return datetime.fromtimestamp(t).isoformat(timespec="seconds")
+
+async def _do_get_anomaly_files(
+    ids_ips: Optional["IDS_IPS"], name: Optional[str], offset: int, limit: int, include_features: bool
+):
+    """
+    Sans `name` : liste des fichiers d'anomalies actuels. Avec `name` : leur contenu (paginé).
+    `name` doit être EXACTEMENT '<prefix>_<n>.pkl' dans le dossier d'anomalies : pas de chemin, pas de '..'.
+    """
+    if ids_ips is None or ids_ips.detector is None:
+        return {"files": [], "detail": "IDS non démarré"}
+    al = ids_ips.detector.anomaly_logger
+    directory, prefix = os.path.realpath(al.dir), al.prefix
+    pattern = re.compile(rf"{re.escape(prefix)}_(\d+)\.pkl")
+
+    if name is None:
+        files = []
+        for f in os.listdir(directory):
+            m = pattern.fullmatch(f)
+            if m:
+                st = os.stat(os.path.join(directory, f))
+                files.append({
+                    "name": f, "index": int(m.group(1)), "size_bytes": st.st_size,
+                    "modified": _format_time(st.st_mtime)
+                })
+        files.sort(key=lambda x: x["index"])
+        return {"files": files, "total": len(files), "directory_name": os.path.basename(directory)}
+
+    if not pattern.fullmatch(name):                              # rejette '../x', chemins absolus, autres extensions
+        raise HTTPException(status_code=400, detail=f"Nom invalide : attendu '{prefix}_<n>.pkl'")
+    path = os.path.realpath(os.path.join(directory, name))
+    if os.path.dirname(path) != directory or not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    offset, limit = max(0, int(offset)), max(1, min(int(limit), 500 if not include_features else 50))
+    try:
+        entries, total = await asyncio.to_thread(_read_anomaly_file, path, offset, limit, include_features)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lecture impossible : {type(e).__name__}")
+    
+    stats = {
+        "size_bytes": None,
+        "last_accès": None,
+        "modified": None,
+    }
+    try:
+        st = os.stat(path)
+        stats = {
+            "size_bytes": st.st_size,
+            "last_accès": _format_time(st.st_atime),
+            "modified": _format_time(st.st_mtime),
+        }
+    except Exception:  # Permisssion, autre
+        pass
+    
+    return {
+        "name": name, "total": total, "offset": offset, "limit": limit,
+        "include_features": include_features, "entries": entries,
+        **stats
+    }
+
+def _safe_stats(fn):
+    """Une stats() cassée ne doit pas faire tomber la route : on renvoie l'erreur à la place."""
+    try:
+        return fn()
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
+async def _do_get_stats(ids_ips: Optional["IDS_IPS"]):
+    """
+    Statistiques de tous les composants : capture, file, détecteur, anomaly logger, blocked skipper.
+    Lecture seule, instantanée (compteurs en mémoire).
+    """
+    if ids_ips is None:
+        return {"running": False, "detail": "IDS non démarré"}
+    det, cap = ids_ips.detector, ids_ips.Capture
+    out = {"running": det is not None, "session_id": getattr(ids_ips, "session_id", None)}
+    out["capture"] = _safe_stats(cap.metrics) if cap is not None else None
+    if det is None:
+        return out
+    out["detector"] = _safe_stats(det.stats)
+    def _logger_stats():
+        st = det.anomaly_logger.stats()
+        st["file"] = os.path.basename(st.get("file") or "") or None      # pas de chemin absolu dans la réponse
+        return st
+    out["anomaly_logger"] = _safe_stats(_logger_stats)
+    out["blocked_skipper"] = _safe_stats(det.skipper.stats)
+    if hasattr(det.q, "stats"):                       # BuffuredQueue (capture vers disque) ; queue.Queue : voir detector.queue
+        out["queue"] = _safe_stats(det.q.stats)
+    return out
+
+
 
 async def _do_stop_logic(app_state):
     ids_ips: Optional["IDS_IPS"] = getattr(app_state, "_ids_ips", None)
@@ -230,6 +360,11 @@ async def _do_help():
                 {"method": "GET", "path": "/api/rate-limit-status", "description": "Statut du rate limiting"},
                 {"method": "GET", "path": "/api/docs", "description": "Documentation Swagger UI"},
                 {"method": "GET", "path": "/api/redoc", "description": "Documentation ReDoc"}
+            ],
+            "monitoring_bearer": [
+                {"method": "GET", "path": "/api/stats", "header": "Authorization: Bearer <token>", "description": "Stats de tous les composants : capture (débit, % de pertes), détecteur (débit, file, taille moyenne des lots, séquences), anomaly logger, blocked skipper"},
+                {"method": "GET", "path": "/api/system-alerts", "header": "Authorization: Bearer <token>", "params": {"n": "1-200 (défaut 50)", "status": "open | resolved (optionnel)"}, "description": "Alertes système (ex. inférence IA en panne) : open = en cours, resolved = refermée par un lot sain"},
+                {"method": "GET", "path": "/api/anomaly-files", "header": "Authorization: Bearer <token>", "params": {"name": "ex. anomalies_0.pkl (sans name : liste des fichiers)", "offset": "0", "limit": "100 (50 max avec features)", "include_features": "false"}, "description": "Liste les fichiers d'anomalies, ou renvoie le contenu paginé d'un fichier"}
             ],
             "authenticated": [
                 {"method": "POST", "path": "/api/login", "body": {"username": "admin", "password": "xxx"}, "response": {"access_token": "string", "expires_in": "int", "success": "bool"}},

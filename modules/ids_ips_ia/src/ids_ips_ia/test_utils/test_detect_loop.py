@@ -51,6 +51,10 @@ def make_detector(n_packets, anomalous_idx):
     d = D.AnomalyDetector.__new__(D.AnomalyDetector)
     d.q = queue.Queue(); d.skipper = SimpleNamespace(should_skip=lambda item: False)
     d.pkt_proccessed = 0; d.enable_graphe = False; d.mode = "ids"
+    d._started_at = __import__("time").monotonic(); d.stat_batches = d.stat_scored = d.stat_last_batch = d.stat_sequences = 0
+    from collections import deque; d.last_anomalies_queue = deque(maxlen=100)
+    d.system_alerts = {}; d._system_alerts_lock = __import__("threading").Lock()   # normalement créés par __init__
+    d._infer_fail = {k: {"consecutive": 0, "alert_id": None} for k in ("packet", "sequence")}
     d.stop_event = __import__("threading").Event(); d.model_lock = __import__("threading").Lock()
     d.Models = FakeModels(); d.FeatureExtractor = FakeFE; d.AnomalyScorer = FakeScorer()
     d.log_anomaly = lambda *a, **k: alerts.append(("log", k.get("source")))
