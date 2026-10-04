@@ -793,7 +793,7 @@ class AnomalyDetector:
     ):
         try:
             mod = dill.loads(load(path))
-            info = self.model.warm_up(
+            info = self.Models.warm_up(
                 mod, max_pkt_batch=DETECT_BATCH_SIZE,
                 max_seq_batch=(DETECT_BATCH_SIZE // SEQ_STRIDE) + 1, stop_event=self.stop_event,
             )
