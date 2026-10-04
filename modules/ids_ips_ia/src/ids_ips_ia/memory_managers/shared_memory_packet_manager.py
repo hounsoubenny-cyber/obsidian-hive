@@ -91,7 +91,8 @@ class MemoryManager:
                 return self.write(pkt)
             else:
                 return True
-            
+        
+        
         ts = struct.pack(">d", time.time())
         taille_bytes = taille_pkt.to_bytes(self.TAILLE_SIZE, byteorder="big")
         self.memory.buf[offset : offset + self.TIMESTAMP_SIZE] = ts

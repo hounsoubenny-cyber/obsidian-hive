@@ -23,6 +23,7 @@ Garanties :
   - attributs inconnus (norm_min_, norm_max_, offset_, ...) délégués au modèle sklearn d'origine ;
   - à reconstruire quand le modèle change (refit) : voir Models._fast_if dans le patch d'intégration.
 """
+
 import numpy as np
 
 

@@ -722,7 +722,8 @@ class Capture:
 
         return False
 
-    def detect_all_ifaces(self) -> list:
+    @staticmethod
+    def detect_all_ifaces() -> list:
         """Détecte TOUTES les interfaces sauf loopback"""
         return detect_all_ifaces()
 
@@ -845,7 +846,7 @@ class Capture:
         """Dépose un paquet sans jamais bloquer. False = refusé (file pleine)."""
         try:
             ok = q.put_nowait(item)
-        except queue.Full:
+        except (queue.Full, ValueError, PermissionError):
             return False
         return ok is None or ok is True  # queue.Queue renvoie None, BuffuredQueue renvoie True/False
 

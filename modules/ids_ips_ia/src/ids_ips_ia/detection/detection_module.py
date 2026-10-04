@@ -13,7 +13,6 @@ Extrait de detection_module.py.
 
 """
 
-
 import os
 import json
 import time
@@ -30,19 +29,15 @@ import queue as pyqueue
 import multiprocessing as mp
 from datetime import datetime
 from collections import deque
-
-from ids_ips_ia.core.features_extractor import FeatureExtractor
 from ids_ips_ia.models.models import Models
-from ids_ips_ia.reaction.reaction_module import React
-from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
-from ids_ips_ia.config.config_ids import (
-    CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH,
-    SEQ_STRIDE, DETECT_BATCH_SIZE, MODEL_ERROR_THRESHOLD
-)
 from ids_ips_ia.ids_ips_utils.loader import load
+from ids_ips_ia.reaction.reaction_module import React
+from ids_ips_ia.core.capture import detect_all_ifaces
 from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.detection.blocked_skip import BlockedSkipper
 from ids_ips_ia.detection.anomaly_logger import AnomalyLogger
+from ids_ips_ia.core.features_extractor import FeatureExtractor
 from ids_ips_ia.ids_ips_utils.real_time_plot import RealTimePLot
 from ids_ips_ia.ids_ips_utils.warnings_manager import suppres_warnings
 from ids_ips_ia.ids_ips_utils.model_file_validation import validate_model_file
@@ -51,7 +46,10 @@ from ids_ips_ia.memory_managers.shared_memory_packet_manager import MemoryManage
 from ids_ips_ia.detection.anomaly_scorer import AnomalyScorer, resolve_hostname
 from modules_utils.stop_process import kill_process_group_async as kill_process
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
-
+from ids_ips_ia.config.config_ids import (
+    CONFIG, SEUIL_KEY, ANOMALY_CONFIG_KEY, SEQ_LENGTH,
+    SEQ_STRIDE, DETECT_BATCH_SIZE, MODEL_ERROR_THRESHOLD
+)
 suppres_warnings()
 logger = get_logger()
 
@@ -82,6 +80,9 @@ class AnomalyDetector:
         'scaler_seq'   # [8]
     ]
     MAX_SYSTEM_ALERTS = 200
+    # Profondeur du pipeline = nb de lots que le producteur peut avoir "d'avance" sur le consommateur.
+    # 1 = recouvrement complet (1 lot en inférence + 1 lot déjà prêt). Plus grand = plus de latence, pas plus de vitesse.
+    PIPELINE_DEPTH = 1
     
     def __init__(
         self, 
@@ -154,6 +155,7 @@ class AnomalyDetector:
         self.current_model_path = ""
         self._monitor_task = None
         self._refit_task = None
+        self._pipe_queue = None      # file des lots prêts (créée par detect()), lue par stats()
         
         if enable_graph:
             logger.print('Graphes activées, bonne visualisation !')
@@ -324,6 +326,11 @@ class AnomalyDetector:
             "last_batch_size": self.stat_last_batch,
             "avg_batch_size": round(self.stat_scored / self.stat_batches, 1) if self.stat_batches else 0.0,
             "sequences_evaluated": self.stat_sequences,
+            # ready_batches toujours = depth  -> l'inférence est le goulot ; toujours 0 -> c'est la préparation (capture/features)
+            "pipeline": {
+                "depth": self.PIPELINE_DEPTH,
+                "ready_batches": pq.qsize() if (pq := getattr(self, "_pipe_queue", None)) is not None else 0,
+            },
             "config": {"seq_length": SEQ_LENGTH, "seq_stride": SEQ_STRIDE, "batch_size": DETECT_BATCH_SIZE},
             "anomalies_in_memory": len(self.last_anomalies_queue),
             "inference": {
@@ -390,9 +397,10 @@ class AnomalyDetector:
             joblib.dump([], first_file)
             return [], first_file
 
-    def detect_all_interfaces(self):
+    @staticmethod
+    def detect_all_interfaces():
         """Détecte TOUTES les interfaces sauf loopback"""
-        return self.Capture.detect_all_ifaces()
+        return detect_all_ifaces()
 
     def _to_alert_entry(self, array, pred, source):
         return {
@@ -663,35 +671,60 @@ class AnomalyDetector:
         eth.ts = time.time()
 
         return eth
+    
+    def _load_new_model(self, model_path: str):
+        """
+        Lit + valide + préchauffe le nouveau modèle. Opération LOURDE et bloquante : toujours appelée via asyncio.to_thread
+        et JAMAIS sous `model_lock` (sinon la boucle async serait gelée pendant tout le chargement).
+        Retourne le modèle, ou None s'il est invalide.
+        """
+        with open(model_path, "rb") as f:
+            new_mod = dill.load(f)
+        if not validate_model_file(new_mod):
+            return None
+        # Préchauffage XLA du modèle NEUF pendant que l'ancien sert encore : l'échange ne coûtera plus de pic.
+        # Un échec de préchauffage ne bloque PAS le rechargement (le modèle est valide, il sera juste lent au 1er lot).
+        try:
+            info = self.Models.warm_up(
+                new_mod, max_pkt_batch=DETECT_BATCH_SIZE,
+                max_seq_batch=DETECT_BATCH_SIZE // SEQ_STRIDE + 1, stop_event=self.stop_event,
+            )
+            logger.print(
+                f"🔥 Préchauffage terminé en {info['seconds']} s "
+                f"({info['pkt_buckets']} tailles paquet, {info['seq_buckets']} tailles séquence)"
+             )
+        except Exception as e:
+            logger.print(f"⚠️ Préchauffage échoué ({type(e).__name__}: {e}) : rechargement quand même")
+        return new_mod
 
     async def reload_model_if_needed(self, new_model_available: mp.Event(), refit_delay: int, model_path: str) -> bool:
         """
         Vérifie si un nouveau modèle est disponible et le recharge.
-        Retourne True si rechargé, False sinon.
+        1) chargement + validation dans un thread (long)  2) échange des références sous le lock (quelques µs).
         """
         while not self.stop_event.is_set():
             await asyncio.sleep(int(refit_delay * 0.75))
-            if new_model_available.is_set():
-                with self.model_lock:
-                    try:
-                        logger.print("🔄 Rechargement du nouveau modèle...")
+            if not new_model_available.is_set():
+                continue
+            try:
+                logger.print("🔄 Rechargement du nouveau modèle...")
 
-                        with open(model_path, "rb") as f:
-                            new_mod = dill.load(f)
+                new_mod = await asyncio.to_thread(self._load_new_model, model_path)
+                if new_mod is None:
+                    continue              # invalide : on garde l'ancien modèle, le flag reste levé (comme avant)
 
-                        if not validate_model_file(new_mod):
-                            continue
+                with self.model_lock:     # section critique minuscule : on échange seulement les références
+                    self.mod = new_mod
+                    self._update_model_refs(with_lock=False)
 
-                        self.mod = new_mod
-                        self._update_model_refs(with_lock=False)
+                new_model_available.clear()
 
-                        new_model_available.clear()
+                logger.print("✅ Modèle rechargé avec succès !")
 
-                        logger.print("✅ Modèle rechargé avec succès !")
+            except Exception as e:
+                logger.print(f"❌ Erreur rechargement modèle : {e}")
+                
 
-                    except Exception as e:
-                        logger.print(f"❌ Erreur rechargement modèle : {e}")
-    
     async def stop_refit_task(self):
         if self._refit_task is not None:
             if not self._refit_task.done():
@@ -725,7 +758,7 @@ class AnomalyDetector:
         Un élément illisible est loggué puis ignoré, il ne fait pas perdre le reste du lot.
         """
         entries = []
-        while len(entries) < max_items:
+        while len(entries) < max_items:  # and not self.stop_event.is_set():
             try:
                 item = self.q.get_nowait()
             except pyqueue.Empty:
@@ -760,6 +793,14 @@ class AnomalyDetector:
     ):
         try:
             mod = dill.loads(load(path))
+            info = self.model.warm_up(
+                mod, max_pkt_batch=DETECT_BATCH_SIZE,
+                max_seq_batch=(DETECT_BATCH_SIZE // SEQ_STRIDE) + 1, stop_event=self.stop_event,
+            )
+            logger.print(
+                f"🔥 Préchauffage terminé en {info['seconds']} s "
+                f"({info['pkt_buckets']} tailles paquet, {info['seq_buckets']} tailles séquence)"
+             )
             self.current_model_path = path
             with self.model_lock:
                 self.mod = mod
@@ -791,6 +832,98 @@ class AnomalyDetector:
         
         self._refit_task = refit_task
 
+        # ================= PIPELINE : capture || traitement =================
+        #
+        #  file amont --> [ PRODUCTEUR ] --> ready (asyncio.Queue) --> [ CONSOMMATEUR ] --> alertes
+        #                  drain + features        lots prêts            modèles + décisions
+        #
+        # Pendant que le consommateur attend l'inférence (dans un thread), le producteur prépare déjà
+        # le lot suivant. `slots` compte les places libres dans `ready` : le producteur en RÉSERVE une
+        # AVANT de drainer. File pleine => il n'a encore rien vidé, les paquets restent dans la file
+        # amont (c'est elle qui encaisse la pression) et le prochain lot sera aussi gros que possible.
+        ready: asyncio.Queue = asyncio.Queue(maxsize=self.PIPELINE_DEPTH)
+        slots = asyncio.Semaphore(self.PIPELINE_DEPTH)
+        self._pipe_queue = ready          # exposé dans stats() pour voir où est le goulot
+
+        producer = asyncio.create_task(self._detect_producer(ready, slots), name=f"detect-producer##{INSTANCE_SUFFIX}")
+        consumer = asyncio.create_task(
+            self._detect_consumer(ready, slots, combination_mode, packet_anomaly, verbose),
+            name=f"detect-consumer##{INSTANCE_SUFFIX}",
+        )
+
+        try:
+            # fin normale : stop_event -> le producteur envoie None -> le consommateur finit ses lots puis s'arrête.
+            # Si UNE des deux tâches plante, gather lève l'erreur ici et le `finally` annule l'autre.
+            await asyncio.gather(producer, consumer)
+
+        except KeyboardInterrupt:
+            if verbose:
+                logger.print("\n[INFO] Détection interrompue")
+
+        except Exception as e:
+            logger.print(f"Erreur pipeline détection : {e}")
+            logger.print(traceback.format_exc())
+
+        finally:
+            for t in (producer, consumer):
+                t.cancel()                # sans effet si la tâche est déjà terminée
+            await asyncio.gather(producer, consumer, return_exceptions=True)
+            self._pipe_queue = None
+
+            self.detect_end_time = time.time()
+
+            await self.stop_monitor_task()
+
+            if refit_task:
+                await self.stop_refit_task()
+
+            self.anomaly_logger.close()
+            self.stop()
+
+    async def _detect_producer(self, ready: asyncio.Queue, slots: asyncio.Semaphore):
+        """
+        ÉTAPE 1 du pipeline : file amont -> drain -> skipper -> features, puis dépose le lot dans `ready`.
+
+        N'utilise AUCUNE prédiction : c'est ce qui lui permet de travailler "en avance" sur le consommateur.
+        """
+        while not self.stop_event.is_set():
+            await slots.acquire()                       # 1) réserver une place AVANT de drainer (attend si pleine)
+            sent = False
+            try:
+                entries = self._drain_entries(DETECT_BATCH_SIZE)        # 2) vider la file amont d'un coup
+
+                batch, feats = [], []                                   # 3) features, ordre d'arrivée conservé
+                for entry in entries:
+                    try:
+                        feats.append(self.FeatureExtractor.extract_pack_features(entry[0]))
+                        batch.append(entry)
+                    except Exception as e:
+                        logger.print(f"Erreur extraction features : {e}")
+
+                if batch:
+                    ready.put_nowait((batch, feats))                    # 4) ne bloque jamais : la place est réservée
+                    sent = True
+            except Exception as e:
+                logger.print(f"Erreur producteur détection : {e}")
+                logger.print(traceback.format_exc())
+
+            if not sent:                 # repos (file amont vide) ou lot entièrement en erreur : on rend la place
+                slots.release()
+                await asyncio.sleep(0.001)
+
+        await ready.put(None)            # fin normale : signale au consommateur qu'il n'y aura plus de lots
+
+    async def _detect_consumer(
+        self, ready: asyncio.Queue, slots: asyncio.Semaphore,
+        combination_mode: str, packet_anomaly: float, verbose: bool,
+    ):
+        """
+        ÉTAPE 2 du pipeline : prend les lots prêts dans l'ordre (FIFO) puis
+        modèles (paquets) -> décisions -> fenêtre glissante -> modèles (séquences) -> alertes.
+
+        TOUT l'état qui dépend des prédictions vit ICI et nulle part ailleurs (fenêtre glissante, since_seq,
+        compteurs de graphes) : un seul consommateur + FIFO = l'ordre des paquets est exactement le même qu'avant.
+        """
         buffer_fea = deque(maxlen=SEQ_LENGTH)
         buffer_pred_pkt = deque(maxlen=SEQ_LENGTH)
         buffer_pkt = deque(maxlen=SEQ_LENGTH)
@@ -803,232 +936,203 @@ class AnomalyDetector:
         how = 'all' if combination_mode == "and" else "any"
         since_seq = 0   # paquets reçus depuis la dernière séquence évaluée (stride)
         
-        try:
-            while not self.stop_event.is_set():
-                refs = self._model_refs
-                if refs is None:
-                    await asyncio.sleep(0.01)
-                    continue
+        async def _stop():
+            self.stop_event.wait()
+        
+        while True:
+            
+            item = await ready.get()
+            if item is None:             # sentinelle du producteur : plus de lots
+                break
+            slots.release()              # lot pris -> une place se libère -> le producteur prépare DÉJÀ le suivant
 
-                (ae_pkt, if_pkt, lof_pkt, scaler_pkt,
-                 ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq) = refs
-                _mod = dict(zip(self.KEYS, refs))
-                mode = self.mode
-                try:
-                    # A) on vide la file d'un coup (jusqu'à DETECT_BATCH_SIZE) : sous charge le lot se remplit,
-                    #    au repos on traite ce qui est là sans attendre -> pas de latence ajoutée.
-                    entries = self._drain_entries(DETECT_BATCH_SIZE)
-                    if not entries:
-                        await asyncio.sleep(0.1)
-                        continue
+            batch, feats = item
+            # références modèles lues PAR LOT : un modèle rechargé est pris en compte dès le lot suivant
+            refs = self._model_refs      # UNE seule lecture (tuple immuable) -> cohérent même si un rechargement tombe en même temps
+            (ae_pkt, if_pkt, lof_pkt, scaler_pkt,
+             ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq) = refs
+            _mod = dict(zip(self.KEYS, refs))
+            mode = self.mode
 
-                    # B) features par paquet (peu coûteux), en gardant l'ordre d'arrivée
-                    #  si ça dure je penses a aller a task + gather + to_thread
-                    batch, feats = [], []
-                    
-                    for entry in entries:
-                        try:
-                            feats.append(self.FeatureExtractor.extract_pack_features(entry[0]))
-                            batch.append(entry)
-                        except Exception as e:
-                            logger.print(f"Erreur extraction features : {e}")
-                            
-                    if not batch:
-                        continue
-                    
-                    self.stat_batches += 1
-                    self.stat_scored += len(batch)
-                    self.stat_last_batch = len(batch)
-                    
-                    # C) UN SEUL appel modèles pour tout le lot (AE + IF + LOF vectorisés)
-                    pkt_scores, pkt_ia_preds = await self.Models.apredict_packet_batch(
-                        ae_pkt, if_pkt, lof_pkt, scaler_pkt, feats,
-                        how=how, method="decision_function", return_pred=True
+            try:
+                self.stat_batches += 1
+                self.stat_scored += len(batch)
+                self.stat_last_batch = len(batch)
+
+                # C) UN SEUL appel modèles pour tout le lot (AE + IF + LOF vectorisés)
+                pkt_scores, pkt_ia_preds = await self.Models.apredict_packet_batch(
+                    ae_pkt, if_pkt, lof_pkt, scaler_pkt, feats,
+                    how=how, method="decision_function", return_pred=True
+                )
+                thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
+                asyncio.create_task(
+                    asyncio.to_thread(
+                        self._track_inference,
+                        stage="packet", scores=pkt_scores, n_items=len(batch)
                     )
-                    thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
-                    asyncio.create_task(
-                        asyncio.to_thread(
-                            self._track_inference,
-                            stage="packet", scores=pkt_scores, n_items=len(batch)
-                        )
-                    )
+                )
 
-                    # D) logique par paquet (décision, alertes) ; on repère au passage les fenêtres à évaluer
-                    seq_jobs = []
-                    for (pkt, alert, from_alert), pkt_fea, score_pkt, ia_pred in zip(batch, feats, pkt_scores, pkt_ia_preds):
-                        buffer_pkt.append(pkt)
-                        buffer_fea.append(pkt_fea)
-                        unknown = bool(np.isnan(score_pkt))     # inférence en échec : ni anomalie ni "normal certifié"
-                        pkt_pred = 1 if unknown else (-1 if score_pkt < thr else 1)
-                        pkt_ia = None if unknown else {"decision_function": float(score_pkt), "predict": int(ia_pred)}
-                        buffer_pred_pkt.append(pkt_pred)
-                        since_seq += 1
+                # D) logique par paquet (décision, alertes) ; on repère au passage les fenêtres à évaluer
+                seq_jobs = []
+                for (pkt, alert, from_alert), pkt_fea, score_pkt, ia_pred in zip(batch, feats, pkt_scores, pkt_ia_preds):
+                    buffer_pkt.append(pkt)
+                    buffer_fea.append(pkt_fea)
+                    unknown = bool(np.isnan(score_pkt))     # inférence en échec : ni anomalie ni "normal certifié"
+                    pkt_pred = 1 if unknown else (-1 if score_pkt < thr else 1)
+                    pkt_ia = None if unknown else {"decision_function": float(score_pkt), "predict": int(ia_pred)}
+                    buffer_pred_pkt.append(pkt_pred)
+                    since_seq += 1
 
-                        if from_alert:   # voie Suricata : paquet fabriqué depuis une alerte (fake_pkt, alert)
-                            if combination_mode == "or":
-                                pkt_combined_pred = -1 if (pkt_pred == -1 or alert) else 1
-                            elif combination_mode == "and":
-                                pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
-                            elif combination_mode == "weighted":
-                                ia_score = 1 if pkt_pred == 1 else 0
-                                snort_score = 1 if not alert else 0
-                                w_score = 0.6 * ia_score + 0.4 * snort_score
-                                pkt_combined_pred = -1 if w_score < 0.5 else 1
-                            else:
-                                pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
+                    if from_alert:   # voie Suricata : paquet fabriqué depuis une alerte (fake_pkt, alert)
+                        if combination_mode == "or":
+                            pkt_combined_pred = -1 if (pkt_pred == -1 or alert) else 1
+                        elif combination_mode == "and":
+                            pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
+                        elif combination_mode == "weighted":
+                            ia_score = 1 if pkt_pred == 1 else 0
+                            snort_score = 1 if not alert else 0
+                            w_score = 0.6 * ia_score + 0.4 * snort_score
+                            pkt_combined_pred = -1 if w_score < 0.5 else 1
+                        else:
+                            pkt_combined_pred = -1 if (pkt_pred == -1 and alert) else 1
 
-                            if pkt_combined_pred == -1:
-                                pkt_rate.append(1)
-                                scores = await self.AnomalyScorer.detect_pkt(
-                                    pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
-                                    pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
-                                    event_timestamp=alert.get("eve_timestamp"),
-                                    ia_preds=pkt_ia
-                                )
-                                if self.enable_graphe:
-                                    scores_deque.append(scores)
-                                    self.graph.add_data3(scores)
-
-                                source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
-                                if verbose:
-                                    scr_ip_resolution = await resolve_hostname(alert['src_ip'])
-                                    logger.print(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
-
-                                self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
-                                self._add_alert(
-                                    {
-                                        **self._to_alert_entry(pkt_fea, pkt_combined_pred, source=source),
-                                        **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(pkt, with_dst=True))))
-                                    }
-                                )
-                        elif pkt_pred == -1:
+                        if pkt_combined_pred == -1:
                             pkt_rate.append(1)
                             scores = await self.AnomalyScorer.detect_pkt(
-                                pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
+                                pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
                                 pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                                event_timestamp=alert.get("eve_timestamp"),
                                 ia_preds=pkt_ia
                             )
                             if self.enable_graphe:
                                 scores_deque.append(scores)
                                 self.graph.add_data3(scores)
 
+                            source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
                             if verbose:
-                                logger.print(f"[PAQUET] Anomalie détectée sur un paquet à {datetime.now().strftime('%H:%M:%S')}")
+                                scr_ip_resolution = await resolve_hostname(alert['src_ip'])
+                                logger.print(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
 
-                            self.log_anomaly(pkt_fea, pkt_pred, source="IA")
+                            self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
                             self._add_alert(
                                 {
-                                    **self._to_alert_entry(pkt_fea, pkt_pred, source="IA"),
+                                    **self._to_alert_entry(pkt_fea, pkt_combined_pred, source=source),
                                     **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(pkt, with_dst=True))))
                                 }
                             )
-
+                    elif pkt_pred == -1:
+                        pkt_rate.append(1)
+                        scores = await self.AnomalyScorer.detect_pkt(
+                            pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
+                            pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                            ia_preds=pkt_ia
+                        )
                         if self.enable_graphe:
-                            num = sum(pkt_rate)
-                            if num == SEQ_LENGTH:
-                                comptes_pkt += 1
+                            scores_deque.append(scores)
+                            self.graph.add_data3(scores)
 
-                            if comptes_pkt >= 10:
-                                pkt_rate.clear()
-                                num = sum(pkt_rate)
-                                comptes_pkt = 0
+                        if verbose:
+                            logger.print(f"[PAQUET] Anomalie détectée sur un paquet à {datetime.now().strftime('%H:%M:%S')}")
 
-                            self.graph.add_data1(num)
-
-                        # Fenêtre glissante : pleine ET `SEQ_STRIDE` paquets écoulés depuis la dernière évaluation.
-                        # (avant : len == SEQ_LENGTH était vrai à CHAQUE paquet -> 4 modèles par paquet)
-                        if len(buffer_fea) == SEQ_LENGTH and since_seq >= SEQ_STRIDE:
-                            since_seq = 0
-                            seq_jobs.append((
-                                self.FeatureExtractor.extract_seq_features(np.array(buffer_fea)),
-                                pkt,
-                                sum(1 for x in buffer_pred_pkt if x == -1) / SEQ_LENGTH,
-                            ))
-
-                    # E) UN SEUL appel modèles pour toutes les séquences du lot (CNN + AE + IF + LOF)
-                    if seq_jobs:
-                        self.stat_sequences += len(seq_jobs)
-                        seq_scores, seq_ia_preds = await self.Models.apredict_sequence_batch(
-                            ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq,
-                            np.stack([job[0] for job in seq_jobs]),
-                            how=how, method="decision_function", return_pred=True
+                        self.log_anomaly(pkt_fea, pkt_pred, source="IA")
+                        self._add_alert(
+                            {
+                                **self._to_alert_entry(pkt_fea, pkt_pred, source="IA"),
+                                **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(pkt, with_dst=True))))
+                            }
                         )
-                        asyncio.create_task(
-                            asyncio.to_thread(
-                                self._track_inference,
-                                stage="sequence", scores=seq_scores, n_items=len(seq_jobs)
-                            )
-                        )
-                        for (seq_fea, last_pkt, prop_anom), score_pred, ia_pred_seq in zip(seq_jobs, seq_scores, seq_ia_preds):
-                            seq_unknown = bool(np.isnan(score_pred))
-                            pred_seq = 1 if seq_unknown else (-1 if score_pred <= thr else 1)
-                            if combination_mode == "or":
-                                combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
-                            elif combination_mode == "and":
-                                combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
-                            elif combination_mode == "weighted":
-                                seq_score = 1 if not pred_seq == -1 else 0
-                                w_score = 0.5 * seq_score + 0.5 * (1 - prop_anom)
-                                combined_pred = -1 if w_score < 0.5 else 1
-                            else:
-                                combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
-
-                            if combined_pred == -1:
-                                seq_rate.append(1)
-                                await self.AnomalyScorer.detect_pkt(
-                                    pkt=last_pkt, pkt_rate=prop_anom, features=seq_fea, models=_mod,
-                                    Model=self.Models, seq_anomaly=True, mode=mode, how=how,
-                                    ia_preds=None if seq_unknown else {"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
-                                )
-                                if verbose:
-                                    logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
-                                self.log_anomaly(seq_fea, combined_pred, source="IA")
-                                self._add_alert(
-                                    {
-                                        **self._to_alert_entry(seq_fea, combined_pred, source="IA"),
-                                        **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(last_pkt, with_dst=True))))
-                                    }
-                                )
-
-                            if verbose:
-                                n_anom = round(prop_anom * SEQ_LENGTH)
-                                logger.print(f"[SÉQUENCE] {prop_anom} ({n_anom} / {SEQ_LENGTH}) paquets anormaux")
-                                if combined_pred != -1:
-                                    logger.print(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
 
                     if self.enable_graphe:
-                        num = sum(seq_rate)
+                        num = sum(pkt_rate)
                         if num == SEQ_LENGTH:
-                            comptes_seq += 1
+                            comptes_pkt += 1
 
-                        if comptes_seq >= 10:
-                            seq_rate.clear()
-                            scores_deque.clear()
-                            num = sum(seq_rate)
-                            comptes_seq = 0
+                        if comptes_pkt >= 10:
+                            pkt_rate.clear()
+                            num = sum(pkt_rate)
+                            comptes_pkt = 0
 
-                        self.graph.add_data2(num)
-                        self.graph.add_data3(sum(scores_deque) / (len(scores_deque) or 1))
+                        self.graph.add_data1(num)
 
-                except Exception as e:
-                    logger.print(f"Erreur détection : {e}")
-                    logger.print(traceback.format_exc())
-                    continue
+                    # Fenêtre glissante : pleine ET `SEQ_STRIDE` paquets écoulés depuis la dernière évaluation.
+                    # (avant : len == SEQ_LENGTH était vrai à CHAQUE paquet -> 4 modèles par paquet)
+                    if len(buffer_fea) == SEQ_LENGTH and since_seq >= SEQ_STRIDE:
+                        since_seq = 0
+                        seq_jobs.append((
+                            self.FeatureExtractor.extract_seq_features(np.array(buffer_fea)),
+                            pkt,
+                            sum(1 for x in buffer_pred_pkt if x == -1) / SEQ_LENGTH,
+                        ))
 
-        except KeyboardInterrupt:
-            if verbose:
-                logger.print("\n[INFO] Détection interrompue")
+                # E) UN SEUL appel modèles pour toutes les séquences du lot (CNN + AE + IF + LOF)
+                if seq_jobs:
+                    self.stat_sequences += len(seq_jobs)
+                    seq_scores, seq_ia_preds = await self.Models.apredict_sequence_batch(
+                        ae_seq, cnn_seq, if_seq, lof_seq, scaler_seq,
+                        np.stack([job[0] for job in seq_jobs]),
+                        how=how, method="decision_function", return_pred=True
+                    )
+                    asyncio.create_task(
+                        asyncio.to_thread(
+                            self._track_inference,
+                            stage="sequence", scores=seq_scores, n_items=len(seq_jobs)
+                        )
+                    )
+                    for (seq_fea, last_pkt, prop_anom), score_pred, ia_pred_seq in zip(seq_jobs, seq_scores, seq_ia_preds):
+                        seq_unknown = bool(np.isnan(score_pred))
+                        pred_seq = 1 if seq_unknown else (-1 if score_pred <= thr else 1)
+                        if combination_mode == "or":
+                            combined_pred = -1 if (pred_seq == -1 or prop_anom >= packet_anomaly) else 1
+                        elif combination_mode == "and":
+                            combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
+                        elif combination_mode == "weighted":
+                            seq_score = 1 if not pred_seq == -1 else 0
+                            w_score = 0.5 * seq_score + 0.5 * (1 - prop_anom)
+                            combined_pred = -1 if w_score < 0.5 else 1
+                        else:
+                            combined_pred = -1 if (pred_seq == -1 and prop_anom >= packet_anomaly) else 1
 
-        finally:
-            self.detect_end_time = time.time()
+                        if combined_pred == -1:
+                            seq_rate.append(1)
+                            await self.AnomalyScorer.detect_pkt(
+                                pkt=last_pkt, pkt_rate=prop_anom, features=seq_fea, models=_mod,
+                                Model=self.Models, seq_anomaly=True, mode=mode, how=how,
+                                ia_preds=None if seq_unknown else {"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
+                            )
+                            if verbose:
+                                logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
+                            self.log_anomaly(seq_fea, combined_pred, source="IA")
+                            self._add_alert(
+                                {
+                                    **self._to_alert_entry(seq_fea, combined_pred, source="IA"),
+                                    **dict(zip(("src_ip", "dst_ip"), tuple(self.AnomalyScorer._get_ip(last_pkt, with_dst=True))))
+                                }
+                            )
 
-            await self.stop_monitor_task()
+                        if verbose:
+                            n_anom = round(prop_anom * SEQ_LENGTH)
+                            logger.print(f"[SÉQUENCE] {prop_anom} ({n_anom} / {SEQ_LENGTH}) paquets anormaux")
+                            if combined_pred != -1:
+                                logger.print(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
 
-            if refit_task:
-                await self.stop_refit_task()
-            
-            self.anomaly_logger.close()
-            self.stop()
+                if self.enable_graphe:
+                    num = sum(seq_rate)
+                    if num == SEQ_LENGTH:
+                        comptes_seq += 1
+
+                    if comptes_seq >= 10:
+                        seq_rate.clear()
+                        scores_deque.clear()
+                        num = sum(seq_rate)
+                        comptes_seq = 0
+
+                    self.graph.add_data2(num)
+                    self.graph.add_data3(sum(scores_deque) / (len(scores_deque) or 1))
+
+            except Exception as e:
+                logger.print(f"Erreur détection : {e}")
+                logger.print(traceback.format_exc())
+                continue
 
 if __name__ == "__main__":
     logger.print("🔍 Vérification de l'intégration de Config...")

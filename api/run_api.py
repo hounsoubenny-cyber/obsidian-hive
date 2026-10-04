@@ -55,6 +55,6 @@ def run():
     
 if __name__ == '__main__':
     nest_asyncio.apply()
-    # run()
+    run()
     
     

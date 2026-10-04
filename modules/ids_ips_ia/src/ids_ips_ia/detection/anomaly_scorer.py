@@ -80,7 +80,7 @@ async def resolve_hostname(ip: str) -> str:
     is_resolved = False
     try:
         result = asyncio.to_thread(socket.gethostbyaddr, ip)
-        result = asyncio.wait_for(result, 0.5)
+        result = await asyncio.wait_for(result, 0.0001)
         value = result[0]
         is_resolved = True
     except Exception:

@@ -1144,15 +1144,21 @@ class Models:
 
     # ------------------------------------------------------------------ batching
     def _get_cnn_bottleneck(self, cnn_seq):
-        """Modèle 'bottleneck' du CNN, recréé si le CNN a changé (refit / rechargement du modèle)."""
-        cached = getattr(self, "_cnn_bottleneck_for", None)
-        if self.cnn_bottleneck_model is None or cached != id(cnn_seq):
-            self.cnn_bottleneck_model = Model(
+        """
+        Modèle 'bottleneck' du CNN, mis en cache PAR CNN (clé = id, vérifié par identité) : pendant un
+        rechargement, l'ancien CNN (encore en service) et le nouveau (en préchauffage) coexistent sans
+        s'évincer l'un l'autre -> pas de reconstruction du bottleneck à chaque lot.
+        """
+        cache = self.__dict__.setdefault("_cnn_bottleneck_cache", {})
+        ent = cache.get(id(cnn_seq))
+        if ent is None or ent[0] is not cnn_seq:
+            if len(cache) > 4:
+                cache.clear()
+            ent = cache[id(cnn_seq)] = (cnn_seq, Model(
                 inputs=cnn_seq.input,
                 outputs=cnn_seq.get_layer("cnn_mha_encoder").input[0]  # query input
-            )
-            self._cnn_bottleneck_for = id(cnn_seq)
-        return self.cnn_bottleneck_model
+            ))
+        return ent[1]
 
     def _fast_if(self, m):
         """FastIForest vérifié pour le modèle `m` (cache par modèle, reconstruit après un refit), sinon `m`."""
@@ -1272,6 +1278,57 @@ class Models:
     async def apredict_sequence_batch(self, *args, **kwargs):
         return await asyncio.to_thread(self.predict_sequence_batch, *args, **kwargs)
     
+    def warm_up(self, mod: dict, max_pkt_batch: int = 256, max_seq_batch: int = 16, stop_event=None) -> dict:
+        """
+        Préchauffe un modèle NEUF avant qu'il serve (rechargement après refit).
+
+        Pourquoi : les fonctions `_predict_*` sont `tf.function(jit_compile=True)` et reçoivent le modèle en
+        argument -> un modèle neuf = nouvelle trace + compilation XLA, PAR taille de bucket. Sans préchauffage,
+        c'est le premier vrai lot qui paie (pic de latence). Ici on passe des lots FACTICES (zéros) de chaque
+        taille de bucket réellement utilisée, dans le thread appelant, pendant que l'ancien modèle sert encore.
+
+        N'écrit AUCUN état partagé de détection (`last_batch_error`, scalers...) : il appelle directement les
+        fonctions `_predict_*`, pas `predict_*_batch`. Seuls des caches par clé sont remplis (bottleneck, FastIForest).
+        Les dtypes sont ceux de la prod (float64 en entrée) car ils font partie de la signature de la trace.
+
+        max_pkt_batch : plus gros lot de paquets attendu (DETECT_BATCH_SIZE)
+        max_seq_batch : plus gros nombre de séquences attendu par lot (~ DETECT_BATCH_SIZE // SEQ_STRIDE + 1)
+        stop_event    : si levé, on s'arrête entre deux buckets
+        """
+        t0 = time.perf_counter()
+        stopped = lambda: stop_event is not None and stop_event.is_set()
+        ae_pkt, ae_seq, cnn_seq = mod["ae_pkt"], mod["ae_seq"], mod["cnn_seq"]
+        n_pkt_feat = int(mod["scaler_pkt"].n_features_in_)
+        seq_len = int(cnn_seq.input_shape[1])
+        n_seq_feat = int(mod["scaler_seq"].n_features_in_)
+        pkt_buckets = [b for b in _BATCH_BUCKETS if b <= _bucket_size(max_pkt_batch)]
+        seq_buckets = [b for b in _BATCH_BUCKETS if b <= _bucket_size(max_seq_batch)]
+
+        n_pkt = n_seq = 0
+        for b in pkt_buckets:                                   # 1) autoencodeur des paquets
+            if stopped():
+                break
+            _run_bucketed(_predict_ae_pkt, ae_pkt, np.zeros((b, n_pkt_feat)))
+            n_pkt += 1
+
+        bottleneck = self._get_cnn_bottleneck(cnn_seq)          # 2) séquences : bottleneck + AE + CNN
+        for b in seq_buckets:
+            if stopped():
+                break
+            new = np.zeros((b, seq_len, n_seq_feat))
+            cnn_memory = _run_bucketed(_predict_cnn_memory, bottleneck, new)
+            _run_bucketed(_predict_ae_seq, ae_seq, new, cnn_memory)
+            _run_bucketed(_predict_cnn_seq, cnn_seq, new)
+            n_seq += 1
+
+        self._fast_if(mod["if_pkt"])                            # 3) caches FastIForest (léger, numpy)
+        self._fast_if(mod["if_seq"])
+        return {
+            "pkt_buckets": n_pkt, "seq_buckets": n_seq,
+            "seconds": round(time.perf_counter() - t0, 2),
+            "interrupted": n_pkt < len(pkt_buckets) or n_seq < len(seq_buckets),
+        }
+
     def plot_history_and_evaluate(self, tf_model, history, X_test, name='Autoencoder', plot=False, cnn_bottleneck = None):
         shape = X_test.shape
         if len(shape) > 2:
