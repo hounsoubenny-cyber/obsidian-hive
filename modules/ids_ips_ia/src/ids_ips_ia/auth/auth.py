@@ -5,14 +5,15 @@ Created on Wed Dec 17 20:57:18 2025
 
 @author: hounsousamuel
 """
-import os, sys
-import secrets, bcrypt
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
+
+import bcrypt
 from dotenv import load_dotenv
+
 load_dotenv(verbose=True)
 
-from ids_ips_ia.auth.config import USERNAME, PASSWORD, JWT_KEY
 from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.auth.config import USERNAME, PASSWORD, JWT_KEY
+
 logger = get_logger()
 
 if not PASSWORD:
@@ -64,8 +65,8 @@ def auth():
 if __name__ == '__main__':
     pw = 'admin'
     hash_ = hash_password(pw)
-    logger.print(verify_password(pw, hash_))
-    logger.print(auth())
+    logger.info(verify_password(pw, hash_))
+    logger.info(auth())
 
 # curl -X POST  "http://0.0.0.0:8080/api/login" -d '{"username":"admin", "password":"admin"}' -H "Content-Type: application/json"  
 

@@ -1,0 +1,44 @@
+DRY-RUN (rien n’est modifié ; ajoute --apply) — cible : modules/ids_ips_ia/src/ids_ips_ia
+Conversions : 0  par niveau : {}
+Appels vides logger.print() laissés tels quels : 62
+À VÉRIFIER (sans texte littéral, NON modifiés) : 35
+Top fichiers : 
+
+=== À VÉRIFIER : fichier:ligne ===
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture.py:801  logger.print(self._status_line(cur, rate, now - self._t0, new_loss))
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture.py:842  logger.print(self.summary())
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture.py:920  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture.py:1040  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture_back.py:670  logger.print(self._status_line(cur, rate, now - self._t0, new_loss))
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture_back.py:710  logger.print(self.summary())
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture_back.py:944  logger.print(t.name, t.is_alive(), self.event.is_set())
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture_back.py:787  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/capture_back.py:905  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/capture/features_extractor.py:267  logger.print(len(FeatureExtractor.get_feature_name()))
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/anomaly_scorer.py:117  logger.print('\n \n \n')
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/anomaly_scorer.py:537  logger.print(message)
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/anomaly_scorer.py:835  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/anomaly_scorer.py:846  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/anomaly_scorer.py:855  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/detection_module.py:865  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/detection_module.py:908  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/back/detection/detection_module.py:1134  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/refit_system/refit_queue.py:149  logger.print(filesname)
+modules/ids_ips_ia/src/ids_ips_ia/resum/auth/auth.py:67  logger.print(verify_password(pw, hash_))
+modules/ids_ips_ia/src/ids_ips_ia/resum/auth/auth.py:68  logger.print(auth())
+modules/ids_ips_ia/src/ids_ips_ia/resum/core/capture.py:341  logger.print(t.name, t.is_alive(), self.event.is_set())
+modules/ids_ips_ia/src/ids_ips_ia/resum/core/features_extractor.py:299  logger.print(len(FeatureExtractor.get_feature_name()))
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/anomaly_scorer.py:112  logger.print('\n \n \n')
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/anomaly_scorer.py:444  logger.print(message)
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/anomaly_scorer.py:668  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/anomaly_scorer.py:676  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/anomaly_scorer.py:682  logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+modules/ids_ips_ia/src/ids_ips_ia/resum/detection/detection_module.py:831  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/resum/models/model_backup.py:808  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/resum/models/models.py:1112  logger.print(traceback.format_exc()) (dans un except -> probablement `error` / `exception`)
+modules/ids_ips_ia/src/ids_ips_ia/resum/reaction/reaction_module.py:225  logger.print(f"  {success_msg}")
+modules/ids_ips_ia/src/ids_ips_ia/resum/reaction/reaction_module.py:739  logger.print(f"  {line}")
+modules/ids_ips_ia/src/ids_ips_ia/resum/reaction/reaction_module.py:760  logger.print(f"  {line.rstrip()}")
+modules/ids_ips_ia/src/ids_ips_ia/resum/refit_system/refit_queue.py:140  logger.print(filesname)
+
+=== CONVERSIONS : fichier:ligne  NIVEAU  raison  | texte ===

@@ -45,13 +45,13 @@ class Text:
             try:
                 data.append({'type': type, 'id': id, 'text': text, 'durée': time})
                 joblib.dump(data, self.dir)
-                logger.print("Texte sauvegardé")
-                logger.print("Chemin de stockage : ", self.dir)
-                logger.print('Numéro : ', id)
+                logger.info("Texte sauvegardé")
+                logger.info("Chemin de stockage : ", self.dir)
+                logger.info('Numéro : ', id)
             except Exception as e:
-                logger.print('Erreur survenue, ', e)
+                logger.error('Erreur survenue, ', e)
         else:
-            logger.print('Aucun message envoyé')
+            logger.info('Aucun message envoyé')
 
     def send_mail(self, text, sender_address, receiver_address, password, subject='INFO'):
         li = [text, sender_address, receiver_address, password]
@@ -73,12 +73,12 @@ class Text:
                 self.have_send = True
                 self.save(text, 'mail', t1)
                 self.current_mail_id += 1
-                logger.print(f'Message envoyé de {sender_address} à {receiver_address} en {t1} secondes')
-                logger.print(f"Destinataire : {self.nom} {self.prenom}")
+                logger.info(f'Message envoyé de {sender_address} à {receiver_address} en {t1} secondes')
+                logger.info(f"Destinataire : {self.nom} {self.prenom}")
             except Exception as e:
-                logger.print("Erreur survenue, ", e)
+                logger.error("Erreur survenue, ", e)
         else:
-            logger.print('Données invalides')
+            logger.info('Données invalides')
 
     def send_sms(self, text, account_sid, auth_token, sender_num, receiver_num):
         li = [account_sid, auth_token, sender_num, receiver_num]
@@ -95,11 +95,11 @@ class Text:
                 self.have_send = True
                 self.save(text, 'sms', t1)
                 self.current_sms_id += 1
-                logger.print(f'Message envoyé de {sender_num} à {receiver_num} en {t1} secondes')
-                logger.print(f"Destinataire : {self.nom} {self.prenom}")
-                logger.print(f"Statut: {sms.status}")
-                logger.print(f"SID: {sms.sid}")
+                logger.info(f'Message envoyé de {sender_num} à {receiver_num} en {t1} secondes')
+                logger.info(f"Destinataire : {self.nom} {self.prenom}")
+                logger.info(f"Statut: {sms.status}")
+                logger.info(f"SID: {sms.sid}")
             except Exception as e:
-                logger.print("Erreur survenue, ", e)
+                logger.error("Erreur survenue, ", e)
         else:
-            logger.print('Données invalides')
+            logger.info('Données invalides')

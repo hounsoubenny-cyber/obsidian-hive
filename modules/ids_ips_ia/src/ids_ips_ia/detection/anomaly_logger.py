@@ -6,7 +6,6 @@ Created on Thu Oct  1 07:40:31 2026
 @author: hounsousamuel
 """
 
-
 """
 anomaly_logger.py — Remplace la persistance de log_anomaly() (joblib.dump de TOUTE la liste à chaque anomalie).
 
@@ -45,6 +44,7 @@ Format d'une entrée (inchangé, sauf `features`) :
 """
 
 import os
+import re
 import time
 import queue
 import atexit
@@ -70,10 +70,14 @@ class AnomalyLogger:
         on_warning: Callable | None = None, 
         on_write: Callable | None = None, 
         after_write: Callable | None = None, 
-        dtype=np.float32
+        dtype=np.float32,
+        max_files: int | None = None
     ):
         self.dir = str(directory)
         self.prefix = prefix
+        self.max_files = max(0, int(max_files)) if max_files else 0   # 0 / None = pas d'élagage
+        self._file_re = re.compile(rf"{re.escape(prefix)}_(\d+)\.pkl")
+        self.pruned = 0
         self.max_per_file = max(1, int(max_per_file))
         self.batch_size = max(1, int(batch_size))
         self.flush_interval = float(flush_interval)
@@ -95,6 +99,7 @@ class AnomalyLogger:
         # état touché UNIQUEMENT par le thread d'écriture
         self._file = self._next_file()
         self._count = 0
+        self._prune()                              # nettoie aussi au démarrage (1 nouveau fichier à chaque redémarrage)
 
         # compteurs (lecture seule côté appelant)
         self.logged = 0
@@ -151,6 +156,7 @@ class AnomalyLogger:
             "written": self.written, 
             "dropped": self.dropped,
             "write_errors": self.write_errors,
+            "pruned": self.pruned,
             "queued": self._q.qsize(), 
             "file": self._file
         }
@@ -181,11 +187,39 @@ class AnomalyLogger:
             self._thread = threading.Thread(target=self._run, name="AnomalyWriter", daemon=True)
             self._thread.start()
 
+    def _list_files(self):
+        """[(index, chemin)] des fichiers d'anomalies existants, du plus ancien au plus récent (tri NUMÉRIQUE : _2 avant _10)."""
+        out = []
+        try:
+            for f in os.listdir(self.dir):
+                m = self._file_re.fullmatch(f)
+                if m:
+                    out.append((int(m.group(1)), os.path.join(self.dir, f)))
+        except FileNotFoundError:
+            pass
+        out.sort()
+        return out
+
     def _next_file(self) -> str:
-        i = 0
-        while os.path.exists(os.path.join(self.dir, f"{self.prefix}_{i}.pkl")):
-            i += 1
-        return os.path.join(self.dir, f"{self.prefix}_{i}.pkl")
+        """Index = dernier + 1 (et non plus 'premier trou') : supprimer les plus vieux ne fait jamais réutiliser un index."""
+        files = self._list_files()
+        nxt = files[-1][0] + 1 if files else 0
+        return os.path.join(self.dir, f"{self.prefix}_{nxt}.pkl")
+
+    def _prune(self):
+        """Garde les `max_files` fichiers les plus récents (le fichier courant compte pour un). Thread d'écriture seulement."""
+        if not self.max_files:
+            return
+        try:
+            old = [path for _, path in self._list_files() if path != self._file]
+            for path in old[:max(0, len(old) - (self.max_files - 1))]:
+                try:
+                    os.remove(path)
+                    self.pruned += 1
+                except FileNotFoundError:
+                    pass
+        except Exception as e:
+            self._warn(f"AnomalyLogger élagage : {e!r}")
 
     def _run(self):
         batch, deadline = [], 0.0
@@ -223,6 +257,7 @@ class AnomalyLogger:
                     self._file = self._next_file()
                     self._count = 0
                     room = self.max_per_file
+                    self._prune()                                 # rotation = moment naturel pour supprimer les plus vieux
                 chunk = batch[i:i + room]
                 with open(self._file, "ab") as f:                 # append : on ne réécrit JAMAIS l'historique
                     pickle.dump(chunk, f, protocol=pickle.HIGHEST_PROTOCOL)

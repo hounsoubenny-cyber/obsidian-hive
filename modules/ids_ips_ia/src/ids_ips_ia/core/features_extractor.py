@@ -23,7 +23,7 @@ try:
     _USE_CYTHON = True
 except ImportError:
     _USE_CYTHON = False
-    logger.print("⚠️ Cython non disponible, utilisation de Python pur")
+    logger.warning("⚠️ Cython non disponible, utilisation de Python pur")
 
 
 
@@ -202,7 +202,7 @@ class FeatureExtractor:
             return np.array(list(features.values()))
         
         except Exception as e:
-            logger.print(f"Erreur extraction features: {e}")
+            logger.error(f"Erreur extraction features: {e}")
             # Retourner des features par défaut en cas d'erreur
             return np.array(list(features.values()))
 
@@ -224,7 +224,7 @@ class FeatureExtractor:
             
             # Convertir en array pour faciliter les calculs
             data = np.array([[pkt[k] for k in keys] for pkt in seq_dicts])
-            # logger.print(data.dtype)
+            # logger.info(data.dtype)
             # input()
         else:
             keys = FeatureExtractor.get_feature_name()
@@ -264,6 +264,6 @@ class FeatureExtractor:
             return FeatureExtractor._extract_seq_features(seq_dicts)
         
 if __name__ == "__main__":
-    logger.print(len(FeatureExtractor.get_feature_name()))
+    logger.info(len(FeatureExtractor.get_feature_name()))
 
     

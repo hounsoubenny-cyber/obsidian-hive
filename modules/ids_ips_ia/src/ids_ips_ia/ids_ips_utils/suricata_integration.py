@@ -75,7 +75,7 @@ def get_all_locals_ip():
         # default_gateway = gateways['default'][netifaces.AF_INET][0]
         
     except Exception as e:
-        logger.print('Erreur netifaces : ', str(e))
+        logger.error('Erreur netifaces : ', str(e))
         
     try:
         host = socket.gethostname()
@@ -84,7 +84,7 @@ def get_all_locals_ip():
         for ip in info:
             ips.add(ip)
     except Exception as e:
-        logger.print('Erreur socket : ', str(e))
+        logger.error('Erreur socket : ', str(e))
     li = ["::1", "0.0.0.0", "127.0.0.1", "255.255.255.255", "172.17.0.2", "172.17.0.1", "ff02::1", "ff02::2"]
     for i in li:
         ips.add(i)
@@ -208,7 +208,7 @@ class State:
 
             if self.threads:
                 for th in self.threads:
-                    logger.print(f' Stop de thread numéro : {self.threads.index(th)} (thread {th[1]}) ')
+                    logger.info(f' Stop de thread numéro : {self.threads.index(th)} (thread {th[1]}) ')
                     th[0].join(1)
 
             Utils.stop_suricata()
@@ -310,10 +310,10 @@ class Utils:
             elif os_id == 'macos':
                 subprocess.run(["brew", "install", "suricata"], check=True)
             elif os_id == 'windows':
-                logger.print("Suricata sur Windows doit être installé manuellement depuis https://suricata.io/")
+                logger.info("Suricata sur Windows doit être installé manuellement depuis https://suricata.io/")
             else:
                 raise ValueError("OS non reconnu pour installation automatique.")
-            logger.print("✅ Suricata installé avec succès")
+            logger.success("✅ Suricata installé avec succès")
         except Exception as e:
             raise RuntimeError(f"Erreur lors de l'installation de Suricata : {e}")
     
@@ -324,11 +324,11 @@ class Utils:
             ["sudo", "suricata-update"],
             check=False, capture_output=True, text=True
         )
-        logger.print("📦 suricata-update terminé, code retour :", r.returncode)
+        logger.success("📦 suricata-update terminé, code retour :", r.returncode)
         if r.stdout:
-            logger.print("   📄 Stdout:", r.stdout.strip()[:300] if r.stdout else "Aucun")
+            logger.info("   📄 Stdout:", r.stdout.strip()[:300] if r.stdout else "Aucun")
         if r.stderr:
-            logger.print("   ⚠️ Stderr:", r.stderr.strip()[:300] if r.stderr else "Aucun")
+            logger.warning("   ⚠️ Stderr:", r.stderr.strip()[:300] if r.stderr else "Aucun")
         self.is_update = r.returncode == 0
         return r.returncode == 0
     
@@ -353,19 +353,19 @@ class Utils:
                 directory = paths.get(key)
                 if directory and not os.path.exists(directory):
                     os.makedirs(directory, exist_ok=True)
-                    logger.print(f"✅ Créé: {directory}")
+                    logger.success(f"✅ Créé: {directory}")
 
             if paths['config']:
                 config_dir = os.path.dirname(paths['config'])
                 if not os.path.exists(config_dir):
                     os.makedirs(config_dir, exist_ok=True)
-                    logger.print(f"✅ Créé: {config_dir}")
+                    logger.success(f"✅ Créé: {config_dir}")
 
             # Création des fichiers de log s'ils n'existent pas
             for f in [paths.get('eve_file'), paths.get('fast_file')]:
                 if f and not os.path.exists(f):
                     open(f, 'a').close()
-                    logger.print(f"✅ Créé: {f}")
+                    logger.success(f"✅ Créé: {f}")
 
             # Permissions (hors Windows)
             if paths['os_id'] not in ['windows'] and paths['log']:
@@ -375,26 +375,26 @@ class Utils:
                         os.chmod(paths['eve_file'], 0o664)
                     if paths['fast_file']:
                         os.chmod(paths['fast_file'], 0o664)
-                    logger.print("✅ Permissions locales définies")
+                    logger.success("✅ Permissions locales définies")
                 except PermissionError:
                     try:
                         subprocess.run(['sudo', 'chmod', '-R', '775', paths['log']],
                                        check=False, capture_output=True)
-                        logger.print("✅ Permissions définies (sudo)")
+                        logger.success("✅ Permissions définies (sudo)")
                     except Exception:
-                        logger.print("⚠️ Permissions non modifiées")
+                        logger.warning("⚠️ Permissions non modifiées")
 
-            logger.print(f"\n📁 Chemins Suricata ({paths['os_id']}):")
-            logger.print(f"   Config:    {paths['config']}")
-            logger.print(f"   Rules:     {paths['rules']}")
-            logger.print(f"   Logs:      {paths['log']}")
-            logger.print(f"   EVE.json:  {paths['eve_file']}")
-            logger.print(f"   Fast.log:  {paths['fast_file']}\n")
+            logger.info(f"\n📁 Chemins Suricata ({paths['os_id']}):")
+            logger.info(f"   Config:    {paths['config']}")
+            logger.info(f"   Rules:     {paths['rules']}")
+            logger.info(f"   Logs:      {paths['log']}")
+            logger.info(f"   EVE.json:  {paths['eve_file']}")
+            logger.info(f"   Fast.log:  {paths['fast_file']}\n")
 
             return paths
 
         except Exception as e:
-            logger.print(f"❌ Erreur get_suricata_paths: {e}")
+            logger.error(f"❌ Erreur get_suricata_paths: {e}")
             traceback.print_exc()
             return paths
 
@@ -405,7 +405,7 @@ class Utils:
         fast_file = paths.get('fast_file')
         
         if not eve_file:
-            logger.print("❌ Impossible de localiser les logs Suricata.")
+            logger.error("❌ Impossible de localiser les logs Suricata.")
             return False
         
         # Afficher les dernières lignes de eve.json
@@ -413,27 +413,27 @@ class Utils:
             cmd = ['sudo', 'tail', '-n', '10', eve_file]
             result = subprocess.run(cmd, text=True, capture_output=True, check=False)
             if show_lines:
-                logger.print("📄 Dernières entrées eve.json :")
-                logger.print(result.stdout if result.stdout else "(vide)")
+                logger.info("📄 Dernières entrées eve.json :")
+                logger.info(result.stdout if result.stdout else "(vide)")
         except Exception as e:
-            logger.print(f"⚠️ Impossible de lire eve.json : {e}")
+            logger.warning(f"⚠️ Impossible de lire eve.json : {e}")
         
         # Vider les fichiers
         try:
             subprocess.run(['sudo', 'truncate', '-s', '0', eve_file], check=True)
-            logger.print(f"✅ {eve_file} vidé")
+            logger.success(f"✅ {eve_file} vidé")
             if fast_file and os.path.exists(fast_file):
                 subprocess.run(['sudo', 'truncate', '-s', '0', fast_file], check=True)
-                logger.print(f"✅ {fast_file} vidé")
+                logger.success(f"✅ {fast_file} vidé")
             return True
         except Exception as e:
-            logger.print(f"❌ Erreur lors du nettoyage : {e}")
+            logger.error(f"❌ Erreur lors du nettoyage : {e}")
             return False
     
     def setup_capabilities(self):
         """Ajoute les capabilities réseau à Python et à Suricata pour éviter de lancer en root."""
         if self.detect_os() == 'windows':
-            logger.print("Capacités réseau non applicables sur Windows")
+            logger.info("Capacités réseau non applicables sur Windows")
             return
         try:
             python_bin = shutil.which(sys.executable.split("/")[-1]) or sys.executable
@@ -447,11 +447,11 @@ class Utils:
                         ['sudo', "setcap", "cap_net_raw,cap_net_admin=eip", python_bin],
                         check=True
                     )
-                    logger.print(f"✅ Capabilities réseau appliquées à {python_bin}")
+                    logger.success(f"✅ Capabilities réseau appliquées à {python_bin}")
                 except subprocess.CalledProcessError as e:
-                    logger.print(f"⚠️ Échec de setcap sur {python_bin} : {e}")
+                    logger.error(f"⚠️ Échec de setcap sur {python_bin} : {e}")
             else:
-                logger.print(f"✅ Capabilities déjà présentes sur {python_bin}")
+                logger.success(f"✅ Capabilities déjà présentes sur {python_bin}")
 
             suricata_path = shutil.which("suricata")
             if suricata_path and os.path.exists(suricata_path):
@@ -461,15 +461,15 @@ class Utils:
                     try:
                         subprocess.run(['sudo', shutil.which("setcap"), 'cap_net_raw,cap_net_admin=eip', suricata_path],
                                        check=True, capture_output=True)
-                        logger.print(f"✅ Capabilities réseau appliquées à Suricata ({suricata_path})")
+                        logger.success(f"✅ Capabilities réseau appliquées à Suricata ({suricata_path})")
                     except subprocess.CalledProcessError as e:
-                        logger.print(f"⚠️ Échec setcap Suricata : {e}")
+                        logger.error(f"⚠️ Échec setcap Suricata : {e}")
                 else:
-                    logger.print(f"✅ Suricata a déjà les capabilities ({suricata_path})")
+                    logger.success(f"✅ Suricata a déjà les capabilities ({suricata_path})")
             else:
-                logger.print("⚠️ Suricata non trouvé dans le PATH")
+                logger.warning("⚠️ Suricata non trouvé dans le PATH")
         except Exception as e:
-            logger.print(f"❌ Erreur configuration capabilities : {e}")
+            logger.error(f"❌ Erreur configuration capabilities : {e}")
 
     def setup_permissions(self):
         """Configure les permissions des répertoires Suricata pour l'utilisateur courant."""
@@ -479,7 +479,7 @@ class Utils:
         config_path = paths['config']
 
         if not rules_dir or not log_dir or not config_path:
-            logger.print("❌ Chemins Suricata non définis")
+            logger.error("❌ Chemins Suricata non définis")
             return False
 
         try:
@@ -499,14 +499,14 @@ class Utils:
                 subprocess.run(["sudo", "chmod", "-R", "775", log_dir], check=True)
                 subprocess.run(["sudo", "chmod", "-R", "775", config_path], check=True)
                 
-                logger.print(f"✅ Permissions configurées pour {current_user}")
+                logger.success(f"✅ Permissions configurées pour {current_user}")
                 return True
         except subprocess.CalledProcessError as e:
-            logger.print(f"❌ Erreur permissions : {e.cmd}")
-            logger.print(f"   Stderr: {e.stderr}")
+            logger.error(f"❌ Erreur permissions : {e.cmd}")
+            logger.info(f"   Stderr: {e.stderr}")
             return False
         except Exception as e:
-            logger.print(f"❌ Erreur inattendue : {e}")
+            logger.error(f"❌ Erreur inattendue : {e}")
             return False
     
     def is_ipv6(self, ip_str):
@@ -568,7 +568,7 @@ class Utils:
             
             return event
         except Exception as e:
-            logger.print("Erreur dans le parsing d'une ligne eve.json :", str(e))
+            logger.error("Erreur dans le parsing d'une ligne eve.json :", str(e))
             return {}
     
     @staticmethod
@@ -589,7 +589,7 @@ class Utils:
             interfaces: Liste des interfaces à surveiller
             home_net: Plage réseau à protéger (ex: "192.168.1.0/24")
         """
-        logger.print(f"📝 Configuration IDS pour {len(interfaces)} interface(s)...")
+        logger.info(f"📝 Configuration IDS pour {len(interfaces)} interface(s)...")
         
         # Charger la configuration existante ou créer une base
         if os.path.exists(config_path):
@@ -681,9 +681,9 @@ class Utils:
             f.write("%YAML 1.1\n---\n")
             yaml.dump(config, f, default_flow_style=False, sort_keys=False)
         
-        logger.print(f"   ✅ Configuration IDS écrite dans {config_path}")
-        logger.print(f"   🏠 HOME_NET = {home_net}")
-        logger.print(f"   🌐 Interfaces = {', '.join(interfaces)}")
+        logger.success(f"   ✅ Configuration IDS écrite dans {config_path}")
+        logger.info(f"   🏠 HOME_NET = {home_net}")
+        logger.info(f"   🌐 Interfaces = {', '.join(interfaces)}")
     
     def _configure_suricata_ips(self, config_path: str, interfaces: list, home_net: str = None, queue_num: int = 0):
         """
@@ -695,7 +695,7 @@ class Utils:
             home_net: Plage réseau à protéger (ex: "192.168.1.0/24")
             queue_num: Numéro de queue NFQUEUE (défaut: 0)
         """
-        logger.print(f"📝 Configuration IPS pour {len(interfaces)} interface(s)...")
+        logger.info(f"📝 Configuration IPS pour {len(interfaces)} interface(s)...")
         
         # D'abord appliquer la configuration IDS de base
         self._configure_suricata_ids(config_path, interfaces, home_net)
@@ -749,15 +749,15 @@ class Utils:
             f.write("%YAML 1.1\n---\n")
             yaml.dump(config, f, default_flow_style=False, sort_keys=False)
         
-        logger.print(f"   ✅ Configuration IPS écrite dans {config_path}")
-        logger.print(f"   🛡️ NFQUEUE activé sur queue {queue_num}")
-        logger.print("   ⚠️ Les règles avec action 'drop' bloqueront le trafic")
+        logger.success(f"   ✅ Configuration IPS écrite dans {config_path}")
+        logger.info(f"   🛡️ NFQUEUE activé sur queue {queue_num}")
+        logger.warning("   ⚠️ Les règles avec action 'drop' bloqueront le trafic")
     
     def setup_nfqueue_for_ips(self, queue_num: int = 0):
         """
         Configure NFQUEUE avec nftables pour le mode IPS de Suricata.
         """
-        logger.print(f"🛡️ Configuration NFQUEUE (queue {queue_num}) avec nftables...")
+        logger.info(f"🛡️ Configuration NFQUEUE (queue {queue_num}) avec nftables...")
         
         table_name = self.suricata_table
         
@@ -802,17 +802,17 @@ class Utils:
             try:
                 subprocess.run(["sudo"] + rule, check=True, capture_output=True, timeout=5)
                 success += 1
-                logger.print(f"   ✅ {' '.join(rule[:5])}...")
+                logger.success(f"   ✅ {' '.join(rule[:5])}...")
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode().strip() if e.stderr else "N/A"
-                logger.print(f"   ⚠️ Échec: {' '.join(rule[:5])}... ({stderr})")
+                logger.error(f"   ⚠️ Échec: {' '.join(rule[:5])}... ({stderr})")
         
-        logger.print(f"   📊 NFQUEUE configuré ({success}/{len(rules)} règles)")
+        logger.info(f"   📊 NFQUEUE configuré ({success}/{len(rules)} règles)")
         return success == len(rules)
     
     def cleanup_nfqueue(self):
         """Nettoie les règles NFQUEUE."""
-        logger.print("🧹 Nettoyage des règles NFQUEUE...")
+        logger.info("🧹 Nettoyage des règles NFQUEUE...")
         
         # Supprimer la table entière (simple et propre)
         result = subprocess.run(
@@ -821,9 +821,9 @@ class Utils:
         )
         
         if result.returncode == 0:
-            logger.print("   ✅ Table suricata_ips supprimée")
+            logger.success("   ✅ Table suricata_ips supprimée")
         else:
-            logger.print("   ℹ️ Table suricata_ips déjà absente")
+            logger.info("   ℹ️ Table suricata_ips déjà absente")
 
     def _detect_home_net(self) -> str:
         """
@@ -877,7 +877,7 @@ class Utils:
                         pass
             
         except Exception as e:
-            logger.print(f"⚠️ Erreur détection HOME_NET : {e}")
+            logger.error(f"⚠️ Erreur détection HOME_NET : {e}")
         
         # Fallback
         if not networks:
@@ -885,7 +885,7 @@ class Utils:
         
         # Formater pour Suricata
         home_net = f"[{', '.join(sorted(networks))}]"
-        logger.print(f"🏠 HOME_NET détecté : {home_net}")
+        logger.info(f"🏠 HOME_NET détecté : {home_net}")
         return home_net
     
     async def run_suricata(self, mode='ids', interface=None, home_net=None):
@@ -915,13 +915,13 @@ class Utils:
         
         # Vérifier si Suricata est déjà lancé dans un autre mode
         if state.current_suricata_mode and state.current_suricata_mode != mode:
-            logger.print(f"⚠️ Changement de mode ({state.current_suricata_mode} → {mode}), arrêt...")
+            logger.warning(f"⚠️ Changement de mode ({state.current_suricata_mode} → {mode}), arrêt...")
             self.stop_suricata()
             await asyncio.sleep(2)
         
         # Installation si nécessaire
         if not self.is_suricata_installed():
-            logger.print("📦 Installation de Suricata...")
+            logger.info("📦 Installation de Suricata...")
             self.install_suricata()
         
         # Configuration des permissions
@@ -929,7 +929,7 @@ class Utils:
         self.setup_capabilities()
         
         # Mise à jour des règles
-        logger.print("🔄 Mise à jour des règles...")
+        logger.info("🔄 Mise à jour des règles...")
         # self.update_suricata_rules()
         
         # Configuration selon le mode
@@ -954,12 +954,12 @@ class Utils:
                     break
                 decoded = line.decode().strip()
                 if any(kw in decoded.lower() for kw in ['error', 'fatal', 'failed']):
-                    logger.print(f"❌ {prefix}: {decoded}")
+                    logger.error(f"❌ {prefix}: {decoded}")
         
         try:
-            logger.print(f"\n🚀 Lancement de Suricata en mode {mode_desc}")
-            logger.print(f"   🌐 Interfaces: {', '.join(interfaces)}")
-            logger.print(f"   📁 Logs: {log_dir}")
+            logger.info(f"\n🚀 Lancement de Suricata en mode {mode_desc}")
+            logger.info(f"   🌐 Interfaces: {', '.join(interfaces)}")
+            logger.info(f"   📁 Logs: {log_dir}")
             
             if mode.lower() == 'ips':
                 # Mode IPS : une seule instance avec NFQUEUE
@@ -1003,14 +1003,14 @@ class Utils:
                     asyncio.create_task(read_stream(process.stdout, f"Suricata-{iface}"))
                     asyncio.create_task(read_stream(process.stderr, f"Suricata-{iface}"))
             
-            logger.print(f"\n✅ Suricata {mode.upper()} lancé")
-            logger.print("📊 Surveillance en direct :")
-            logger.print(f"   tail -f {log_dir}/eve.json | jq 'select(.event_type==\"alert\")'")
+            logger.success(f"\n✅ Suricata {mode.upper()} lancé")
+            logger.info("📊 Surveillance en direct :")
+            logger.info(f"   tail -f {log_dir}/eve.json | jq 'select(.event_type==\"alert\")'")
             
             await asyncio.gather(*[p.wait() for p in state.suricata_processes])
             
         except asyncio.CancelledError:
-            logger.print("🛑 Arrêt de Suricata...")
+            logger.info("🛑 Arrêt de Suricata...")
             self.stop_suricata()
             raise
         except Exception as e:
@@ -1029,68 +1029,68 @@ class Utils:
         )
         thread.start()
         state.add_threads((thread, f"SURICATA_{mode.upper()}"))
-        logger.print(f"🚀 Suricata {mode.upper()} lancé en arrière-plan")
+        logger.info(f"🚀 Suricata {mode.upper()} lancé en arrière-plan")
         return thread
 
 if __name__ == "__main__":
-    logger.print("=" * 60)
-    logger.print("🧪 TEST DU MODULE SURICATA (IDS/IPS)")
-    logger.print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🧪 TEST DU MODULE SURICATA (IDS/IPS)")
+    logger.info("=" * 60)
     
     utils = Utils()
     
     # 1. Détection OS
-    logger.print("\n🖥️ 1. DÉTECTION OS")
-    logger.print("-" * 40)
+    logger.info("\n🖥️ 1. DÉTECTION OS")
+    logger.info("-" * 40)
     os_detected = utils.detect_os()
-    logger.print(f"   OS détecté : {os_detected}")
+    logger.info(f"   OS détecté : {os_detected}")
     
     # 2. Chemins Suricata
-    logger.print("\n📁 2. CHEMINS SURICATA")
-    logger.print("-" * 40)
+    logger.info("\n📁 2. CHEMINS SURICATA")
+    logger.info("-" * 40)
     paths = utils.get_suricata_paths()
-    logger.print(f"   Config : {paths.get('config')}")
-    logger.print(f"   Rules  : {paths.get('rules')}")
-    logger.print(f"   Logs   : {paths.get('log')}")
+    logger.info(f"   Config : {paths.get('config')}")
+    logger.info(f"   Rules  : {paths.get('rules')}")
+    logger.info(f"   Logs   : {paths.get('log')}")
     
     # 3. Vérification installation
-    logger.print("\n📦 3. INSTALLATION")
-    logger.print("-" * 40)
+    logger.info("\n📦 3. INSTALLATION")
+    logger.info("-" * 40)
     is_installed = utils.is_suricata_installed()
-    logger.print(f"   Suricata installé : {'✅ Oui' if is_installed else '❌ Non'}")
+    logger.error(f"   Suricata installé : {'✅ Oui' if is_installed else '❌ Non'}")
     
     if not is_installed:
-        logger.print("\n   📥 Installation de Suricata...")
+        logger.info("\n   📥 Installation de Suricata...")
         try:
             utils.install_suricata()
         except Exception as e:
-            logger.print(f"   ⚠️ Installation échouée : {e}")
-            logger.print("   ⚠️ Poursuite des tests sans installation...")
+            logger.warning(f"   ⚠️ Installation échouée : {e}")
+            logger.warning("   ⚠️ Poursuite des tests sans installation...")
     
     # 4. Détection HOME_NET
-    logger.print("\n🏠 4. DÉTECTION HOME_NET")
-    logger.print("-" * 40)
+    logger.info("\n🏠 4. DÉTECTION HOME_NET")
+    logger.info("-" * 40)
     home_net = utils._detect_home_net()
-    logger.print(f"   HOME_NET : {home_net}")
+    logger.info(f"   HOME_NET : {home_net}")
     
     # 5. Détection interfaces
-    logger.print("\n🌐 5. INTERFACES RÉSEAU")
-    logger.print("-" * 40)
+    logger.info("\n🌐 5. INTERFACES RÉSEAU")
+    logger.info("-" * 40)
     interfaces = [iface for iface in psutil.net_if_addrs().keys() if iface != 'lo']
-    logger.print(f"   Interfaces disponibles : {interfaces}")
+    logger.info(f"   Interfaces disponibles : {interfaces}")
     
     # 6. Test LocalIPS
-    logger.print("\n📍 6. TEST LocalIPS")
-    logger.print("-" * 40)
+    logger.info("\n📍 6. TEST LocalIPS")
+    logger.info("-" * 40)
     test_ips = ["192.168.1.1", "8.8.8.8", "127.0.0.1", "10.0.0.1"]
     for ip in test_ips:
         is_local = IPS.is_local_ip(ip)
         emoji = "🏠" if is_local else "🌍"
-        logger.print(f"   {emoji} {ip:15} → {'LOCAL' if is_local else 'EXTERNE'}")
+        logger.info(f"   {emoji} {ip:15} → {'LOCAL' if is_local else 'EXTERNE'}")
     
     # 7. Test parsing eve.json (simulé)
-    logger.print("\n📄 7. TEST PARSING EVE.JSON")
-    logger.print("-" * 40)
+    logger.info("\n📄 7. TEST PARSING EVE.JSON")
+    logger.info("-" * 40)
     fake_alert = json.dumps({
         "timestamp": "2026-04-13T10:30:45.123456+0200",
         "event_type": "alert",
@@ -1108,102 +1108,102 @@ if __name__ == "__main__":
         }
     })
     parsed = utils.parse_eve_line(fake_alert)
-    logger.print(f"   Type      : {parsed.get('type')}")
-    logger.print(f"   Src IP    : {parsed.get('src_ip')}")
-    logger.print(f"   Dest IP   : {parsed.get('dest_ip')}")
-    logger.print(f"   Signature : {parsed.get('signature')}")
-    logger.print(f"   Direction : {parsed.get('direction')}")
+    logger.info(f"   Type      : {parsed.get('type')}")
+    logger.info(f"   Src IP    : {parsed.get('src_ip')}")
+    logger.info(f"   Dest IP   : {parsed.get('dest_ip')}")
+    logger.info(f"   Signature : {parsed.get('signature')}")
+    logger.info(f"   Direction : {parsed.get('direction')}")
     
     # 8. Test configuration IDS (sans lancer)
-    logger.print("\n⚙️ 8. TEST CONFIGURATION IDS")
-    logger.print("-" * 40)
+    logger.info("\n⚙️ 8. TEST CONFIGURATION IDS")
+    logger.info("-" * 40)
     if interfaces:
         test_iface = interfaces[:1]  # Première interface
-        logger.print(f"   Test avec interface : {test_iface[0]}")
+        logger.info(f"   Test avec interface : {test_iface[0]}")
         try:
             config_path = paths.get('config')
             if config_path:
                 utils._configure_suricata_ids(config_path, test_iface, home_net)
-                logger.print("   ✅ Configuration IDS générée")
+                logger.success("   ✅ Configuration IDS générée")
         except Exception as e:
-            logger.print(f"   ⚠️ Erreur configuration : {e}")
+            logger.error(f"   ⚠️ Erreur configuration : {e}")
     
     # 9. Test configuration IPS
-    logger.print("\n🛡️ 9. TEST CONFIGURATION IPS")
-    logger.print("-" * 40)
+    logger.info("\n🛡️ 9. TEST CONFIGURATION IPS")
+    logger.info("-" * 40)
     if interfaces:
         test_iface = interfaces[:1]
         try:
             config_path = paths.get('config')
             if config_path:
                 utils._configure_suricata_ips(config_path, test_iface, home_net)
-                logger.print("   ✅ Configuration IPS générée")
+                logger.success("   ✅ Configuration IPS générée")
         except Exception as e:
-            logger.print(f"   ⚠️ Erreur configuration : {e}")
+            logger.error(f"   ⚠️ Erreur configuration : {e}")
     
     # 10. Test update rules
-    logger.print("\n🔄 10. TEST MISE À JOUR RÈGLES")
-    logger.print("-" * 40)
-    logger.print("   (cette opération peut prendre du temps...)")
+    logger.info("\n🔄 10. TEST MISE À JOUR RÈGLES")
+    logger.info("-" * 40)
+    logger.info("   (cette opération peut prendre du temps...)")
     try:
         success = utils.update_suricata_rules()
-        logger.print(f"   → {'✅ Succès' if success else '❌ Échec'}")
+        logger.success(f"   → {'✅ Succès' if success else '❌ Échec'}")
     except Exception as e:
-        logger.print(f"   ⚠️ Erreur : {e}")
+        logger.error(f"   ⚠️ Erreur : {e}")
     
     # 11. Test permissions
-    logger.print("\n🔐 11. TEST PERMISSIONS")
-    logger.print("-" * 40)
+    logger.info("\n🔐 11. TEST PERMISSIONS")
+    logger.info("-" * 40)
     try:
         success = utils.setup_permissions()
-        logger.print(f"   → {'✅ Succès' if success else '❌ Échec'}")
+        logger.success(f"   → {'✅ Succès' if success else '❌ Échec'}")
     except Exception as e:
-        logger.print(f"   ⚠️ Erreur : {e}")
+        logger.error(f"   ⚠️ Erreur : {e}")
     
     # 12. Test capabilities
-    logger.print("\n⚡ 12. TEST CAPABILITIES")
-    logger.print("-" * 40)
+    logger.info("\n⚡ 12. TEST CAPABILITIES")
+    logger.info("-" * 40)
     try:
         utils.setup_capabilities()
-        logger.print("   → ✅ Test terminé")
+        logger.success("   → ✅ Test terminé")
     except Exception as e:
-        logger.print(f"   ⚠️ Erreur : {e}")
+        logger.error(f"   ⚠️ Erreur : {e}")
     
     # 13. Test lancement background (5 secondes)
-    logger.print("\n🚀 13. TEST LANCEMENT BACKGROUND (5 secondes)")
-    logger.print("-" * 40)
+    logger.info("\n🚀 13. TEST LANCEMENT BACKGROUND (5 secondes)")
+    logger.info("-" * 40)
     if is_installed and interfaces:
-        logger.print(f"   Lancement Suricata IDS sur {interfaces[0]}...")
+        logger.info(f"   Lancement Suricata IDS sur {interfaces[0]}...")
         thread = utils.run_suricata_background(mode='ids', interface=interfaces[0])
-        logger.print("   ⏳ Attente 10 secondes...")
+        logger.info("   ⏳ Attente 10 secondes...")
         time.sleep(10)
-        logger.print("   🛑 Arrêt de Suricata...")
+        logger.info("   🛑 Arrêt de Suricata...")
         state.stop()
         
-        logger.print(f"   Lancement Suricata IPS sur {interfaces[0]}...")
+        logger.info(f"   Lancement Suricata IPS sur {interfaces[0]}...")
         thread = utils.run_suricata_background(mode='ips', interface=interfaces[0])
-        logger.print("   ⏳ Attente 10 secondes...")
+        logger.info("   ⏳ Attente 10 secondes...")
         time.sleep(10)
-        logger.print("   🛑 Arrêt de Suricata...")
+        logger.info("   🛑 Arrêt de Suricata...")
         state.stop()
-        logger.print("   ✅ Test terminé")
+        logger.success("   ✅ Test terminé")
     else:
-        logger.print("   ⚠️ Test ignoré (Suricata non installé ou pas d'interface)")
+        logger.warning("   ⚠️ Test ignoré (Suricata non installé ou pas d'interface)")
     
     # 14. Test stop_suricata
-    logger.print("\n🛑 14. TEST STOP SURICATA")
-    logger.print("-" * 40)
+    logger.info("\n🛑 14. TEST STOP SURICATA")
+    logger.info("-" * 40)
     try:
         utils.stop_suricata()
-        logger.print("   ✅ Commande stop exécutée")
+        logger.success("   ✅ Commande stop exécutée")
     except Exception as e:
-        logger.print(f"   ⚠️ Erreur : {e}")
+        logger.error(f"   ⚠️ Erreur : {e}")
     
     # 15. Résumé
-    logger.print("\n" + "=" * 60)
-    logger.print("📊 RÉSUMÉ DES TESTS")
-    logger.print("=" * 60)
-    logger.print(f"""
+    logger.info("\n" + "=" * 60)
+    logger.info("📊 RÉSUMÉ DES TESTS")
+    logger.info("=" * 60)
+    logger.success(f"""
     ✅ OS détecté          : {os_detected}
     ✅ HOME_NET            : {home_net}
     ✅ Interfaces          : {len(interfaces)} trouvée(s)
@@ -1213,14 +1213,14 @@ if __name__ == "__main__":
     ✅ EVE.json            : {paths.get('eve_file')}
     """)
     
-    logger.print("\n💡 Commandes utiles pour tester manuellement :")
-    logger.print("   # Vérifier la configuration")
-    logger.print(f"   suricata -T -c {paths.get('config')}")
-    logger.print("   # Lancer Suricata en IDS")
-    logger.print(f"   sudo suricata -c {paths.get('config')} -i {interfaces[0] if interfaces else 'eth0'} -l {paths.get('log')}")
-    logger.print("   # Surveiller les alertes")
-    logger.print(f"   tail -f {paths.get('eve_file')} | jq 'select(.event_type==\"alert\")'")
+    logger.info("\n💡 Commandes utiles pour tester manuellement :")
+    logger.info("   # Vérifier la configuration")
+    logger.info(f"   suricata -T -c {paths.get('config')}")
+    logger.info("   # Lancer Suricata en IDS")
+    logger.info(f"   sudo suricata -c {paths.get('config')} -i {interfaces[0] if interfaces else 'eth0'} -l {paths.get('log')}")
+    logger.info("   # Surveiller les alertes")
+    logger.info(f"   tail -f {paths.get('eve_file')} | jq 'select(.event_type==\"alert\")'")
     
-    logger.print("\n" + "=" * 60)
-    logger.print("✅ TESTS TERMINÉS")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.success("✅ TESTS TERMINÉS")
+    logger.info("=" * 60)

@@ -83,6 +83,8 @@ class AnomalyDetector:
     # Profondeur du pipeline = nb de lots que le producteur peut avoir "d'avance" sur le consommateur.
     # 1 = recouvrement complet (1 lot en inférence + 1 lot déjà prêt). Plus grand = plus de latence, pas plus de vitesse.
     PIPELINE_DEPTH = 1
+    IDLE_SLEEP_MIN = 0.001      # attente minimale du producteur quand la file amont est vide (s)
+    IDLE_SLEEP_MAX = 0.010      # plafond du backoff : latence max ajoutée au 1er paquet après un silence (10 ms)
     
     def __init__(
         self, 
@@ -121,7 +123,7 @@ class AnomalyDetector:
             directory=ANOM_DIR, 
             prefix=ANOMALY_FILE_PREFIX, 
             max_per_file=int(MAX_ANOMALIES),
-            on_warning=logger.print,
+            on_warning=logger.warning,
             batch_size=ANOMALY_BATCH_SIZE,
             flush_interval=10.0,
             on_write=None,
@@ -158,16 +160,16 @@ class AnomalyDetector:
         self._pipe_queue = None      # file des lots prêts (créée par detect()), lue par stats()
         
         if enable_graph:
-            logger.print('Graphes activées, bonne visualisation !')
+            logger.info('Graphes activées, bonne visualisation !')
             if graph:
                 self.graph = graph
-                logger.print('graph bien reçue !')
+                logger.info('graph bien reçue !')
             else:
                 self.graph = RealTimePLot()
                 self.graph.control()
-                logger.print('Graphe bien crée !')
+                logger.info('Graphe bien crée !')
         else:
-            logger.print('[ANOMALY_DETECTOR] Graphes descativées !')
+            logger.info('[ANOMALY_DETECTOR] Graphes descativées !')
 
         self.monotor_event = asyncio.Event()
         self.save_atexit()
@@ -182,18 +184,18 @@ class AnomalyDetector:
         self.stat_scored = 0         # nb de paquets scorés (somme des tailles de lots)
         self.stat_last_batch = 0     # taille du dernier lot
         self.stat_sequences = 0      # nb de séquences évaluées
-        logger.print()
-        logger.print("=" * 60)
-        logger.print("🛡️  ANOMALY DETECTOR INITIALISÉ")
-        logger.print("=" * 60)
-        logger.print(f"   PID              : {os.getpid()}")
-        logger.print(f"   Mode             : {self.mode.upper()}")
-        logger.print(f"   Interfaces       : {self.interfaces}")
-        logger.print(f"   Graphiques       : {'✅ Activés' if enable_graph else '❌ Désactivés'}")
-        logger.print(f"   Queue            : {'MemoryManager' if hasattr(self.q, 'name') else 'Queue'}")
-        logger.print(f"   Whitelist        : {len(self.whitelist)} IPs")
-        logger.print("=" * 60)
-        logger.print()
+        logger.info()
+        logger.info("=" * 60)
+        logger.info("🛡️  ANOMALY DETECTOR INITIALISÉ")
+        logger.info("=" * 60)
+        logger.info(f"   PID              : {os.getpid()}")
+        logger.info(f"   Mode             : {self.mode.upper()}")
+        logger.info(f"   Interfaces       : {self.interfaces}")
+        logger.info(f"   Graphiques       : {'✅ Activés' if enable_graph else '❌ Désactivés'}")
+        logger.info(f"   Queue            : {'MemoryManager' if hasattr(self.q, 'name') else 'Queue'}")
+        logger.info(f"   Whitelist        : {len(self.whitelist)} IPs")
+        logger.info("=" * 60)
+        logger.info()
 
     def _get_last_alerts(self, n: int = 5):
         if isinstance(n, int):
@@ -269,7 +271,7 @@ class AnomalyDetector:
             st["alert_id"] = alert_id
             while len(self.system_alerts) > self.MAX_SYSTEM_ALERTS:            # borne mémoire : on purge les plus anciennes
                 self.system_alerts.pop(next(iter(self.system_alerts)))
-        logger.print(f"🚨 ALERTE SYSTEME {alert_id} : inférence '{stage}' en panne ({st['consecutive']} échecs) - {err}")
+        logger.info(f"🚨 ALERTE SYSTEME {alert_id} : inférence '{stage}' en panne ({st['consecutive']} échecs) - {err}")
 
     def _change_mode(self, mode):
         mode = str(mode).lower().strip()
@@ -299,7 +301,7 @@ class AnomalyDetector:
         else:
             self._model_refs = new_refs
 
-        logger.print("✅ Références modèles mises à jour")
+        logger.info("✅ Références modèles mises à jour")
 
     def _stop(self):
         self.stop_event.set()
@@ -344,12 +346,12 @@ class AnomalyDetector:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
-            logger.print('Fichier sauvegarder dans : ', filename)
+            logger.info('Fichier sauvegarder dans : ', filename)
             os.chmod(filename, 0o644)
             return True
 
         except Exception as e:
-            logger.print("Erreur lord de la sauvegarde du fichier historique : ", e)
+            logger.error("Erreur lord de la sauvegarde du fichier historique : ", e)
             return False
 
     def load_whitelist(self, filename):
@@ -357,18 +359,18 @@ class AnomalyDetector:
             data = []
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            logger.print('Fichier chargé depuis : ', filename)
+            logger.info('Fichier chargé depuis : ', filename)
             os.chmod(filename, 0o644)
 
         except Exception as e:
-            logger.print("Erreur lord du chargement du fichier de whitelist : ", e)
+            logger.error("Erreur lord du chargement du fichier de whitelist : ", e)
 
         self.whitelist = data
 
     def save_atexit(self):
         def _save():
             self.save(self.white_file, self.whitelist)
-            logger.print('Fin sauvegarde !')
+            logger.info('Fin sauvegarde !')
         atexit.register(_save)
 
     def load_anomalies(self):
@@ -390,7 +392,7 @@ class AnomalyDetector:
             return [], first_file
 
         except Exception as e:
-            logger.print(f"Erreur load_anomalies : {e}")
+            logger.error(f"Erreur load_anomalies : {e}")
             first_file = os.path.join(ANOM_DIR, f"{ANOMALY_FILE_PREFIX}_0.pkl")
 
             os.makedirs(os.path.dirname(first_file), exist_ok=True)
@@ -426,7 +428,7 @@ class AnomalyDetector:
     #             joblib.dump(self.anomalies, self.current_file)
 
     #     except Exception as e:
-    #         logger.print(f"Erreur log_anomaly : {e}")
+    #         logger.error(f"Erreur log_anomaly : {e}")
 
     def _is_ipv6(self, ip_str):
         """Détecte si une string est une IPv6 valide"""
@@ -448,14 +450,14 @@ class AnomalyDetector:
             eve_file = suricata_paths['eve_file']
 
         if not os.path.exists(eve_file):
-            logger.print(f"⚠️ Fichier alert introuvable: {eve_file}")
-            logger.print("Création du fichier...")
+            logger.info(f"⚠️ Fichier alert introuvable: {eve_file}")
+            logger.info("Création du fichier...")
             os.makedirs(os.path.dirname(eve_file), exist_ok=True)
             open(eve_file, 'a').close()
 
         # Prendre la taille en octet (offset pour tail)
         start_offset = os.path.getsize(eve_file)
-        logger.print(f"📡 Monitoring Suricata alerts: {eve_file} (offset {start_offset})")
+        logger.info(f"📡 Monitoring Suricata alerts: {eve_file} (offset {start_offset})")
 
         tail = await asyncio.create_subprocess_exec(
             "sudo", "tail", "-c", f"+{start_offset + 1}", "-F", eve_file,
@@ -466,7 +468,7 @@ class AnomalyDetector:
 
         if ready_event is not None:
             ready_event.set()
-            logger.print("✅ Monitoring attaché, prêt à capter les alertes")
+            logger.info("✅ Monitoring attaché, prêt à capter les alertes")
 
         error_count = 0
         try:
@@ -489,12 +491,12 @@ class AnomalyDetector:
 
                     if not self._validate_fake_packet(eth):
                         if verbose:
-                            logger.print(f"⚠️ Paquet invalide ignoré : {alert['src_ip']} → {alert['dst_ip']}")
+                            logger.info(f"⚠️ Paquet invalide ignoré : {alert['src_ip']} → {alert['dst_ip']}")
                         continue
 
                     if verbose:
                         proto = "IPv4" if eth.type == dpkt.ethernet.ETH_TYPE_IP else "IPv6"
-                        logger.print(f"[SURICATA] {alert['message']} | "
+                        logger.info(f"[SURICATA] {alert['message']} | "
                                       f"{alert['src_ip']}:{alert['src_port']} → "
                                       f"{alert['dst_ip']}:{alert['dst_port']} ({proto})")
 
@@ -503,9 +505,9 @@ class AnomalyDetector:
                 except Exception as e:
                     error_count += 1
                     if error_count <= 5 or verbose:
-                        logger.print(f"⚠️ Erreur création paquet : {e}")
+                        logger.info(f"⚠️ Erreur création paquet : {e}")
                         if verbose:
-                            traceback.print_exc()
+                            logger.error(traceback.format_exc())
 
         except asyncio.CancelledError:
             raise
@@ -568,7 +570,7 @@ class AnomalyDetector:
                 ip_pkt.src = socket.inet_aton(src_ip_str)
                 ip_pkt.dst = socket.inet_aton(dst_ip_str)
             except OSError as e:
-                logger.print(f"⚠️ IP invalide: {src_ip_str} / {dst_ip_str} : {e}")
+                logger.error(f"⚠️ IP invalide: {src_ip_str} / {dst_ip_str} : {e}")
                 ip_pkt.src = socket.inet_aton("0.0.0.0")
                 ip_pkt.dst = socket.inet_aton("0.0.0.0")
 
@@ -626,7 +628,7 @@ class AnomalyDetector:
                 ip6_pkt.src = socket.inet_pton(socket.AF_INET6, src_ip_str)
                 ip6_pkt.dst = socket.inet_pton(socket.AF_INET6, dst_ip_str)
             except OSError as e:
-                logger.print(f"⚠️ IPv6 invalide: {src_ip_str} / {dst_ip_str} : {e}")
+                logger.error(f"⚠️ IPv6 invalide: {src_ip_str} / {dst_ip_str} : {e}")
                 ip6_pkt.src = socket.inet_pton(socket.AF_INET6, "::")
                 ip6_pkt.dst = socket.inet_pton(socket.AF_INET6, "::")
 
@@ -689,12 +691,12 @@ class AnomalyDetector:
                 new_mod, max_pkt_batch=DETECT_BATCH_SIZE,
                 max_seq_batch=DETECT_BATCH_SIZE // SEQ_STRIDE + 1, stop_event=self.stop_event,
             )
-            logger.print(
+            logger.info(
                 f"🔥 Préchauffage terminé en {info['seconds']} s "
                 f"({info['pkt_buckets']} tailles paquet, {info['seq_buckets']} tailles séquence)"
              )
         except Exception as e:
-            logger.print(f"⚠️ Préchauffage échoué ({type(e).__name__}: {e}) : rechargement quand même")
+            logger.error(f"⚠️ Préchauffage échoué ({type(e).__name__}: {e}) : rechargement quand même")
         return new_mod
 
     async def reload_model_if_needed(self, new_model_available: mp.Event(), refit_delay: int, model_path: str) -> bool:
@@ -707,7 +709,7 @@ class AnomalyDetector:
             if not new_model_available.is_set():
                 continue
             try:
-                logger.print("🔄 Rechargement du nouveau modèle...")
+                logger.info("🔄 Rechargement du nouveau modèle...")
 
                 new_mod = await asyncio.to_thread(self._load_new_model, model_path)
                 if new_mod is None:
@@ -719,10 +721,10 @@ class AnomalyDetector:
 
                 new_model_available.clear()
 
-                logger.print("✅ Modèle rechargé avec succès !")
+                logger.info("✅ Modèle rechargé avec succès !")
 
             except Exception as e:
-                logger.print(f"❌ Erreur rechargement modèle : {e}")
+                logger.error(f"❌ Erreur rechargement modèle : {e}")
                 
 
     async def stop_refit_task(self):
@@ -779,7 +781,7 @@ class AnomalyDetector:
                 else:
                     entries.append((item, None, False))
             except Exception as e:
-                logger.print(f"Erreur lecture paquet : {e}")
+                logger.error(f"Erreur lecture paquet : {e}")
         return entries
 
     async def detect(
@@ -797,7 +799,7 @@ class AnomalyDetector:
                 mod, max_pkt_batch=DETECT_BATCH_SIZE,
                 max_seq_batch=(DETECT_BATCH_SIZE // SEQ_STRIDE) + 1, stop_event=self.stop_event,
             )
-            logger.print(
+            logger.info(
                 f"🔥 Préchauffage terminé en {info['seconds']} s "
                 f"({info['pkt_buckets']} tailles paquet, {info['seq_buckets']} tailles séquence)"
              )
@@ -807,22 +809,22 @@ class AnomalyDetector:
 
             self._update_model_refs(with_lock=True)
         except Exception as e:
-            logger.print(f"Erreur chargement modèle : {e}")
+            logger.error(f"Erreur chargement modèle : {e}")
             return
 
-        logger.print()
-        logger.print("=" * 60)
-        logger.print("🚀 DÉMARRAGE DE LA DÉTECTION TEMPS RÉEL")
-        logger.print("=" * 60)
-        logger.print(f"   PID              : {os.getpid()}")
-        logger.print(f"   Modèle           : {os.path.basename(path)}")
-        logger.print(f"   Mode combinaison : {combination_mode}")
-        logger.print(f"   Seuil anomalie   : {packet_anomaly}")
-        logger.print(f"   Verbose          : {verbose}")
-        logger.print(f"   Batch max        : {DETECT_BATCH_SIZE} paquets")
-        logger.print(f"   Stride séquence  : {SEQ_STRIDE} paquets (fenêtre = {SEQ_LENGTH})")
-        logger.print("=" * 60)
-        logger.print()
+        logger.info()
+        logger.info("=" * 60)
+        logger.info("🚀 DÉMARRAGE DE LA DÉTECTION TEMPS RÉEL")
+        logger.info("=" * 60)
+        logger.info(f"   PID              : {os.getpid()}")
+        logger.info(f"   Modèle           : {os.path.basename(path)}")
+        logger.info(f"   Mode combinaison : {combination_mode}")
+        logger.info(f"   Seuil anomalie   : {packet_anomaly}")
+        logger.info(f"   Verbose          : {verbose}")
+        logger.info(f"   Batch max        : {DETECT_BATCH_SIZE} paquets")
+        logger.info(f"   Stride séquence  : {SEQ_STRIDE} paquets (fenêtre = {SEQ_LENGTH})")
+        logger.info("=" * 60)
+        logger.info()
         self.detect_start_time = time.time()
 
         if any(p is None for p in (new_model_available, refit_delay, model_path)):
@@ -841,6 +843,7 @@ class AnomalyDetector:
         # le lot suivant. `slots` compte les places libres dans `ready` : le producteur en RÉSERVE une
         # AVANT de drainer. File pleine => il n'a encore rien vidé, les paquets restent dans la file
         # amont (c'est elle qui encaisse la pression) et le prochain lot sera aussi gros que possible.
+        self._bg_tasks = set()            # références fortes des tâches de fond (voir _spawn_bg)
         ready: asyncio.Queue = asyncio.Queue(maxsize=self.PIPELINE_DEPTH)
         slots = asyncio.Semaphore(self.PIPELINE_DEPTH)
         self._pipe_queue = ready          # exposé dans stats() pour voir où est le goulot
@@ -858,17 +861,21 @@ class AnomalyDetector:
 
         except KeyboardInterrupt:
             if verbose:
-                logger.print("\n[INFO] Détection interrompue")
+                logger.info("\n[INFO] Détection interrompue")
 
         except Exception as e:
-            logger.print(f"Erreur pipeline détection : {e}")
-            logger.print(traceback.format_exc())
+            logger.error(f"Erreur pipeline détection : {e}")
+            logger.error(traceback.format_exc())
 
         finally:
             for t in (producer, consumer):
                 t.cancel()                # sans effet si la tâche est déjà terminée
             await asyncio.gather(producer, consumer, return_exceptions=True)
             self._pipe_queue = None
+            if self._bg_tasks:                                  # tâches de fond encore en vol : on les annule proprement
+                for t in list(self._bg_tasks):
+                    t.cancel()
+                await asyncio.gather(*list(self._bg_tasks), return_exceptions=True)
 
             self.detect_end_time = time.time()
 
@@ -880,12 +887,24 @@ class AnomalyDetector:
             self.anomaly_logger.close()
             self.stop()
 
+    def _spawn_bg(self, coro):
+        """
+        Lance une tâche « tir et oubli » EN GARDANT UNE RÉFÉRENCE FORTE.
+        La boucle asyncio ne garde que des références faibles aux tâches : sans cet ensemble, une tâche non attendue
+        peut être ramassée par le garbage collector avant d'avoir fini (documenté dans la doc de create_task).
+        """
+        t = asyncio.create_task(coro)
+        self._bg_tasks.add(t)
+        t.add_done_callback(self._bg_tasks.discard)
+        return t
+
     async def _detect_producer(self, ready: asyncio.Queue, slots: asyncio.Semaphore):
         """
         ÉTAPE 1 du pipeline : file amont -> drain -> skipper -> features, puis dépose le lot dans `ready`.
 
         N'utilise AUCUNE prédiction : c'est ce qui lui permet de travailler "en avance" sur le consommateur.
         """
+        idle = self.IDLE_SLEEP_MIN                      # attente au repos : double à chaque tour vide (1 -> 10 ms)
         while not self.stop_event.is_set():
             await slots.acquire()                       # 1) réserver une place AVANT de drainer (attend si pleine)
             sent = False
@@ -898,18 +917,21 @@ class AnomalyDetector:
                         feats.append(self.FeatureExtractor.extract_pack_features(entry[0]))
                         batch.append(entry)
                     except Exception as e:
-                        logger.print(f"Erreur extraction features : {e}")
+                        logger.error(f"Erreur extraction features : {e}")
 
                 if batch:
                     ready.put_nowait((batch, feats))                    # 4) ne bloque jamais : la place est réservée
                     sent = True
             except Exception as e:
-                logger.print(f"Erreur producteur détection : {e}")
-                logger.print(traceback.format_exc())
+                logger.error(f"Erreur producteur détection : {e}")
+                logger.error(traceback.format_exc())
 
-            if not sent:                 # repos (file amont vide) ou lot entièrement en erreur : on rend la place
+            if sent:
+                idle = self.IDLE_SLEEP_MIN              # du trafic : on repart à la réactivité maximale
+            else:                        # repos (file amont vide) ou lot entièrement en erreur : on rend la place
                 slots.release()
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(idle)
+                idle = min(idle * 2, self.IDLE_SLEEP_MAX)   # backoff : moins de réveils (et de GIL) quand rien n'arrive
 
         await ready.put(None)            # fin normale : signale au consommateur qu'il n'y aura plus de lots
 
@@ -935,9 +957,6 @@ class AnomalyDetector:
 
         how = 'all' if combination_mode == "and" else "any"
         since_seq = 0   # paquets reçus depuis la dernière séquence évaluée (stride)
-        
-        async def _stop():
-            self.stop_event.wait()
         
         while True:
             
@@ -965,7 +984,7 @@ class AnomalyDetector:
                     how=how, method="decision_function", return_pred=True
                 )
                 thr = CONFIG.CONFIG.get(SEUIL_KEY, {}).get('decision', -0.6)
-                asyncio.create_task(
+                self._spawn_bg(
                     asyncio.to_thread(
                         self._track_inference,
                         stage="packet", scores=pkt_scores, n_items=len(batch)
@@ -1011,7 +1030,7 @@ class AnomalyDetector:
                             source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
                             if verbose:
                                 scr_ip_resolution = await resolve_hostname(alert['src_ip'])
-                                logger.print(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
+                                logger.info(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
 
                             self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
                             self._add_alert(
@@ -1032,7 +1051,7 @@ class AnomalyDetector:
                             self.graph.add_data3(scores)
 
                         if verbose:
-                            logger.print(f"[PAQUET] Anomalie détectée sur un paquet à {datetime.now().strftime('%H:%M:%S')}")
+                            logger.info(f"[PAQUET] Anomalie détectée sur un paquet à {datetime.now().strftime('%H:%M:%S')}")
 
                         self.log_anomaly(pkt_fea, pkt_pred, source="IA")
                         self._add_alert(
@@ -1072,7 +1091,7 @@ class AnomalyDetector:
                         np.stack([job[0] for job in seq_jobs]),
                         how=how, method="decision_function", return_pred=True
                     )
-                    asyncio.create_task(
+                    self._spawn_bg(
                         asyncio.to_thread(
                             self._track_inference,
                             stage="sequence", scores=seq_scores, n_items=len(seq_jobs)
@@ -1100,7 +1119,7 @@ class AnomalyDetector:
                                 ia_preds=None if seq_unknown else {"decision_function": float(score_pred), "predict": int(ia_pred_seq)}
                             )
                             if verbose:
-                                logger.print(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
+                                logger.info(f"[ALERTE] Anomalie détectée sur la séquence à {datetime.now().strftime('%H:%M:%S')}")
                             self.log_anomaly(seq_fea, combined_pred, source="IA")
                             self._add_alert(
                                 {
@@ -1111,9 +1130,9 @@ class AnomalyDetector:
 
                         if verbose:
                             n_anom = round(prop_anom * SEQ_LENGTH)
-                            logger.print(f"[SÉQUENCE] {prop_anom} ({n_anom} / {SEQ_LENGTH}) paquets anormaux")
+                            logger.info(f"[SÉQUENCE] {prop_anom} ({n_anom} / {SEQ_LENGTH}) paquets anormaux")
                             if combined_pred != -1:
-                                logger.print(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
+                                logger.info(f"[OK] Séquence normale à {datetime.now().strftime('%H:%M:%S')}")
 
                 if self.enable_graphe:
                     num = sum(seq_rate)
@@ -1130,27 +1149,27 @@ class AnomalyDetector:
                     self.graph.add_data3(sum(scores_deque) / (len(scores_deque) or 1))
 
             except Exception as e:
-                logger.print(f"Erreur détection : {e}")
-                logger.print(traceback.format_exc())
+                logger.error(f"Erreur détection : {e}")
+                logger.error(traceback.format_exc())
                 continue
 
 if __name__ == "__main__":
-    logger.print("🔍 Vérification de l'intégration de Config...")
+    logger.info("🔍 Vérification de l'intégration de Config...")
     
     # Test 1: La config est-elle chargée ?
-    logger.print(f"1. Config chargée : {len(CONFIG.CONFIG)} catégories")
+    logger.info(f"1. Config chargée : {len(CONFIG.CONFIG)} catégories")
     
     # Test 2: Les modifications sont-elles dynamiques ?
     original_seuil = CONFIG.CONFIG["SEUIL"]["decision"]
-    logger.print(f"2. Seuil initial : {original_seuil}")
+    logger.info(f"2. Seuil initial : {original_seuil}")
     
     # Simuler une modification
     result = CONFIG.update("SEUIL", {"decision": -0.5})
-    logger.print(f"3. Modification : {result['success']}")
-    logger.print(f"4. Nouveau seuil : {CONFIG.CONFIG['SEUIL']['decision']}")
+    logger.info(f"3. Modification : {result['success']}")
+    logger.info(f"4. Nouveau seuil : {CONFIG.CONFIG['SEUIL']['decision']}")
     
     # Test 3: Vérifier l'accès depuis AnomalyScorer
     test_scorer = AnomalyScorer(React=None, Text=None)
-    logger.print(f"5. Ports critiques chargés : {len(test_scorer.critical_port)}")
+    logger.info(f"5. Ports critiques chargés : {len(test_scorer.critical_port)}")
     
-    logger.print("\n✅ Intégration Config : OK !")
+    logger.info("\n✅ Intégration Config : OK !")

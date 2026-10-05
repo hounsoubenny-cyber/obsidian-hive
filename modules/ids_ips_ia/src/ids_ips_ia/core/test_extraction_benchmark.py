@@ -33,7 +33,7 @@ try:
     )
     CYTHON_AVAILABLE = True
 except ImportError:
-    logger.print("⚠️ Version Cython non trouvée. Compilez d'abord : python setup.py build_ext --inplace")
+    logger.warning("⚠️ Version Cython non trouvée. Compilez d'abord : python setup.py build_ext --inplace")
     CYTHON_AVAILABLE = False
 
 
@@ -99,9 +99,9 @@ def create_fake_ipv6_packet():
 
 def test_extract_pack_features(n_iterations=1000000):
     """Test de performance pour extract_pack_features."""
-    logger.print("\n" + "=" * 60)
-    logger.print("🧪 TEST : extract_pack_features")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🧪 TEST : extract_pack_features")
+    logger.info("=" * 60)
     
     # Créer les paquets de test
     packet_ipv4 = create_fake_packet()
@@ -110,12 +110,12 @@ def test_extract_pack_features(n_iterations=1000000):
     extractor_python = FeatureExtractorPython()
     
     # Test IPv4 - Python
-    logger.print("\n📊 IPv4 :")
+    logger.info("\n📊 IPv4 :")
     start = time.perf_counter()
     for _ in range(n_iterations):
         _ = extractor_python.extract_pack_features(packet_ipv4)
     time_python_ipv4 = time.perf_counter() - start
-    logger.print(f"   Python : {time_python_ipv4:.4f}s ({time_python_ipv4/n_iterations*1e6:.2f} µs/paquet)")
+    logger.info(f"   Python : {time_python_ipv4:.4f}s ({time_python_ipv4/n_iterations*1e6:.2f} µs/paquet)")
     
     # Test IPv4 - Cython
     if CYTHON_AVAILABLE:
@@ -124,16 +124,16 @@ def test_extract_pack_features(n_iterations=1000000):
             _ = extract_pack_features_cython(packet_ipv4)
         time_cython_ipv4 = time.perf_counter() - start
         speedup = time_python_ipv4 / time_cython_ipv4
-        logger.print(f"   Cython : {time_cython_ipv4:.4f}s ({time_cython_ipv4/n_iterations*1e6:.2f} µs/paquet)")
-        logger.print(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
+        logger.info(f"   Cython : {time_cython_ipv4:.4f}s ({time_cython_ipv4/n_iterations*1e6:.2f} µs/paquet)")
+        logger.info(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
     
     # Test IPv6 - Python
-    logger.print("\n📊 IPv6 :")
+    logger.info("\n📊 IPv6 :")
     start = time.perf_counter()
     for _ in range(n_iterations):
         _ = extractor_python.extract_pack_features(packet_ipv6)
     time_python_ipv6 = time.perf_counter() - start
-    logger.print(f"   Python : {time_python_ipv6:.4f}s ({time_python_ipv6/n_iterations*1e6:.2f} µs/paquet)")
+    logger.info(f"   Python : {time_python_ipv6:.4f}s ({time_python_ipv6/n_iterations*1e6:.2f} µs/paquet)")
     
     # Test IPv6 - Cython
     if CYTHON_AVAILABLE:
@@ -142,17 +142,17 @@ def test_extract_pack_features(n_iterations=1000000):
             _ = extract_pack_features_cython(packet_ipv6)
         time_cython_ipv6 = time.perf_counter() - start
         speedup = time_python_ipv6 / time_cython_ipv6
-        logger.print(f"   Cython : {time_cython_ipv6:.4f}s ({time_cython_ipv6/n_iterations*1e6:.2f} µs/paquet)")
-        logger.print(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
+        logger.info(f"   Cython : {time_cython_ipv6:.4f}s ({time_cython_ipv6/n_iterations*1e6:.2f} µs/paquet)")
+        logger.info(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
     
     return time_python_ipv4
 
 
 def test_extract_seq_features(n_iterations=100000, seq_length=60):
     """Test de performance pour extract_seq_features."""
-    logger.print("\n" + "=" * 60)
-    logger.print("🧪 TEST : extract_seq_features")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🧪 TEST : extract_seq_features")
+    logger.info("=" * 60)
     
     # Créer une séquence de paquets
     extractor_python = FeatureExtractorPython()
@@ -163,12 +163,12 @@ def test_extract_seq_features(n_iterations=100000, seq_length=60):
         packets.append(dict(zip(extractor_python.get_feature_name(), features)))
     
     # Test Python
-    logger.print(f"\n📊 Séquence de {seq_length} paquets :")
+    logger.info(f"\n📊 Séquence de {seq_length} paquets :")
     start = time.perf_counter()
     for _ in range(n_iterations):
         _ = extractor_python.extract_seq_features(packets)
     time_python = time.perf_counter() - start
-    logger.print(f"   Python : {time_python:.4f}s ({time_python/n_iterations*1e3:.2f} ms/séquence)")
+    logger.info(f"   Python : {time_python:.4f}s ({time_python/n_iterations*1e3:.2f} ms/séquence)")
     
     # Test Cython
     if CYTHON_AVAILABLE:
@@ -177,20 +177,20 @@ def test_extract_seq_features(n_iterations=100000, seq_length=60):
             _ = extract_seq_features_cython(packets)
         time_cython = time.perf_counter() - start
         speedup = time_python / time_cython
-        logger.print(f"   Cython : {time_cython:.4f}s ({time_cython/n_iterations*1e3:.2f} ms/séquence)")
-        logger.print(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
+        logger.info(f"   Cython : {time_cython:.4f}s ({time_cython/n_iterations*1e3:.2f} ms/séquence)")
+        logger.info(f"   🚀 Speedup : {speedup:.2f}x plus rapide")
     
     return time_python
 
 
 def test_output_consistency():
     """Vérifie que les deux versions produisent les mêmes résultats."""
-    logger.print("\n" + "=" * 60)
-    logger.print("🧪 TEST : Cohérence des sorties")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🧪 TEST : Cohérence des sorties")
+    logger.info("=" * 60)
     
     if not CYTHON_AVAILABLE:
-        logger.print("⚠️ Cython non disponible, test ignoré")
+        logger.warning("⚠️ Cython non disponible, test ignoré")
         return
     
     packet = create_fake_packet()
@@ -203,53 +203,53 @@ def test_output_consistency():
     diff = np.abs(features_python - features_cython)
     max_diff = np.max(diff)
     
-    logger.print(f"\n   Différence maximale : {max_diff:.10f}")
+    logger.info(f"\n   Différence maximale : {max_diff:.10f}")
     if max_diff < 1e-6:
-        logger.print("   ✅ Les sorties sont IDENTIQUES")
+        logger.success("   ✅ Les sorties sont IDENTIQUES")
     else:
-        logger.print("   ⚠️ Différences détectées :")
+        logger.warning("   ⚠️ Différences détectées :")
         for i, (p, c) in enumerate(zip(features_python, features_cython)):
             if abs(p - c) > 1e-6:
-                logger.print(f"      Feature {i}: Python={p:.6f}, Cython={c:.6f}")
+                logger.info(f"      Feature {i}: Python={p:.6f}, Cython={c:.6f}")
 
 
 def test_edge_cases():
     """Test les cas limites."""
-    logger.print("\n" + "=" * 60)
-    logger.print("🧪 TEST : Cas limites")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("🧪 TEST : Cas limites")
+    logger.info("=" * 60)
     
     if not CYTHON_AVAILABLE:
-        logger.print("⚠️ Cython non disponible, test ignoré")
+        logger.warning("⚠️ Cython non disponible, test ignoré")
         return
     
     # Test avec None
-    logger.print("\n   Test avec None :")
+    logger.info("\n   Test avec None :")
     try:
         f1 = extract_pack_features_cython(None)
-        logger.print(f"      ✅ Cython gère None : {len(f1)} features")
+        logger.success(f"      ✅ Cython gère None : {len(f1)} features")
     except Exception as e:
-        logger.print(f"      ❌ Cython échoue : {e}")
+        logger.error(f"      ❌ Cython échoue : {e}")
     
     # Test avec liste vide
-    logger.print("\n   Test avec liste vide :")
+    logger.info("\n   Test avec liste vide :")
     try:
         f2 = extract_seq_features_cython([])
-        logger.print(f"      ✅ Cython gère liste vide : shape={f2.shape}")
+        logger.success(f"      ✅ Cython gère liste vide : shape={f2.shape}")
     except Exception as e:
-        logger.print(f"      ❌ Cython échoue : {e}")
+        logger.error(f"      ❌ Cython échoue : {e}")
 
 
 def main():
     """Fonction principale de test."""
-    logger.print("=" * 60)
-    logger.print("🧪 TEST DE PERFORMANCE FEATURE EXTRACTOR")
-    logger.print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🧪 TEST DE PERFORMANCE FEATURE EXTRACTOR")
+    logger.info("=" * 60)
     
     if not CYTHON_AVAILABLE:
-        logger.print("\n⚠️ Version Cython non disponible.")
-        logger.print("   Compilez d'abord : python setup.py build_ext --inplace")
-        logger.print("\n   Test de la version Python uniquement...\n")
+        logger.warning("\n⚠️ Version Cython non disponible.")
+        logger.info("   Compilez d'abord : python setup.py build_ext --inplace")
+        logger.info("\n   Test de la version Python uniquement...\n")
     
     # Tests de cohérence
     test_output_consistency()
@@ -262,19 +262,19 @@ def main():
     test_edge_cases()
     
     # Résumé
-    logger.print("\n" + "=" * 60)
-    logger.print("✅ TESTS TERMINÉS")
-    logger.print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.success("✅ TESTS TERMINÉS")
+    logger.info("=" * 60)
     
     if CYTHON_AVAILABLE:
-        logger.print("\n📊 Gain de performance estimé pour votre IDS/IPS :")
-        logger.print("   - Extraction paquet : 5-8x plus rapide")
-        logger.print("   - Extraction séquence : 5x plus rapide")
-        logger.print("   - CPU utilisé : divisé par 3")
-        logger.print("   - Débit maximal : 300 000+ paquets/seconde")
+        logger.info("\n📊 Gain de performance estimé pour votre IDS/IPS :")
+        logger.info("   - Extraction paquet : 5-8x plus rapide")
+        logger.info("   - Extraction séquence : 5x plus rapide")
+        logger.info("   - CPU utilisé : divisé par 3")
+        logger.info("   - Débit maximal : 300 000+ paquets/seconde")
     
-    logger.print("\n💡 Pour utiliser Cython dans votre projet :")
-    logger.print("   from ids_ips_ia.core.feature_extractor_cython import extract_pack_features, extract_seq_features")
+    logger.info("\n💡 Pour utiliser Cython dans votre projet :")
+    logger.info("   from ids_ips_ia.core.feature_extractor_cython import extract_pack_features, extract_seq_features")
 
 
 if __name__ == "__main__":

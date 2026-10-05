@@ -26,7 +26,7 @@ def run_ids_ips():
         th, server = start(app, host, port)
         th.start()
         def _main_signal_handler(*args, **kwargs):
-            logger.print("\n[SIGNAL] Arrêt demandé...")
+            logger.info("\n[SIGNAL] Arrêt demandé...")
             server.should_exit = True
             _run_async(
                 _do_stop_logic,

@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI):
         app.state._ids_thread = thread
         app.state._ids_is_started = True
 
-    logger.print("API lancée !!!")
+    logger.info("API lancée !!!")
     yield
 
     if ids_ips:
@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
     if thread and thread.is_alive():
         thread.join(timeout=10)
         
-    logger.print("API fermée !!!")
+    logger.info("API fermée !!!")
 
 
 app = FastAPI(
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         th.start()
 
         def _main_signal_handler(*args, **kwargs):
-            logger.print("\n[SIGNAL] Arrêt demandé...")
+            logger.info("\n[SIGNAL] Arrêt demandé...")
             ids_ips.stop()
 
         signal_manager(_main_signal_handler)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         ids_ips.stop()
 
     except Exception as e:
-        logger.print(f"[ERROR] Exception dans main : {e}")
+        logger.error(f"[ERROR] Exception dans main : {e}")
         if GRAPH:
             graph.end()
         traceback.print_exc()

@@ -233,7 +233,10 @@ async def _do_get_anomaly_files(
         for f in os.listdir(directory):
             m = pattern.fullmatch(f)
             if m:
-                st = os.stat(os.path.join(directory, f))
+                try:
+                    st = os.stat(os.path.join(directory, f))
+                except FileNotFoundError:     # supprimé entre listdir et stat
+                    continue
                 files.append({
                     "name": f, "index": int(m.group(1)), "size_bytes": st.st_size,
                     "modified": _format_time(st.st_mtime)
@@ -249,6 +252,10 @@ async def _do_get_anomaly_files(
     offset, limit = max(0, int(offset)), max(1, min(int(limit), 500 if not include_features else 50))
     try:
         entries, total = await asyncio.to_thread(_read_anomaly_file, path, offset, limit, include_features)
+    
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lecture impossible : {type(e).__name__}")
     
@@ -330,7 +337,7 @@ async def _do_stop_logic(app_state):
     #     os._exit(0)
     # )).start()
     if thread and thread.is_alive():
-        logger.print("[WARN] Le thread IDS_IPS n'a pas terminé son cleanup après 10s (il continue en arrière-plan, daemon).")
+        logger.success("[WARN] Le thread IDS_IPS n'a pas terminé son cleanup après 10s (il continue en arrière-plan, daemon).")
 
 
     return {"stopped": True, "detail": "IDS/IPS arrêté"}
@@ -466,7 +473,7 @@ async def _do_unlock(ids_ips: Optional["IDS_IPS"], data: UnlockData, verify_auth
 
         if whitelist.strip().lower() in ['true', 'yes', '1']:
             detector_instance.React.add_to_whitelist(ip)
-            logger.print(f'{ip} ajouté à la whitelist !')
+            logger.info(f'{ip} ajouté à la whitelist !')
 
         LIST = list(detector_instance.AnomalyScorer.get_list_blocked_ip().keys())
 
@@ -635,9 +642,9 @@ async def _do_health_check(ids_ips: Optional["IDS_IPS"]):
 async def _do_close_api(token: str):
     validate_username(token, username=ADMIN_DATA.get("username"))
     if server_state.server is None:
-        logger.print('Serveur non lancé !')
+        logger.info('Serveur non lancé !')
         return {"message ": "Serveur non lancé !"}
     else:
         server_state.server.should_exit = True
-        logger.print('Serveur fermé.')
+        logger.info('Serveur fermé.')
         return {"message ": 'Serveur fermé.'}

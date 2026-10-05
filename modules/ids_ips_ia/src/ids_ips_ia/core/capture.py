@@ -48,7 +48,7 @@ try:
     _USE_CYTHON = True
 except ImportError:
     _USE_CYTHON = False
-    logger.print("⚠️ Cython non disponible, utilisation de Python pur")
+    logger.warning("⚠️ Cython non disponible, utilisation de Python pur")
 
 
 from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
@@ -152,7 +152,7 @@ def detect_all_ifaces() -> list:
     excluded = ['lo', 'bluetooth', 'usbmon', 'any', 'bluetooth-monitor', 'nfqueue', 'nflog']
     interfaces = [p for p in faces if not any(str(p).startswith(x) for x in excluded)]
     interfaces = interfaces or ['wlp1s0']
-    logger.print('Interfaces de captures : ', interfaces)
+    logger.info('Interfaces de captures : ', interfaces)
     return interfaces
 
 
@@ -331,7 +331,6 @@ def load_pkt_file(path: str):
             except EOFError:
                 break
 
-
 class QueueEmpty(Exception):
     pass
 
@@ -374,12 +373,12 @@ class BuffuredQueue:
         self.budget = budget
         self.ram_max = (self.queue_max + self.num_workers + 1) * self.chunk_bytes
         if self.ram_max > budget:
-            logger.print(
+            logger.warning(
                 f"⚠️ BuffuredQueue : RAM max {self.ram_max / 1e6:.1f} Mo > budget "
                 f"{budget / 1e6:.1f} Mo (allow_over_budget={allow_over_budget})"
             )
         elif self.max_size < int(max_size):
-            logger.print(
+            logger.info(
                 f"ℹ️ BuffuredQueue : chunks réduits de {int(max_size)} à {self.max_size} paquets "
                 f"pour tenir dans le budget de {budget / 1e6:.0f} Mo"
             )
@@ -472,7 +471,7 @@ class BuffuredQueue:
                     with self._stats_lock:
                         self.failed_chunks += 1
                         self.failed_items += len(data)
-                    logger.print(
+                    logger.error(
                         f"❌ [{worker_id}] échec d'écriture de {os.path.basename(filename)} "
                         f"({len(data)} paquets perdus) : {e!r}"
                      )
@@ -595,7 +594,7 @@ class BuffuredQueue:
             th.start()
             self.workers.append(th)
         self._started = True
-        logger.print(
+        logger.info(
             f"💾 BuffuredQueue prête : chunks de {_fmt_n(self.max_size)} paquets max "
             f"(≤ {self.chunk_bytes / 1e6:.1f} Mo), {self.queue_max} chunks en attente max, "
             f"{self.num_workers} workers, RAM max ≈ {self.ram_max / 1e6:.0f} Mo "
@@ -608,7 +607,7 @@ class BuffuredQueue:
         for ev in list(self._end_event.values()):
             while not ev.wait(log_every):
                 st = self.stats()
-                logger.print(
+                logger.info(
                     f"⏳ [{_fmt_dur(time.time() - t0)}] écriture des derniers chunks : "
                     f"{st['queued']} en attente, {st['saved_files']} écrits "
                     f"({_fmt_n(st['saved_items'])} paquets)"
@@ -640,17 +639,20 @@ class _Local:
         self.recv = self.kept = self.ignored = self.filtered = self.dropped = self.errors = 0
 
 
+_MP_EVENT_TYPE = type(mp.Event())
+
 class Capture:
     def __init__(
         self,
         queue: Union[BuffuredQueue, queue.Queue],
-        backup_queue=None,
+        backup_queue: Union[BuffuredQueue, queue.Queue, None] = None,
+        event: Union[threading.Event, _MP_EVENT_TYPE, None] = None,
         src_ignored_ip: set = None,
         dst_ignored_ip: set = None,
         log_interval: float = 5.0,
     ):
         self.queue = queue
-        self.event = threading.Event()
+        self.event = event or threading.Event()
         self.threads = []
         self.save_task = None
         self.backup_queue = backup_queue
@@ -676,9 +678,9 @@ class Capture:
             return dict(self._stats)
 
         if self.use_af_packet:
-            logger.print("🐧 Linux détecté → AF_PACKET activé (performance maximale)")
+            logger.info("🐧 Linux détecté → AF_PACKET activé (performance maximale)")
         else:
-            logger.print(f"🍎 {platform.system()} détecté → fallback pcap")
+            logger.info(f"🍎 {platform.system()} détecté → fallback pcap")
 
     # ----------------------------------------------------------- IP ignorées
 
@@ -798,7 +800,7 @@ class Capture:
             dt = max(now - prev_t, 1e-9)
             rate = (cur["kept"] - prev["kept"]) / dt
             new_loss = (cur["k_drops"] - prev["k_drops"]) + (cur["dropped"] - prev["dropped"])
-            logger.print(self._status_line(cur, rate, now - self._t0, new_loss))
+            logger.info(self._status_line(cur, rate, now - self._t0, new_loss))
             prev, prev_t = cur, now
 
     def summary(self) -> str:
@@ -835,21 +837,31 @@ class Capture:
 
         alive = [th for th in tasks if th and th.is_alive()]
         for th in alive:
-            logger.print(f"⚠️ {th.name} tourne encore après {timeout}s")
+            logger.warning(f"⚠️ {th.name} tourne encore après {timeout}s")
 
         if not self._summary_logged:
             self._summary_logged = True
-            logger.print(self.summary())
+            logger.info(self.summary())
         return not alive     # True = tous les threads sont arrêtés
 
     def _put(self, q, item: Any) -> bool:
         """Dépose un paquet sans jamais bloquer. False = refusé (file pleine)."""
         try:
             ok = q.put_nowait(item)
-        except (queue.Full, ValueError, PermissionError):
+        except queue.Full:
             return False
         return ok is None or ok is True  # queue.Queue renvoie None, BuffuredQueue renvoie True/False
-
+    
+    def _put_many(self, q, items: list[Any]) -> bool:
+        try:
+            keep = q.put_many(items)
+        except Exception:
+            return 0
+        return keep  # le nombre gardé
+    
+    def _has_put_many(self):
+        return hasattr(self.queue, "put_many"), hasattr(self.backup_queue, "put_many")
+    
     # ------------------------------------------------------------------- pcap
 
     def _pcap_capture(
@@ -865,7 +877,7 @@ class Capture:
         try:
             pc = pcap.pcap(name=iface, timeout_ms=TIMEOUT_MS or 40, **opts)
         except Exception as e:
-            logger.print(f"⚠️ [{thread_name}] ouverture de {iface} impossible ({e!r}) → interface par défaut")
+            logger.warning(f"⚠️ [{thread_name}] ouverture de {iface} impossible ({e!r}) → interface par défaut")
             pc = pcap.pcap(name=None, timeout_ms=TIMEOUT_MS or 30, **opts)
         pc.setfilter(filter or 'tcp or udp or icmp')
         loc = _Local()
@@ -884,7 +896,7 @@ class Capture:
                 pass
             self._flush(loc, seen, drops)
 
-        logger.print(f"🚀 Capture pcap démarrée sur {iface}")
+        logger.info(f"🚀 Capture pcap démarrée sur {iface}")
         try:
             while not self.event.is_set():
                 for ts, pkt in pc:
@@ -908,7 +920,7 @@ class Capture:
                     except Exception as e:
                         loc.errors += 1
                         if loc.errors == 1:
-                            logger.print(f"⚠️ [{thread_name}] erreur traitement paquet : {e!r}")
+                            logger.error(f"⚠️ [{thread_name}] erreur traitement paquet : {e!r}")
 
                     now = time.monotonic()
                     if now - last_flush >= 1.0:
@@ -916,13 +928,13 @@ class Capture:
                         last_flush = now
                 flush()
         except Exception as e:
-            logger.print(f"❌ [{thread_name}] erreur globale : {e!r}")
-            logger.print(traceback.format_exc())
+            logger.error(f"❌ [{thread_name}] erreur globale : {e!r}")
+            logger.error(traceback.format_exc())
             
         finally:
             flush()
             pc.close()
-            logger.print(f"🛑 Capture pcap arrêtée sur {iface}")
+            logger.info(f"🛑 Capture pcap arrêtée sur {iface}")
 
     # ------------------------------------------------------------- AF_PACKET
 
@@ -951,7 +963,7 @@ class Capture:
             wanted = BUFFER_SIZE or 64 * 1024 * 1024
             actual = _set_rcvbuf(sock, wanted)
             if actual < wanted:
-                logger.print(
+                logger.warning(
                     f"⚠️ [{thread_name}] tampon socket plafonné à {actual / 1e6:.1f} Mo "
                     f"(demandé {wanted / 1e6:.0f} Mo). Débloque-le : "
                     f"sudo sysctl -w net.core.rmem_max={wanted}"
@@ -962,14 +974,14 @@ class Capture:
                 attach_bpf(sock, prog=BPF_PROG)
                 bpf_attached = True
             except Exception as e:
-                logger.print(f"⚠️ [{thread_name}] BPF non attaché ({e!r}) → filtre Python de secours")
+                logger.warning(f"⚠️ [{thread_name}] BPF non attaché ({e!r}) → filtre Python de secours")
 
             sock.bind((iface, 0x0003))       # ETH_P_ALL
             sock.setblocking(False)
             poller = select.poll()
             poller.register(sock, select.POLLIN)
 
-            logger.print(
+            logger.info(
                 f"🚀 Capture AF_PACKET démarrée sur {iface} | BPF noyau : "
                 f"{'oui' if bpf_attached else 'non (filtre Python)'} | "
                 f"tampon {actual / 1e6:.0f} Mo | lots de {batch_size}"
@@ -980,7 +992,9 @@ class Capture:
             batch = []
             consecutive_err = 0
             last_flush = time.monotonic()
-
+            queue_has_put_many, backup_has_put_many = self._has_put_many()
+            all_has_put_many = queue_has_put_many and backup_has_put_many
+            
             while not self.event.is_set():
                 if poller.poll(TIMEOUT_MS or 40):    # attend jusqu'à TIMEOUT_MS(40 ms), 1 seul appel pour tout un lot
                     batch.clear()
@@ -994,7 +1008,7 @@ class Capture:
                             loc.errors += 1
                             consecutive_err += 1
                             if consecutive_err == 1 or consecutive_err % 500 == 0:
-                                logger.print(f"⚠️ [{thread_name}] erreur recv ({consecutive_err} de suite) : {e!r}")
+                                logger.error(f"⚠️ [{thread_name}] erreur recv ({consecutive_err} de suite) : {e!r}")
                                 
                             time.sleep(min(1.0, 0.01 * consecutive_err))   # recul progressif (interface tombée...)
                             break
@@ -1002,11 +1016,12 @@ class Capture:
                         consecutive_err = 0
                         batch.append((time.time(), bytes(mv[:n])))
                     loc.recv += len(batch)
-
+                    
                     try:
                         ip_only = AF_PACKET_IP_ONLY and not bpf_attached
                         src_set, dst_set = self._src_packed, self._dst_packed
                         check_ignored = bool(src_set or dst_set)
+                        keep = []
                         for item in batch:
                             raw = item[1]
                             if ip_only and not _match_tcp_udp_icmp(raw):
@@ -1015,16 +1030,27 @@ class Capture:
                             if check_ignored and _is_ignored(raw, src_set, dst_set):
                                 loc.ignored += 1
                                 continue
-
-                            if self._put(self.queue, item):
-                                loc.kept += 1
+                            
+                            if not all_has_put_many:
+                                if self._put(self.queue, item):
+                                    loc.kept += 1
+                                else:
+                                    loc.dropped += 1
+                                if self.backup_queue:
+                                    self._put(self.backup_queue, item)
                             else:
-                                loc.dropped += 1
+                                keep.append(item)
+                        
+                        if keep:
+                            written = self._put_many(self.queue, keep)         # le ring (via ton RingWriter)
                             if self.backup_queue:
-                                self._put(self.backup_queue, item)
+                                self._put_many(self.backup_queue, keep)
+                            loc.kept += written
+                            loc.dropped += len(keep) - written          # les derniers qui n'ont pas rentré
+                            
                     except Exception as e:
                         loc.errors += 1
-                        logger.print(f"⚠️ Erreur traitement paquet dans {thread_name}: {e!r}")
+                        logger.error(f"⚠️ Erreur traitement paquet dans {thread_name}: {e!r}")
 
                 now = time.monotonic()
                 if now - last_flush >= 1.0:  # publie les compteurs + pertes du noyau
@@ -1033,11 +1059,11 @@ class Capture:
                     last_flush = now
 
         except Exception as e:
-            logger.print(
+            logger.error(
                 f"❌ Erreur globale dans _socket_capture, thread_name={thread_name} : "
                 f"{type(e).__name__}: {e}"
             )
-            logger.print(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
         finally:
             if sock is not None:
@@ -1047,7 +1073,7 @@ class Capture:
                     sock.close()
                 except Exception:
                     pass
-            logger.print(f"🛑 Capture AF_PACKET arrêtée sur {iface}")
+            logger.info(f"🛑 Capture AF_PACKET arrêtée sur {iface}")
 
     # ---------------------------------------------------------------- lancement
 
@@ -1076,7 +1102,7 @@ class Capture:
             tasks.append(th)
 
         # for t in tasks:
-        #     logger.print(t.name, t.is_alive(), self.event.is_set())
+        #     logger.info((t.name, t.is_alive(), self.event.is_set())
         self.threads = tasks
 
         if self.log_interval:
@@ -1088,7 +1114,7 @@ class Capture:
 
         if save_interval and path:
             if not isinstance(self.queue, queue.Queue):
-                logger.print("L'objet queue passé ne permet pas une sauvegarde périodique !")
+                logger.info("L'objet queue passé ne permet pas une sauvegarde périodique !")
                 return tasks
 
             def save_task():
@@ -1096,7 +1122,7 @@ class Capture:
                     try:
                         _save(list(self.queue.queue), path)
                     except Exception as e:
-                        logger.print("Erreur sauvegarde :", str(e))
+                        logger.error("Erreur sauvegarde :", str(e))
 
             self.save_task = threading.Thread(target=save_task, daemon=True, name="Save-Thread")
             self.save_task.start()
@@ -1138,7 +1164,7 @@ def _merge_chunks(save_dir: str, path: str, delete: bool = False) -> int:
     Ne supprime les chunks que si le nombre de paquets relu est exact."""
     files = sorted(glob.glob(os.path.join(save_dir, "*.pkl")))
     if not files:
-        logger.print("ℹ️ Aucun chunk à fusionner")
+        logger.info("ℹ️ Aucun chunk à fusionner")
         return 0
     
     if delete:
@@ -1156,7 +1182,7 @@ def _merge_chunks(save_dir: str, path: str, delete: bool = False) -> int:
         _cum_save(data, path)
         total += len(data)
         if i % 5 == 0 or i == len(files):
-            logger.print(
+            logger.info(
                 f"🔗 Fusion {i}/{len(files)} chunks ({_fmt_n(total)} paquets, "
                 f"{_fmt_dur(time.time() - t0)})"
             )
@@ -1164,9 +1190,9 @@ def _merge_chunks(save_dir: str, path: str, delete: bool = False) -> int:
     after = _count_items(path)
     if after == before + total or after == total:
         shutil.rmtree(save_dir, ignore_errors=True)
-        logger.print(f"✅ Plein succès lors du merge : {_fmt_n(total)} paquets → {path}")
+        logger.success(f"✅ Plein succès lors du merge : {_fmt_n(total)} paquets → {path}")
     else:
-        logger.print(f"❌ Merge incomplet : attendu {_fmt_n(before + total)}, trouvé {_fmt_n(after)}. "
+        logger.error(f"❌ Merge incomplet : attendu {_fmt_n(before + total)}, trouvé {_fmt_n(after)}. "
                      f"Chunks conservés dans {save_dir}")
     return total
 
@@ -1195,7 +1221,7 @@ def start_capture(
         in_process=False
     )
     start_time = time.time()
-    logger.print(
+    logger.info(
         f"▶️ Collecte lancée pour {_fmt_dur(duration)}"
         + (f" ou {_fmt_n(max_n_paquets)} paquets" if max_n_paquets != float("inf") else "")
      )
@@ -1215,16 +1241,16 @@ def start_capture(
             time.sleep(0.5)
 
         if queue.num_items >= max_n_paquets:
-            logger.print("🎯 Nombre de paquets demandé atteint")
+            logger.info("🎯 Nombre de paquets demandé atteint")
             
         elif time.time() >= start_time + duration:
-            logger.print("⏱️ Durée de collecte atteinte")
+            logger.info("⏱️ Durée de collecte atteinte")
 
     except KeyboardInterrupt:
-        logger.print("\n[INFO] Capture interrompue par l'utilisateur")
+        logger.info("\n[INFO] Capture interrompue par l'utilisateur")
 
     except Exception as e:
-        logger.print("\n[INFO, start_capture] Erreur : ", str(e))
+        logger.error("\n[INFO, start_capture] Erreur : ", str(e))
 
     finally:
         stopped = cap_obj.stop(timeout=2)               # 1. plus aucun nouveau paquet
@@ -1235,7 +1261,7 @@ def start_capture(
         queue.stop(timeout=1)
         st = queue.stats()
         if st["failed_chunks"]:
-            logger.print(f"❌ {st['failed_chunks']} chunk(s) non écrits ({_fmt_n(st['failed_items'])} paquets perdus)")
+            logger.error(f"❌ {st['failed_chunks']} chunk(s) non écrits ({_fmt_n(st['failed_items'])} paquets perdus)")
         _merge_chunks(queue.save_dir, path, delete=True)
         return
 
@@ -1302,7 +1328,7 @@ async def collect_and_process(
             ifaces=ifaces,
             max_n_paquets=max_n_paquets,
         )
-        logger.print(f"Fin de la capture, {_fmt_n(cap_queue.qsize())} paquets enregistrés dans la durée !")
+        logger.info(f"Fin de la capture, {_fmt_n(cap_queue.qsize())} paquets enregistrés dans la durée !")
         if cap_queue.qsize() == 0:
             raise ValueError("Aucun paquet collecté !")
 
@@ -1317,14 +1343,14 @@ async def collect_and_process(
             except Exception:
                 bad += 1
             if n % 50_000 == 0:
-                logger.print(
+                logger.info(
                     f"⚙️ Features : {_fmt_n(n)} paquets ({n / (time.time() - t0):,.0f}/s, "
                     f"RAM {_rss_mb():.0f} Mo)".replace(",", " ")
                  )
 
         if bad:
-            logger.print(f"⚠️ {_fmt_n(bad)} paquets illisibles ignorés")
-        logger.print(
+            logger.warning(f"⚠️ {_fmt_n(bad)} paquets illisibles ignorés")
+        logger.info(
             f"Nombre total finale de packet : {_fmt_n(len(feats))} "
             f"(features en {_fmt_dur(time.time() - t0)})"
         )
@@ -1343,27 +1369,27 @@ async def collect_and_process(
             try:
                 seq_lis.append(extractor.extract_seq_features(X_packets[i: i + SEQ_LENGTH]))
             except Exception as e:
-                logger.print("Erreur extraction sequence :", str(e))
+                logger.error("Erreur extraction sequence :", str(e))
             if (k + 1) % 50_000 == 0:
-                logger.print(f"⚙️ Séquences : {_fmt_n(k + 1)}/{_fmt_n(n_seq)}")
+                logger.info(f"⚙️ Séquences : {_fmt_n(k + 1)}/{_fmt_n(n_seq)}")
         if not seq_lis:
             raise ValueError("Aucune séquence exploitable !")
-        logger.print(f"Séquences prêtes : {_fmt_n(len(seq_lis))} en {_fmt_dur(time.time() - t0)}")
+        logger.info(f"Séquences prêtes : {_fmt_n(len(seq_lis))} en {_fmt_dur(time.time() - t0)}")
 
         X_sequences = np.array(seq_lis)
         del seq_lis
-        logger.print("[DEBUG] Avant nettoyage:")
-        logger.print(f"  NaN dans séquences: {np.isnan(X_sequences).sum()}")
-        logger.print(f"  Inf dans séquences: {np.isinf(X_sequences).sum()}")
-        logger.print(f"  Min/Max: {X_sequences.min():.2f} / {X_sequences.max():.2f}")
+        logger.debug("[DEBUG] Avant nettoyage:")
+        logger.info(f"  NaN dans séquences: {np.isnan(X_sequences).sum()}")
+        logger.info(f"  Inf dans séquences: {np.isinf(X_sequences).sum()}")
+        logger.info(f"  Min/Max: {X_sequences.min():.2f} / {X_sequences.max():.2f}")
 
         # Nettoyer
         X_sequences = np.nan_to_num(X_sequences, nan=0.0, posinf=1.0, neginf=-1.0)
         X_packets = np.nan_to_num(X_packets, nan=0.0, posinf=1.0, neginf=-1.0)
 
-        logger.print("[DEBUG] Après nettoyage:")
-        logger.print(f"  NaN dans séquences: {np.isnan(X_sequences).sum()}")  # Doit être 0
-        logger.print(f"  Min/Max: {X_sequences.min():.2f} / {X_sequences.max():.2f}")
+        logger.debug("[DEBUG] Après nettoyage:")
+        logger.info(f"  NaN dans séquences: {np.isnan(X_sequences).sum()}")  # Doit être 0
+        logger.info(f"  Min/Max: {X_sequences.min():.2f} / {X_sequences.max():.2f}")
 
         scaler_pkt = StandardScaler()
         scaler_seq = StandardScaler()
@@ -1372,16 +1398,16 @@ async def collect_and_process(
         scaler_seq.fit(X_flat_seq)
         X_sequences_scaled = np.array([scaler_seq.transform(seq) for seq in X_sequences])
 
-        logger.print("[DEBUG] Après normalisation :")
-        logger.print(f"  NaN dans séquences: {np.isnan(X_sequences_scaled).sum()}")
-        logger.print(f"  Inf dans séquences: {np.isinf(X_sequences_scaled).sum()}")
-        logger.print(f"  Min/Max: {X_sequences_scaled.min():.2f} / {X_sequences_scaled.max():.2f}")
+        logger.debug("[DEBUG] Après normalisation :")
+        logger.info(f"  NaN dans séquences: {np.isnan(X_sequences_scaled).sum()}")
+        logger.info(f"  Inf dans séquences: {np.isinf(X_sequences_scaled).sum()}")
+        logger.info(f"  Min/Max: {X_sequences_scaled.min():.2f} / {X_sequences_scaled.max():.2f}")
 
         return X_sequences_scaled, scaler_seq, scaler_pkt, X_packets_scaled
 
     except Exception as e:
-        traceback.print_exc()
-        logger.print("Erreur globale collect_and_process :", str(e))
+        logger.error("Erreur globale collect_and_process :", str(e))
+        logger.error(traceback.format_exc())
         return None, None, None, None
 
 
@@ -1395,8 +1421,8 @@ if __name__ == "__main__":
             add_data_path="/home/hounsousamuel/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/core/data/capture_2026-04-14T06:47:18.102521.pkl",
         ))
         if X_seq is not None:
-            logger.print("Extraction terminée, shapes :", X_seq.shape, X_pkt.shape)
+            logger.info("Extraction terminée, shapes :", X_seq.shape, X_pkt.shape)
         else:
-            logger.print("Erreur lors de la collecte ou du traitement")
+            logger.error("Erreur lors de la collecte ou du traitement")
     except Exception as e:
-        logger.print("Erreur main collect_and_process :", e)
+        logger.error("Erreur main collect_and_process :", e)

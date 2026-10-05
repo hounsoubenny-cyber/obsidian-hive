@@ -28,6 +28,7 @@ from modules_utils.loop_utils import _run_async
 from ids_ips_ia.ids_ips_utils.loader import save
 from ids_ips_ia.main.server_state import close_api
 from ids_ips_ia.ids_ips_utils.logger import get_logger
+from ids_ips_ia.dashboard.dashboard import Dashboard
 from ids_ips_ia.refit_system.refit_queue import RefitQueue
 from ids_ips_ia.ids_ips_utils.real_time_plot import RealTimePLot
 from ids_ips_ia.detection.detection_module import AnomalyDetector
@@ -441,6 +442,66 @@ class IDS_IPS:
         logger.print("Capture Démaréé")
         return self.Capture
 
+    # ----------------------------------------------------------------------
+    # Dashboard terminal
+    # ----------------------------------------------------------------------
+    def _dashboard_snapshot(self) -> dict:
+        """Instantané LECTURE SEULE des compteurs pour le dashboard (capture + détecteur + réaction)."""
+        snap = {}
+        det, cap = getattr(self, "detector", None), getattr(self, "Capture", None)
+        if det is not None:
+            snap["detector"] = det.stats()
+            al = getattr(det, "anomaly_logger", None)
+            if al is not None:
+                snap["anomalies_logged"] = al.stats()["logged"]
+            react = getattr(det, "React", None)
+            if react is not None:
+                snap["blocked"] = len(react.blocked)
+                batcher = react.__dict__.get("_blocker_obj")
+                if batcher is not None:
+                    snap["batcher"] = batcher.stats()
+        if cap is not None:
+            snap["capture"] = cap.metrics()
+        return snap
+
+    def _start_dashboard(self):
+        """
+        Dashboard « façon top » : en-tête fixe en haut du terminal, les logs défilent dessous.
+        Quand il occupe l'écran, la console ne montre que warning+ (IDS_CONSOLE_LEVEL, défaut WARNING) et le détail
+        part dans les fichiers de log (écriture asynchrone).
+        IDS_DASHBOARD : auto (défaut : seulement si c'est un terminal) | 1 (forcé) | 0 (désactivé).
+        Sans terminal (service, redirection) : une ligne de synthèse toutes les 10 s dans le log.
+        """
+        mode = os.environ.get("IDS_DASHBOARD", "auto").strip().lower()
+        if mode in ("0", "off", "false", "no"):
+            return None
+        try:
+            from modules_utils.logger import set_console_level, enable_file_logging
+            level = os.environ.get("IDS_CONSOLE_LEVEL", "WARNING").upper()
+            dash = Dashboard(
+                self._dashboard_snapshot, fallback_log=logger.info,
+                force=True if mode in ("1", "on", "true", "yes") else None,
+                footer=f"journaux : {level}+ en console · détail dans {logger.log_dir} · Ctrl-C pour arrêter",
+            )
+            if dash.mode == "tty":
+                enable_file_logging("DEBUG")
+                set_console_level(level)
+            return dash.start()
+        except Exception as e:
+            logger.warning("Dashboard indisponible :", e)
+            return None
+
+    def _stop_dashboard(self, dash):
+        if dash is None:
+            return
+        dash.stop()
+        if dash.mode == "tty":
+            try:                                   # l'arrêt (suricata, nft...) doit redevenir visible en console
+                from modules_utils.logger import set_console_level
+                set_console_level("DEBUG")
+            except Exception:
+                pass
+
     def _stop_capture(self):
         if hasattr(self, "Capture"):
             if self.Capture is not None:
@@ -464,7 +525,7 @@ class IDS_IPS:
         logger.print(f"   Délai refit      : {self.ModelRefitMonitor.refit_delay // 3600} heures")
         logger.print("=" * 60)
         logger.print()
-        self.ModelRefitMonitor.start()
+        self.ModelRefitMonitor.run(mp_event)
 
     def _start_refit_manager_process(self, model_ready, mp_event):
         process = mp.Process(
@@ -487,6 +548,7 @@ class IDS_IPS:
     async def _detection_coroutine(self, model_ready, queue_or_mem):
         """Coroutine principale de détection en temps réel."""
         detector = None
+        dash = None
         try:
             if graph:
                 graph.control()
@@ -526,7 +588,8 @@ class IDS_IPS:
                 await asyncio.sleep(0.5)
 
             self._start_capture(queue_or_mem)
-            logger.print("[INFO] Lancement de la détection temps réel...")
+            dash = self._start_dashboard()
+            logger.info("[INFO] Lancement de la détection temps réel...")
             await self.detector.detect(
                 self.model_file,
                 combination_mode=self.combination_mode,
@@ -543,6 +606,7 @@ class IDS_IPS:
             self.stop_event_mp.set()
 
         finally:
+            self._stop_dashboard(dash)
             if detector is not None and detector._monitor_task is not None and not detector._monitor_task.done():
                 detector._monitor_task.cancel()
                 try:

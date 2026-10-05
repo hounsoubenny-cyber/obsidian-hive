@@ -253,9 +253,9 @@ class Config:
         try:
             with open(self.config_path, "r") as f:
                 data = json5.load(f)
-                logger.print(f'Succès du chargement de la configuartion de {self.config_path}')
+                logger.success(f'Succès du chargement de la configuartion de {self.config_path}')
         except Exception as e:
-            logger.print(f'Erreur de chargement de la configuartion de {self.config_path} : ', str(e))
+            logger.error(f'Erreur de chargement de la configuartion de {self.config_path} : ', str(e))
             
         if data is None:
             self.CONFIG = deepcopy(CLASS_CONFIG)
@@ -286,9 +286,9 @@ class Config:
         try:
             with open(self.config_path, "w") as f:
                 json5.dump(value, f, indent=2, ensure_ascii=False)
-                logger.print(f'Succès de sauvegarde de la configuartion de {self.config_path}')
+                logger.success(f'Succès de sauvegarde de la configuartion de {self.config_path}')
         except Exception as e:
-            logger.print(f'Erreur de sauvegarde de la configuartion de {self.config_path} : ', str(e))
+            logger.error(f'Erreur de sauvegarde de la configuartion de {self.config_path} : ', str(e))
     
     def _validate_seuil(self, data:dict):
         if 'decision' in data:
@@ -384,7 +384,7 @@ class Config:
         }
         
         if not isinstance(to_set, dict):
-            logger.print('update attend un dictionnaire, on skip !')
+            logger.info('update attend un dictionnaire, on skip !')
             return results
         results['received'] = list(to_set.keys())
         who = str(who).strip().strip("'\",;:").strip()
@@ -398,19 +398,19 @@ class Config:
             key_in = [k for k in list(to_set.keys()) if k in list(to_modifie.keys())]
             not_in = [k for k in list(to_set.keys()) if k not in key_in]
             if not key_in:
-                logger.print('Clés invalides, skip !')
+                logger.info('Clés invalides, skip !')
                 results["rejected"] = list(to_set.keys())
                 results['errors'].append(" Dictionnaire invalide, aucune clé ne figure dans les configs !")
                 return results
             
             if not_in:
-                logger.print('Clé rejetées : ', not_in)
+                logger.info('Clé rejetées : ', not_in)
                 results['rejected'] = not_in
                 
             filtered = {k:to_set[k] for k in key_in}
             validated = self.validate(who.upper(), filtered)
             if not validated:
-                logger.print('Valeur de dictionnaire incohérentes !')
+                logger.info('Valeur de dictionnaire incohérentes !')
                 results['errors'].append('Valeur de dictionnaire incohérentes !')
                 return results
             
@@ -525,12 +525,12 @@ class Config:
 if __name__ == "__main__":
     def test():
         import tempfile
-        logger.print("🧪 DÉBUT DES TESTS UNITAIRES - Classe Config")
-        logger.print("=" * 50)
+        logger.info("🧪 DÉBUT DES TESTS UNITAIRES - Classe Config")
+        logger.info("=" * 50)
         
         # === TEST 1: Initialisation ===
-        logger.print("\n1. TEST d'initialisation")
-        logger.print("-" * 30)
+        logger.info("\n1. TEST d'initialisation")
+        logger.info("-" * 30)
         
         # Créer un fichier temporaire pour les tests
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
@@ -546,11 +546,11 @@ if __name__ == "__main__":
             for category in LIST:
                 assert category in config.CONFIG, f"❌ Catégorie manquante: {category}"
             
-            logger.print("✅ Initialisation OK")
+            logger.success("✅ Initialisation OK")
         
         # === TEST 2: Validation des catégories ===
-        logger.print("\n2. TEST de validation")
-        logger.print("-" * 30)
+        logger.info("\n2. TEST de validation")
+        logger.info("-" * 30)
         
         # Test SEUIL
         valid_seuil = {"decision": -0.5}
@@ -570,11 +570,11 @@ if __name__ == "__main__":
         assert config.validate("SCORING_CONFIG", valid_scoring), "❌ Validation SCORING valide échouée"
         assert not config.validate("SCORING_CONFIG", invalid_scoring), "❌ Validation SCORING invalide réussie"
         
-        logger.print("✅ Validation OK")
+        logger.success("✅ Validation OK")
         
         # === TEST 3: Méthode update() ===
-        logger.print("\n3. TEST de update()")
-        logger.print("-" * 30)
+        logger.info("\n3. TEST de update()")
+        logger.info("-" * 30)
         
         # Sauvegarder les valeurs originales pour restauration
         original_config = deepcopy(config.CONFIG)
@@ -598,11 +598,11 @@ if __name__ == "__main__":
         assert invalid_result["success"] == False, "❌ Update invalide réussi"
         assert invalid_result["rejected"] == ["invalid_key"] or "invalid_key" in invalid_result["errors"], "❌ Pas d'erreur pour clé invalide"
         
-        logger.print("✅ Update() OK")
+        logger.success("✅ Update() OK")
         
         # === TEST 4: Persistance (sauvegarde/chargement) ===
-        logger.print("\n4. TEST de persistance")
-        logger.print("-" * 30)
+        logger.info("\n4. TEST de persistance")
+        logger.info("-" * 30)
         
         # Modifier une valeur
         config.update("SCORING_CONFIG", {"ml_predict": 25})
@@ -622,11 +622,11 @@ if __name__ == "__main__":
             saved_data = json5.load(f)
             assert saved_data["SCORING_CONFIG"]["ml_predict"] == 25, "❌ Données incorrectes dans le fichier"
         
-        logger.print("✅ Persistance OK")
+        logger.success("✅ Persistance OK")
         
         # === TEST 5: Thread safety (simulation) ===
-        logger.print("\n5. TEST de thread safety")
-        logger.print("-" * 30)
+        logger.info("\n5. TEST de thread safety")
+        logger.info("-" * 30)
         
         import time
         
@@ -653,11 +653,11 @@ if __name__ == "__main__":
         assert isinstance(final_value, (int, float)), "❌ Corruption des données"
         assert 0 <= final_value <= 300, "❌ Valeur hors limites après updates concurrents"
         
-        logger.print("✅ Thread safety OK")
+        logger.success("✅ Thread safety OK")
         
         # === TEST 6: Validation edge cases ===
-        logger.print("\n6. TEST des cas limites")
-        logger.print("-" * 30)
+        logger.info("\n6. TEST des cas limites")
+        logger.info("-" * 30)
         
         # Test avec données vides
         empty_result = config.update("SEUIL", {})
@@ -676,11 +676,11 @@ if __name__ == "__main__":
         string_result = config.update("SEUIL", "not a dict")
         assert string_result["success"] == False, "❌ String accepté comme paramètre"
         
-        logger.print("✅ Cas limites OK")
+        logger.success("✅ Cas limites OK")
         
         # === TEST 7: Restauration des valeurs originales ===
-        logger.print("\n7. TEST de restauration")
-        logger.print("-" * 30)
+        logger.info("\n7. TEST de restauration")
+        logger.info("-" * 30)
         
         # Restaurer la config originale
         config.CONFIG = original_config
@@ -691,11 +691,11 @@ if __name__ == "__main__":
             assert config.CONFIG[category] == original_config[category], \
                 f"❌ Restauration échouée pour {category}"
         
-        logger.print("✅ Restauration OK")
+        logger.success("✅ Restauration OK")
         
         # === TEST 8: Méthode _help() ===
-        logger.print("\n8. TEST de la méthode _help()")
-        logger.print("-" * 30)
+        logger.info("\n8. TEST de la méthode _help()")
+        logger.info("-" * 30)
         
         help_text = config._help()
         assert help_text is not None, "❌ _help() retourne None"
@@ -706,14 +706,14 @@ if __name__ == "__main__":
         for category in LIST:
             assert category in help_text.upper(), f"❌ Catégorie {category} non mentionnée dans _help()"
         
-        logger.print("✅ _help() OK")
+        logger.success("✅ _help() OK")
         
         # Nettoyage
         os.unlink(temp_config_path)
         
-        logger.print("\n" + "=" * 50)
-        logger.print("🎉 TOUS LES TESTS PASSÉS AVEC SUCCÈS !")
-        logger.print(f"✅ {8} groupes de tests validés")
-        logger.print("=" * 50)
+        logger.info("\n" + "=" * 50)
+        logger.success("🎉 TOUS LES TESTS PASSÉS AVEC SUCCÈS !")
+        logger.success(f"✅ {8} groupes de tests validés")
+        logger.info("=" * 50)
     
     # test()

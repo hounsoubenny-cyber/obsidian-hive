@@ -7,11 +7,8 @@ Created on Wed Apr 15 08:37:54 2026
 """
 
 
-import os
-import sys
 from pathlib import Path
 from typing import Optional, Union
-
 from modules_utils.logger import (
     get_logger as _get_logger,
     setup_logger as _setup_logger,
@@ -149,7 +146,7 @@ __all__ = [
 if __name__ == "__main__":
     # Tester le logger ids_ips
     logger = get_logger()
-    logger.print("Démarrage de ids_ips")
+    logger.info("Démarrage de ids_ips")
     logger.info("ids_ips initialisé")
     logger.setup(level='DEBUG')
     logger.debug("Mode debug activé")

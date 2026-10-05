@@ -14,9 +14,6 @@ et la résolution DNS avec cache borné (resolve_hostname).
 """
 
 import os
-import sys
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
-
 import json
 import time
 import dpkt
@@ -28,7 +25,10 @@ import numpy as np
 from datetime import datetime
 from collections import deque
 from ids_ips_ia.models.models import Models
+from ids_ips_ia.ids_ips_utils.logger import get_logger
 from ids_ips_ia.ids_ips_utils.suricata_integration import IPS
+from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
+from ids_ips_ia.detection.resolve_hostname import resolve_hostname
 from ids_ips_ia.reaction.reaction_module import React, GeoLocator
 from ids_ips_ia.ids_ips_utils.mail_sms_sender import Text
 from ids_ips_ia.config.config_ids import (
@@ -38,9 +38,6 @@ from ids_ips_ia.config.config_ids import (
     ANOMALY_RATE_THRESHOLDS_KEY,
     DECAY_CONFIG_KEY, DANGEROUS_LOCALISATION_KEY, SEQ_LENGTH
 )
-from ids_ips_ia.ids_ips_utils.logger import get_logger
-from ids_ips_ia.ids_ips_utils.instance_id import INSTANCE_SUFFIX
-
 try:
     from ids_ips_ia.detection._cython_module.calculate_ip_score_anomaly_cython import calculate_ip_score_anomaly_cython
     _USE_CYTHON = True
@@ -65,35 +62,6 @@ ip_score_dir = os.path.join(locator_dir, 'historique_score')
 os.makedirs(locator_dir, exist_ok=True)
 os.makedirs(ip_score_dir, exist_ok=True)
 
-_hostname_cache: dict[str, str] = {}
-_HOSTNAME_CACHE_MAXSIZE = 500
-
-
-async def resolve_hostname(ip: str) -> str:
-    """Essaie de résoudre le nom d'hôte d'une IP (avec cache borné, FIFO)"""
-    if not ip or ip in ("0.0.0.0", "127.0.0.1", "::", "::1"):
-        return "local"
-    
-    if ip in _hostname_cache:
-        return _hostname_cache[ip]
-
-    is_resolved = False
-    try:
-        result = asyncio.to_thread(socket.gethostbyaddr, ip)
-        result = await asyncio.wait_for(result, 0.0001)
-        value = result[0]
-        is_resolved = True
-    except Exception:
-        value = "non-résolu"
-
-    if len(_hostname_cache) >= _HOSTNAME_CACHE_MAXSIZE:
-        oldest_ip = next(iter(_hostname_cache))
-        del _hostname_cache[oldest_ip]
-
-    if is_resolved:
-        _hostname_cache[ip] = value
-    return value
-
 
 class TextMonitor:
     def __init__(self, window_size=60):
@@ -107,14 +75,14 @@ class TextMonitor:
         avg_score = sum(self.scores) / len(self.scores) if self.scores else 0
         recent_alerts = list(self.actions)[-5:]
 
-        logger.print(f"\n \n \n {'='*150}")
-        logger.print(f"🕒  Date : {time.ctime()}")
-        logger.print(f"🕒 {time.strftime('%H:%M:%S %d/%m/%Y')} | IP: {ip}")
-        logger.print(f"📊 Score: {score:.1f} | Moyenne: {avg_score:.1f}")
-        logger.print(f"🚨 Action: {action}")
-        logger.print(f"📈 Récent: {', '.join(recent_alerts[-3:])}")
-        logger.print(f"{'='*150}")
-        logger.print('\n \n \n')
+        logger.info(f"\n \n \n {'='*150}")
+        logger.info(f"🕒  Date : {time.ctime()}")
+        logger.info(f"🕒 {time.strftime('%H:%M:%S %d/%m/%Y')} | IP: {ip}")
+        logger.info(f"📊 Score: {score:.1f} | Moyenne: {avg_score:.1f}")
+        logger.info(f"🚨 Action: {action}")
+        logger.info(f"📈 Récent: {', '.join(recent_alerts[-3:])}")
+        logger.info(f"{'='*150}")
+        logger.info('\n \n \n')
 
 class BoundedIPStore:
     """
@@ -216,7 +184,7 @@ class AnomalyScorer:
             )
         ) # {ip: {'events': [...], 'last_update': time, 'escalation_level': 0}}
 
-        logger.print(f"AnomalyScorer initialisé avec dossier de scores ip à : {self.ip_score_dir}")
+        logger.info(f"AnomalyScorer initialisé avec dossier de scores ip à : {self.ip_score_dir}")
     
     def clear(self,):
         self.cleanup_stale_data()
@@ -226,11 +194,11 @@ class AnomalyScorer:
         try:
             joblib.dump(value, filename, compress=5)
             os.chmod(filename, 0o644)
-            logger.print(f'Fichier sauvegarder dans : {filename}')
+            logger.info(f'Fichier sauvegarder dans : {filename}')
             try:
                 with open(filename.replace('.pkl', '.json'), 'w', encoding='utf-8') as f:
                     json.dump(value, f, indent=4, ensure_ascii=False)
-                logger.print(f"Fichier sauvegarder aussi dans : {filename.replace('.pkl', '.json')}")
+                logger.info(f"Fichier sauvegarder aussi dans : {filename.replace('.pkl', '.json')}")
                 os.chmod(filename.replace('.pkl', '.json'), 0o644)
             except Exception:
                 pass
@@ -238,31 +206,31 @@ class AnomalyScorer:
             return True
 
         except Exception as e:
-            logger.print("Erreur lors de la sauvegarde du fichier historique : ", e)
+            logger.error("Erreur lors de la sauvegarde du fichier historique : ", e)
             return False
 
     def save_whitelist(self, filename, value):
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
-            logger.print('Fichier sauvegarder dans : ', filename)
+            logger.info('Fichier sauvegarder dans : ', filename)
             os.chmod(filename, 0o644)
             return True
 
         except Exception as e:
-            logger.print("Erreur lors de la sauvegarde du fichier whitelist : ", e)
+            logger.error("Erreur lors de la sauvegarde du fichier whitelist : ", e)
             return False
 
     def load(self, filename):
         try:
             import joblib
             data = joblib.load(filename)
-            logger.print('Fichier chargé depuis : ', filename, "avec ", len(data), 'entrées !')
+            logger.info('Fichier chargé depuis : ', filename, "avec ", len(data), 'entrées !')
             self.blocked_for = data if isinstance(data, dict) else {}
             return True
 
         except Exception as e:
-            logger.print("Erreur lord du chargement du fichier historique : ", e)
+            logger.error("Erreur lord du chargement du fichier historique : ", e)
             return False
 
     def save_atexit(self):
@@ -270,7 +238,7 @@ class AnomalyScorer:
 
         def _save():
             self.save(self.ip_score_dir, self.ip_data.to_dict())
-            logger.print('Fin sauvegarde !')
+            logger.info('Fin sauvegarde !')
         atexit.register(_save)
 
     def _get_ip(self, pkt: dpkt.ethernet.Ethernet, with_dst: bool = False):
@@ -290,7 +258,7 @@ class AnomalyScorer:
                     dst = socket.inet_ntoa(ip.dst)
                     return (src, dst) if with_dst else src
                 except Exception as e:
-                    logger.print(f"Erreur IPv4 extraction: {e}")
+                    logger.error(f"Erreur IPv4 extraction: {e}")
                     return ("0.0.0.0", "0.0.0.0") if with_dst else "0.0.0.0"
 
             elif isinstance(ip, dpkt.ip6.IP6):
@@ -299,13 +267,13 @@ class AnomalyScorer:
                     dst = socket.inet_ntop(socket.AF_INET6, ip.dst)
                     return (src, dst) if with_dst else src
                 except Exception as e:
-                    logger.print(f"Erreur IPv6 extraction: {e}")
+                    logger.error(f"Erreur IPv6 extraction: {e}")
                     return ("::", "::") if with_dst else "::"
             else:
                 return ("0.0.0.0", "0.0.0.0") if with_dst else "0.0.0.0"
 
         except Exception as e:
-            logger.print(f"Erreur _get_ip globale: {e}")
+            logger.error(f"Erreur _get_ip globale: {e}")
             return ("0.0.0.0", "0.0.0.0") if with_dst else "0.0.0.0"
 
     def _get_port(self, pkt: dpkt.ethernet.Ethernet):
@@ -330,7 +298,7 @@ class AnomalyScorer:
                 return None
 
         except Exception as e:
-            logger.print(f"Erreur _get_port: {e}")
+            logger.error(f"Erreur _get_port: {e}")
             return None
 
     async def get_ia_preds_pkt(self, features: dict | np.ndarray, models: dict, Model: Models, how, *args, **kwargs):
@@ -534,7 +502,7 @@ class AnomalyScorer:
         {json.dumps(self.ip_data[ip], indent=2)}
         """
         if show:
-            logger.print(message)
+            logger.info(message)
         return message
 
     def get_default(self, ip):
@@ -677,7 +645,7 @@ class AnomalyScorer:
 
         else:
             multiplier = 2.5
-            logger.print(f"🔴🔴🔴 ATTAQUE COORDONNÉE: {ip} ({num_events} anomalies)")
+            logger.info(f"🔴🔴🔴 ATTAQUE COORDONNÉE: {ip} ({num_events} anomalies)")
 
         return multiplier
 
@@ -735,15 +703,15 @@ class AnomalyScorer:
                     detection_details.append(f"JITTER FAIBLE: ratio={jitter_ratio:.3f}")
 
         if beaconing_score >= 50:
-            logger.print(f"🚨 BEACONING C2 DÉTECTÉ sur {ip}")
-            logger.print(f"   Score beaconing : {beaconing_score}")
+            logger.error(f"🚨 BEACONING C2 DÉTECTÉ sur {ip}")
+            logger.info(f"   Score beaconing : {beaconing_score}")
             for detail in detection_details:
-                logger.print(f"   - {detail}")
-            logger.print(f"   Total événements analysés : {len(recent_events)}")
+                logger.info(f"   - {detail}")
+            logger.info(f"   Total événements analysés : {len(recent_events)}")
             return min(beaconing_score, 100)
 
         elif beaconing_score >= 30:
-            logger.print(f"⚠️ BEACONING POTENTIEL sur {ip} (score={beaconing_score})")
+            logger.warning(f"⚠️ BEACONING POTENTIEL sur {ip} (score={beaconing_score})")
             return beaconing_score
 
         return 0
@@ -780,7 +748,7 @@ class AnomalyScorer:
         if any(
             ip in ('::', '0.0.0.0', '255.255.255.255') or (ip and ip.startswith('ff')) for ip in (src, dst) if ip
         ):
-            logger.print(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
+            logger.warning(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
             return
         
         block_input_has_been_none = block_input is None
@@ -803,26 +771,26 @@ class AnomalyScorer:
             target_ip = src if block_input else dst # Si entrant bloquer la source, sinon la destination
             
         if not target_ip:
-            logger.print(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target_ip}")
+            logger.warning(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target_ip}")
             return
             
         if target_ip in self.React.whitelist:
-            logger.print(f"✅ {target_ip} - Whitelistée, aucune action")
+            logger.success(f"✅ {target_ip} - Whitelistée, aucune action")
             return
 
         action_type = decision.get('action', 'log_only')
         duration = decision.get('duration', 3600)
-
+        msg = ""
         if action_type == 'log_only':
             score = decision.get('score', 0)
-            logger.print(f"📊 {target_ip} - Score {score} - Surveillance ({direction})")
+            msg = f"📊 {target_ip} - Score {score} - Surveillance ({direction})"
 
         elif action_type == 'rate_limit':
             self.React.block(
                 ip=target_ip, rule="rate_limit", input=block_input,
                 timeout=duration, unit="s", nowait=True
             )
-            logger.print(f"🐌 {target_ip} - Nombre de connexion limitée ({direction})")
+            msg = f"🐌 {target_ip} - Nombre de connexion limitée ({direction})"
             self.make_blocked(target_ip)
 
         elif action_type == 'rate_limit_data':
@@ -830,9 +798,9 @@ class AnomalyScorer:
                 ip=target_ip, rule="rate_limit_data", input=block_input, 
                 timeout=duration, unit="s", nowait=True
             )
-            logger.print(f"🐌 {target_ip} - Bande passante limitée ({direction})")
+            logger.info(f"🐌 {target_ip} - Bande passante limitée ({direction})")
             if target_ip in self.ip_data:
-                logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+                msg = "\n" + json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False)
             self.make_blocked(target_ip)
 
         elif action_type == 'block_temp':
@@ -841,20 +809,23 @@ class AnomalyScorer:
                 timeout=duration, unit="s", nowait=True
             )
             self.make_blocked(target_ip)
-            logger.print(f"🔒 {target_ip} - Bloqué temporairement ({duration}s, {direction})")
+            logger.info(f"🔒 {target_ip} - Bloqué temporairement ({duration}s, {direction})")
             if target_ip in self.ip_data:
-                logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+                msg = "\n" + json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False)
 
         elif action_type == 'block_perm':
             self.React.block(
                 ip=target_ip, rule="drop", input=block_input,
                 timeout=float("inf"), nowait=True
             )
-            logger.print(f"🚨 {target_ip} - BLOQUÉ DÉFINITIVEMENT ({direction})")
+            logger.error(f"🚨 {target_ip} - BLOQUÉ DÉFINITIVEMENT ({direction})")
             if target_ip in self.ip_data:
-                logger.print("\n", json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False))
+                msg = "\n" + json.dumps(self.ip_data[target_ip], indent=2, ensure_ascii=False)
             self.make_blocked(target_ip)
-
+        
+        if msg:
+            logger.info(msg)
+        
     async def detect_pkt(
         self,
         pkt,
@@ -876,7 +847,7 @@ class AnomalyScorer:
         src, dst = self._get_ip(pkt, with_dst=True)
         if any(ip in ('::', '0.0.0.0', '255.255.255.255') or (ip and ip.startswith('ff'))
                for ip in (src, dst) if ip):
-            logger.print(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
+            logger.warning(f"⚠️ IP spéciale ignorée : src={src}, dst={dst}")
             return 0.0
         
         src_is_local = src in IPS if src else False
@@ -884,11 +855,11 @@ class AnomalyScorer:
         block_input = False if (src_is_local and not dst_is_local) else True
         target = src if block_input else dst # Si entrant bloquer la source, sinon la destination
         if not target:
-            logger.print(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target}")
+            logger.warning(f"⚠️ Pas d'IP spéciale ignorée : src={src}, dst={dst}, target={target}")
             return
         
         if target in self.React.whitelist:
-            logger.print("Ip présente dans whitelist !")
+            logger.info("Ip présente dans whitelist !")
             return 0.0
 
         if ia_preds is None:
@@ -909,9 +880,9 @@ class AnomalyScorer:
         if multiplier > 1.0:
             score_dangerous_correlated = min(score_dangerous * multiplier, 300)
 
-            logger.print(f"📊 CORRÉLATION DÉTECTÉE: {target} ")
-            logger.print(f"Score {score_dangerous:.0f} → {score_dangerous_correlated:.0f} ")
-            logger.print(f"(×{multiplier:.1f})")
+            logger.info(f"📊 CORRÉLATION DÉTECTÉE: {target} ")
+            logger.info(f"Score {score_dangerous:.0f} → {score_dangerous_correlated:.0f} ")
+            logger.info(f"(×{multiplier:.1f})")
 
             score_dangerous = score_dangerous_correlated
 
@@ -925,14 +896,14 @@ class AnomalyScorer:
 
         type_detect = "SÉQUENCE" if seq_anomaly else "PAQUET"
 
-        logger.print(f"[{type_detect}] {target} - Score: {score_dangerous} - {decision.get('level', 'log_only')}")
+        logger.info(f"[{type_detect}] {target} - Score: {score_dangerous} - {decision.get('level', 'log_only')}")
 
         self.TextMonitor.update(score_dangerous, action=decision.get('level', 'log_only'), ip=target)
 
         if mode == 'ips':
             await asyncio.to_thread(self.action, src, dst, target, decision, block_input=block_input)
         else:
-            logger.print(f"[MODE IDS] Aurait exécuté: {decision}")
+            logger.info(f"[MODE IDS] Aurait exécuté: {decision}")
 
         t = time.time()
         if t - self.last_save >= self.save_interval:

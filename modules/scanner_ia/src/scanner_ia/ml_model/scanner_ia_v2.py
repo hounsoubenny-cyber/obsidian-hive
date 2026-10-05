@@ -14,8 +14,6 @@ import pandas as pd
 import numpy as np
 from scanner_ia.ml_model.datamanager import DataManager, _DEFAULT_TARGET_FUNC
 from scanner_ia.ml_model.modelmanager import ModelManager
-
-# from loguru import logger as scanner_ia_logger
 from scanner_ia.scanner_utils.logger import get_logger
 scanner_ia_logger = get_logger()
 

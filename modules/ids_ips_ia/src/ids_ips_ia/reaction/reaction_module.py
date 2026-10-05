@@ -69,30 +69,30 @@ def clear_sets(set_name: list | str = None):
         if isinstance(set_name, str):
             set_name = [set_name]
         if set_name is None:
-            logger.print("Aucun set !!")
+            logger.info("Aucun set !!")
             return
         
-        logger.print('Sets entrés par l\'user : ', set_name)
+        logger.info('Sets entrés par l\'user : ', set_name)
         r = subprocess.run(['sudo', 'nft', 'list', 'sets'], capture_output=True, text=True, check=False)
-        logger.print("[AVANT] Set et tables existants : \n", r.stdout[:100], "\n...")
+        logger.info("[AVANT] Set et tables existants : \n", r.stdout[:100], "\n...")
         for s in set_name:
             try:
                 cmd = f'sudo nft flush set inet {NFT_TABLE_NAME} {s}'
                 r = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False, timeout=NFT_CMD_TIMEOUT)
-                logger.print(f'Set {s}: ', 'succès' if r.returncode == 0 else 'échec')
+                logger.success(f'Set {s}: ', 'succès' if r.returncode == 0 else 'échec')
                 if r.stderr:
-                    logger.print("Stderr : ", r.stderr, '\nStdout : ', r.stdout)
+                    logger.info("Stderr : ", r.stderr, '\nStdout : ', r.stdout)
                 trys.append(r)
             except subprocess.TimeoutExpired:
-                logger.print(f"⏱️ Timeout sur le flush de {s}, on passe au suivant")
+                logger.info(f"⏱️ Timeout sur le flush de {s}, on passe au suivant")
                 continue
             except Exception:
                 pass
             
         r = subprocess.run(['sudo', 'nft', 'list', 'sets'], capture_output=True, text=True, check=False)
-        logger.print("[APRÈS] Set et tables existants : \n", r.stdout[:100], "\n...")
+        logger.info("[APRÈS] Set et tables existants : \n", r.stdout[:100], "\n...")
     except Exception as e:
-        logger.print(f"❌ Erreur vidage des sets : {e}")
+        logger.error(f"❌ Erreur vidage des sets : {e}")
     
     return any(f.returncode == 0 for f in trys)
 
@@ -195,7 +195,7 @@ class React:
         self._nft_lib_available = False
         if _nftables_module is not None:
             if not _has_net_admin_capability():
-                logger.print(
+                logger.warning(
                     "⚠️ python-nftables détecté mais pas root ni CAP_NET_ADMIN : "
                     "la lib nftables in-process nécessite root ou "
                     "AmbientCapabilities=CAP_NET_ADMIN (ex: via systemd). "
@@ -206,11 +206,11 @@ class React:
                     self._nft = _nftables_module.Nftables()
                     self._nft.set_json_output(False)
                     self._nft_lib_available = True
-                    logger.print("✅ Backend nftables : lib python-nftables (in-process)")
+                    logger.success("✅ Backend nftables : lib python-nftables (in-process)")
                 except Exception as e:
-                    logger.print(f"⚠️ Échec init python-nftables ({e}), fallback subprocess")
+                    logger.error(f"⚠️ Échec init python-nftables ({e}), fallback subprocess")
         if not self._nft_lib_available:
-            logger.print("ℹ️ Backend nftables : subprocess (fallback)")
+            logger.info("ℹ️ Backend nftables : subprocess (fallback)")
         self.set_names = [
             # INPUT IPv4
             "blacklist_input_ip4", 
@@ -292,37 +292,37 @@ class React:
         if self._nft_lib_available and is_nft_cmd:
             cmdline = self._to_nft_cmdline(cmd, shell)
             if success_msg:
-                logger.print(f"  {success_msg}")
+                logger.info(f"  {success_msg}")
             else:
-                logger.print(f"  ▶ {cmdline[:50]}...")
+                logger.info(f"  ▶ {cmdline[:50]}...")
             try:
                 with self._nft_lock:
                     rc, output, error = self._nft.cmd(cmdline)
                 output = output or ""
                 error = error or ""
-                logger.print("Cmd : ", cmdline)
+                logger.info("Cmd : ", cmdline)
                 if rc == 0:
                     if output:
-                        logger.print(f"    ✓ Stdout: {output.strip()[:300]}")
+                        logger.info(f"    ✓ Stdout: {output.strip()[:300]}")
                 else:
                     if "interval overlaps with an existing one" not in error:
                         if error_msg:
-                            logger.print(f"    ❌ {error_msg}")
+                            logger.error(f"    ❌ {error_msg}")
                         if error:
-                            logger.print(f"    ⚠️ Stderr: {error.strip()[:200]}")
+                            logger.warning(f"    ⚠️ Stderr: {error.strip()[:200]}")
                 r = subprocess.CompletedProcess(args=cmdline, returncode=rc, stdout=output, stderr=error)
                 if check and rc != 0:
                     raise subprocess.CalledProcessError(rc, cmdline, output=output, stderr=error)
                 return r
             except subprocess.CalledProcessError as e:
-                logger.print(f"    ❌ Échec (code {e.returncode})")
+                logger.error(f"    ❌ Échec (code {e.returncode})")
                 if e.stderr:
-                    logger.print(f"    ⚠️ Stderr: {e.stderr.strip()[:200]}")
+                    logger.warning(f"    ⚠️ Stderr: {e.stderr.strip()[:200]}")
                 if check:
                     raise
                 return None
             except Exception as e:
-                logger.print(f"    ❌ Exception: {e}")
+                logger.error(f"    ❌ Exception: {e}")
                 if check:
                     raise
                 return None
@@ -346,9 +346,9 @@ class React:
         
         cmd_display = cmd if isinstance(cmd, str) else ' '.join(cmd[:5])
         if success_msg:
-            logger.print(f"  {success_msg}")
+            logger.info(f"  {success_msg}")
         else:
-            logger.print(f"  ▶ {' '.join(cmd[:5]) if isinstance(cmd, list) else cmd[:50]}...")
+            logger.info(f"  ▶ {' '.join(cmd[:5]) if isinstance(cmd, list) else cmd[:50]}...")
         
         try:
             if capture:
@@ -356,30 +356,30 @@ class React:
             else:
                 r = subprocess.run(cmd, shell=shell, check=check)
             
-            logger.print("Cmd : ", cmd_display)
+            logger.info("Cmd : ", cmd_display)
             if capture:
                 if r.returncode == 0:
                     if r.stdout:
-                        logger.print(f"    ✓ Stdout: {r.stdout.strip()[:300]}")
+                        logger.info(f"    ✓ Stdout: {r.stdout.strip()[:300]}")
                 else:
                     if not "interval overlaps with an existing one" in r.stderr:
                         if error_msg:
-                            logger.print(f"    ❌ {error_msg}")
+                            logger.error(f"    ❌ {error_msg}")
                         if r.stderr:
-                            logger.print(f"    ⚠️ Stderr: {r.stderr.strip()[:200]}")
+                            logger.warning(f"    ⚠️ Stderr: {r.stderr.strip()[:200]}")
             
             return r
             
         except subprocess.CalledProcessError as e:
-            logger.print(f"    ❌ Échec (code {e.returncode})")
+            logger.error(f"    ❌ Échec (code {e.returncode})")
             if e.stderr:
-                logger.print(f"    ⚠️ Stderr: {e.stderr.strip()[:200]}")
+                logger.warning(f"    ⚠️ Stderr: {e.stderr.strip()[:200]}")
             if check:
                 raise
             return None
         
         except Exception as e:
-            logger.print(f"    ❌ Exception: {e}")
+            logger.error(f"    ❌ Exception: {e}")
             if check:
                 raise
             return None
@@ -400,17 +400,17 @@ class React:
                     
                 self._run_command(cmd, shell=True, success_msg="Permissions réduites")
         except Exception as e:
-            logger.print(f"Erreur dans le changement des permissions : {str(e)}")
+            logger.error(f"Erreur dans le changement des permissions : {str(e)}")
 
     def save_history(self, filename: str, value: dict) -> bool:
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
             os.chmod(filename, 0o644)
-            logger.print(f'Fichier historique sauvegardé dans : {filename} ({len(value)} entrées)')
+            logger.info(f'Fichier historique sauvegardé dans : {filename} ({len(value)} entrées)')
             return True
         except Exception as e:
-            logger.print(f"Erreur lors de la sauvegarde du fichier historique : {str(e)}")
+            logger.error(f"Erreur lors de la sauvegarde du fichier historique : {str(e)}")
             return False
 
     def load_whitelist(self, filename: str):
@@ -419,13 +419,13 @@ class React:
                 with open(filename, 'r', encoding='utf-8') as f:
                     whitelist = json.load(f)
                 
-                logger.print(f'Fichier whitelist chargé depuis : {filename}')
+                logger.info(f'Fichier whitelist chargé depuis : {filename}')
                 return whitelist
             except Exception as e:
-                logger.print(f"Erreur lors du chargement du fichier whitelist : {str(e)}")
+                logger.error(f"Erreur lors du chargement du fichier whitelist : {str(e)}")
                 return []
         else:
-            logger.print(f"Fichier inexistant: {filename}")
+            logger.info(f"Fichier inexistant: {filename}")
             return []
     
     def save_whitelist(self, filename, value):
@@ -438,10 +438,10 @@ class React:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(value, f, indent=4, ensure_ascii=False)
             os.chmod(filename, 0o644)
-            logger.print(f'Fichier whitelist sauvegardé dans : {filename}')
+            logger.info(f'Fichier whitelist sauvegardé dans : {filename}')
             return True
         except Exception as e:
-            logger.print(f"Erreur lors de la sauvegarde du fichier whitelist : {str(e)}")
+            logger.error(f"Erreur lors de la sauvegarde du fichier whitelist : {str(e)}")
             return False
 
     def load_history(self, filename):
@@ -449,15 +449,15 @@ class React:
             try:
                 with open(filename, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                logger.print(f'Fichier chargé depuis : {filename} avec {len(data)} entrées !')
+                logger.info(f'Fichier chargé depuis : {filename} avec {len(data)} entrées !')
                 self.blocked = data if isinstance(data, dict) else {}
                 return True
             except Exception as e:
-                logger.print(f"Erreur lors du chargement du fichier historique : {str(e)}")
+                logger.error(f"Erreur lors du chargement du fichier historique : {str(e)}")
                 return False
         
         else:
-            logger.print(f"Fichier inexistant: {filename}")
+            logger.info(f"Fichier inexistant: {filename}")
             return False
 
     @staticmethod
@@ -478,7 +478,7 @@ class React:
     # CONFIGURATION NFTABLES
     # =========================================================================
     def _setup_nftables(self):
-        logger.print("🔧 Configuration NFTables...")
+        logger.info("🔧 Configuration NFTables...")
         white_ip4 = [ip for ip in self.whitelist if self.get_ip_type(ip) == "ip4"]
         white_ip6 = [ip for ip in self.whitelist if self.get_ip_type(ip) == "ip6"]
         
@@ -660,7 +660,7 @@ class React:
                         table=NFT_TABLE_NAME, 
                         run_cmd=self._run_command,
                         on_blocked=self._record_blocked,
-                        on_warning=logger.print,
+                        on_warning=logger.warning,
                         flush_interval=0.03,
                         queue_max=1_000_000   # Eviter de rater des blocage, catastrophique, mais eviter de OOM la ram -> échec
                     )
@@ -847,7 +847,7 @@ class React:
         """
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
-            logger.print(f"❌ Format d'IP invalide : {ip}")
+            logger.error(f"❌ Format d'IP invalide : {ip}")
             return False
     
         set_name = f"whitelist_{ip_type}"
@@ -855,7 +855,7 @@ class React:
 
         try:
             self._run_command(cmd, check=True)
-            logger.print(f"✅ {ip} ajouté à la whitelist ({set_name})")
+            logger.success(f"✅ {ip} ajouté à la whitelist ({set_name})")
             
             if ip not in self.whitelist:
                 self.whitelist.append(ip)
@@ -866,7 +866,7 @@ class React:
                     
             return True
         except subprocess.CalledProcessError as e:
-            logger.print(f"❌ Échec ajout whitelist : {e.stderr}")
+            logger.error(f"❌ Échec ajout whitelist : {e.stderr}")
             return False
     
     def remove_from_whitelist(self, ip: str) -> bool:
@@ -875,7 +875,7 @@ class React:
         """
         ip_type = self.get_ip_type(ip)
         if ip_type == "error":
-            logger.print(f"❌ Format d'IP invalide : {ip}")
+            logger.error(f"❌ Format d'IP invalide : {ip}")
             return False
     
         set_name = f"whitelist_{ip_type}"
@@ -883,7 +883,7 @@ class React:
 
         try:
             self._run_command(cmd, check=True)
-            logger.print(f"✅ {ip} retiré de la whitelist ({set_name})")
+            logger.success(f"✅ {ip} retiré de la whitelist ({set_name})")
             
             if ip in self.whitelist:
                 self.whitelist.remove(ip)
@@ -894,7 +894,7 @@ class React:
                     
             return True
         except subprocess.CalledProcessError as e:
-            logger.print(f"❌ Échec suppression whitelist : {e.stderr}")
+            logger.error(f"❌ Échec suppression whitelist : {e.stderr}")
             return False
     
     # =========================================================================
@@ -903,12 +903,12 @@ class React:
     def _sig_manager(self, *args, **kwargs):
         self.save_history(self.history_path, self.blocked)
         self.save_whitelist(self.whitelist_filename, self.whitelist)
-        logger.print('Fin sauvegarde !')
+        logger.info('Fin sauvegarde !')
         if self.clear_sets_at_exit:
             self.clear_sets(self.set_names)
         elif self.unlock_at_exit:
             for data in list(self.blocked.values()):
-                logger.print("Déblocage de l'ip :", data["ip"])
+                logger.info("Déblocage de l'ip :", data["ip"])
                 self.unlock(**data)
         else:
             self.save_nft_conf()
@@ -925,31 +925,31 @@ class React:
 
 
 if __name__ == "__main__":
-    logger.print("=" * 60)
-    logger.print("🧪 TEST DU MODULE REACT (IDS/IPS NFTables)")
-    logger.print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🧪 TEST DU MODULE REACT (IDS/IPS NFTables)")
+    logger.info("=" * 60)
     
     # 1. Test GeoLocator
-    logger.print("\n📍 TEST GeoLocator...")
+    logger.info("\n📍 TEST GeoLocator...")
     geo = GeoLocator()
     test_ips = ["8.8.8.8", "1.1.1.1", "203.0.113.1"]
     for ip in test_ips:
         country = geo.locate(ip)
         is_susp = geo.is_suspicious(ip)
-        logger.print(f"  IP: {ip:15} → Pays: {country:2} | Suspect: {is_susp}")
+        logger.info(f"  IP: {ip:15} → Pays: {country:2} | Suspect: {is_susp}")
     
     # 2. Test get_ip_type
-    logger.print("\n🔍 TEST get_ip_type...")
+    logger.info("\n🔍 TEST get_ip_type...")
     test_ips = ["192.168.1.1", "2001:db8::1", "invalid_ip"]
     for ip in test_ips:
         ip_type = React.get_ip_type(ip)
-        logger.print(f"  IP: {ip:20} → Type: {ip_type}")
+        logger.info(f"  IP: {ip:20} → Type: {ip_type}")
     
     # 3. Whitelist de test
     whitelist = ["127.0.0.1", "::1", "192.168.1.0/24"]
     
     # 4. Initialisation de React
-    logger.print("\n🚀 INITIALISATION DE REACT...")
+    logger.info("\n🚀 INITIALISATION DE REACT...")
     react = React(
         whitelist=whitelist,
         history_filename="test_history.json",
@@ -959,7 +959,7 @@ if __name__ == "__main__":
     )
     
     # 5. Test de blocage
-    logger.print("\n🚫 TEST BLOCAGE...")
+    logger.info("\n🚫 TEST BLOCAGE...")
     test_block_ips = [
         ("192.0.2.1", "drop", True, 5),
         ("198.51.100.1", "rate_limit", True, 10),
@@ -968,61 +968,61 @@ if __name__ == "__main__":
     ]
     
     for ip, rule, input_dir, timeout in test_block_ips:
-        logger.print(f"\n  Blocage de {ip} ({rule}, input={input_dir}, timeout={timeout}m)...")
+        logger.info(f"\n  Blocage de {ip} ({rule}, input={input_dir}, timeout={timeout}m)...")
         success = react.block(ip, rule=rule, input=input_dir, timeout=timeout, unit="m")
-        logger.print(f"  → {'✅ Succès' if success else '❌ Échec'}")
+        logger.success(f"  → {'✅ Succès' if success else '❌ Échec'}")
     
     # 6. Afficher l'état interne
-    logger.print("\n📊 ÉTAT INTERNE (self.blocked)...")
+    logger.info("\n📊 ÉTAT INTERNE (self.blocked)...")
     for ip, data in react.blocked.items():
-        logger.print(f"  {ip}: {data}")
+        logger.info(f"  {ip}: {data}")
     
     # 7. Test de déblocage
-    logger.print("\n🔓 TEST DÉBLOCAGE...")
+    logger.info("\n🔓 TEST DÉBLOCAGE...")
     if test_block_ips:
         ip, rule, input_dir, _ = test_block_ips[0]
-        logger.print(f"\n  Déblocage de {ip}...")
+        logger.info(f"\n  Déblocage de {ip}...")
         success = react.unlock(ip, rule=rule, input=input_dir)
-        logger.print(f"  → {'✅ Succès' if success else '❌ Échec'}")
+        logger.success(f"  → {'✅ Succès' if success else '❌ Échec'}")
     
     # 8. Lister les règles nftables actuelles
-    logger.print("\n📋 RÈGLES NFTABLES ACTUELLES...")
+    logger.info("\n📋 RÈGLES NFTABLES ACTUELLES...")
     try:
         cmd = ["sudo", "nft", "list", "table", "inet", NFT_TABLE_NAME] if os.geteuid() != 0 else ["nft", "list", "table", "inet", NFT_TABLE_NAME]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode == 0:
             lines = r.stdout.split("\n")[:30]
             for line in lines:
-                logger.print(f"  {line}")
+                logger.info(f"  {line}")
             if len(r.stdout.split("\n")) > 30:
-                logger.print("  ... (tronqué)")
+                logger.info("  ... (tronqué)")
         else:
-            logger.print("  ⚠️ Table non trouvée")
+            logger.warning("  ⚠️ Table non trouvée")
     except Exception as e:
-        logger.print(f"  ⚠️ {e}")
+        logger.warning(f"  ⚠️ {e}")
     
     # 9. Test save_nft_conf
-    logger.print("\n💾 TEST SAVE_NFT_CONF...")
+    logger.info("\n💾 TEST SAVE_NFT_CONF...")
     success = react.save_nft_conf()
-    logger.print(f"  → {'✅ Sauvegarde réussie' if success else '❌ Échec'}")
-    logger.print(f"  Fichier: {react.nft_path}")
-    logger.print(f"  État: {react.nft_state_path}")
+    logger.error(f"  → {'✅ Sauvegarde réussie' if success else '❌ Échec'}")
+    logger.info(f"  Fichier: {react.nft_path}")
+    logger.info(f"  État: {react.nft_state_path}")
     
     # 10. Vérifier le contenu du fichier de conf
     if os.path.exists(react.nft_path):
-        logger.print("\n📄 CONTENU DU FICHIER DE CONF (extrait)...")
+        logger.info("\n📄 CONTENU DU FICHIER DE CONF (extrait)...")
         with open(react.nft_path, "r") as f:
             lines = f.readlines()[:20]
             for line in lines:
-                logger.print(f"  {line.rstrip()}")
+                logger.info(f"  {line.rstrip()}")
     
-    logger.print(f"\n  Blocked après chargement: {len(react.blocked)} entrées")
+    logger.info(f"\n  Blocked après chargement: {len(react.blocked)} entrées")
     
-    logger.print("\n" + "=" * 60)
-    logger.print("✅ TESTS TERMINÉS")
-    logger.print("=" * 60)
-    logger.print("\n📁 Fichiers créés :")
-    logger.print(f"  - Conf NFT    : {react.nft_path}")
-    logger.print(f"  - État NFT    : {react.nft_state_path}")
-    logger.print(f"  - Historique  : {react.history_path}")
-    logger.print("\n⚠️ Pensez à nettoyer avec : sudo nft delete table inet", NFT_TABLE_NAME)
+    logger.info("\n" + "=" * 60)
+    logger.success("✅ TESTS TERMINÉS")
+    logger.info("=" * 60)
+    logger.info("\n📁 Fichiers créés :")
+    logger.info(f"  - Conf NFT    : {react.nft_path}")
+    logger.info(f"  - État NFT    : {react.nft_state_path}")
+    logger.info(f"  - Historique  : {react.history_path}")
+    logger.warning("\n⚠️ Pensez à nettoyer avec : sudo nft delete table inet", NFT_TABLE_NAME)

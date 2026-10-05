@@ -41,7 +41,7 @@ def get_token() -> str:
 async def close_api(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params={"token": TOKEN}) as response:
-            logger.print('Statut : ', response.status)
+            logger.info('Statut : ', response.status)
 
 
 def close_api_atexit(url):
@@ -65,6 +65,6 @@ def start(app, host, port):
 
 
 def stop(th, timeout=5):
-    logger.print('Arrêt des threads...')
+    logger.info('Arrêt des threads...')
     th.join(timeout)
-    logger.print('Threads arrêtés')
+    logger.info('Threads arrêtés')

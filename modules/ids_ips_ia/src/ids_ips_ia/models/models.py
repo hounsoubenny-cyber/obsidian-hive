@@ -714,7 +714,7 @@ class Models:
         study = optuna.create_study(direction='maximize')
         study.optimize(_optimize, n_trials=n_trial, timeout=timeout, n_jobs=-1, show_progress_bar=bool(self.verbose))
         t = time.time() - s
-        logger.print('Optimisation terminé en ', t,' secondes')
+        logger.success('Optimisation terminé en ', t,' secondes')
         if name == 'Local Outlier Factor':
             best_model = classe(**study.best_params, novelty=True, n_jobs=-1)
         else:
@@ -771,9 +771,9 @@ class Models:
         
         try:
             self.plot_history_and_evaluate(cnn_seq, h_cnn, X_seq_test, plot=False,name='CNN sequentiel')
-            logger.print()
+            logger.info()
         except Exception as e:
-            logger.print("Erreur pour ploting de CNN : ",e)
+            logger.error("Erreur pour ploting de CNN : ",e)
 
         # Extraire la mémoire du bottleneck CNN
           #    = sortie de la couche juste avant la MHA encodeur
@@ -794,9 +794,9 @@ class Models:
         )
         try:
             self.plot_history_and_evaluate(ae_seq, h, X_seq_test, plot=False,name='Autoencoder sequentiel', cnn_bottleneck=cnn_bottleneck_model)
-            logger.print()
+            logger.info()
         except Exception as e:
-            logger.print("Erreur pour ploting de ae_seq : ",e)
+            logger.error("Erreur pour ploting de ae_seq : ",e)
         
         X_packets, X_pkt_test = train_test_split(X_packets, test_size=0.1)
         h1 = ae_pkt.fit(
@@ -812,9 +812,9 @@ class Models:
 
         try:
             self.plot_history_and_evaluate(ae_pkt, h1, X_pkt_test, plot=False,name='Autoencoder packet')
-            logger.print()
+            logger.info()
         except Exception as e:
-            logger.print("Erreur pour ploting de ae_pkt : ",e)
+            logger.error("Erreur pour ploting de ae_pkt : ",e)
 
         X_seq_pred = np.asarray(ae_seq.predict([X_sequences, cnn_memory], verbose=verbose))
         X_seq_flat = X_seq_pred.reshape(X_seq_pred.shape[0], -1) # Maintenir le nombre d'element, la premiere dim et transformer en 2D
@@ -845,24 +845,24 @@ class Models:
         X_pkt_pred, X_pkt_test = train_test_split(X_pkt_to_fit, test_size=0.1)
 
         if if_seq is not None:
-            logger.print("Fit du IsolationForest Séquentiel ...")
+            logger.info("Fit du IsolationForest Séquentiel ...")
             opt_if = self.optimize(X=X_seq_flat, n_trial=self.n_trial, classe=IsolationForest, rs=42, name='IsolationForest')
             if_seq = opt_if['best_model']
             if_seq.fit(X_seq_flat, X_seq_flat)
-            logger.print('Meilleur score : ', opt_if['best_score'])
-            logger.print('Meilleur params : ', opt_if['best_params'])
-            logger.print('DataFrame Trial : \n', opt_if['df'])
+            logger.info('Meilleur score : ', opt_if['best_score'])
+            logger.info('Meilleur params : ', opt_if['best_params'])
+            logger.info('DataFrame Trial : \n', opt_if['df'])
             self.evaluate_sklearn(if_seq, X_seq_flat, name='Isolation Forest sequentiel (Train)')
             self.evaluate_sklearn(if_seq, X_seq_flat_test, name='Isolation Forest sequentiel (Test)')
 
         if lof_seq is not None:
-            logger.print('Fit du Local Outlier Factor des séquences ...')
+            logger.info('Fit du Local Outlier Factor des séquences ...')
             opt_lof = self.optimize(X=X_seq_flat, n_trial=self.n_trial, classe=LocalOutlierFactor, name='Local Outlier Factor')
             lof_seq = opt_lof['best_model']
             lof_seq.fit(X_seq_flat, X_seq_flat)
-            logger.print('Meilleur score : ', opt_lof['best_score'])
-            logger.print('Meilleur params : ', opt_lof['best_params'])
-            logger.print('DataFrame Trial : \n', opt_lof['df'])
+            logger.info('Meilleur score : ', opt_lof['best_score'])
+            logger.info('Meilleur params : ', opt_lof['best_params'])
+            logger.info('DataFrame Trial : \n', opt_lof['df'])
 
             self.evaluate_sklearn(lof_seq, X_seq_flat, name='Local Outlier Factor sequentiel (Train)')
             self.evaluate_sklearn(lof_seq, X_seq_flat_test, name='Local Outlier Factor sequentiel (Test)')
@@ -871,23 +871,23 @@ class Models:
         self.accord_models(if_seq, lof_seq, X_seq_flat_test, name1='Isolation Forest (Test)', name2='Local Outlier Factor (Test)')
 
         if if_pkt is not None:
-            logger.print("Fit du IsolationForest des packets...")
+            logger.info("Fit du IsolationForest des packets...")
             opt_if_pkt = self.optimize(X=X_seq_flat, n_trial=self.n_trial, classe=IsolationForest, rs=42, name='IsolationForest')
             if_pkt = opt_if_pkt['best_model'] #or IsolationForest(**opt_if_pkt['best_params'], random_state=42)
-            logger.print('Meilleur score : ', opt_if_pkt['best_score'])
-            logger.print('Meilleur params : ', opt_if_pkt['best_params'])
-            logger.print('DataFrame Trial : \n', opt_if_pkt['df'])
+            logger.info('Meilleur score : ', opt_if_pkt['best_score'])
+            logger.info('Meilleur params : ', opt_if_pkt['best_params'])
+            logger.info('DataFrame Trial : \n', opt_if_pkt['df'])
             if_pkt.fit(X_pkt_pred, X_pkt_pred)
             self.evaluate_sklearn(if_pkt, X_pkt_pred, name='Isolation Forest packet (Train)')
             self.evaluate_sklearn(if_pkt, X_pkt_test, name='Isolation Forest packet (Test)')
         
         if lof_pkt is not None:
-            logger.print("Fit du Local Outlier Factor des packets...")
+            logger.info("Fit du Local Outlier Factor des packets...")
             opt_lof_pkt = self.optimize(X=X_pkt_pred, n_trial=self.n_trial, classe=LocalOutlierFactor, name='Local Outlier Factor')
             lof_pkt = opt_lof_pkt['best_model']
-            logger.print('Meilleur score : ', opt_lof_pkt['best_score'])
-            logger.print('Meilleur params : ', opt_lof_pkt['best_params'])
-            logger.print('DataFrame Trial : \n', opt_lof_pkt['df'])
+            logger.info('Meilleur score : ', opt_lof_pkt['best_score'])
+            logger.info('Meilleur params : ', opt_lof_pkt['best_params'])
+            logger.info('DataFrame Trial : \n', opt_lof_pkt['df'])
             lof_pkt.fit(X_pkt_pred, X_pkt_pred)
             self.evaluate_sklearn(lof_pkt, X_pkt_pred, name='Local Outlier Factor packet (Train)')
             self.evaluate_sklearn(lof_pkt, X_pkt_test, name='Local Outlier Factor packet (Test)')
@@ -924,7 +924,7 @@ class Models:
         self.accord_models(if_pkt, lof_pkt, X_pkt_test, name1='Isolation Forest (Test)', name2='Local Outlier Factor (Test)')
         
         # Crer les graphes
-        logger.print("Création des graphe XLA")
+        logger.info("Création des graphe XLA")
         for b in _BATCH_BUCKETS:
             _predict_ae_pkt(ae_pkt, X_packets[:b])
             cnn_memory_test = _predict_cnn_memory(cnn_bottleneck_model, X_sequences[:b])
@@ -936,7 +936,7 @@ class Models:
         if_seq.set_params(n_jobs=1)
         lof_seq.set_params(n_jobs=1)
         
-        logger.print("Fin de la création !")
+        logger.info("Fin de la création !")
         return ae_seq, cnn_seq, if_seq, lof_seq, ae_pkt, if_pkt, lof_pkt
 
     def _normalize_decision_function(self, if_score: float, lof_score: float, who: str, if_model, lof_model):
@@ -1089,7 +1089,7 @@ class Models:
                return r
 
         except Exception as e:
-            logger.print("Erreur predict_sequence:", e)
+            logger.error("Erreur predict_sequence:", e)
             return 1
 
     async def apredict_sequence(self, *args, **kwargs):
@@ -1121,9 +1121,9 @@ class Models:
                 decision = if_pkt.decision_function(X_pred)[0]
                 decision_lof = lof_pkt.decision_function(X_pred)[0]
                 # normalized = ((decision + 0.5) / 1.5)
-                # # logger.print(normalized)
+                # # logger.info(normalized)
                 # normalized = float(np.clip(normalized, -1, 1))
-                # logger.print(normalized)
+                # logger.info(normalized)
                 return self._normalize_decision_function(decision, decision_lof, who="pkt", if_model=if_pkt, lof_model=lof_pkt)
 
             if method == 'score_sample':
@@ -1135,8 +1135,8 @@ class Models:
                 return -1 if np.any(np.array([if_pkt.predict(X_pred)[0], lof_pkt.predict(X_pred)[0]]) == -1) else 1
 
         except Exception as e:
-            logger.print("Erreur predict_packet:", e)
-            logger.print(traceback.format_exc())
+            logger.error("Erreur predict_packet:", e)
+            logger.error(traceback.format_exc())
             return 1
     
     async def apredict_packet(self, *args, **kwargs):
@@ -1235,8 +1235,8 @@ class Models:
             Z = np.concatenate((X_pred, mse, mae), axis=1)
             return self._score_batch(Z, if_pkt, lof_pkt, method, how, who='pkt', return_pred=return_pred)
         except Exception as e:
-            logger.print("Erreur predict_packet_batch:", e)
-            logger.print(traceback.format_exc())
+            logger.error("Erreur predict_packet_batch:", e)
+            logger.error(traceback.format_exc())
             return self._batch_failed("packet", e, n, return_pred)
 
     async def apredict_packet_batch(self, *args, **kwargs):
@@ -1272,7 +1272,7 @@ class Models:
             ), axis=1)
             return self._score_batch(X_flat, if_seq, lof_seq, method, how, who='seq', return_pred=return_pred)
         except Exception as e:
-            logger.print("Erreur predict_sequence_batch:", e)
+            logger.error("Erreur predict_sequence_batch:", e)
             return self._batch_failed("sequence", e, m, return_pred)
 
     async def apredict_sequence_batch(self, *args, **kwargs):
@@ -1350,20 +1350,20 @@ class Models:
         self.mse_mean = mse_mean1
         self.table_mse_mean = mse_mean
 
-        logger.print('='*30, 'MSE du model ',name, '='*30)
-        logger.print(f"MSE moyen global: {np.mean(mse_mean):.4f}")
-        logger.print(f"MSE max: {np.max(mse_mean):.4f}")
-        logger.print(f"MSE min: {np.min(mse_mean):.4f}")
-        logger.print(f"Écart-type: {np.std(mse_mean):.4f}")
+        logger.info('='*30, 'MSE du model ',name, '='*30)
+        logger.info(f"MSE moyen global: {np.mean(mse_mean):.4f}")
+        logger.info(f"MSE max: {np.max(mse_mean):.4f}")
+        logger.info(f"MSE min: {np.min(mse_mean):.4f}")
+        logger.info(f"Écart-type: {np.std(mse_mean):.4f}")
 
         if mse_mean1 <= 0.1:
-            logger.print('Le modèle est excellent, il apprend bien !')
+            logger.info('Le modèle est excellent, il apprend bien !')
         elif 0.1 < mse_mean1 <= 0.5:
-            logger.print('Le modèle est bon, il apprend bien !')
+            logger.info('Le modèle est bon, il apprend bien !')
         elif 0.5 < mse_mean1 < 1:
-            logger.print('Modèle acceptable.')
+            logger.info('Modèle acceptable.')
         else:
-            logger.print('Le modèle n\'apprend pas bien !')
+            logger.info('Le modèle n\'apprend pas bien !')
 
         keys = list(history.history.keys())
         val = [k for k in keys if str(k).startswith('val_') ]
@@ -1407,17 +1407,17 @@ class Models:
                 plt.grid(True)
 
                 plt.savefig(os.path.join(path,f'courbe_history_{name}_tf{k}.png'))
-                logger.print(f'Courbe history saved to {os.path.join(path,f"courbe_history_tf_{name}{k}.png")}')
-                logger.print()
+                logger.info(f'Courbe history saved to {os.path.join(path,f"courbe_history_tf_{name}{k}.png")}')
+                logger.info()
 
                 gap_mean = sum(gap) / len(gap)
                 if gap_mean > 0.15 :
-                    logger.print("[ALERTE] Overfiting détecté ! \n Le modèle performe plus sur train que validation. Vous pouvez essayer de réduire la complxité du modèle.")
+                    logger.info("[ALERTE] Overfiting détecté ! \n Le modèle performe plus sur train que validation. Vous pouvez essayer de réduire la complxité du modèle.")
                 elif gap_mean > 0.1:
-                    logger.print("Ovverfiting léger. Gap acceptable mais peut être amélioré")
+                    logger.info("Ovverfiting léger. Gap acceptable mais peut être amélioré")
                 else :
-                    logger.print('Pas d\'overfitting détecté. Le modèle généralise bien !')
-                    logger.print()
+                    logger.info('Pas d\'overfitting détecté. Le modèle généralise bien !')
+                    logger.info()
 
                 plt.tight_layout()
                 plt.show(block=False)
@@ -1427,10 +1427,10 @@ class Models:
     def evaluate_sklearn(self, model, X_test, name):
         score = np.asarray(model.decision_function(X_test))
         mean, std = np.mean(score), np.std(score)
-        logger.print('Evaluation pour ', name)
-        logger.print(' NOTE : Pour un bon modèle, std doit être grand et mean proche de 0 !')
-        logger.print(f"Moyenne: {mean:.3f}, Ecart-type: {std:.3f}")
-        logger.print()
+        logger.info('Evaluation pour ', name)
+        logger.info(' NOTE : Pour un bon modèle, std doit être grand et mean proche de 0 !')
+        logger.info(f"Moyenne: {mean:.3f}, Ecart-type: {std:.3f}")
+        logger.info()
 
         scores_list = []
         for i in range(5):
@@ -1438,16 +1438,16 @@ class Models:
             scores_list.append(model.decision_function(subset))
         stability = np.std([np.mean(s) for s in scores_list])
 
-        logger.print('Stabilité du modele : ', stability, '(Doit être faible)')
-        logger.print()
+        logger.info('Stabilité du modele : ', stability, '(Doit être faible)')
+        logger.info()
 
         kmeans = KMeans(n_clusters=3).fit(score.reshape(-1,1))
         silhouette = silhouette_score(score.reshape(-1,1), kmeans.labels_)
         good = silhouette > 0.5
         if good:
-            logger.print('Bon score de silhouette, le modele sépare bien !')
-        logger.print(f"Score de silhouette: {silhouette:.4f}")
-        logger.print()
+            logger.info('Bon score de silhouette, le modele sépare bien !')
+        logger.info(f"Score de silhouette: {silhouette:.4f}")
+        logger.info()
 
     def accord_models(self, model1, model2, X_test, name1, name2):
 
@@ -1460,22 +1460,22 @@ class Models:
         safe1 = np.asarray(score1) == 1
         safe2 = np.asarray(score2) == 1
 
-        logger.print(f"=== Comparaison {name1} vs {name2} ===")
-        logger.print(f"Anomalies détectées par {name1}: {np.sum(anomalies1)}")
-        logger.print(f"Normaux détectées par {name1}: {np.sum(safe1)}")
-        logger.print()
-        logger.print(f"Anomalies détectées par {name2}: {np.sum(anomalies2)}")
-        logger.print(f"Normaux détectées par {name2}: {np.sum(safe2)}")
-        logger.print()
+        logger.info(f"=== Comparaison {name1} vs {name2} ===")
+        logger.info(f"Anomalies détectées par {name1}: {np.sum(anomalies1)}")
+        logger.info(f"Normaux détectées par {name1}: {np.sum(safe1)}")
+        logger.info()
+        logger.info(f"Anomalies détectées par {name2}: {np.sum(anomalies2)}")
+        logger.info(f"Normaux détectées par {name2}: {np.sum(safe2)}")
+        logger.info()
 
         accord = np.mean(score1 == score2)
-        logger.print('Accord total entre le deux modèles : ', accord)
-        logger.print()
+        logger.info('Accord total entre le deux modèles : ', accord)
+        logger.info()
 
         accord = np.mean(anomalies1 == anomalies2)
         self.accord_sklearn_seq = accord
-        logger.print('Accord anomalies entre le deux modèles : ', accord)
-        logger.print()
+        logger.info('Accord anomalies entre le deux modèles : ', accord)
+        logger.info()
 
         over = np.sum(anomalies1 & anomalies2)
         union = np.sum(anomalies1 | anomalies2)
@@ -1483,8 +1483,8 @@ class Models:
         if union > 0:
             jaccard = over / union
             self.jaccard_sklearn_seq_ano = jaccard
-            logger.print(f"Similarité de Jaccard entre les détections anomalies : {jaccard:.4f} \n")
-            logger.print()
+            logger.info(f"Similarité de Jaccard entre les détections anomalies : {jaccard:.4f} \n")
+            logger.info()
 
         over = np.sum(safe1 & safe2)
         union = np.sum(safe1 | safe2)
@@ -1492,6 +1492,6 @@ class Models:
         if union > 0:
             jaccard = over / union
             self.jaccard_sklearn_seq_no = jaccard
-            logger.print(f"Similarité de Jaccard entre les détections safe : {jaccard:.4f} \n")
-            logger.print()
-            logger.print()
+            logger.info(f"Similarité de Jaccard entre les détections safe : {jaccard:.4f} \n")
+            logger.info()
+            logger.info()

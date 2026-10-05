@@ -140,7 +140,8 @@
     "seq_stride": 20,
     "seq_stride_fit": 1,
     "detect_batch_size": 512,
-    "model_error_threshold": 5
+    "model_error_threshold": 5,
+    "max_anomaly_files": 50
   },
   "CAPTURE_CONFIG": {
     "FILTER": "tcp or udp or icmp",

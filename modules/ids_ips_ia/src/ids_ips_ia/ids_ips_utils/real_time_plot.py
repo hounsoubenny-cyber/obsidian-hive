@@ -422,7 +422,7 @@ class RealTimePLot:
         self.server.start()
         self.port = self.server.port
         port = self.port
-        logger.print(f"🚀 Serveur Bokeh: http://localhost:{port}/")
+        logger.info(f"🚀 Serveur Bokeh: http://localhost:{port}/")
         # for i in range(0,4):
         #     logger.print(f"Onglet {i} accesible à http://localhost:{port}/?tab={i}")
         self.server.io_loop.start()
@@ -436,7 +436,7 @@ class RealTimePLot:
             # code2 = subprocess.run(['pkill','-f',f":{self.server.port}"], check=False, capture_output=True)
             # logger.print(code.returncode, code2.returncode)
             if code.returncode == 0:
-                logger.print(f'Port {self.server.port} fermé avec succès')
+                logger.success(f'Port {self.server.port} fermé avec succès')
             self.event.set()
         except Exception:
             pass
@@ -456,10 +456,10 @@ class RealTimePLot:
 if __name__ == '__main__':
     controller = RealTimePLot()
     controller.control()
-    logger.print("⏳ Démarrage du serveur...")
+    logger.info("⏳ Démarrage du serveur...")
     # time.sleep(3)
 
-    logger.print("🎯 JE CONTRÔLE LE GRAPHIQUE MAINTENANT !")
+    logger.info("🎯 JE CONTRÔLE LE GRAPHIQUE MAINTENANT !")
     t = time.time()
     # VOTRE CODE - vous faites ce que vous voulez
     for i in range(2000000):
@@ -490,13 +490,13 @@ if __name__ == '__main__':
             controller.add_data3(x)
 
             if i % 20 == 0:
-                logger.print(f"📊 Frame {i} envoyée - {x} points")
+                logger.info(f"📊 Frame {i} envoyée - {x} points")
 
             time.sleep(0.05)  # 20 FPS
         except KeyboardInterrupt:
             controller.end()
-            logger.print("\n👋 Arrêt demandé")
+            logger.info("\n👋 Arrêt demandé")
             break
 
-    logger.print("✅ Contrôle terminé - Le serveur continue de tourner")
-    logger.print("💡 Arrêtez avec Ctrl+C")
+    logger.success("✅ Contrôle terminé - Le serveur continue de tourner")
+    logger.info("💡 Arrêtez avec Ctrl+C")

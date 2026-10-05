@@ -6,7 +6,6 @@ Created on Sun Oct  4 05:42:05 2026
 @author: hounsousamuel
 """
 
-
 """
 ring.py : buffer circulaire en mémoire partagée (SharedMemory + struct).
 
@@ -22,6 +21,13 @@ Principe : UN SEUL writer et UN SEUL reader par ring, donc aucun lock.
     - seul le READER modifie n_read  (EN DERNIER, après avoir lu les données)
 Chacun lit le compteur de l'autre sans jamais l'écrire. Si ce compteur est un peu en
 retard, on est pessimiste (moins de place / moins de données), jamais optimiste.
+
+ATTENTION, compteurs : on les lit/écrit avec un memoryview de type 'Q' (UN accès de
+8 octets alignés, atomique sur x86-64 et ARM64), PAS avec struct.pack_into. struct écrit
+l'entier en deux temps (zéro puis octets) : un lecteur peut alors voir 0 au milieu d'une
+écriture (mesuré : des dizaines de milliers de lectures "en arrière" sur 3 millions
+d'écritures). Lire le compteur deux fois ne règle pas ça.
+ 
 
 Plusieurs sources (ex : n processus de capture) ? UN RING PAR SOURCE, puis un
 MultiReader qui les lit à tour de rôle.
@@ -48,13 +54,16 @@ import time
 import queue
 import struct
 import multiprocessing as mp
+from typing import List
 from multiprocessing import shared_memory
 
-POS = struct.Struct("<Q")           # un compteur : 8 octets, little-endian
-OFF_W, OFF_R = 0, 8                 # n_write à l'octet 0, n_read à l'octet 8
+
+IDX_W, IDX_R = 0, 1                 # les 2 compteurs = tableau de 2 entiers de 8 octets :
+                                    # n_write à l'octet 0, n_read à l'octet 8
 HEADER_SIZE = 16                    # 8 + 8 : la zone de données commence à l'octet 16
 PKT_HEADER = struct.Struct("<dI")   # ts (double) + taille du paquet (entier)
 PKT_HEADER_SIZE = PKT_HEADER.size   # 12
+ 
 
 
 class Ring:
@@ -72,8 +81,10 @@ class Ring:
                  bord), full (put refusés), empty (get sans rien à lire).
     """
 
-    def __init__(self, name: str, cap: int, create: bool = False,
-                 verbose: bool = False, role: str = ""):
+    def __init__(
+        self, name: str, cap: int, create: bool = False,
+        verbose: bool = False, role: str = ""
+    ):
         if role not in ("", "P", "W", "R"):
             raise ValueError(f"role doit être 'P', 'W', 'R' ou vide, obtenu {role!r}")
         self.name = name
@@ -88,8 +99,6 @@ class Ring:
             self.shm = shared_memory.SharedMemory(
                 name=name, create=True, size=HEADER_SIZE + cap
             )
-            POS.pack_into(self.shm.buf, OFF_W, 0)
-            POS.pack_into(self.shm.buf, OFF_R, 0)
         else:                                    # les autres le REJOIGNENT par son nom
             # Python >= 3.13 : track=False pour que le "surveillant" ne supprime pas
             # le bloc quand CE processus se termine.
@@ -100,6 +109,13 @@ class Ring:
                     f"Bloc trop petit : même cap partout ! "
                     f"({self.shm.size} < {HEADER_SIZE + cap})"
                 )
+        # Les 2 compteurs vus comme un tableau d'entiers 'Q' (8 octets natifs, alignés) :
+        # chaque lecture / écriture est UN seul accès mémoire (atomique).
+        self._hdr_view = self.shm.buf[:HEADER_SIZE]
+        self._ctr = self._hdr_view.cast("Q")
+        if create:
+            self._ctr[IDX_W] = 0
+            self._ctr[IDX_R] = 0
         self._dbg(f"INIT name={name} cap={cap} créé={create}")
 
     def _dbg(self, msg: str):
@@ -108,21 +124,15 @@ class Ring:
 
     # ----------------------------------------------------------------- compteurs
     def _counters(self):
-        """Lit (n_write, n_read). Double lecture : struct lit octet par octet, un
-        compteur lu pendant que l'autre processus l'écrit pourrait être faux.
-        On relit jusqu'à obtenir deux fois la même chose."""
-        buf = self.shm.buf
-        a = (POS.unpack_from(buf, OFF_W)[0], POS.unpack_from(buf, OFF_R)[0])
-        while True:
-            b = (POS.unpack_from(buf, OFF_W)[0], POS.unpack_from(buf, OFF_R)[0])
-            if a == b:
-                return b
-            a = b
-
+        """Lit (n_write, n_read). Chaque lecture est atomique (un accès de 8 octets).
+        Les deux ne sont pas lus au même instant, mais ce n'est pas grave : le compteur
+        de l'AUTRE processus peut seulement être en retard, donc on est pessimiste."""
+        return self._ctr[IDX_W], self._ctr[IDX_R]
+    
     def _all(self):
         """Toutes les infos en une fois :
         (n_write, n_read, w_pos, r_pos, used, free)
-
+    
         w_pos / r_pos = position réelle dans la mémoire partagée (header compris).
         used = n_write - n_read   (octets occupés, pas encore lus)
         free = cap - used         (octets où on peut écrire)
@@ -132,6 +142,7 @@ class Ring:
         r_pos = (n_read % self.cap) + HEADER_SIZE
         used = n_write - n_read
         return n_write, n_read, w_pos, r_pos, used, self.cap - used
+
 
     # --- écrire / lire des octets "dans le cercle", en coupant en deux au bord ---
     def _write_at(self, counter: int, data: bytes):
@@ -188,12 +199,60 @@ class Ring:
             self.counts["wraps"] += 1
         self._write_at(n_write, item)
         # EN DERNIER : on avance n_write seulement quand les données sont écrites
-        POS.pack_into(self.shm.buf, OFF_W, n_write + len(item))
+        self._ctr[IDX_W] = n_write + len(item)
         self._dbg(
             f"PUT item={len(item)} | n_write {n_write} -> {n_write + len(item)} "
             f"w_pos={w_pos} r_pos={r_pos} used={used} free={free}"
         )
         return True
+    
+    def put_many(self, items) -> int:
+        """Écrit PLUSIEURS paquets en une fois (un lot de capture). Rôle W (ou P/vide).
+
+        Beaucoup plus économe que n appels à put() : les lectures des compteurs, la
+        copie dans la mémoire et la mise à jour de n_write ne sont faites qu'UNE fois.
+
+        Args:
+            items: liste de (ts, pkt), exactement le format de ta capture.
+                   ts = None : date d'écriture.
+        Returns:
+            Le NOMBRE de paquets écrits. On écrit les premiers, DANS L'ORDRE, tant qu'il
+            y a de la place, et on s'arrête au premier qui ne rentre pas (jamais de trou
+            dans l'ordre). Les autres ne sont PAS écrits : à toi de les compter comme
+            perdus (dropped += len(items) - n) ou de les réessayer.
+        Raises:
+            PermissionError : si le rôle est "R".
+            ValueError      : si un paquet ne rentrera JAMAIS (plus grand que cap).
+        """
+        if self.role == "R":
+            raise PermissionError("rôle R : seul un writer (W) peut appeler put_many()")
+        n_write, n_read, w_pos, r_pos, used, free = self._all()
+        parts, total, count = [], 0, 0
+        for ts, pkt in items:
+            need = PKT_HEADER_SIZE + len(pkt)
+            if need > self.cap:
+                raise ValueError(f"Paquet trop grand ({need} > {self.cap})")
+            if total + need > free:                  # ne rentre pas : on s'arrête ici
+                break
+            parts.append(PKT_HEADER.pack(time.time() if ts is None else ts, len(pkt)))
+            parts.append(pkt)
+            total += need
+            count += 1
+
+        if count < len(items):
+            self.counts["full"] += 1
+        if count == 0:
+            return 0
+        if n_write % self.cap + total > self.cap:
+            self.counts["wraps"] += 1
+        self._write_at(n_write, b"".join(parts))     # UNE seule copie (coupée en 2 si besoin)
+        self._ctr[IDX_W] = n_write + total           # UNE seule mise à jour, EN DERNIER
+        self._dbg(
+            f"PUT_MANY {count}/{len(items)} paquets, {total} octets | "
+            f"n_write {n_write} -> {n_write + total} used={used} free={free}"
+        )
+        return count
+    
 
     def get(self):
         """Lit le plus ancien paquet. Rôle R (ou P/vide pour un test mono-processus).
@@ -223,13 +282,15 @@ class Ring:
                                f"n_write={n_write} n_read={n_read}")
         pkt = self._read_at(n_read + PKT_HEADER_SIZE, size)   # JUSTE APRÈS l'en-tête
         new_read = n_read + PKT_HEADER_SIZE + size
-        POS.pack_into(self.shm.buf, OFF_R, new_read)          # EN DERNIER
+        self._ctr[IDX_R] = new_read                           # EN DERNIER
         self._dbg(f"GET size={size} | n_read {n_read} -> {new_read} "
                   f"w_pos={w_pos} r_pos={r_pos} used={used} free={free}")
         return ts, pkt
 
     def close(self):
         """Tout le monde appelle close() quand il a fini."""
+        self._ctr.release()           # il faut libérer les vues AVANT de fermer la mémoire
+        self._hdr_view.release()
         self.shm.close()
 
     def unlink(self):
@@ -283,6 +344,33 @@ class MultiReader:
             ring.close()
 
 
+class RingWriter:
+    def __init__(self, ring: Ring):
+        if not isinstance(ring, Ring):
+            raise TypeError("Un objet ring est nécessaire !")
+            
+        self.ring = ring
+    
+    def put(self, item: tuple[float | None, bytes]):
+        try:
+            ts, raw = item
+            r = self.ring.put(pkt=raw, ts=ts)
+            if r is False:
+                raise queue.Full
+            return r
+        except (PermissionError, ValueError) as e:
+            raise e
+    
+    def put_many(self, items: List[tuple[float | None, bytes]]):
+        try:
+            return self.ring.put_many(items)
+        except (PermissionError, ValueError) as e:
+            raise e
+            
+    def put_nowait(self, item: tuple[float | None, bytes]):
+        return self.put(item)
+        
+            
 class RingQueue:
     """Un MultiReader déguisé en `queue.Queue`, pour le détecteur.
 
@@ -382,20 +470,21 @@ class RingQueue:
         self._reader.close()
 
 
+
 # =============================================================================
 # TEST : n_rings processus writer (un ring chacun) + le processus principal
 # qui les lit tous avec un MultiReader. Les fonctions des processus sont au niveau
 # du module (obligatoire sur certains systèmes).
 # =============================================================================
 TS0 = 1_700_000_000.0      # le writer de test donne au paquet i la date TS0 + i
-
-
+ 
+ 
 def make_packet(ring_id: int, i: int) -> bytes:
     """[ring_id (1 octet)][numéro du paquet (4 octets)][octet répété] : tailles variables."""
     size = 20 + (i * 7919 + ring_id * 131) % 380
     return bytes([ring_id]) + i.to_bytes(4, "little") + bytes([i % 251]) * (size - 5)
-
-
+ 
+ 
 def writer_proc(results, cfg, ring_id, n, verbose):
     try:
         ring = Ring(**cfg, create=False, role="W", verbose=verbose)
@@ -412,8 +501,8 @@ def writer_proc(results, cfg, ring_id, n, verbose):
         ring.close()
     except Exception as e:
         results.put((ring_id, "ERREUR", repr(e)))
-
-
+ 
+ 
 def cleanup_old(name):
     # Si un test précédent a planté, le bloc existe encore : on le supprime.
     try:
@@ -423,21 +512,21 @@ def cleanup_old(name):
         print(f"(ancien bloc {name} supprimé)")
     except FileNotFoundError:
         pass
-
-
+ 
+ 
 def main(n_rings: int = 3, n: int = 200, cap: int = 2000, verbose: bool = False):
     configs = [{"name": f"ring_cap{k}", "cap": cap} for k in range(n_rings)]
     for cfg in configs:
         cleanup_old(cfg["name"])
     parents = [Ring(**cfg, create=True, verbose=verbose) for cfg in configs]   # rôle P
-
+ 
     results = mp.Queue()
     procs = [mp.Process(daemon=True, target=writer_proc,
                         args=(results, cfg, k, n, verbose))
              for k, cfg in enumerate(configs)]
     for p in procs:
         p.start()
-
+ 
     reader = MultiReader(configs, verbose=verbose)       # lit TOUT, rôle R
     expected = [0] * n_rings                              # prochain numéro attendu par ring
     got = [0] * n_rings
@@ -461,7 +550,7 @@ def main(n_rings: int = 3, n: int = 200, cap: int = 2000, verbose: bool = False)
         expected[idx] = i + 1
         got[idx] += 1
     elapsed = time.time() - start
-
+ 
     for p in procs:
         p.join(timeout=10)
     for _ in range(n_rings):
@@ -473,13 +562,13 @@ def main(n_rings: int = 3, n: int = 200, cap: int = 2000, verbose: bool = False)
     print(f"   📖 reader : {sum(got)}/{total} paquets en {elapsed:.3f}s | par ring : {got}")
     print("   ✅ ordre et contenu OK (dans chaque ring)" if not errors and sum(got) == total
           else f"   ❌ problèmes : {errors[:5]}")
-
+ 
     reader.close()
     for ring in parents:
         ring.close()
         ring.unlink()                                     # le parent supprime les blocs
-
-
+ 
+ 
 def test_ringqueue(n: int = 100, cap: int = 2000):
     """RingQueue = interface de queue.Queue : alertes locales d'abord, puis les rings."""
     print("\n=== Test RingQueue ===")
@@ -492,10 +581,10 @@ def test_ringqueue(n: int = 100, cap: int = 2000):
              for k, cfg in enumerate(configs)]
     for p in procs:
         p.start()
-
+ 
     rq = RingQueue(configs, local_maxsize=3)
     errors = []
-
+ 
     # 1) alertes locales (comme le moniteur Suricata) : elles passent AVANT les paquets
     rq.put_nowait(("fake_eth_1", {"msg": "alerte 1"}))
     rq.put_nowait(("fake_eth_2", {"msg": "alerte 2"}))
@@ -504,7 +593,7 @@ def test_ringqueue(n: int = 100, cap: int = 2000):
         item = rq.get_nowait()
         if not (isinstance(item[1], dict) and item[1]["msg"] == f"alerte {k}"):
             errors.append(f"alerte {k} pas en premier : {item[0]!r}")
-
+ 
     # 2) file locale bornée : la 4e alerte doit lever queue.Full
     for k in range(3):
         rq.put_nowait(("x", {"k": k}))
@@ -515,7 +604,7 @@ def test_ringqueue(n: int = 100, cap: int = 2000):
         pass
     for _ in range(3):
         rq.get_nowait()
-
+ 
     # 3) tous les paquets : (ts, bytes), ts conservé, ordre conservé par ring
     expected = [0, 0]
     got, start = 0, time.time()
@@ -530,7 +619,7 @@ def test_ringqueue(n: int = 100, cap: int = 2000):
             errors.append(f"ring {ring_id} : attendu {expected[ring_id]}, reçu {i}, ts={ts}")
         expected[ring_id] = i + 1
         got += 1
-
+ 
     # 4) tout est vide : queue.Empty, empty() vrai, stats() utilisable
     try:
         rq.get_nowait()
@@ -544,16 +633,17 @@ def test_ringqueue(n: int = 100, cap: int = 2000):
     print(f"   qsize={rq.qsize()} maxsize={rq.maxsize}")
     print(f"   {got}/{2 * n} paquets lus, alertes locales d'abord, queue.Full / queue.Empty OK"
           if not errors and got == 2 * n else f"   ❌ problèmes : {errors[:5]}")
-
+ 
     for p in procs:
         p.join(timeout=10)
     rq.close()
     for ring in parents:
         ring.close()
         ring.unlink()
-
-
+ 
+ 
 if __name__ == "__main__":
     VERBOSE = False        # mets True (avec un petit n) pour voir chaque put / get
     main(n_rings=3, n=200, cap=2000, verbose=VERBOSE)
     test_ringqueue()
+ 
