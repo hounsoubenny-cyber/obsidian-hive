@@ -4,11 +4,27 @@
 Système de logging avancé avec instances indépendantes
 Auteur: Hounsou Samuel
 
-Variables d'environnement :
+Variables d'environnement (lues au chargement du module, utilisées comme
+valeurs par défaut des arguments) :
     OBSIDIAN_LOG_FILE     "0"/"false"/"no" -> désactive l'écriture fichier (défaut : activé)
     OBSIDIAN_LOG_LEVEL    DEBUG/INFO/SUCCESS/WARNING/ERROR/CRITICAL
                           (défaut : DEBUG ; toute valeur invalide retombe sur DEBUG)
     OBSIDIAN_LOG_CONSOLE  niveau console uniquement (défaut : = OBSIDIAN_LOG_LEVEL)
+
+Ordre de priorité pour chaque paramètre :
+    1. Argument explicite (ex. get_logger("x", level="WARNING"))
+    2. État global modifié par enable_file_logging / disable_file_logging
+    3. Variable d'environnement (défaut de l'argument)
+
+Exemples :
+    get_logger("scanner")                            # utilise l'env
+    get_logger("scanner", level="WARNING")           # force WARNING (ignore l'env)
+    get_logger("scanner", file_logging=False)        # pas de fichier pour ce logger
+    get_logger("scanner", file_level="WARNING",      # console DEBUG, fichier WARNING
+               file_async=False)                     # écriture fichier synchrone
+
+Un seul handler de signal est enregistré, au premier logger qui active le
+fichier en mode asynchrone. Il ferme TOUS les loggers d'un coup.
 """
 
 # Fait avec deepseek
@@ -32,15 +48,16 @@ LOGDIR = os.path.dirname(os.path.abspath(__file__))
 PROD_PATH = os.path.join(os.sep, "var", "log", "obsidian")
 # Rotation des fichiers
 LOG_MAX_BYTES    = 10 * 1024 * 1024   # 10 Mo max par fichier
-LOG_BACKUP_COUNT = 3                  # 3 fichiers de rotation 
+LOG_BACKUP_COUNT = 3                  # 3 fichiers de rotation
 
 # Comportement (mettre False pour gain de perf)
 CONSOLE_FLUSH = False    # flush après chaque écriture console
-FILE_ASYNC    = True    # écriture fichier via QueueListener (hors thread appelant)
+FILE_ASYNC    = True     # écriture fichier via QueueListener (hors thread appelant)
 
 # ==================== NIVEAU PERSONNALISÉ SUCCESS ====================
 SUCCESS_LEVEL_NUM = 25
 logging.addLevelName(SUCCESS_LEVEL_NUM, "SUCCESS")
+
 
 # ==================== HELPERS ENV ====================
 def _env_bool(name: str, default: bool = True) -> bool:
@@ -62,12 +79,13 @@ def _env_level(name: str, default: int = logging.DEBUG) -> int:
     return lvl if isinstance(lvl, int) else default
 
 
-# ==================== VARIABLES D'ENVIRONNEMENT ====================
-FILE_LOGGING_ENABLED = _env_bool("OBSIDIAN_LOG_FILE", True)             # défaut : activé
-DEFAULT_LOG_LEVEL    = _env_level("OBSIDIAN_LOG_LEVEL", logging.DEBUG)  # invalide -> DEBUG
-_CONSOLE_LEVEL       = _env_level("OBSIDIAN_LOG_CONSOLE", DEFAULT_LOG_LEVEL)
+# ==================== VARIABLES D'ENVIRONNEMENT (défauts) ====================
+FILE_LOGGING_ENABLED  = _env_bool("OBSIDIAN_LOG_FILE", True)              # défaut : activé
+DEFAULT_LOG_LEVEL     = _env_level("OBSIDIAN_LOG_LEVEL", logging.DEBUG)   # invalide -> DEBUG
+DEFAULT_CONSOLE_LEVEL = _env_level("OBSIDIAN_LOG_CONSOLE", DEFAULT_LOG_LEVEL)
 
-# État global (utilisé par get_logger pour activer fichiers sur les nouveaux loggers)
+# État global (mis à jour par enable_file_logging / disable_file_logging).
+# Utilisé par le constructeur pour les loggers créés APRÈS un changement global.
 _FILE_LOGGING: Optional[tuple] = (DEFAULT_LOG_LEVEL, FILE_ASYNC) if FILE_LOGGING_ENABLED else None
 
 # ==================== REGEX COMPILÉS ====================
@@ -136,35 +154,21 @@ class ColoredFormatter(logging.Formatter):
         color = self.COLORS.get(levelname, self.COLORS['RESET'])
         icon  = self.ICONS.get(levelname, '')
 
-        # Padding calculé sur le texte brut AVANT les codes ANSI
         padded = f"{icon} {levelname}".ljust(12)
         record.levelname      = f"{color}{padded}{self.COLORS['RESET']}"
         record.filename_color = f"\033[35m{record.filename}\033[0m"
         record.funcname_color = f"\033[36m{record.funcName}\033[0m"
         record.lineno_color   = f"\033[33m{record.lineno}\033[0m"
         record.module_color   = f"\033[36m{getattr(record, 'module_name', '?')}\033[0m"
-        
+
         fmt = (
             "%(asctime)s | %(levelname)s | %(module_color)s | "
             "%(filename_color)s:%(lineno_color)s | %(message)s"
         )
-        
-        # if record.levelno >= logging.ERROR:
-        #     fmt = (
-        #         "%(asctime)s | %(levelname)s | %(module_color)s | "
-        #         "%(filename_color)s:%(lineno_color)s | %(messagse)s"
-        #     )
-        # else:
-        #     fmt = "%(asctime)s | %(levelname)s | %(module_color)s | %(message)s"
-        #     fmt = (
-        #         "%(asctime)s | %(levelname)s | %(module_color)s | "
-        #         "%(filename_color)s:%(lineno_color)s | %(message)s"
-        #     )
 
         formatter = logging.Formatter(fmt, datefmt="%H:%M:%S")
         result = formatter.format(record)
 
-        # Restore pour que les autres handlers (fichiers) reçoivent le nom propre
         record.levelname = levelname
         return result
 
@@ -225,12 +229,49 @@ def _safe_filename(name: str) -> str:
 
 # ==================== LOGGER INDÉPENDANT ====================
 class Logger:
-    """Logger indépendant avec détection automatique du niveau."""
+    """Logger indépendant avec détection automatique du niveau.
+
+    Tous les arguments ont pour valeur par défaut les variables d'environnement
+    lues au chargement du module (None = « hérite du global / de l'env »).
+
+    Args:
+        module_name:   nom logique du module (sert aussi de nom de dossier).
+        log_dir:       racine des logs (défaut : get_default_log_dir()).
+        structured:    conservé pour compatibilité (JSON désactivé par défaut).
+        level:         niveau global du logger (défaut : OBSIDIAN_LOG_LEVEL).
+        console_level: niveau console (défaut : OBSIDIAN_LOG_CONSOLE).
+        file_logging:  écrire dans un fichier ? None = suit l'état global.
+        file_async:    écriture fichier asynchrone ? None = suit l'état global.
+        file_level:    niveau du fichier (None = = level).
+    """
 
     def __init__(
-        self, module_name: str, log_dir: Optional[Path] = None, structured: bool = True
+        self,
+        module_name: str,
+        log_dir: Optional[Path] = None,
+        structured: bool = True,
+        level: Union[int, str] = DEFAULT_LOG_LEVEL,
+        console_level: Union[int, str] = DEFAULT_CONSOLE_LEVEL,
+        file_logging: Optional[bool] = None,
+        file_async: Optional[bool] = None,
+        file_level: Union[int, str] = None,
     ):
         self.module_name = module_name
+        self.structured = structured
+
+        # Résolution des niveaux (accepte int ou str, y compris "SUCCESS")
+        resolved_level   = _to_level(level)
+        resolved_console = _to_level(console_level)
+        resolved_file    = _to_level(file_level) if file_level is not None else resolved_level
+
+        # Résolution de file_logging / file_async :
+        #   - argument explicite prioritaire,
+        #   - sinon état global (_FILE_LOGGING) qui reflète enable/disable_file_logging,
+        #   - sinon constante FILE_ASYNC.
+        if file_logging is None:
+            file_logging = _FILE_LOGGING is not None
+        if file_async is None:
+            file_async = _FILE_LOGGING[1] if _FILE_LOGGING else FILE_ASYNC
 
         # --- Résolution du dossier de logs (toujours en Path) ---
         base = Path(log_dir) if log_dir is not None else get_default_log_dir()
@@ -239,44 +280,44 @@ class Logger:
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            # Ne casse pas le logger si on ne peut pas créer le dossier
             print(f"[logger] Impossible de créer {self.log_dir} : {e}", file=sys.stderr)
             self.log_dir = base  # fallback : on écrit à la racine
 
         self.logger = logging.getLogger(f"module_{module_name}")
-        self.logger.setLevel(DEFAULT_LOG_LEVEL)
+        self.logger.setLevel(resolved_level)
         self.logger.handlers.clear()
         self.logger.propagate = False
-        self.structured = structured
 
         self.logger.addFilter(ModuleNameFilter(module_name))
-        self.console_level = _CONSOLE_LEVEL
-        self._file_enabled = None          # (niveau, asynchrone) si le fichier est actif
+        self.console_level = resolved_console
+        self._file_enabled = None
         self._file_handlers = ()
         self._qlistener = None
         self._qhandler = None
 
         self._setup_handlers()
+
+        # Activation du fichier AVANT le message d'init, pour que ce message
+        # arrive aussi dans le fichier (sinon il n'existe que sur la console).
+        if file_logging:
+            self.enable_file_logging(level=resolved_file, asynchronous=file_async)
+
         self.logger.debug(f"Logger initialisé pour '{module_name}' dans {self.log_dir}")
 
     # ── Handlers ────────────────────────────────────────────────────────────
     def _setup_handlers(self):
-        # (Re)créer le dossier si besoin (peut avoir changé via set_default_log_dir)
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
             pass
 
-        # Console (thread-safe)
         console_handler = ThreadSafeStreamHandler(sys.stdout)
         console_handler.setLevel(self.console_level)
         console_handler.setFormatter(ColoredFormatter())
         self.logger.addHandler(console_handler)
-        # NB : les handlers fichiers sont ajoutés via enable_file_logging()
-        # pour être correctement suivis dans self._file_handlers.
 
     def _detect_level(self, message: str) -> int:
-        """Détection par regex — SUCCESS avant ERROR (gère 'Erreur corrigée avec succès')."""
+        """Détection par regex — SUCCESS avant ERROR."""
         if _SUCCESS_RE.search(message):
             return SUCCESS_LEVEL_NUM
         if _ERROR_RE.search(message):
@@ -289,10 +330,6 @@ class Logger:
 
     # ── Émission ────────────────────────────────────────────────────────────
     def _emit(self, level, args, sep=" ", extra=None, exc_info=None, stack_info=False):
-        """
-        - filtre de niveau AVANT construction de la chaîne ;
-        - stacklevel=3 : %(filename)s:%(lineno)d désignent l'APPELANT.
-        """
         if not self.logger.isEnabledFor(level):
             return
         kw = {"stacklevel": 3}
@@ -305,11 +342,8 @@ class Logger:
         self.logger.log(level, _fmt(args, sep), **kw)
 
     # ── API publique ────────────────────────────────────────────────────────
-    # Les méthodes de niveau se comportent COMME print : logger.error("Echec", ip, code).
-    # (sep= respecté ; end=, flush=, file=, verify= acceptés et ignorés.)
-
     def print(self, *args, **kwargs):
-        """Ancienne API : niveau DEVINÉ par regex. Préférer debug/info/success/warning/error."""
+        """Ancienne API : niveau DEVINÉ par regex."""
         message = _fmt(args, kwargs.get("sep", " "))
         verify = kwargs.get('verify', True)
         extra = kwargs.get('extra') or None
@@ -340,7 +374,6 @@ class Logger:
         self._emit(logging.CRITICAL, args if message is None else (message, *args), sep, extra, exc_info)
 
     def exception(self, *args, sep=" ", extra=None, message=None, **_):
-        """Comme error(), avec la trace de l'exception en cours."""
         self._emit(logging.ERROR, args if message is None else (message, *args), sep, extra, exc_info=True)
 
     # ── Sorties : console réglable + fichier (sync ou async) ────────────────
@@ -376,7 +409,6 @@ class Logger:
         if asynchronous is None:
             asynchronous = FILE_ASYNC
 
-        # Le dossier peut avoir changé (set_default_log_dir) : on s'assure qu'il existe
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
@@ -401,10 +433,8 @@ class Logger:
             )
             self._qlistener.start()
             atexit.register(self.close_file_logging)
-            def _stop(*args, **kwargs):
-                self.close_file_logging()
-                
-            signal_manager(_stop)
+            # Le handler de signal est posé UNE SEULE FOIS pour tous les loggers.
+            _ensure_signal_handler()
         else:
             self.logger.addHandler(fh)
             self.logger.addHandler(eh)
@@ -414,7 +444,7 @@ class Logger:
         return self
 
     def close_file_logging(self):
-        """Vide la file d'écriture et ferme les fichiers (appelé aussi à la sortie)."""
+        """Vide la file d'écriture et ferme les fichiers."""
         if self._qlistener is not None:
             try:
                 self._qlistener.stop()
@@ -484,6 +514,10 @@ class Logger:
 _LOGGER_REGISTRY: dict = {}
 _DEFAULT_LOG_DIR: Optional[Path] = None
 
+# Flag pour n'enregistrer qu'un seul handler de signal, quel que soit le
+# nombre de loggers qui activent l'écriture asynchrone.
+_SIGNAL_HANDLER_REGISTERED = False
+
 
 def get_default_log_dir() -> Path:
     global _DEFAULT_LOG_DIR
@@ -514,26 +548,77 @@ def set_default_log_dir(log_dir: Union[str, Path], reconfigure_existing: bool = 
     return _DEFAULT_LOG_DIR
 
 
-def get_logger(module_name: str,
-               log_dir: Optional[Union[str, Path]] = None,
-               structured: bool = True) -> Logger:
+def _close_all_loggers(*_args, **_kwargs):
+    """Ferme proprement tous les loggers enregistrés (appelé sur signal ou atexit)."""
+    for lg in list(_LOGGER_REGISTRY.values()):
+        try:
+            lg.close_file_logging()
+        except Exception:
+            pass
+
+
+def _ensure_signal_handler():
+    """Enregistre UN SEUL handler de signal qui ferme tous les loggers.
+
+    Idempotent : peut être appelé par chaque Logger.enable_file_logging() sans
+    dupliquer l'enregistrement auprès du signal_manager.
+    """
+    global _SIGNAL_HANDLER_REGISTERED
+    if _SIGNAL_HANDLER_REGISTERED:
+        return
+    _SIGNAL_HANDLER_REGISTERED = True
+    try:
+        signal_manager(_close_all_loggers)
+    except Exception as e:
+        # On ne casse pas le logger si signal_manager a un souci : on
+        # continue avec atexit, qui fait le gros du travail.
+        print(f"[logger] signal_manager indisponible : {e}", file=sys.stderr)
+
+
+def get_logger(
+    module_name: str,
+    log_dir: Optional[Union[str, Path]] = None,
+    structured: bool = True,
+    level: Union[int, str] = None,
+    console_level: Union[int, str] = None,
+    file_logging: Optional[bool] = None,
+    file_async: Optional[bool] = None,
+    file_level: Union[int, str] = None,
+) -> Logger:
+    """Renvoie (ou crée) un logger pour ce module.
+
+    Tous les arguments sont optionnels. Si None, la valeur vient de l'état
+    global (enable/disable_file_logging) ou, à défaut, des variables
+    d'environnement lues au chargement du module.
+    """
     if module_name in _LOGGER_REGISTRY:
         return _LOGGER_REGISTRY[module_name]
     if log_dir is not None:
         log_dir = Path(log_dir)
-    lg = Logger(module_name, log_dir, structured)
+
+    kwargs = {"structured": structured}
+    if level is not None:
+        kwargs["level"] = level
+    if console_level is not None:
+        kwargs["console_level"] = console_level
+    if file_level is not None:
+        kwargs["file_level"] = file_level
+    if file_async is not None:
+        kwargs["file_async"] = file_async
+    if file_logging is not None:
+        kwargs["file_logging"] = file_logging
+
+    lg = Logger(module_name, log_dir, **kwargs)
     _LOGGER_REGISTRY[module_name] = lg
-    if _FILE_LOGGING:
-        lg.enable_file_logging(*_FILE_LOGGING)
     return lg
 
 
 def set_console_level(level) -> None:
     """Niveau console de TOUS les loggers (existants et futurs)."""
-    global _CONSOLE_LEVEL
-    _CONSOLE_LEVEL = _to_level(level)
+    global DEFAULT_CONSOLE_LEVEL
+    DEFAULT_CONSOLE_LEVEL = _to_level(level)
     for lg in _LOGGER_REGISTRY.values():
-        lg.set_console_level(_CONSOLE_LEVEL)
+        lg.set_console_level(DEFAULT_CONSOLE_LEVEL)
 
 
 def enable_file_logging(level=logging.DEBUG, asynchronous: bool = None) -> None:
@@ -572,11 +657,26 @@ def remove_all_handlers(module_name: str = None, all_handlers: bool = True):
             lg.remove_handlers(all_handlers)
 
 
-def setup_logger(module_name: str,
-                 level: Union[str, int] = None,
-                 structured: bool = None,
-                 log_dir: Optional[Union[str, Path]] = None) -> Logger:
-    lg = get_logger(module_name, log_dir, structured if structured is not None else True)
+def setup_logger(
+    module_name: str,
+    level: Union[str, int] = None,
+    structured: bool = None,
+    log_dir: Optional[Union[str, Path]] = None,
+    file_logging: Optional[bool] = None,
+    file_async: Optional[bool] = None,
+    file_level: Union[int, str] = None,
+    console_level: Union[int, str] = None,
+) -> Logger:
+    lg = get_logger(
+        module_name,
+        log_dir,
+        structured if structured is not None else True,
+        level=None,             # on applique après coup via setup()
+        console_level=console_level,
+        file_logging=file_logging,
+        file_async=file_async,
+        file_level=file_level,
+    )
     if level is not None:
         lg.setup(level=level, structured=lg.structured)
     return lg
@@ -608,7 +708,6 @@ if __name__ == "__main__":
     logger_parser.error("Parse échoué")
     logger_parser.success("Parse réussi")
 
-    # Force l'écriture sur disque avant sortie
     for lg in get_logger_registry().values():
         lg.close_file_logging()
 

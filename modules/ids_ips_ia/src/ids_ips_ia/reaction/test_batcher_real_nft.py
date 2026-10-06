@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct  2 10:37:03 2026
-
-@author: hounsousamuel
-"""
-
-"""
 test_batcher_real_nft.py — teste BlockBatcher contre un VRAI nftables.
 
 Il crée une table TEMPORAIRE isolée (ids_batch_test_<pid>) avec des sets IDENTIQUES aux tiens

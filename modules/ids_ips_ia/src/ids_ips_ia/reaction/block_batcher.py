@@ -6,7 +6,6 @@ Created on Fri Oct  2 10:48:34 2026
 @author: hounsousamuel
 """
 
-
 """
 block_batcher.py — Blocages nftables groupés et asynchrones.
 
@@ -195,19 +194,24 @@ class BlockBatcher:
             cur = best.get((set_name, ip))
             if cur is None or r > cur[0]:
                 best[(set_name, ip)] = (r, tok, meta)
-        groups = {}
+        groups = {}                                         # UN seul groupe par set : chaque élément porte SON timeout
         for (set_name, ip), (_r, tok, meta) in best.items():
-            groups.setdefault((set_name, tok), []).append((ip, meta))
-        for (set_name, tok), els in groups.items():
-            if self._commit(set_name, tok, els):
-                continue
-            if len(els) > 1:                                   # une IP invalide casse toute la transaction
-                for e in els:
-                    self._commit(set_name, tok, [e])
+            groups.setdefault(set_name, []).append((ip, tok, meta))
+        for set_name, els in groups.items():
+            self._commit_bisect(set_name, els)
+    
+    # Si une commande échoue, on COUPE EN DEUX récursivement (1 IP fautive sur 1024 = 21 commandes, pas 1024).
+    
+    def _commit_bisect(self, set_name, els):
+        if self._commit(set_name, els) or len(els) <= 1:
+            return
+        mid = len(els) // 2
+        self._commit_bisect(set_name, els[:mid])
+        self._commit_bisect(set_name, els[mid:])
 
-    def _commit(self, set_name, tok, els) -> bool:
+    def _commit(self, set_name, els) -> bool:
         toks = []
-        for k, (ip, _meta) in enumerate(els):
+        for k, (ip, tok, _meta) in enumerate(els):
             if k:
                 toks.append(",")
             toks.append(ip)
@@ -218,24 +222,20 @@ class BlockBatcher:
         try:
             r = self.run_cmd(
                 cmd, check=False,
-                success_msg=(
-                    f"Blocage de {len(els)} IP ({set_name}) : {els[0][0]}"
-                    + (f" … +{len(els) - 1}" if len(els) > 1 else "")
-                )
+                success_msg=(f"Blocage de {len(els)} IP ({set_name}) : {els[0][0]}"
+                             + (f" … +{len(els) - 1}" if len(els) > 1 else ""))
             )
         except Exception as e:
             self._warn(f"BlockBatcher commande : {e!r}")
             r = None
-            
         if r is not None and getattr(r, "returncode", 1) == 0:
-            for _ip, meta in els:
+            for _ip, _tok, meta in els:
                 try:
                     self.on_blocked(meta)
                 except Exception as e:
                     self._warn(f"BlockBatcher on_blocked : {e!r}")
             self.committed += len(els)
             return True
-        
         if len(els) == 1:
             self.failed += 1
         return False

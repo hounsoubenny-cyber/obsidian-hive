@@ -112,7 +112,7 @@ class CaptureProxy:
         
         return results
             
-    def _do_request(self, rid, attr, attr_for, is_callable, args, kwargs, timeout: float = 2.0):
+    def _do_request(self, rid, attr, attr_for, is_callable, args, kwargs, timeout: float = 2.0) -> dict:
         attr_for = attr_for or "capture"
         request = (
             rid, attr, attr_for, is_callable, args or [], kwargs or {}
@@ -140,17 +140,25 @@ class CaptureProxy:
     def _create_rid():
         return str(uuid4())
     
-    def add_src_ip_to_ignore(self, ip: str):
+    def add_src_ip_to_ignore(self, ip: str, return_bool: bool = True):
         rid = self._create_rid()
-        return all(list(self._do_request(
+        result = self._do_request(
             rid, "add_src_ip_to_ignore", "capture", True, [], {"ip": ip}
-        ).values()))
+        )
+        if not return_bool:
+            return result
+        values = list(result.values())
+        return result and values and all(values)
        
-    def remove_src_ip_to_ignore(self, ip: str):
+    def remove_src_ip_to_ignore(self, ip: str, return_bool: bool = True):
         rid = self._create_rid()
-        return all(list(self._do_request(
+        result = self._do_request(
             rid, "remove_src_ip_to_ignore", "capture", True, [], {"ip": ip}
-        ).values()))
+        )
+        if not return_bool:
+            return result
+        values = list(result.values())
+        return result and values and all(values)
         
     def stats(self):
         rid = self._create_rid()

@@ -337,7 +337,7 @@ class AnomalyScorer:
 
         if port:
             port_score = self.critical_port.get(str(port), 10)
-            score += min(port_score, SCORE_CONF.get('port_weight', port_score))
+            score += min(port_score, SCORE_CONF.get('port_weight', 35.0))   # même défaut que le .pyx
         else:
             score += 10
 
@@ -346,7 +346,7 @@ class AnomalyScorer:
         if pred == -1:
             score += SCORE_CONF.get('ml_predict', 15)
 
-        if ((pred == -1) and (port in self.critical_port)):
+        if ((pred == -1) and (str(port) in self.critical_port)):   # clés du dict = str
             score += 30
 
         if dec_func <= -0.8:
@@ -366,9 +366,7 @@ class AnomalyScorer:
 
         if seq_anomaly:
             score += 10
-            anomaly_ratio = pkt_rate / SEQ_LENGTH if SEQ_LENGTH > 0 else 0
-        else:
-            anomaly_ratio = pkt_rate
+        anomaly_ratio = pkt_rate   # contrat : ratio de paquets anormaux dans la fenêtre, dans [0, 1]
 
         ANO_CONF_RATE = CONFIG.CONFIG.get(ANOMALY_RATE_THRESHOLDS_KEY, {})
         if anomaly_ratio > ANO_CONF_RATE.get('critical', 0.9):
@@ -403,7 +401,9 @@ class AnomalyScorer:
                 critical_port=self.critical_port,
                 score_conf=CONFIG.CONFIG.get(SCORING_CONFIG_KEY, {}),
                 ano_conf_rate=CONFIG.CONFIG.get(ANOMALY_RATE_THRESHOLDS_KEY, {}),
-                seq_length=SEQ_LENGTH
+                # pkt_rate est déjà un ratio : seq_length=1 neutralise la division faite dans le .pyx
+                # (à nettoyer dans le .pyx à la prochaine recompilation)
+                seq_length=1
             )
 
     def calculate_ip_score_dangerous(self, ip: str, anomaly_score: int | float):
@@ -840,6 +840,7 @@ class AnomalyScorer:
         ia_preds: dict | None = None,
     ):
         """
+        pkt_rate : ratio de paquets anormaux dans la fenêtre, dans [0, 1] (PAS un compte).
         ia_preds : {"decision_function": float, "predict": -1|1} DÉJÀ calculés en lot par detect().
         Si fourni, on ne ré-infère pas (avant : 2 inférences unitaires complètes AE+IF+LOF par anomalie).
         """

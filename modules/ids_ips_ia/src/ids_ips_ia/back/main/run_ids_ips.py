@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jul  3 21:08:33 2026
+
+@author: hounsousamuel
+"""
+
+import time
+from ids_ips_ia.main.server_state import (
+    start, stop, logger
+)
+
+from ids_ips_ia.main.services import (
+    _do_stop_logic,
+)
+
+from ids_ips_ia.main.api import (
+    app, host, port, GRAPH, graph
+)
+from modules_utils.loop_utils import _run_async
+from modules_utils.signal_manager import signal_manager
+
+def run_ids_ips():
+    try:
+        th, server = start(app, host, port)
+        th.start()
+        def _main_signal_handler(*args, **kwargs):
+            logger.info("\n[SIGNAL] Arrêt demandé...")
+            server.should_exit = True
+            _run_async(
+                _do_stop_logic,
+                app.state
+            )
+        
+        signal_manager(_main_signal_handler)
+        while True:
+            time.sleep(1)
+            # print("En cours...", end="\r")
+            
+    except Exception:
+        if GRAPH:
+            graph.end()
+    
+    stop(th, 2)
+
+if __name__ == "__main__":
+    run_ids_ips()

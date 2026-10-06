@@ -33,7 +33,7 @@ class ProcessCaptureAdapter:
         stop_event: _EVENT_TYPE,
         capture_event: Union[threading.Event, _EVENT_TYPE, None] = None,
         log_interval: float = 10.0,
-        sleep_time: float = 0.001,
+        sleep_time: float = 2,
     ):
         if not isinstance(ring_args, dict):
             raise TypeError("`ring_arg` doit être un dictionnaire !")
@@ -77,6 +77,7 @@ class ProcessCaptureAdapter:
             #     break
             
             try:
+                
                 item = self._command_queue.get(timeout=self._sleep_time)
             except (queue.Empty, ):
                 continue         

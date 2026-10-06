@@ -621,14 +621,15 @@ class IDS_IPS:
     def _setup_signal_handlers(self, process: list = None, threads: list = None):
         """Configure les gestionnaires de signaux pour un arrêt propre."""
         def signal_handler(*args, **kwargs):
+            import time
             logger.print("\n[INFO] Interruption détectée. Arrêt des threads...")
             self.stop()
             if self.detector:
                 print("Detection start time:", self.detector.detect_start_time)
-                print("Detection end time:", self.detector.detect_end_time)
+                print("Detection end time:", self.detector.detect_end_time or time.time())
                 print("Detection processed paquets time:", self.detector.pkt_proccessed)
                 st = self.detector.detect_start_time
-                et = self.detector.detect_end_time
+                et = self.detector.detect_end_time or time.time()
                 pkt = self.detector.pkt_proccessed
                 if st and et:
                     e = et - st

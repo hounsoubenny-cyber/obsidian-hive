@@ -1,0 +1,1136 @@
+{
+ "opts": {
+  "idle": false,
+  "native": false,
+  "nonblocking": false,
+  "gil": false,
+  "rate": 70,
+  "duration": 365,
+  "target_alive": true
+ },
+ "spy_log": "py-spy> Sampling process 70 times a second for 365 seconds. Press Control-C to exit.\n\npy-spy> Wrote speedscope file to '/home/hounsousamuel/PROJET/obsidian_hive/modules/ids_ips_ia/src/ids_ips_ia/test_utils/results/result014/profile.speedscope.json'. Samples: 41776 Errors: 1\npy-spy> Visit https://www.speedscope.app/ to view\n",
+ "cpu": {
+  "wall": 364.05781670400756,
+  "threads": [
+   {
+    "pid": 733780,
+    "tid": 733780,
+    "comm": "python3.11",
+    "cpu": 1.43
+   },
+   {
+    "pid": 733780,
+    "tid": 733784,
+    "comm": "python3.11",
+    "cpu": 0.55
+   },
+   {
+    "pid": 733780,
+    "tid": 733785,
+    "comm": "python3.11",
+    "cpu": 58.22
+   },
+   {
+    "pid": 733780,
+    "tid": 733802,
+    "comm": "jemalloc_bg_thd",
+    "cpu": 0.53
+   },
+   {
+    "pid": 733780,
+    "tid": 733803,
+    "comm": "python3.11",
+    "cpu": 0.52
+   },
+   {
+    "pid": 733780,
+    "tid": 733804,
+    "comm": "python3.11",
+    "cpu": 0.49
+   },
+   {
+    "pid": 733780,
+    "tid": 733805,
+    "comm": "python3.11",
+    "cpu": 0.46
+   },
+   {
+    "pid": 733780,
+    "tid": 733806,
+    "comm": "python3.11",
+    "cpu": 0.43
+   },
+   {
+    "pid": 733780,
+    "tid": 733807,
+    "comm": "python3.11",
+    "cpu": 0.43
+   },
+   {
+    "pid": 733780,
+    "tid": 733808,
+    "comm": "python3.11",
+    "cpu": 0.42
+   },
+   {
+    "pid": 733780,
+    "tid": 733809,
+    "comm": "python3.11",
+    "cpu": 0.41
+   },
+   {
+    "pid": 733780,
+    "tid": 733810,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733811,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733812,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733813,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733814,
+    "comm": "python3.11",
+    "cpu": 0.38
+   },
+   {
+    "pid": 733780,
+    "tid": 733837,
+    "comm": "python3.11",
+    "cpu": 1.27
+   },
+   {
+    "pid": 733780,
+    "tid": 733839,
+    "comm": "python3.11",
+    "cpu": 97.28
+   },
+   {
+    "pid": 733780,
+    "tid": 733840,
+    "comm": "python3.11",
+    "cpu": 1.19
+   },
+   {
+    "pid": 733780,
+    "tid": 733842,
+    "comm": "iou-sqp-733837",
+    "cpu": 185.0
+   },
+   {
+    "pid": 733780,
+    "tid": 733843,
+    "comm": "python3.11",
+    "cpu": 0.42
+   },
+   {
+    "pid": 733780,
+    "tid": 733844,
+    "comm": "python3.11",
+    "cpu": 0.4
+   },
+   {
+    "pid": 733780,
+    "tid": 733845,
+    "comm": "python3.11",
+    "cpu": 0.4
+   },
+   {
+    "pid": 733780,
+    "tid": 733846,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733853,
+    "comm": "python3.11",
+    "cpu": 0.46
+   },
+   {
+    "pid": 733780,
+    "tid": 733855,
+    "comm": "python3.11",
+    "cpu": 0.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733856,
+    "comm": "python3.11",
+    "cpu": 6.56
+   },
+   {
+    "pid": 733780,
+    "tid": 733857,
+    "comm": "python3.11",
+    "cpu": 6.39
+   },
+   {
+    "pid": 733780,
+    "tid": 733858,
+    "comm": "python3.11",
+    "cpu": 6.5
+   },
+   {
+    "pid": 733780,
+    "tid": 733859,
+    "comm": "python3.11",
+    "cpu": 6.47
+   },
+   {
+    "pid": 733780,
+    "tid": 733860,
+    "comm": "python3.11",
+    "cpu": 6.46
+   },
+   {
+    "pid": 733780,
+    "tid": 733861,
+    "comm": "python3.11",
+    "cpu": 6.43
+   },
+   {
+    "pid": 733780,
+    "tid": 733862,
+    "comm": "python3.11",
+    "cpu": 6.44
+   },
+   {
+    "pid": 733780,
+    "tid": 733863,
+    "comm": "python3.11",
+    "cpu": 6.42
+   },
+   {
+    "pid": 733780,
+    "tid": 733864,
+    "comm": "python3.11",
+    "cpu": 6.55
+   },
+   {
+    "pid": 733780,
+    "tid": 733865,
+    "comm": "python3.11",
+    "cpu": 6.46
+   },
+   {
+    "pid": 733780,
+    "tid": 733866,
+    "comm": "python3.11",
+    "cpu": 6.29
+   },
+   {
+    "pid": 733780,
+    "tid": 733867,
+    "comm": "python3.11",
+    "cpu": 6.47
+   },
+   {
+    "pid": 733780,
+    "tid": 733868,
+    "comm": "python3.11",
+    "cpu": 0.38
+   },
+   {
+    "pid": 733780,
+    "tid": 733869,
+    "comm": "python3.11",
+    "cpu": 0.37
+   },
+   {
+    "pid": 733780,
+    "tid": 733870,
+    "comm": "python3.11",
+    "cpu": 0.37
+   },
+   {
+    "pid": 733780,
+    "tid": 733871,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733872,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733873,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733874,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733875,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733876,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733877,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733878,
+    "comm": "python3.11",
+    "cpu": 0.37
+   },
+   {
+    "pid": 733780,
+    "tid": 733879,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733882,
+    "comm": "python3.11",
+    "cpu": 1.02
+   },
+   {
+    "pid": 733780,
+    "tid": 733900,
+    "comm": "python3.11",
+    "cpu": 3.52
+   },
+   {
+    "pid": 733780,
+    "tid": 733901,
+    "comm": "python3.11",
+    "cpu": 50.93
+   },
+   {
+    "pid": 733780,
+    "tid": 733903,
+    "comm": "python3.11",
+    "cpu": 0.45
+   },
+   {
+    "pid": 733780,
+    "tid": 733904,
+    "comm": "python3.11",
+    "cpu": 0.69
+   },
+   {
+    "pid": 733780,
+    "tid": 733923,
+    "comm": "python3.11",
+    "cpu": 0.42
+   },
+   {
+    "pid": 733780,
+    "tid": 733943,
+    "comm": "python3.11",
+    "cpu": 0.37
+   },
+   {
+    "pid": 733780,
+    "tid": 733944,
+    "comm": "python3.11",
+    "cpu": 0.37
+   },
+   {
+    "pid": 733780,
+    "tid": 733945,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733946,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733947,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733948,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733949,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733950,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733951,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733952,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733953,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733954,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733955,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733956,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733957,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733958,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733959,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733960,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733961,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733962,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733963,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733964,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733965,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733966,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733967,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733968,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733969,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733970,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733971,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 733972,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 733973,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733974,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733975,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733976,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733977,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733978,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733979,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733980,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733981,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 733982,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733983,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733984,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 733985,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733986,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733987,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733988,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 733989,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 733990,
+    "comm": "python3.11",
+    "cpu": 0.36
+   },
+   {
+    "pid": 733780,
+    "tid": 734025,
+    "comm": "python3.11",
+    "cpu": 41.37
+   },
+   {
+    "pid": 733780,
+    "tid": 734026,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734027,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734028,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734029,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734030,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734031,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734032,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734033,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734034,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734035,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734036,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734037,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734038,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734039,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734040,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734041,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734042,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734043,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734044,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734045,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734046,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734047,
+    "comm": "python3.11",
+    "cpu": 0.33
+   },
+   {
+    "pid": 733780,
+    "tid": 734049,
+    "comm": "python3.11",
+    "cpu": 0.72
+   },
+   {
+    "pid": 733780,
+    "tid": 734066,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734067,
+    "comm": "python3.11",
+    "cpu": 16.62
+   },
+   {
+    "pid": 733780,
+    "tid": 734068,
+    "comm": "python3.11",
+    "cpu": 80.4
+   },
+   {
+    "pid": 733780,
+    "tid": 734069,
+    "comm": "python3.11",
+    "cpu": 3.55
+   },
+   {
+    "pid": 733780,
+    "tid": 734070,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734071,
+    "comm": "python3.11",
+    "cpu": 0.34
+   },
+   {
+    "pid": 733780,
+    "tid": 734072,
+    "comm": "python3.11",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733780,
+    "tid": 734073,
+    "comm": "python3.11",
+    "cpu": 22.87
+   },
+   {
+    "pid": 733780,
+    "tid": 734075,
+    "comm": "python3.11",
+    "cpu": 0.55
+   },
+   {
+    "pid": 733780,
+    "tid": 734139,
+    "comm": "python3.11",
+    "cpu": 0.5
+   },
+   {
+    "pid": 733780,
+    "tid": 736959,
+    "comm": "python3.11",
+    "cpu": 0.18
+   },
+   {
+    "pid": 733780,
+    "tid": 737505,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737506,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737507,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737508,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737509,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737510,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737511,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737512,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737542,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737543,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737544,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737545,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737546,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737547,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737548,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737549,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737568,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737569,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737570,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737571,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737572,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737573,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737574,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733780,
+    "tid": 737575,
+    "comm": "python3.11",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733922,
+    "tid": 733922,
+    "comm": "sudo",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733925,
+    "tid": 733925,
+    "comm": "Suricata-Main",
+    "cpu": 0.48
+   },
+   {
+    "pid": 733925,
+    "tid": 733926,
+    "comm": "W#01-veth_rx",
+    "cpu": 1.4
+   },
+   {
+    "pid": 733925,
+    "tid": 733927,
+    "comm": "W#02-veth_rx",
+    "cpu": 1.35
+   },
+   {
+    "pid": 733925,
+    "tid": 733928,
+    "comm": "W#03-veth_rx",
+    "cpu": 2.04
+   },
+   {
+    "pid": 733925,
+    "tid": 733929,
+    "comm": "W#04-veth_rx",
+    "cpu": 1.3
+   },
+   {
+    "pid": 733925,
+    "tid": 733930,
+    "comm": "W#05-veth_rx",
+    "cpu": 1.28
+   },
+   {
+    "pid": 733925,
+    "tid": 733931,
+    "comm": "W#06-veth_rx",
+    "cpu": 1.24
+   },
+   {
+    "pid": 733925,
+    "tid": 733932,
+    "comm": "W#07-veth_rx",
+    "cpu": 1.33
+   },
+   {
+    "pid": 733925,
+    "tid": 733933,
+    "comm": "W#08-veth_rx",
+    "cpu": 1.36
+   },
+   {
+    "pid": 733925,
+    "tid": 733934,
+    "comm": "W#09-veth_rx",
+    "cpu": 1.3
+   },
+   {
+    "pid": 733925,
+    "tid": 733935,
+    "comm": "W#10-veth_rx",
+    "cpu": 1.28
+   },
+   {
+    "pid": 733925,
+    "tid": 733936,
+    "comm": "W#11-veth_rx",
+    "cpu": 1.39
+   },
+   {
+    "pid": 733925,
+    "tid": 733937,
+    "comm": "W#12-veth_rx",
+    "cpu": 1.33
+   },
+   {
+    "pid": 733925,
+    "tid": 733938,
+    "comm": "FM#01",
+    "cpu": 0.26
+   },
+   {
+    "pid": 733925,
+    "tid": 733939,
+    "comm": "FR#01",
+    "cpu": 0.11
+   },
+   {
+    "pid": 733925,
+    "tid": 733940,
+    "comm": "CW",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733925,
+    "tid": 733941,
+    "comm": "CS",
+    "cpu": 0.03
+   },
+   {
+    "pid": 733852,
+    "tid": 733852,
+    "comm": "sudo",
+    "cpu": 0.0
+   },
+   {
+    "pid": 733880,
+    "tid": 733880,
+    "comm": "tail",
+    "cpu": 0.35
+   },
+   {
+    "pid": 733841,
+    "tid": 733841,
+    "comm": "python3.11",
+    "cpu": 0.55
+   }
+  ],
+  "procs": {
+   "733780": 693.99,
+   "733922": 0.0,
+   "733925": 17.51,
+   "733852": 0.0,
+   "733880": 0.35,
+   "733841": 0.55
+  },
+  "total_cpu": 712.4,
+  "exited_threads_cpu": 9.799999999998931,
+  "lost_procs": [],
+  "ncpu": 12,
+  "generator_cpu": 69.83,
+  "spy_cpu": 281.58603800000003,
+  "system_busy_pct": 61.18724528102744
+ }
+}

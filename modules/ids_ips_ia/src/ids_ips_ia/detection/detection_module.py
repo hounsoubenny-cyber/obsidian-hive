@@ -1019,7 +1019,7 @@ class AnomalyDetector:
                             pkt_rate.append(1)
                             scores = await self.AnomalyScorer.detect_pkt(
                                 pkt=pkt, seq_anomaly=False, models=_mod, Model=self.Models, mode=mode,
-                                pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                                pkt_rate=buffer_pred_pkt.count(-1) / SEQ_LENGTH, features=pkt_fea, how=how,
                                 event_timestamp=alert.get("eve_timestamp"),
                                 ia_preds=pkt_ia
                             )
@@ -1043,7 +1043,7 @@ class AnomalyDetector:
                         pkt_rate.append(1)
                         scores = await self.AnomalyScorer.detect_pkt(
                             pkt=pkt, seq_anomaly=None, models=_mod, Model=self.Models, mode=mode,
-                            pkt_rate=sum(pkt_rate), features=pkt_fea, how=how,
+                            pkt_rate=buffer_pred_pkt.count(-1) / SEQ_LENGTH, features=pkt_fea, how=how,
                             ia_preds=pkt_ia
                         )
                         if self.enable_graphe:

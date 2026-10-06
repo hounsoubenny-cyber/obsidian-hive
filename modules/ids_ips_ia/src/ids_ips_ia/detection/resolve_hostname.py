@@ -30,9 +30,12 @@ Auto-test : python resolve_hostname_fixed.py
 import socket
 import time
 import threading
+import ipaddress
 from concurrent.futures import ThreadPoolExecutor
 
 _UNRESOLVED = "non-résolu"
+
+RDNS_PRIVATE = False   # True en prod si le DNS interne du client connaît ses machines
 
 # ip -> (valeur, instant d'expiration en time.monotonic())
 _hostname_cache: dict[str, tuple[str, float]] = {}
@@ -46,9 +49,17 @@ _HOSTNAME_MAX_PENDING = 32              # au-delà : on ne lance plus rien (reto
 _hostname_cache_lock = threading.Lock()  # protège seulement l'ÉCRITURE/éviction ; lire un dict n'en a pas besoin
 _hostname_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="rdns")
 
+def _worth_resolving(ip: str) -> bool:
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return a.is_global or (RDNS_PRIVATE and a.is_private)
 
 def _lookup_hostname(ip: str) -> None:
     """Tourne dans un thread du pool : résout (bloquant), puis range le résultat. Ne lève jamais."""
+    if not _worth_resolving(ip):
+        return _UNRESOLVED
     try:
         value, ttl = socket.gethostbyaddr(ip)[0], _HOSTNAME_TTL_OK
     except Exception:
