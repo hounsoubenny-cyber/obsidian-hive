@@ -91,7 +91,8 @@ class CaptureProxy:
                      continue
                 
                 # result_queue.put_nowait(_SENTINEL)
-                items = [item]
+                items = {str(item[0]): (item, item[-2])}
+                
                 while True:
                     try:
                         item = result_queue.get(timeout=0.001)
@@ -105,10 +106,13 @@ class CaptureProxy:
                         results[self.get_pcid(id(result_queue))] = item[-1]
                         break
                     
-                    items.append(item)
-                    
-                for item in items:
-                    result_queue.put_nowait(item)
+                    items[str(item[0])] = (item, item[-2])
+                
+                
+                now = time.monotonic()
+                for (ts, item) in items.values():
+                    if now - ts < 10:
+                        result_queue.put_nowait(item)
         
         return results
             

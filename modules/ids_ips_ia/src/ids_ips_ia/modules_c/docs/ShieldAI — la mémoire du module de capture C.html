@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ShieldAI — la mémoire du module de capture C</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#F3F7F6;--ink:#12202B;--soft:#566772;--card:#fff;--line:#D3DEDC;--addr:#2A9D8F;--num:#D98E1F;--ptr:#7B5EA7;--tag:#3A86FF;--pad:#B4C0C5;--un:#D1495B}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0E1920;--ink:#E6EEF0;--soft:#97A9B2;--card:#16262F;--line:#2A3D47;--pad:#4A5D67}}
+:root[data-theme=dark]{--bg:#0E1920;--ink:#E6EEF0;--soft:#97A9B2;--card:#16262F;--line:#2A3D47;--pad:#4A5D67}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:760px;margin:auto;padding:18px 16px 60px}
+h1{font-size:clamp(28px,7vw,44px);line-height:1.05;margin:.2em 0 .3em;font-weight:800;letter-spacing:-.02em}
+h2{font-size:24px;margin:2em 0 .3em;font-weight:800}
+h3{font-size:17px;margin:1.3em 0 .2em}
+p{margin:.4em 0;max-width:68ch}
+code,.m{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.88em}
+code{background:var(--card);border:1px solid var(--line);padding:0 .3em;border-radius:4px}
+.lead{font-size:18px;color:var(--soft)}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+nav a,.tab,.bit,summary{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:5px 11px;border-radius:99px;text-decoration:none;font:inherit;font-size:14px;cursor:pointer}
+.tab.on,.bit.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
+.kid{border-left:4px solid var(--tag)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.g{display:grid;gap:2px;align-items:center;margin:10px 0}
+.g i{font:10px "IBM Plex Mono",monospace;color:var(--soft);font-style:normal;text-align:right;padding-right:4px}
+.c{height:24px;border-radius:3px;cursor:pointer;opacity:.95}
+.c.dim{opacity:.28}
+.k-addr{background:var(--addr)}.k-num{background:var(--num)}.k-ptr{background:var(--ptr)}.k-tag{background:var(--tag)}.k-un{background:var(--un)}
+.k-pad{background:repeating-linear-gradient(45deg,var(--pad) 0 3px,transparent 3px 6px);border:1px dashed var(--pad)}
+.info{min-height:3em;font-size:14px;color:var(--soft)}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--soft)}
+.leg span:before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--x)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.wrap{overflow-x:auto}
+.bits{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.bit{border-radius:8px;padding:6px 0;text-align:center;font-size:12px}
+.bit b{display:block;font-size:18px}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--ink);font:11px "Bricolage Grotesque",sans-serif}
+svg .s{fill:var(--soft);font-size:10px}
+svg rect{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+svg path{stroke:var(--soft);fill:none;stroke-width:1.4}
+details{margin:8px 0}summary{display:inline-block}
+details p{padding:6px 2px}
+.ok{color:var(--addr);font-weight:600}
+</style></head><body><main>
+
+<p class="m" style="color:var(--soft)">ShieldAI · modules_c · 11 octobre 2026</p>
+<h1>Où vit chaque octet, et qui parle à qui 🧠</h1>
+<p class="lead">Les paquets arrivent en octets, le parser les range dans une fiche, la table de flux retient chaque conversation. Touche les cases colorées : chaque case est <b>un octet</b> pour de vrai (tailles mesurées sur ton code).</p>
+<nav><a href="#vue">🧭 Vue d'ensemble</a><a href="#struct">🗄️ struct</a><a href="#union">📦 union</a><a href="#enum">🏷️ enum</a><a href="#pad">📐 Padding</a><a href="#tas">🧱 Pile et tas</a><a href="#vie">⏳ Cycle de vie</a><a href="#conv">📏 Conventions</a><a href="#etat">✅ État</a></nav>
+
+<h2 id="vue">🧭 Le voyage d'un paquet</h2>
+<div class="box kid">🧒 <b>Comme à 5 ans :</b> un camion de lettres arrive (les octets). Le facteur <code>parse</code> lit l'enveloppe et remplit une fiche. Le bureau <code>ft_process</code> cherche : « cette conversation existe déjà ? » Si oui, il met la fiche à jour. Sinon, il en crée une et la range à deux endroits : un <b>annuaire</b> (dict, pour retrouver vite) et une <b>file</b> (pour savoir qui est le plus vieux).</div>
+<ol>
+<li><code>parse(pkt, len)</code> rend un <code>ParserResult</code> (92 o, sur la pile). Si <code>code ≠ SUCCES</code> : refusé.</li>
+<li><code>pr_tuple</code> en tire IP, ports, protocole. Pas d'IP (ARP) : refusé.</li>
+<li><code>build_flow_key</code> fabrique la clé <b>canonique</b> (A→B et B→A donnent la même).</li>
+<li><code>ft_get</code> : connue ? → <code>entry_update</code> (compteurs, flags) puis <code>move_to_end</code>.</li>
+<li>Inconnue ? → <code>FlowEntry</code> + <code>FlowData</code> créés, <code>ft_add</code> (évince le plus ancien si plein), puis compteur d'IP et port visité dans la <code>PortMap</code>.</li>
+</ol>
+<div class="wrap"><table><tr><th>Module</th><th>Rôle en une phrase</th><th>État</th></tr>
+<tr><td><code>utils</code></td><td>octets → entiers, hachage</td><td>✅</td></tr>
+<tr><td><code>parser</code></td><td>octets → <code>ParserResult</code> (Ethernet, VLAN, IPv4/6, TCP, UDP, ICMP, ARP)</td><td>✅</td></tr>
+<tr><td><code>dict</code></td><td>table de hachage générique (rehash à 75 %)</td><td>✅</td></tr>
+<tr><td><code>portmap</code></td><td>65 536 bits : « ce port a été visité »</td><td>✅</td></tr>
+<tr><td><code>flow</code></td><td>clé de flux, fiche, mise à jour, fonctions du dict</td><td>✅</td></tr>
+<tr><td><code>dchained_list</code></td><td>file ancien → récent des <code>FlowEntry</code></td><td>✅</td></tr>
+<tr><td><code>flow_table</code></td><td>chef d'orchestre : <code>ft_process</code></td><td>✅</td></tr>
+<tr><td><code>rules</code></td><td>règle rapide : un flux et sa <code>PortMap</code> → un verdict (scan de ports)</td><td>✅</td></tr>
+<tr><td>capture, ring</td><td>sockets, partage vers Python</td><td>⏳ prévu</td></tr></table></div>
+
+<h2 id="struct">🗄️ struct : une commode à tiroirs</h2>
+<div class="box kid">🧒 Une <code>struct</code> range ses champs <b>l'un après l'autre</b>, comme des tiroirs. Chaque tiroir a une place fixe (<code>offsetof</code>). Parfois le compilateur laisse un tiroir vide <span class="m">(hachuré)</span> pour que le suivant commence à une adresse « ronde » : c'est l'<b>alignement</b>, et c'est pour ça que <code>sizeof</code> est souvent plus grand que la somme des champs.</div>
+<div class="tabs" id="st-tabs"></div>
+<div class="g" id="st-grid"></div>
+<div class="leg" id="st-leg"></div>
+<p class="info" id="st-info">👆 Touche une case.</p>
+<details><summary>🤔 Question : ParserResult fait 92 o, mais ses champs ne font que 86. Où sont les 6 autres ?</summary><p class="ok">Dans les deux blocs hachurés : 3 octets après <code>code</code> (pour aligner <code>n_vlan</code> sur 4) et 3 après <code>ip_data</code> (pour aligner <code>data</code> sur 4).</p></details>
+
+<h2 id="pad">📐 La logique du padding</h2>
+<div class="box kid">🧒 Le compilateur range chaque tiroir sur une étagère à <b>trous réguliers</b>. Un tiroir de 1 octet va n'importe où. Un tiroir de 4 octets ne s'installe qu'aux places 0, 4, 8… Un tiroir de 8 octets, qu'aux places 0, 8, 16… Si la place libre ne convient pas, il saute jusqu'à la prochaine : les cases sautées sont le <b>padding</b>.</div>
+<ol>
+<li><b>Chaque champ</b> commence à un offset multiple de son <i>alignement</i>, en général sa taille : <code>uint8_t</code> n'importe où · <code>uint16_t</code> multiple de 2 · <code>int</code> / <code>uint32_t</code> multiple de 4 · <code>uint64_t</code> / pointeur multiple de 8.</li>
+<li><b>La struct entière</b> est arrondie à un multiple de son plus grand alignement, pour qu'un tableau de ces structs reste aligné case après case.</li>
+<li>Le compilateur <b>ne réordonne jamais</b> : l'ordre écrit est l'ordre en mémoire.</li>
+<li>Une <b>union</b> a la taille de son plus grand membre, arrondie de la même façon. Un tableau d'<code>uint8_t</code> n'exige aucun alignement : c'est pourquoi <code>IPV4_DATA</code> (9 o) n'a aucun trou.</li>
+</ol>
+<p>Dans ton code : <code>code</code> est à 4 et <code>n_vlan</code> (4 o) ne peut pas aller à 5, il saute à 8. Dans <code>FlowData</code>, <code>header</code> finit à 37 et <code>start_time</code> (8 o) saute à 40. Dans <code>FlowKeyIpv4</code>, les champs finissent à 17 mais la struct fait 20 : arrondie au multiple de 4.</p>
+<h3>Essaie : mêmes champs, autre ordre</h3>
+<div class="tabs" id="pd-tabs"></div><div class="g" id="pd-grid"></div><p class="info" id="pd-info"></p>
+<p>Le contenu du padding est <b>indéfini</b> : c'est pour ça que ton parser fait un <code>memset</code> et que <code>PortPerIpKey</code> a un <code>pad[3]</code> explicite avant le <code>memcmp</code>. Déclarer du plus gros au plus petit réduit le padding, mais chez toi le gain serait faible : ça ne compterait qu'avec des millions d'objets.</p>
+<details><summary>🤔 Question : un <code>uint8_t</code> est à l'offset 0, un <code>uint64_t</code> le suit. À quel offset commence le <code>uint64_t</code> ?</summary><p class="ok">À 8 : il saute 7 octets de padding pour tomber sur un multiple de 8.</p></details>
+
+<h2 id="union">📦 union : une boîte, plusieurs étiquettes</h2>
+<div class="box kid">🧒 Une <code>union</code> est <b>une seule boîte</b> avec plusieurs étiquettes. La boîte a la taille du <b>plus grand</b> contenu. Dedans, il y a soit des légumes (IPv4), soit des jouets (IPv6), jamais les deux : changer l'étiquette, c'est relire <b>les mêmes cases</b> autrement. C'est pour ça qu'on garde à côté un champ qui dit comment lire (<code>version</code>, <code>proto</code>).</div>
+<h3>ip_data : IPv4 ou IPv6 (33 octets)</h3>
+<div class="tabs" id="u1-tabs"></div><div class="g" id="u1-grid"></div><p class="info" id="u1-info"></p>
+<h3>data : TCP, UDP, ICMP ou ARP (24 octets)</h3>
+<div class="tabs" id="u2-tabs"></div><div class="g" id="u2-grid"></div><p class="info" id="u2-info"></p>
+<details><summary>🤔 Question : j'écris 10 dans <code>ip_data.ipv4.src_ip[0]</code>. Que lit-on dans <code>ip_data.ipv6.src_ip[0]</code> ?</summary><p class="ok">10 aussi : c'est la même case. Les tests le vérifient (<code>t_mem_unions_du_parser</code>).</p></details>
+<details><summary>🤔 Question : pourquoi lire <code>data.tcp</code> si le paquet est ICMP serait une erreur ?</summary><p class="ok">Tu lirais les octets d'ICMP en croyant que ce sont des ports. D'où <code>pr_tuple</code> : il choisit le bon membre selon <code>proto</code> et donne des zéros sinon.</p></details>
+
+<h2 id="enum">🏷️ enum : des noms pour des nombres</h2>
+<div class="box kid">🧒 Un <code>enum</code> est une liste de <b>noms</b> qui valent des <b>nombres</b>. <code>TCP</code> veut juste dire 6. En mémoire, c'est un entier (4 octets ici). Pour les flags TCP, chaque nom est <b>un interrupteur</b> dans un seul octet. Allume-les :</div>
+<div class="bits" id="bits"></div><p class="m" id="bits-out" style="margin-top:10px"></p>
+<div class="wrap"><table><tr><th>enum</th><th>valeurs</th></tr>
+<tr><td><code>PARSER_RETURN_CODE</code></td><td>SUCCES 0 · ERROR 1 · TOO_LITTLE 2 · INCOHERENCE 3 · NOT_HANDLE 4 · FRAGMENT 5</td></tr>
+<tr><td><code>PKT_TYPE</code></td><td>IPV4 0x0800 · IPV6 0x86DD · ARP 0x0806 · VLAN 0x8100 · QINQ 0x88A8</td></tr>
+<tr><td><code>PROTOCOLS</code></td><td>ICMP 1 · TCP 6 · UDP 17 · ICMPV6 58</td></tr>
+<tr><td><code>FlowKeyType</code></td><td>FlowKeyIpv4Type 0 · FlowKeyIpv6Type 1 (premier champ de chaque clé)</td></tr>
+<tr><td><code>FlowVerdict</code></td><td>UNKNOW 0 · BLOCK 1 · LIMIT_REACHED 2</td></tr></table></div>
+<details><summary>🤔 Question : l'octet de flags vaut 0x12. Quels interrupteurs sont allumés ?</summary><p class="ok">0x12 = 0001 0010 : ACK (0x10) et SYN (0x02). C'est un SYN-ACK. Essaie en haut.</p></details>
+
+<h2 id="tas">🧱 Pile et tas : où vit un flux</h2>
+<svg viewBox="0 0 360 400" role="img" aria-label="Objets en mémoire pour une table de flux">
+<rect x="105" y="8" width="150" height="36" rx="8"/><text x="180" y="30" text-anchor="middle">FlowTable · 96 o</text>
+<path d="M180 44V60M60 60H300M60 60V76M180 60V76M300 60V76"/>
+<rect x="10" y="76" width="100" height="44" rx="8"/><text x="60" y="95" text-anchor="middle">flow_dict</text><text class="s" x="60" y="110" text-anchor="middle">Dict 72 o + buckets</text>
+<rect x="130" y="76" width="100" height="44" rx="8"/><text x="180" y="95" text-anchor="middle">flow_dcl</text><text class="s" x="180" y="110" text-anchor="middle">head · tail · 24 o</text>
+<rect x="250" y="76" width="100" height="44" rx="8"/><text x="300" y="95" text-anchor="middle">port_per_ip</text><text class="s" x="300" y="110" text-anchor="middle">Dict 72 o</text>
+<path d="M60 120V150M180 120V150M300 120V150"/>
+<rect x="10" y="150" width="100" height="48" rx="8"/><text x="60" y="169" text-anchor="middle">Entry · 32 o</text><text class="s" x="60" y="184" text-anchor="middle">key · value · next</text>
+<rect x="125" y="150" width="110" height="48" rx="8" style="stroke:var(--ptr);stroke-width:2.5"/><text x="180" y="169" text-anchor="middle">FlowEntry · 40 o</text><text class="s" x="180" y="184" text-anchor="middle">UN seul exemplaire</text>
+<rect x="250" y="150" width="100" height="48" rx="8"/><text x="300" y="169" text-anchor="middle">PortMap</text><text class="s" x="300" y="184" text-anchor="middle">8 200 o · 65 536 ports</text>
+<path d="M110 174H125"/><text class="s" x="117" y="168" text-anchor="middle">value</text>
+<path d="M180 120V150" style="stroke:var(--ptr)"/>
+<path d="M180 198V232M60 198V232M300 198V232"/>
+<rect x="10" y="232" width="100" height="44" rx="8"/><text x="60" y="251" text-anchor="middle">clé (copie du dict)</text><text class="s" x="60" y="266" text-anchor="middle">20 o v4 · 44 o v6</text>
+<rect x="125" y="232" width="110" height="44" rx="8"/><text x="180" y="251" text-anchor="middle">FlowData · 120 o</text><text class="s" x="180" y="266" text-anchor="middle">compteurs, adresses</text>
+<rect x="250" y="232" width="100" height="44" rx="8"/><text x="300" y="251" text-anchor="middle">clé (copie de</text><text x="300" y="264" text-anchor="middle">la FlowEntry)</text>
+<path d="M300 198V232" style="stroke:var(--ptr)"/>
+<rect x="10" y="300" width="340" height="90" rx="8" style="stroke-dasharray:5 4"/>
+<text x="20" y="320">Sur la pile (disparaît à la fin de la fonction) :</text>
+<text class="s" x="20" y="340">ParserResult 92 o · clé locale de ft_process 20/44 o</text>
+<text class="s" x="20" y="356">PortPerIpKey 20 o · PacketTuple (pointeurs vers le ParserResult)</text>
+<text class="s" x="20" y="376">Tout le reste est sur le tas (malloc / calloc) et libéré à l'éviction.</text>
+</svg>
+<div class="box">Une conversation = <b>une</b> <code>FlowEntry</code>, vue par le dict (via <code>Entry.value</code>) et par la file (via <code>lru_prev / lru_next</code>). Il y a <b>deux copies de la clé</b> : une dans la <code>FlowEntry</code>, une dans le dict. Le dict est créé avec <code>key_dup</code> mais sans <code>value_dup</code>. Retrait (éviction, expiration, fin TCP) = copie vers le <code>sink</code>, <code>dict_delitem</code>, <code>free(data)</code>, <code>free(key)</code>, puis <code>delete_entry</code> libère la <code>FlowEntry</code>.</div>
+
+<h2 id="vie">⏳ Quand un flux quitte la table</h2>
+<div class="wrap"><table><tr><th>Condition</th><th>Qui la voit</th><th>Raison envoyée</th></tr>
+<tr><td>Inactif depuis <code>idle_ms</code></td><td><code>ft_expire</code> (tête de file)</td><td><code>END_IDLE</code></td></tr>
+<tr><td>RST, ou FIN des deux côtés (option <code>close_on_tcp_end</code>)</td><td><code>ft_process</code>, juste après la mise à jour</td><td><code>END_TCP_CLOSED</code></td></tr>
+<tr><td>Table pleine</td><td><code>ft_add</code> chasse le plus ancien</td><td><code>END_EVICTED</code></td></tr>
+<tr><td>Arrêt du programme</td><td><code>ft_destroy</code></td><td><code>END_SHUTDOWN</code></td></tr>
+<tr><td>Durée dépassée (<code>max_ms</code>)</td><td><code>ft_process</code>, en dernier (après la règle et la fin TCP)</td><td><code>END_MAX_DURATION</code> : le flux <b>reste</b>, il repart de zéro</td></tr>
+<tr><td>Verdict <code>BLOCK</code> ou <code>LIMIT_REACHED</code></td><td>la règle</td><td><b>le flux reste</b> avec son verdict, jusqu'à l'une des lignes ci-dessus</td></tr></table></div>
+<p>Chaque flux qui part est d'abord copié dans un <code>FlowRecord</code> (176 o, sans pointeur) donné au <code>sink</code>, puis libéré. Pour Python, <code>start_time</code> et <code>end_time</code> sont en ms depuis 1970 : <code>int(time.time() * 1000)</code>. <code>end_time</code> = dernier paquet vu.</p>
+<h3>Deux minuteurs, deux jobs</h3>
+<div class="box kid">🧒 <b>Inactivité (<code>idle_ms</code>)</b> : « cette personne s'est endormie, on libère sa chaise » 💤. <b>Durée max (<code>max_ms</code>)</b> : « tu es là depuis 5 minutes : tu notes ce que tu as fait, et on repart d'une page blanche » 🗣️. Le flux reste, ses compteurs repartent à 0.</div>
+<ul><li>Sans <code>idle_ms</code> : les flux morts (client débranché, attaque à moitié ouverte) pèsent en mémoire pour rien.</li><li>Sans <code>max_ms</code> : un flux qui parle sans arrêt n'est jamais envoyé à Python.</li></ul>
+<details><summary>🤔 Question : <code>idle_ms</code> = 30 s, <code>max_ms</code> = 5 min. Un flux envoie un paquet toutes les 10 s pendant 1 heure. Est-il exporté ?</summary><p class="ok">Oui, 12 fois (toutes les 5 min), et jamais pour inactivité : il n'est jamais silencieux plus de 10 s. Le test <code>t_duree_max_flux_bavard</code> le vérifie.</p></details>
+<h3>L'ordre pour chaque paquet : <code>ft_process(ft, pr, now_ms)</code></h3>
+<ol><li>IP source sur la liste noire ? On l'ignore, <b>rien n'est stocké</b>, retour 0.</li><li><code>ft_expire</code> : le ménage, en regardant la tête de file.</li><li>Fiche : <code>entry_update</code> (compteurs, octets, <code>end_time</code>) ou création du flux.</li><li>Règle <code>check</code> : elle donne un verdict, et <code>BLOCK</code> ajoute l'IP à la liste noire.</li><li>Fin TCP ? Le flux est retiré (en dernier : il peut être libéré).</li><li>Sinon, durée max atteinte ? Instantané envoyé, le flux repart de zéro.</li></ol>
+<div class="box">Tu n'as pas à appeler <code>ft_expire</code> pour chaque paquet : <code>ft_process</code> le fait. Mais si aucun paquet n'arrive, rien ne se déclenche : ta boucle de capture appelle aussi <code>ft_expire(ft, realtime_ms())</code> quand <code>recv</code> expire, ou toutes les secondes.<pre style="overflow-x:auto;margin:8px 0 0" class="m">struct FlowHooks h = {0};
+h.idle_ms = 30000;          // 30 s sans paquet : retiré
+h.max_ms  = 300000;         // 5 min : instantané, puis il repart de zéro
+h.close_on_tcp_end = 1;
+h.check = rule_port_scan;
+h.sink  = mon_sink;         // void mon_sink(const FlowRecord *r, void *ctx)
+h.ctx   = mon_ring;         // le sink copie ce qu'il veut de *r
+FlowTable *ft = ft_create_with(65536, &amp;h);   // ou ft_create puis ft_set_hooks
+ft_process(ft, &amp;pr, realtime_ms());</pre></div>
+<details><summary>🤔 Question : une règle renvoie BLOCK pour un flux. Est-il supprimé tout de suite ?</summary><p class="ok">Non. L'IP va sur la liste noire (ses prochains paquets sont ignorés) et le flux reste avec son verdict jusqu'à son expiration. Le supprimer ferait recréer un flux UNKNOW au paquet suivant.</p></details>
+
+<h2 id="conv">📏 Les conventions, une seule fois pour toutes</h2>
+<div class="wrap"><table><tr><th>Famille</th><th>Règle</th><th>Exemples</th></tr>
+<tr><td>Action</td><td><b>0</b> = succès · <b>-1</b> = échec</td><td><code>ft_add</code>, <code>ft_process</code>, <code>dict_setitem</code>, <code>move_to_end</code>, <code>build_flow_key</code></td></tr>
+<tr><td>Question</td><td><b>1</b> = oui · <b>0</b> = non</td><td><code>ft_contains</code>, <code>ft_can_add</code>, <code>portmap_add</code> (nouveau ?), <code>portmap_test</code></td></tr>
+<tr><td>Comparaison</td><td><b>0</b> = égaux · sinon différents</td><td><code>flow_key_compare</code>, <code>port_key_compare</code></td></tr>
+<tr><td>Pointeur</td><td><b>NULL</b> = absent ou échec</td><td><code>ft_get</code>, <code>dict_getitem</code>, <code>create_dcl</code></td></tr>
+<tr><td>Drapeau <code>v4</code></td><td><b>1</b> = IPv4 · <b>0</b> = IPv6</td><td><code>FlowData.v4</code>, <code>PortPerIpKey.v4</code>, <code>PacketTuple.v4</code></td></tr>
+<tr><td>Compteur</td><td><b>≥ 0</b> = nombre · <b>-1</b> = erreur</td><td><code>ft_expire</code> (nombre de flux retirés)</td></tr>
+<tr><td>Parser</td><td><b>SUCCES = 0</b>, erreurs &gt; 0 toutes différentes</td><td><code>ParserResult.code</code></td></tr></table></div>
+<p>Avant, <code>v4 == 0</code> voulait dire IPv4 (à l'envers de son nom), et <code>ft_contains</code> / <code>ft_can_add</code> répondaient 0 pour « oui ». C'est ce qui embrouillait.</p>
+<details><summary>🤔 Question : <code>ft_contains(ft, key)</code> renvoie 0. Le flux est-il présent ?</summary><p class="ok">Non. C'est une question : 0 = non, 1 = oui. Ce n'est jamais -1.</p></details>
+<details><summary>🤔 Question : <code>delete_from_top</code> sur une liste vide renvoie 0. Est-ce une erreur ?</summary><p class="ok">Non : rien à supprimer n'est pas un échec. Seul -1 signale un échec.</p></details>
+
+<h2 id="etat">✅ État du code</h2>
+<div class="box"><b>Tests : tout est vert</b> avec ASan et UBSan, 0 avertissement : utils 10 · portmap 11 · dchained_list 28 · flow 44 · flow_table 35 · integration 45 · dict 74 · parser 46 + 37 + 52.<br><b>Corrigé :</b> <code>ft_add</code> chassait avant de regarder si la clé existait (il pouvait se chasser lui-même) · l'éviction supposait la tête de file · fuites dans <code>ft_create</code> en cas d'échec · code dupliqué v4 / v6 regroupé dans <code>pr_tuple</code> · code mort retiré.<br><b>Nouveau :</b> <code>octets_data_*</code> et <code>end_time</code> remplis, heure réelle compatible Python, <code>ft_expire</code>, <code>FlowHooks</code> (sink, règle, inactivité), liste noire, règle de scan, durée max (<code>max_ms</code>), <code>ft_create_with</code>.<br><b>Pas encore fait :</b> fenêtre de temps pour le scan (la <code>PortMap</code> vit tant que l'IP a un flux), capture et ring.</div>
+<p class="m" style="color:var(--soft)">Lancer : <code>./run_tests.sh</code> (ou <code>./run_tests.sh integration</code>)</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const COL={addr:'--addr',num:'--num',ptr:'--ptr',tag:'--tag',un:'--un',pad:'--pad'};
+// champs : [nom, offset, taille, genre, note]
+function mem(gridId,infoId,cols){
+  const g=$(gridId),info=$(infoId);let F=[],T=0;
+  function draw(total,fields){
+    F=fields;T=total;g.style.gridTemplateColumns='auto repeat('+cols+',1fr)';let h='';
+    for(let i=0;i<total;i++){
+      if(i%cols==0)h+='<i>'+i.toString(16).toUpperCase().padStart(2,'0')+'</i>';
+      const f=fields.findIndex(x=>i>=x[1]&&i<x[1]+x[2]);
+      h+='<div class="c k-'+fields[f][3]+'" data-f="'+f+'" title="octet '+i+'"></div>';
+    }
+    g.innerHTML=h;info.textContent='👆 Touche une case.';
+    g.onclick=e=>{const f=e.target.dataset.f;if(f==null)return;const x=F[f];
+      g.querySelectorAll('.c').forEach(c=>c.classList.toggle('dim',c.dataset.f!=f));
+      info.innerHTML='<b>'+x[0]+'</b> · octets '+x[1]+' à '+(x[1]+x[2]-1)+' · '+x[2]+' o'+(x[4]?' · '+x[4]:'');};
+  }
+  return draw;
+}
+function tabs(id,names,cb){const t=$(id);t.innerHTML=names.map((n,i)=>'<button class="tab'+(i?'':' on')+'" data-i="'+i+'">'+n+'</button>').join('');
+  t.onclick=e=>{const i=e.target.dataset.i;if(i==null)return;t.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.i==i));cb(+i);};cb(0);}
+const P=(o,s)=>['(remplissage)',o,s,'pad','octets vides pour l\'alignement'];
+// ── structs (tailles et offsets mesurés avec sizeof / offsetof)
+const ST=[
+ ['FlowKeyIpv4',20,10,[['key',0,4,'tag','FlowKeyType : lu en premier depuis un void *'],['ip_min',4,4,'addr','IP la plus petite'],['ip_max',8,4,'addr'],['port_min',12,2,'num','port de la machine ip_min'],['port_max',14,2,'num'],['proto',16,1,'num'],P(17,3)]],
+ ['FlowKeyIpv6',44,11,[['key',0,4,'tag'],['ip_min',4,16,'addr'],['ip_max',20,16,'addr'],['port_min',36,2,'num'],['port_max',38,2,'num'],['proto',40,1,'num'],P(41,3)]],
+ ['FlowEntry',40,8,[['key',0,8,'ptr','pointeur vers la clé'],['data',8,8,'ptr','pointeur vers FlowData'],['lru_prev',16,8,'ptr','maillon précédent de la file'],['lru_next',24,8,'ptr','maillon suivant'],['dcl_pos',32,4,'num'],P(36,4)]],
+ ['FlowData',120,16,[['v4',0,1,'tag','1 = IPv4, 0 = IPv6'],['header (union)',1,36,'un','Ipv4EntryData (12 o) ou Ipv6EntryData (36 o)'],P(37,3),['start_time',40,8,'num','ms depuis 1970 : 1er paquet'],['end_time',48,8,'num','ms depuis 1970 : dernier paquet vu'],['flag_count',56,32,'num','8 compteurs de 4 o'],['n_pkt_ltr',88,4,'num'],['n_pkt_rtl',92,4,'num'],['octets_data_ltr',96,8,'num','somme des len (trame entière)'],['octets_data_rtl',104,8,'num'],['proto',112,1,'num'],P(113,3),['verdict',116,4,'tag','FlowVerdict']]],
+ ['ParserResult',92,16,[['len',0,4,'num'],['code',4,1,'tag','PARSER_RETURN_CODE'],P(5,3),['n_vlan',8,4,'num'],['ip_start',12,4,'num'],['type',16,2,'tag','PKT_TYPE'],['ihl',18,1,'num'],['version',19,1,'tag','4 ou 6 : dit comment lire ip_data'],['src_mac',20,6,'addr'],['dst_mac',26,6,'addr'],['ip_data (union)',32,33,'un','IPV4_DATA ou IPV6_DATA'],P(65,3),['data (union)',68,24,'un','TCP, UDP, ICMP ou ARP']]],
+ ['FlowRecord',176,16,[['key (union)',0,44,'un','FlowKeyIpv4 ou FlowKeyIpv6'],P(44,4),['data',48,120,'num','copie à plat de FlowData : envoyée au sink'],['reason',168,4,'tag','FlowEndReason'],P(172,4)]]
+];
+const stDraw=mem('st-grid','st-info',16);
+function showSt(i){const [n,tot,cols,f]=ST[i];const g=$('st-grid');
+  const used=f.filter(x=>x[3]!='pad').reduce((a,x)=>a+x[2],0);
+  mem('st-grid','st-info',cols)(tot,f);
+  $('st-leg').innerHTML='<b>sizeof('+n+') = '+tot+' o</b> · champs '+used+' o · remplissage '+(tot-used)+' o'+
+   ['addr:adresse','num:nombre','ptr:pointeur','tag:enum / type','un:union','pad:vide'].map(s=>'<span style="--x:var(--'+s.split(':')[0]+')">'+s.split(':')[1]+'</span>').join('');}
+tabs('st-tabs',ST.map(s=>s[0]),showSt);
+// ── unions : même boîte, plusieurs lectures
+const N=(o,s)=>['(non lu)',o,s,'pad','octets que cette étiquette ne regarde pas'];
+function union(pre,total,cols,views){const names=Object.keys(views);
+  tabs(pre+'-tabs',names.map(n=>'lire comme '+n),i=>{mem(pre+'-grid',pre+'-info',cols)(total,views[names[i]]);
+    $(pre+'-info').textContent='La boîte fait '+total+' octets. Étiquette « '+names[i]+' » : les octets hachurés ne sont pas lus. Touche une case.';});}
+union('u1',33,11,{'IPV4_DATA (9 o)':[['src_ip',0,4,'addr'],['dst_ip',4,4,'addr'],['proto',8,1,'num'],N(9,24)],
+ 'IPV6_DATA (33 o)':[['src_ip',0,16,'addr'],['dst_ip',16,16,'addr'],['next_header',32,1,'num']]});
+union('u2',24,12,{'TCP_DATA (5 o)':[['src_port',0,2,'num'],['dst_port',2,2,'num'],['flags',4,1,'tag','un octet de 8 interrupteurs'],N(5,19)],
+ 'UDP_DATA (4 o)':[['src_port',0,2,'num'],['dst_port',2,2,'num'],N(4,20)],
+ 'ICMP_DATA (8 o)':[['type',0,4,'num'],['code',4,4,'num'],N(8,16)],
+ 'ARP_DATA (22 o)':[['op',0,2,'num'],['sender_mac',2,6,'addr'],['sender_ip',8,4,'addr'],['target_mac',12,6,'addr'],['target_ip',18,4,'addr'],N(22,2)]});
+// ── padding : mêmes champs, deux ordres
+const PD=[[24,[['a (uint8_t)',0,1,'num'],P(1,7),['b (uint64_t)',8,8,'num'],['c (uint8_t)',16,1,'num'],P(17,3),['d (uint32_t)',20,4,'num']]],
+ [16,[['b (uint64_t)',0,8,'num'],['d (uint32_t)',8,4,'num'],['a (uint8_t)',12,1,'num'],['c (uint8_t)',13,1,'num'],P(14,2)]]];
+tabs('pd-tabs',['ordre a, b, c, d','ordre b, d, a, c'],i=>{const [t,f]=PD[i];mem('pd-grid','pd-info',8)(t,f);
+  const u=f.filter(x=>x[3]!='pad').reduce((s,x)=>s+x[2],0);$('pd-info').textContent='sizeof = '+t+' o, dont '+(t-u)+' de padding. Touche une case.';});
+// ── flags TCP
+const FL=[['CWR',128],['ECE',64],['URG',32],['ACK',16],['PSH',8],['RST',4],['SYN',2],['FIN',1]];let fv=0x12;
+function bits(){$('bits').innerHTML=FL.map(a=>'<button class="bit'+(fv&a[1]?' on':'')+'" data-v="'+a[1]+'"><b>'+(fv&a[1]?1:0)+'</b>'+a[0]+'</button>').join('');
+  const on=FL.filter(a=>fv&a[1]).map(a=>a[0]).join(' + ');
+  $('bits-out').textContent='octet = 0x'+fv.toString(16).toUpperCase().padStart(2,'0')+' = '+fv+'  →  '+(on||'aucun flag');}
+$('bits').onclick=e=>{const b=e.target.closest('.bit');if(b){fv^=+b.dataset.v;bits();}};bits();
+</script></main></body></html>

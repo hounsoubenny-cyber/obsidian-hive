@@ -6,6 +6,7 @@ Created on Sun Oct  4 09:29:19 2026
 @author: hounsousamuel
 """
 
+import time
 import queue
 import pickle
 import threading
@@ -18,7 +19,7 @@ from ids_ips_ia.memory_managers.ring import Ring, RingWriter
 _QUEUE_TYPE = type(mp.Queue())
 _EVENT_TYPE = type(mp.Event())
 # Structure d'une demande (id: str, attr: str, attr_for: str, callable: bool, args: list | None, kwargs: dict | None)
-# Structure de la sortie (id: str, message: str, is_error: bool, result: Any)
+# Structure de la sortie (id: str, message: str, is_error: bool, ts: float, result: Any)
 _ATTR_NOT_FOUND = object()
 
 class ProcessCaptureAdapter:
@@ -98,7 +99,7 @@ class ProcessCaptureAdapter:
                 cmd_id, attr, attr_for = str(cmd_id), str(attr), str(attr_for)
             except Exception as e:
                 error = True
-                request_result = (str(e), "INVALID_REQUEST", error, None)
+                request_result = (str(e), "INVALID_REQUEST", error, time.monotonic(), None)
             
             if error:
                 try:
@@ -118,7 +119,7 @@ class ProcessCaptureAdapter:
                     attr = getattr(self._refit_queue, attr, _ATTR_NOT_FOUND)    
                 else:
                     error = True
-                    request_result = (cmd_id, "UNKNOW_VALUE_FOR_ATTR_FOR", error, None)
+                    request_result = (cmd_id, "UNKNOW_VALUE_FOR_ATTR_FOR", error, time.monotonic(), None)
             except Exception as e:
                 error = True
                 request_result = (cmd_id, "ATTR_ACCESS_ERROR", error, str(e))
@@ -126,15 +127,15 @@ class ProcessCaptureAdapter:
             if not error:
                 if attr is _ATTR_NOT_FOUND:
                     error = True
-                    request_result = (cmd_id, "ATTR_NOT_FOUND", error, None)
+                    request_result = (cmd_id, "ATTR_NOT_FOUND", error, time.monotonic(), None)
                 
                 if (not error) and (is_callable and not callable(attr)):
                     error = True
-                    request_result = (cmd_id, "REQUEST_CALLABLE_ARG_WHO_IS_NOT_CALLABLE", error, None)
+                    request_result = (cmd_id, "REQUEST_CALLABLE_ARG_WHO_IS_NOT_CALLABLE", error, time.monotonic(), None)
                 
                 if (not error) and ((not is_callable) and callable(attr)):
                     error = True
-                    request_result = (cmd_id, "REQUEST_NOT_CALLABLE_ARG_WHO_IS_CALLABLE", error, None)
+                    request_result = (cmd_id, "REQUEST_NOT_CALLABLE_ARG_WHO_IS_CALLABLE", error, time.monotonic(), None)
 
 
             if not error:
@@ -142,9 +143,9 @@ class ProcessCaptureAdapter:
                 kwargs = kwargs if kwargs and isinstance(kwargs, dict) else {}
                 try:
                     result = attr if not is_callable else attr(*list(args), **dict(kwargs))
-                    request_result = (cmd_id, None, False, result)
+                    request_result = (cmd_id, None, False, time.monotonic(), result)
                 except Exception as e:
-                    request_result = (cmd_id, "RUN_ERROR", False, str(e))
+                    request_result = (cmd_id, "RUN_ERROR", True, time.monotonic(), str(e))
                 # print("Debug", request_result)
             
             try:

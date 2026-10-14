@@ -228,6 +228,16 @@ def _safe_filename(name: str) -> str:
 
 
 # ==================== LOGGER INDÉPENDANT ====================
+
+def _get_from_env(val, module_name, key):
+    if val is not None:
+        return val
+    
+    module_name = str(module_name)
+    key = str(key)
+    key = f"{key.upper()}_{module_name.upper()}"
+    return os.environ.get(key, val)
+
 class Logger:
     """Logger indépendant avec détection automatique du niveau.
 
@@ -260,9 +270,12 @@ class Logger:
         self.structured = structured
 
         # Résolution des niveaux (accepte int ou str, y compris "SUCCESS")
-        resolved_level   = _to_level(level)
-        resolved_console = _to_level(console_level)
-        resolved_file    = _to_level(file_level) if file_level is not None else resolved_level
+        resolved_level   = _to_level(_get_from_env(level, module_name=module_name, key="LEVEL"))
+        resolved_console = _to_level(_get_from_env(console_level, module_name=module_name, key="CONSOLE_LEVEL"))
+        _resolved = _to_level(_get_from_env(file_level, module_name=module_name, key="FILE_LEVEL"))
+        if _resolved is not None:
+            _resolved = str(_resolved).lower() in ("1", "oui", "yes")
+        resolved_file    = _resolved or resolved_level
 
         # Résolution de file_logging / file_async :
         #   - argument explicite prioritaire,

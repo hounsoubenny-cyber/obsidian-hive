@@ -303,7 +303,8 @@ def run(packets, label=""):
 
     def on_flow(kind, f):
         kinds[kind] += 1
-        flows_out.append((kind, features(f), f.init))
+        resp = f.key[1] if f.key[0] == f.init else f.key[0]       # extrémité « serveur » (celle qui n'a pas initié)
+        flows_out.append((kind, features(f), f.init, resp))
 
     table = FlowTable(on_flow=on_flow, on_alert=alerts.append)
     t0 = time.perf_counter()
@@ -347,21 +348,27 @@ def main():
     except ImportError:
         print("\n(numpy/scikit-learn absents : niveau 2 ignoré. pip install numpy scikit-learn)")
         return
-    X_train = np.array([f for _, f, _ in flows_n])
+    X_train = np.array([f for _, f, _, _ in flows_n])
     scaler = StandardScaler().fit(X_train)
     model = IsolationForest(n_estimators=100, contamination=0.001, random_state=0).fit(scaler.transform(X_train))
-    X = np.array([f for _, f, _ in flows_m])
+    X = np.array([f for _, f, _, _ in flows_m])
     score = model.decision_function(scaler.transform(X))             # plus bas = plus anormal
     flagged = score < np.percentile(model.decision_function(scaler.transform(X_train)), 0.5)
-    print(f"\nNIVEAU 2 — IsolationForest sur {len(X):,} flux (batch, vectorisé) : {int(flagged.sum())} flux jugés anormaux".replace(",", " "))
-    by_src = defaultdict(int)
-    for (kind, _, init), bad in zip(flows_m, flagged):
-        if bad:
-            by_src[init[0]] += 1
-    for src, n in sorted(by_src.items(), key=lambda kv: -kv[1])[:5]:
-        print(f"  sources les plus représentées parmi les flux anormaux : {ip_str(src)} ({n} flux)")
-    print("\n💡 Les flux du scan (1 SYN + 1 RST) sont repérés par le ML sur leur FORME (2 paquets, 0 octet de données) ;\n"
-          "   le flood usurpé se voit surtout par la règle « destination » : chaque faux flux est trop banal seul.")
+    print(f"\nNIVEAU 2 — IsolationForest sur {len(X):,} flux (batch, vectorisé), entraîné sur le trafic NORMAL seul :".replace(",", " "))
+    attacker, flood_victim = ip(203, 0, 113, 9), ip(10, 0, 0, 80)
+    groups = {"flux normaux": [0, 0], "flux du scan de ports": [0, 0], "flux du SYN flood": [0, 0]}
+    for (kind, _, init, resp), bad in zip(flows_m, flagged):          # on connaît la vérité terrain : c'est une démo
+        g = ("flux du scan de ports" if init[0] == attacker else
+             "flux du SYN flood" if resp[0] == flood_victim else "flux normaux")
+        groups[g][0] += 1
+        groups[g][1] += bool(bad)
+    for g, (n, b) in groups.items():
+        what = "faux positifs" if g == "flux normaux" else "détectés"
+        print(f"  {g:<24} {b:>6} / {n:<6} {what} ({100 * b / max(n, 1):.1f} %)")
+    print("\n💡 À retenir pour un IPS :\n"
+          "   • le scan est attribué à UNE source -> on peut la bloquer ;\n"
+          "   • le flood vient de sources USURPÉES (une IP = un flux) : bloquer par source frapperait des innocents ->\n"
+          "     on protège la DESTINATION (limite de débit SYN, SYN cookies, filtre amont), pas les sources.")
 
 
 if __name__ == "__main__":

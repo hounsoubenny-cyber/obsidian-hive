@@ -1,0 +1,5 @@
+Level 1: FLAG{level1_sql1nj3ct10n_or_bru7ef0rce}
+Level 2: FLAG{level2_1d0r_0r_bl1nd_sqli}
+Level 3: FLAG{level3_cmd1nj3ct10n_or_1nsecure_p1ckle}
+Level 4: FLAG{level4_pr0t0c0l_bru7ef0rce_0r_l34k}
+Level 5: FLAG{level5_ssrf_path_tr4versal_chain}

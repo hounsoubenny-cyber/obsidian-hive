@@ -6,6 +6,7 @@ Created on Thu Oct  1 00:14:59 2026
 @author: hounsousamuel
 """
 
+
 """
 profile_run.py — Lance l'IDS/IPS (main/api.py) sous charge, le profile avec py-spy,
 et écrit un rapport complet (Markdown) qui désigne le goulot.
@@ -34,7 +35,6 @@ Dépendance : pip install py-spy
 Sorties (dans --out-dir) : report.md, profile.speedscope.json (à glisser dans https://speedscope.app
 pour le flamegraph interactif), folded.txt (pour flamegraph.pl / inferno), target.log.
 """
-
 import argparse
 import json
 import linecache
@@ -188,6 +188,25 @@ def _key_of(pname: str):
     """'Process 604893 Thread 605002 "Capture"' -> (604893, 605002) ; le tid de py-spy = tid OS (/proc/<pid>/task/<tid>)."""
     m = RE_PNAME.search(pname or "")
     return (int(m[1]), int(m[2])) if m else None
+
+
+def _tname(pname: str) -> str:
+    """'Process 7 Thread 9 "API Thread"' -> 'API Thread (9)'."""
+    m = re.search(r'Thread (\d+)(?: "(.*)")?\s*$', pname or "")
+    return f"{m[2]} ({m[1]})" if m and m[2] else (pname or "?")
+
+
+_REAL_FILE = {}
+
+
+def _is_real_file(path: str):
+    """None : pas un chemin de fichier (<frozen …>, <string>, extension C) ; sinon True/False selon qu'il existe sur cette machine."""
+    if not path or not path.startswith("/"):
+        return None
+    v = _REAL_FILE.get(path)
+    if v is None:
+        v = _REAL_FILE[path] = os.path.isfile(path)
+    return v
 
 
 def _read_stat(path: str):
@@ -377,7 +396,9 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     d = json.loads(Path(json_path).read_text())
     frames = d["shared"]["frames"]
     profiles = d["profiles"]
-    if not wall:   # --analyze-only : la durée de la fenêtre est dans le profil lui-même (unité = secondes)
+    if not wall and cpu:                  # --analyze-only avec run_meta.json : fenêtre exacte mesurée pendant le run
+        wall = cpu["wall"]
+    if not wall:   # --analyze-only sans meta : la durée de la fenêtre est dans le profil lui-même (unité = secondes)
         try:   # durée la plus fréquente parmi les threads durables (un thread mal attribué par py-spy peut doubler)
             durs = [round(p["endValue"] - p["startValue"]) for p in profiles if p["endValue"] - p["startValue"] > 1]
             wall = Counter(durs).most_common(1)[0][0] if durs else 0
@@ -409,8 +430,8 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
             leaf_idle = (lf["name"], lbase) in PY_IDLE
             if not leaf_idle and lf.get("file") and lf.get("line"):
                 src_line = linecache.getline(lf["file"], lf["line"])
-                if not src_line:
-                    src_missing += w      # source illisible ici -> les time.sleep/wait ne peuvent pas être repérés
+                if not src_line and _is_real_file(lf["file"]) is False:
+                    src_missing += w      # chemin absolu introuvable ici -> les time.sleep/wait ne peuvent pas être repérés
                 leaf_idle = bool(src_line and BLOCK_LINE.search(src_line))
             if leaf_idle or any(k in n for n in tail for k in IDLE_NAMES):
                 idle_tot[pname] = idle_tot.get(pname, 0.0) + w
@@ -482,12 +503,16 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     native = [t for k, t in cpu_thread.items() if k not in py_keys and t["cpu"] > 0.01]
     unsampled = [t for k, t in cpu_thread.items() if k in py_keys and k not in matched and t["cpu"] > 0.01]
     native_cpu = sum(t["cpu"] for t in native)
+    iou = [t for t in native if t["comm"].startswith("iou-")]       # threads noyau io_uring (iou-sqp-<tid créateur>)
+    iou_cpu = sum(t["cpu"] for t in iou)
     unsampled_cpu = sum(t["cpu"] for t in unsampled)
     exited_cpu = (cpu or {}).get("exited_threads_cpu", 0.0) if recal else 0.0
     if recal:
         leaf_cat = Counter(leaf_cat)
-        if native_cpu > 0:
-            leaf_cat["⟨threads natifs hors Python : BLAS / TF / OpenMP…⟩"] += native_cpu
+        if iou_cpu > 0:
+            leaf_cat["⟨thread noyau io_uring (iou-sqp / iou-wrk)⟩"] += iou_cpu
+        if native_cpu - iou_cpu > 0:
+            leaf_cat["⟨threads natifs hors Python : BLAS / TF / OpenMP…⟩"] += native_cpu - iou_cpu
         if unsampled_cpu > 0:
             leaf_cat["⟨threads Python sans échantillon actif⟩"] += unsampled_cpu
         if exited_cpu > 0:
@@ -528,15 +553,17 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
                if _key_of(pn) in cpu_thread and thread_tot[pn] >= 2 and thread_tot[pn] > 1.5 * cpu_thread[_key_of(pn)]["cpu"] + 1]
         if sus:
             sus.sort(key=lambda x: x[1] - x[2], reverse=True)
-            ex = ", ".join(f"`{pn.split('Thread')[-1].strip()}` ({a:.0f} s « actif » vs {c:.1f} s de CPU)" for pn, a, c in sus[:4])
+            ex = ", ".join(f"`{_tname(pn)}` ({a:.0f} s « actif » vs {c:.1f} s de CPU)" for pn, a, c in sus[:4])
             chk(False, "", f"**{len(sus)} thread(s) « actifs » pour py-spy mais quasi sans CPU = en attente** (réseau/DNS/verrou…) : {ex}"
                            + (" …" if len(sus) > 4 else "") + ". Ils sont neutralisés dans les tables.")
         else:
             chk(True, "aucun thread « actif » sans CPU réel correspondant.", "")
         n_unm = sum(1 for k in py_keys if k not in cpu_thread)
         if n_unm:
-            chk(False, "", f"{n_unm} thread(s) vus par py-spy ont disparu de /proc avant la fin de la fenêtre (leur CPU est compté dans "
-                           f"« threads terminés »).")
+            ex_cpu = cpu.get("exited_threads_cpu", 0.0)
+            ex_pct = 100 * ex_cpu / max(cpu.get("total_cpu", 0) or 1, 1e-9)
+            chk(ex_pct <= 5, f"{n_unm} thread(s) éphémères (pools, tâches) terminés pendant la fenêtre : {ex_cpu:.1f} s de CPU ({ex_pct:.1f} %), négligeable.",
+                f"{ex_pct:.0f} % du CPU ({ex_cpu:.0f} s) est parti dans {n_unm} threads éphémères non attribuables : le détail par fonction est incomplet.")
         dw = abs(cpu["wall"] - wall) / wall if wall else 0
         chk(dw < 0.05, f"fenêtre CPU ({cpu['wall']:.0f} s) alignée sur celle de py-spy ({wall:.0f} s).",
             f"fenêtre CPU ({cpu['wall']:.0f} s) ≠ fenêtre py-spy ({wall:.0f} s) : l'attache/le détachement de py-spy décale les deux mesures.")
@@ -559,9 +586,11 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
     if "behind in sampling" in slog:
         chk(False, "", "py-spy signale du **retard d'échantillonnage** (« behind in sampling ») : baisse `--rate`, ou profile moins de threads à la fois.")
     mm = re.search(r"Errors?:\s*(\d+)", slog)
-    if mm and int(mm[1]) > 0:
+    if mm:
         ms = re.search(r"Samples?:\s*(\d+)", slog)
-        chk(False, "", f"py-spy a eu {mm[1]} erreur(s) de lecture" + (f" sur {ms[1]} échantillons" if ms else "") + " : stacks incomplètes ignorées.")
+        ne, ns = int(mm[1]), (int(ms[1]) if ms else 0)
+        chk(ne == 0 or (ns > 0 and ne / ns < 0.01), f"py-spy : {ne} erreur(s) de lecture sur {ns} échantillons (négligeable).",
+            f"py-spy a eu {ne} erreur(s) de lecture" + (f" sur {ns} échantillons" if ns else "") + " : stacks incomplètes ignorées.")
     chk(not wall or wall >= 30, f"fenêtre de {wall:.0f} s.", f"fenêtre de seulement {wall:.0f} s : statistiquement fragile (vise ≥ 60 s).")
     chk(n_active >= 500, f"{n_active:,} échantillons actifs.".replace(",", " "), f"seulement {n_active} échantillons actifs : trop peu pour des pourcentages fins.")
     if tap is not None and tap.pre_stats and tap.stats:
@@ -627,11 +656,21 @@ def analyze(json_path: Path, project_marker: str, top: int, tap: "LineTap | None
         hints.append("Les commandes nft sont bloquantes dans la boucle → file d'attente dédiée + ne pas re-bloquer une IP déjà bloquée.")
     if s("graphes (add_data*)") > 0.05:
         hints.append("Les graphes Bokeh coûtent → `enable_graph=False` pour mesurer le pipeline seul.")
-    if recal and native_cpu / denom > 0.15:
-        hints.append(f"**{100 * native_cpu / denom:.0f} % du CPU est consommé par des threads NATIFS invisibles pour py-spy** "
+    if recal and iou_cpu / denom > 0.03:
+        makers = []
+        for t in iou:
+            mt = re.match(r"iou-(?:sqp|wrk)-(\d+)", t["comm"])
+            if mt:
+                makers.append(next((_tname(p["name"]) for p in profiles if _key_of(p["name"]) == (t["pid"], int(mt[1]))), f"tid {mt[1]}"))
+        hints.append(f"🚨 **{100 * iou_cpu / denom:.0f} % du CPU ({iou_cpu:.0f} s) est brûlé par un thread noyau io_uring**, créé par "
+                     f"{', '.join(sorted(set(makers))) or 'un thread inconnu'} (le nom `iou-sqp-<tid>` donne le créateur). Ce n'est pas ton code : "
+                     "typiquement libuv/uvloop avec io_uring (SQPOLL). Teste `UV_USE_IO_URING=0` dans l'environnement du process, "
+                     "ou `loop=\"asyncio\"` pour ce serveur, puis relance un profil.")
+    if recal and (native_cpu - iou_cpu) / denom > 0.15:
+        hints.append(f"**{100 * (native_cpu - iou_cpu) / denom:.0f} % du CPU est consommé par des threads NATIFS invisibles pour py-spy** "
                      "(BLAS/OpenMP/TensorFlow) : voir la table des threads natifs ; `perf top -p <pid>` les détaille.")
     for h in hints or ["Pas de règle évidente déclenchée : regarde les tables ci-dessous et le flamegraph."]:
-        add(f"- 💡 {h}")
+        add(f"- {h}" if h.startswith("🚨") else f"- 💡 {h}")
     add("\n_(Heuristiques indicatives : vérifie toujours dans le flamegraph.)_\n")
 
     # --- débit réel ---
