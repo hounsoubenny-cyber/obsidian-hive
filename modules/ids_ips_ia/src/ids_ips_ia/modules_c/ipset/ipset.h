@@ -10,6 +10,10 @@
  * est UN pointeur atomique vers une « fiche » (IpEntry) qu'on ne modifie JAMAIS une fois publiée.
  * Un lecteur voit donc soit la case vide, soit une fiche complète : jamais une IP à moitié écrite.
  *
+ * Capacité : max_items est la capacité demandée. Les cases « supprimées » encore nécessaires pour retrouver d'autres IP
+ * comptent dans le budget de cases (voir ipset_remove) : dans une table très remplie, ipset_add peut donc répondre -1
+ * un peu avant max_items IP présentes. Demander plus de place que le besoin réel (x2 est large).
+ *
  * Conventions : action 0 = succès / -1 = échec · question 1 = oui / 0 = non */
 typedef struct IpSet IpSet;
 

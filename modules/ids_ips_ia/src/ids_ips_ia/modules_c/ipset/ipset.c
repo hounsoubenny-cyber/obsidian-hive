@@ -12,6 +12,9 @@ struct IpEntry{
 };
 
 // Marqueur « case supprimée » : la case n'est plus vide (la chaîne de recherche continue) mais ne contient plus rien.
+// Une TOMB n'est gardée que si elle est NÉCESSAIRE : si la case d'après est vide, la chaîne s'arrête là de toute façon,
+// et ipset_remove remet la case (et les TOMB qui la précèdent) à vide. Sans ce nettoyage, chaque IP différente retirée
+// laisserait une TOMB pour toujours, et la table finirait « pleine » alors qu'elle est presque vide.
 static struct IpEntry TOMB;
 
 struct IpSet{
@@ -146,7 +149,24 @@ int ipset_remove(IpSet *s, const uint8_t *ip, int v4){
                 s -> cap_retired = cap;
             }
             s -> retired[s -> n_retired++] = e;
-            atomic_store_explicit(&s -> cells[i], &TOMB, memory_order_release);
+            uint32_t next = (i + 1) & s -> mask;
+            if (atomic_load_explicit(&s -> cells[next], memory_order_relaxed) == NULL){
+                // La case d'après est vide : aucune chaîne ne passe par i pour aller plus loin (une chaîne n'a jamais de trou).
+                // Un lecteur qui arrive en i s'arrêtait déjà sur la case vide d'après : en la vidant, il s'arrête une case plus tôt,
+                // sans rien perdre. On vide i, puis on remonte : chaque TOMB juste avant une case vide peut l'être à son tour.
+                atomic_store_explicit(&s -> cells[i], NULL, memory_order_release);
+                s -> n_used--;
+                uint32_t j = (i - 1) & s -> mask;
+                for (uint32_t k = 0; k < s -> mask; k++){          // au plus un tour de table
+                    if (atomic_load_explicit(&s -> cells[j], memory_order_relaxed) != &TOMB) break;
+                    atomic_store_explicit(&s -> cells[j], NULL, memory_order_release);
+                    s -> n_used--;
+                    j = (j - 1) & s -> mask;
+                }
+            } else {
+                // Une autre IP peut dépendre de cette case pour être retrouvée : elle devient TOMB (la chaîne continue)
+                atomic_store_explicit(&s -> cells[i], &TOMB, memory_order_release);
+            }
             atomic_fetch_sub_explicit(&s -> n_items, 1, memory_order_relaxed);
             pthread_mutex_unlock(&s -> lock);
             return 0;

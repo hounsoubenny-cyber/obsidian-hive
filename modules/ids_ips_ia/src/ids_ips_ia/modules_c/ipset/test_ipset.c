@@ -127,6 +127,123 @@ static void t_lecteurs_pendant_l_ecriture(void) {
     ipset_destroy(sh.s);
 }
 
+
+/* ───── cases « supprimées » (TOMB) : elles ne doivent pas faire déclarer la table pleine à tort ───── */
+
+static void t_tomb_ne_saturent_pas(void) {
+    IpSet *s = ipset_create(8);                                   /* 16 cases, 8 IP max à la fois */
+    uint8_t ip[4];
+    int refused = 0;
+    for (uint32_t i = 0; i < 1000; i++) {                         /* 1000 IP DIFFÉRENTES, une seule présente à la fois */
+        ip4(ip, 5000 + i);
+        if (ipset_add(s, ip, 1) != 0) refused++;
+        if (ipset_remove(s, ip, 1) != 0) refused++;
+    }
+    CHECK_EQ(refused, 0, "1000 IP différentes ajoutées puis retirées : aucun refus « plein »");
+    CHECK_EQ(ipset_count(s), 0, "vide à la fin");
+    ipset_destroy(s);
+}
+
+static void t_tomb_fenetre_glissante(void) {
+    /* comme un IPS : des IP arrivent, d'autres partent, 500 présentes en même temps, 200 000 IP différentes en tout */
+    IpSet *s = ipset_create(1024);
+    uint8_t ip[4];
+    int refused = 0;
+    const uint32_t N = 200000, WIN = 500;
+    for (uint32_t i = 0; i < N; i++) {
+        ip4(ip, 10000 + i);
+        if (ipset_add(s, ip, 1) != 0) refused++;
+        if (i >= WIN) { ip4(ip, 10000 + i - WIN); if (ipset_remove(s, ip, 1) != 0) refused++; }
+    }
+    CHECK_EQ(refused, 0, "200 000 IP différentes, 500 présentes à la fois : aucun refus");
+    CHECK_EQ(ipset_count(s), WIN, "il reste exactement 500 IP");
+    int ok = 1;
+    for (uint32_t i = N - WIN; i < N; i++) { ip4(ip, 10000 + i); if (!ipset_contains(s, ip, 1)) ok = 0; }
+    CHECK(ok, "les 500 dernières sont toutes retrouvées");
+    int ghost = 0;
+    for (uint32_t i = 0; i < 2000; i++) { ip4(ip, 10000 + i); if (ipset_contains(s, ip, 1)) ghost++; }
+    CHECK_EQ(ghost, 0, "aucune ancienne IP retirée n'est encore vue");
+    ipset_destroy(s);
+}
+
+static uint32_t rng_next(uint32_t *st) { *st = *st * 1664525u + 1013904223u; return *st >> 8; }
+
+/* Compare l'ensemble à un tableau de booléens (le « modèle ») sur des milliers d'opérations au hasard.
+ *   cap, universe : taille demandée à ipset_create, nombre d'IP différentes possibles (<= 64)
+ *   live_max      : le modèle n'essaie jamais d'avoir plus d'IP présentes que ça
+ *   strict        : 1 = aucun refus « plein » toléré · 0 = un refus est toléré (les cases supprimées encore utiles comptent
+ *                   dans le budget de cases : dans une table minuscule, elle peut dire « plein » avant live_max IP).
+ * Dans les deux cas : contains, remove et count doivent être EXACTS à chaque opération. */
+static int model_run(uint32_t cap, uint32_t universe, int live_max, int strict, uint32_t seed, int *accepted) {
+    IpSet *s = ipset_create(cap);
+    uint32_t st = seed * 7919u;
+    int model[64] = {0}, n = 0, bad = 0;
+    uint8_t ip[4];
+    for (int step = 0; step < 4000; step++) {
+        uint32_t k = rng_next(&st) % universe, op = rng_next(&st) % 3;
+        ip4(ip, 300 + k);
+        if (op == 0) {
+            if (!model[k] && n >= live_max) continue;             /* le modèle ne dépasse pas live_max */
+            int r = ipset_add(s, ip, 1);
+            if (r == 0) { if (!model[k]) { model[k] = 1; n++; (*accepted)++; } }
+            else if (strict || model[k]) bad++;                   /* refus : jamais pour une IP déjà là ; jamais en mode strict */
+        } else if (op == 1) {
+            int r = ipset_remove(s, ip, 1);
+            if (model[k]) { if (r != 0) bad++; model[k] = 0; n--; }
+            else if (r != -1) bad++;
+        } else {
+            if (ipset_contains(s, ip, 1) != model[k]) bad++;
+        }
+        if ((int)ipset_count(s) != n) bad++;
+    }
+    for (uint32_t k = 0; k < universe; k++) { ip4(ip, 300 + k); if (ipset_contains(s, ip, 1) != model[k]) bad++; }
+    ipset_destroy(s);
+    return bad;
+}
+
+static void t_modele_aleatoire_minuscule(void) {
+    /* 16 cases, 12 IP possibles : collisions, chaînes et tour de table en permanence */
+    int accepted = 0, bad = 0;
+    for (uint32_t seed = 1; seed <= 20; seed++) bad += model_run(8, 12, 8, 0, seed, &accepted);
+    CHECK_EQ(bad, 0, "20 graines, table minuscule : contains / remove / count toujours exacts");
+    CHECK(accepted > 1000, "la table accepte bien des IP (elle ne refuse pas tout)");
+}
+
+static void t_modele_aleatoire_realiste(void) {
+    /* 128 cases, au plus 16 IP présentes sur 40 possibles : aucun refus ne doit arriver */
+    int accepted = 0, bad = 0;
+    for (uint32_t seed = 1; seed <= 20; seed++) bad += model_run(64, 40, 16, 1, seed, &accepted);
+    CHECK_EQ(bad, 0, "20 graines, table à l'aise : exact ET aucun refus « plein »");
+}
+
+static void *churn_thread(void *a) {
+    struct Shared *sh = a; uint8_t ip[4];
+    for (int round = 0; round < 4000; round++) {
+        for (uint32_t i = 0; i < 30; i++) { ip4(ip, 70000 + (uint32_t)(round % 7) * 31 + i); ipset_add(sh -> s, ip, 1); }
+        for (uint32_t i = 0; i < 30; i++) { ip4(ip, 70000 + (uint32_t)(round % 7) * 31 + i); ipset_remove(sh -> s, ip, 1); }
+    }
+    return NULL;
+}
+
+static void t_lecteurs_table_serree(void) {
+    /* petite table très chargée : le nettoyage des cases supprimées se fait pendant que 4 lecteurs lisent */
+    struct Shared sh;
+    sh.s = ipset_create(64);                                      /* 128 cases */
+    sh.n_perm = 20;
+    atomic_init(&sh.stop, 0); atomic_init(&sh.errors, 0);
+    uint8_t ip[4];
+    for (int i = 0; i < sh.n_perm; i++) { ip4(ip, 1000 + (uint32_t)i); ipset_add(sh.s, ip, 1); }
+    pthread_t th[4], w;
+    for (int i = 0; i < 4; i++) pthread_create(&th[i], NULL, reader, &sh);
+    pthread_create(&w, NULL, churn_thread, &sh);
+    pthread_join(w, NULL);
+    atomic_store(&sh.stop, 1);
+    for (int i = 0; i < 4; i++) pthread_join(th[i], NULL);
+    CHECK_EQ(atomic_load(&sh.errors), 0, "table serrée : jamais une permanente manquante, jamais une IP fantôme");
+    CHECK_EQ(ipset_count(sh.s), 20, "il reste les 20 permanentes");
+    ipset_destroy(sh.s);
+}
+
 struct W { IpSet *s; uint32_t base; };
 static void *writer_thread(void *a) {
     struct W *w = a; uint8_t ip[4];
@@ -158,5 +275,10 @@ int main(int argc, char **argv) {
     RUN_LEAKS("beaucoup d'ajouts et de retraits",       t_retirer_beaucoup);
     RUN_LEAKS("4 lecteurs pendant l'écriture",          t_lecteurs_pendant_l_ecriture);
     RUN_LEAKS("2 écrivains en même temps",              t_deux_ecrivains);
+    RUN_LEAKS("cases supprimées : pas de saturation",   t_tomb_ne_saturent_pas);
+    RUN_LEAKS("200 000 IP différentes, fenêtre glissante", t_tomb_fenetre_glissante);
+    RUN_LEAKS("modèle aléatoire, table minuscule",      t_modele_aleatoire_minuscule);
+    RUN_LEAKS("modèle aléatoire, table à l'aise",       t_modele_aleatoire_realiste);
+    RUN_LEAKS("4 lecteurs, table serrée",               t_lecteurs_table_serree);
     return tc_end();
 }
