@@ -61,6 +61,7 @@ cdef extern from "../modules_c/engine/engine.h":
         uint64_t ring_n_read;
         uint64_t ring_n_write;
         uint64_t ring_dropped
+        uint64_t blocked_flows
 
     void engine_config_default(EngineConfig *cfg)
     uint32_t engine_record_size()
@@ -78,6 +79,9 @@ cdef extern from "../modules_c/engine/engine.h":
     int engine_ignore_remove(CEngine *e, const char *ip, int which) nogil
     int engine_ignore_contains(CEngine *e, const char *ip, int which) nogil
     uint32_t engine_ignore_count(CEngine *e, int which) nogil
+    int engine_rules_set_enabled(CEngine *e, int rule, int enabled) nogil
+    int engine_rules_set_threshold(CEngine *e, int rule, uint32_t threshold) nogil
+    int engine_rules_get(CEngine *e, int rule, int *enabled, uint32_t *threshold) nogil
 
 
 class EngineError(RuntimeError):
@@ -85,7 +89,7 @@ class EngineError(RuntimeError):
 
 
 STATES = {0: "libre", 1: "en cours", 2: "arrêtée", 3: "en erreur"}
-END_REASONS = {1: "inactif", 2: "tcp-fini", 3: "chassé", 4: "arrêt", 5: "durée-max"}
+END_REASONS = {1: "inactif", 2: "tcp-fini", 3: "chassé", 4: "arrêt", 5: "durée-max", 6: "bloqué"}
 IGNORE = {"src": IGNORE_SRC, "dst": IGNORE_DST, "both": IGNORE_BOTH}
 
 # Un flux dans le ring = 176 octets. Les positions viennent de sizeof / offsetof mesurés sur flow.h et flow_table.h.
@@ -109,6 +113,19 @@ FLOW_DTYPE = np.dtype({
     "itemsize": 176,
 })
 
+# rule_reason : la règle qui a donné le verdict (octet 161, dans le remplissage : la taille reste 176)
+import numpy as _np_rule
+if "rule_reason" not in FLOW_DTYPE.names:
+    _fields = [(_n, FLOW_DTYPE.fields[_n][0], FLOW_DTYPE.fields[_n][1]) for _n in FLOW_DTYPE.names]
+    _fields.append(("rule_reason", _np_rule.dtype("u1"), 161))
+    _fields.sort(key=lambda _f: _f[2])
+    FLOW_DTYPE = _np_rule.dtype({
+        "names": [_f[0] for _f in _fields],
+        "formats": [_f[1] for _f in _fields],
+        "offsets": [_f[2] for _f in _fields],
+        "itemsize": FLOW_DTYPE.itemsize,
+    })
+
 
 def _b(text):
     return text.encode() if isinstance(text, str) else bytes(text)
@@ -131,6 +148,23 @@ def flow_addresses(rec):
         make = ipaddress.IPv6Address
     return (str(make(ini)), int.from_bytes(pi, "big"), str(make(rec_ip)), int.from_bytes(pr, "big"))
 
+
+# ───── réglages des règles (à chaud) ─────
+RULE_IDS = {"port_scan": 1, "null_scan": 2, "xmas_scan": 3, "fin_scan": 4, "flood": 5}
+RULE_NAMES = {0: "none", 1: "port_scan", 2: "null_scan", 3: "xmas_scan", 4: "fin_scan", 5: "flood"}   # valeur de FlowData.rule_reason
+
+def _rule_id(rule):
+    if isinstance(rule, str):
+        if rule not in RULE_IDS:
+            raise ValueError("règle inconnue : %r (attendu : %s)" % (rule, ", ".join(RULE_IDS)))
+        return RULE_IDS[rule]
+    return int(rule)
+
+cdef str _rules_last_error():
+    cdef const char *msg = engine_last_error()
+    if msg == NULL:
+        return "erreur inconnue"
+    return msg.decode("utf-8", "replace")
 
 cdef class Engine:
     """Le moteur. Une interface = une thread de capture = un ring. Plusieurs threads Python peuvent l'utiliser."""
@@ -295,6 +329,52 @@ cdef class Engine:
         self._alive()
         return engine_ignore_count(self._e, IGNORE[which])
 
+    def rules_set(self, rule, enabled=None, threshold=None):
+        """Change une règle À CHAUD : effet au paquet suivant, la capture continue.
+        rule : nom ("port_scan", "null_scan", "xmas_scan", "fin_scan", "flood") ou numéro (1 à 5).
+        enabled : True / False · threshold : port_scan = nombre de ports distincts, flood = paquets par seconde
+        (les autres règles n'ont pas de seuil). ValueError si la règle est inconnue, sans seuil, ou si le seuil est < 1.
+        Désactiver une règle ne débloque pas les IP qu'elle a déjà bloquées."""
+        cdef int r
+        cdef int rc
+        cdef uint32_t th
+        if self._e == NULL:
+            raise RuntimeError("engine détruit")
+        if enabled is None and threshold is None:
+            raise ValueError("rien à changer : donne enabled et/ou threshold")
+        r = _rule_id(rule)
+        if threshold is not None:
+            if int(threshold) < 1 or int(threshold) > 4294967295:
+                raise ValueError("le seuil doit être entre 1 et 4294967295")
+            th = <uint32_t>int(threshold)
+            rc = engine_rules_set_threshold(self._e, r, th)
+            if rc != 0:
+                raise ValueError(_rules_last_error())
+        if enabled is not None:
+            rc = engine_rules_set_enabled(self._e, r, 1 if enabled else 0)
+            if rc != 0:
+                raise ValueError(_rules_last_error())
+
+    def rules_get(self, rule=None):
+        """Lit les réglages. Sans argument : {nom: {"enabled": bool, "threshold": int ou None}} pour toutes les règles.
+        Avec une règle (nom ou numéro) : seulement son dict. threshold vaut None pour les règles sans seuil."""
+        cdef int r
+        cdef int en
+        cdef uint32_t th
+        if self._e == NULL:
+            raise RuntimeError("engine détruit")
+        if rule is None:
+            out = {}
+            for name in RULE_IDS:
+                out[name] = self.rules_get(name)
+            return out
+        r = _rule_id(rule)
+        en = 0
+        th = 0
+        if engine_rules_get(self._e, r, &en, &th) != 0:
+            raise ValueError(_rules_last_error())
+        return {"enabled": bool(en), "threshold": int(th) if th != 0 else None}
+
 
 cdef dict _stats_dict(EngineStats *st):
     return {
@@ -305,5 +385,5 @@ cdef dict _stats_dict(EngineStats *st):
         "flows_exported": st.flows_exported, "flows_lost": st.flows_lost, "flows_evicted": st.flows_evicted,
         "kernel_recv": st.kernel_recv, "kernel_drop": st.kernel_drop, "active_flows": st.active_flows,
         "ring_size": st.ring_size, "ring_used": st.ring_used, "ring_free": st.ring_free,
-        "ring_n_read": st.ring_n_read, "ring_n_write": st.ring_n_write, "ring_dropped": st.ring_dropped,
+        "ring_n_read": st.ring_n_read, "ring_n_write": st.ring_n_write, "ring_dropped": st.ring_dropped, "blocked_flows": st.blocked_flows,
     }
