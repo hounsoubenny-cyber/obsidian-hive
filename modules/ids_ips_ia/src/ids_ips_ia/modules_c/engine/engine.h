@@ -41,7 +41,8 @@ struct EngineConfig{
     uint64_t idle_ms;               /* un flux sans paquet depuis idle_ms est envoyé au ring et retiré (0 = jamais) */
     uint64_t max_ms;                /* un flux qui dure depuis max_ms est envoyé, puis repart de zéro (0 = jamais) */
     int close_on_tcp_end;           /* 1 = un RST ou deux FIN retire le flux tout de suite */
-    int scan_rule;                  /* 1 = règle « scan de ports » active (BLOCK + IP en liste noire) */
+    int scan_rule;                  /* 1 = les règles sont évaluées pour cette capture (0 = aucune). Lesquelles, et avec quel seuil :
+                                       engine_rules_* (réglages partagés par toutes les captures, modifiables à chaud) */
     uint64_t ring_size;             /* taille du segment du ring, en octets (la place utile = ring_size - 256) */
     uint32_t batch_size;            /* use_mmsg : trames lues par appel système */
     uint32_t max_turns;             /* use_mmsg : lots maximum avant de rendre la main */
@@ -57,7 +58,7 @@ struct EngineStats{
     uint64_t frames_ok;             /* acceptées par la table de flux */
     uint64_t frames_failed;         /* refusées (ARP, paquet coupé, fragment...) */
     uint64_t frames_ignored;        /* écartées par les listes d'IP à ignorer */
-    uint64_t blocked_pkts;          /* ignorées parce que l'IP est en liste noire (règle de scan) */
+    uint64_t blocked_pkts;          /* ignorées parce que leur IP (source ou destination) est en liste noire */
     uint64_t flows_exported;        /* flux écrits dans le ring */
     uint64_t flows_lost;            /* flux perdus parce que le ring était plein (Python trop lent) */
     uint64_t flows_evicted;         /* flux chassés parce que la table était pleine */
@@ -70,6 +71,7 @@ struct EngineStats{
     uint64_t ring_n_read;
     uint64_t ring_n_write;
     uint64_t ring_dropped;          /* écritures refusées par le ring (même chose que flows_lost, vue du ring) */
+    uint64_t blocked_flows;         /* flux retirés parce qu'une règle a bloqué leur IP (envoyés au ring avec reason END_BLOCKED) */
 };
 
 typedef struct Engine Engine;
@@ -93,6 +95,15 @@ int engine_read(Engine *e, const char *ifname, FlowRecord *out, int max);
 int engine_stats(Engine *e, const char *ifname, struct EngineStats *out);
 int engine_list(Engine *e, struct EngineStats *out, int max);   /* nombre de captures présentes (>= 0), au plus max remplies */
 int engine_ring_name(Engine *e, const char *ifname, char *out, size_t size);   /* pour qui veut lire /dev/shm lui-même */
+
+/* Réglages des règles, PARTAGÉS par toutes les captures et modifiables À CHAUD (champs atomiques : pas de verrou, effet au paquet suivant).
+ * rule = une valeur de FlowRuleReason (RULE_PORT_SCAN = 1 ... RULE_FLOOD = 5, voir flows/flow.h).
+ * Défauts : toutes les règles actives, port_scan à 20 ports, flood à 10000 paquets/s.
+ * Désactiver une règle ne débloque pas les IP qu'elle a déjà bloquées. -1 + engine_last_error() si la règle est inconnue,
+ * si elle n'a pas de seuil (null_scan, xmas_scan, fin_scan), ou si le seuil est 0. */
+int engine_rules_set_enabled(Engine *e, int rule, int enabled);
+int engine_rules_set_threshold(Engine *e, int rule, uint32_t threshold);
+int engine_rules_get(Engine *e, int rule, int *enabled, uint32_t *threshold);   /* pointeurs facultatifs (NULL permis) */
 
 /* Listes d'IP à ignorer, partagées par toutes les captures. ip = texte ("10.0.0.1", "2001:db8::1"). which = IGNORE_*. */
 int engine_ignore_add(Engine *e, const char *ip, int which);

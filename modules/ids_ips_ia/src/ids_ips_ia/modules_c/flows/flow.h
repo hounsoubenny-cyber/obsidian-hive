@@ -28,6 +28,27 @@ enum FlowVerdict{
 typedef enum FlowVerdict FlowVerdict;
 typedef enum FlowKeyType FlowKeyType;
 
+// Quelle règle a donné le verdict (champ rule_reason de FlowData, lisible par Python). Ne pas confondre avec FlowEndReason
+// (pourquoi le flux QUITTE la table) : un flux bloqué par un scan Xmas part avec reason = END_BLOCKED ET rule_reason = RULE_XMAS_SCAN.
+// Les valeurs sont stockées dans un uint8_t : ne jamais dépasser 255. Ajouter une règle = l'ajouter AVANT RULE_COUNT.
+enum FlowRuleReason{
+    RULE_NONE = 0,              // aucune règle n'a donné d'avis
+    RULE_PORT_SCAN = 1,         // une même IP a visité trop de ports distincts
+    RULE_NULL_SCAN = 2,         // paquet TCP sans aucun drapeau
+    RULE_XMAS_SCAN = 3,         // FIN + PSH + URG, sans ACK
+    RULE_FIN_SCAN = 4,          // FIN seul, sans ACK
+    RULE_FLOOD = 5,             // trop de paquets par seconde (UDP / ICMP)
+    RULE_COUNT = 6,             // nombre d'emplacements (RULE_NONE compris) : PAS une vraie règle
+};
+typedef enum FlowRuleReason FlowRuleReason;
+
+// Ce que rend une règle : un verdict (UNKNOW = pas d'avis) et la règle qui l'a donné
+struct FlowRuleResult{
+    FlowVerdict verdict;
+    FlowRuleReason reason;
+};
+typedef struct FlowRuleResult FlowRuleResult;
+
 struct FlowKeyIpv4{
     FlowKeyType key;
     uint8_t ip_min[L_IPV4];
@@ -86,6 +107,7 @@ struct FlowData{
     uint64_t octets_data_ltr;   // somme des pr.len (trame entière : Ethernet + IP + TCP + données)
     uint64_t octets_data_rtl;   // uint64 : un uint32 déborde à 4 Go
     uint8_t proto;
+    uint8_t rule_reason;        // une valeur de FlowRuleReason : la règle qui a donné le verdict (dans le remplissage : la taille ne change pas)
     FlowVerdict verdict;
 };
 typedef struct FlowData FlowData;
@@ -107,7 +129,7 @@ enum FlowEndReason{
     END_EVICTED = 3,            // table pleine : le plus ancien est chassé
     END_SHUTDOWN = 4,           // ft_destroy : on vide la table
     END_MAX_DURATION = 5,       // le flux dure depuis max_ms : on envoie un instantané, puis il repart de zéro (il RESTE dans la table)
-    END_RULE_BLOCKED = 6,       // FLUX SIGNALER PAR UNE RÈGLE
+    END_BLOCKED = 6,            // une règle a bloqué l'IP : le flux est envoyé (verdict BLOCK + rule_reason) puis retiré
 };
 
 // Copie À PLAT d'un flux qui part (aucun pointeur) : c'est ça qu'on envoie dans le ring, lisible par Python

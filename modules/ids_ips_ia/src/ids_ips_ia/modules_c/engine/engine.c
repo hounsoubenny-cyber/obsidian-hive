@@ -36,7 +36,7 @@ const char *engine_last_error(void){
 /* ═════════════════════ les structures internes ═════════════════════ */
 
 struct Counters{                                        /* écrits par la thread de capture, lus par Python : donc atomiques */
-    _Atomic uint64_t frames_in, frames_ok, frames_failed, frames_ignored, blocked_pkts;
+    _Atomic uint64_t frames_in, frames_ok, frames_failed, frames_ignored, blocked_pkts, blocked_flows;
     _Atomic uint64_t flows_exported, flows_lost, flows_evicted, active_flows;
     _Atomic uint64_t kernel_recv, kernel_drop;
 };
@@ -60,6 +60,7 @@ struct Slot{                                            /* une capture = une cas
 struct Engine{
     pthread_mutex_t lock;                               /* protège le tableau des captures (démarrer, arrêter, lire, stats) */
     IpSet *ign_src, *ign_dst;                           /* partagées : la thread de capture ne fait que les LIRE, sans verrou */
+    struct RulesConfig rules;                           /* partagés : champs atomiques, Python les change à chaud, les captures les lisent */
     struct Slot slots[ENGINE_MAX_CAPTURES];
 };
 
@@ -113,6 +114,7 @@ static void _refresh(struct Slot *s){
     _set(&s -> c.active_flows, s -> ft -> nbr_elements);
     _set(&s -> c.flows_evicted, s -> ft -> n_evicted);
     _set(&s -> c.blocked_pkts, s -> ft -> n_blocked_pkts);
+    _set(&s -> c.blocked_flows, s -> ft -> n_blocked_flows);
 }
 
 /* Appelée pour chaque trame : octets → fiche → (ignorée ?) → table de flux */
@@ -215,6 +217,7 @@ static void _fill_stats(struct Slot *s, struct EngineStats *out){
     out -> frames_failed = _get(&s -> c.frames_failed);
     out -> frames_ignored = _get(&s -> c.frames_ignored);
     out -> blocked_pkts = _get(&s -> c.blocked_pkts);
+    out -> blocked_flows = _get(&s -> c.blocked_flows);
     out -> flows_exported = _get(&s -> c.flows_exported);
     out -> flows_lost = _get(&s -> c.flows_lost);
     out -> flows_evicted = _get(&s -> c.flows_evicted);
@@ -267,6 +270,7 @@ Engine *engine_create(void){
         _fail("mémoire insuffisante (listes d'IP)");
         return NULL;
     }
+    rules_config_default(&e -> rules);
     pthread_mutex_init(&e -> lock, NULL);
     return e;
 }
@@ -330,7 +334,8 @@ int engine_start(Engine *e, const struct EngineConfig *cfg){
     h.idle_ms = cfg -> idle_ms;
     h.max_ms = cfg -> max_ms;
     h.close_on_tcp_end = (uint8_t)(cfg -> close_on_tcp_end != 0);
-    h.check = cfg -> scan_rule ? rule_port_scan : NULL;
+    h.check = cfg -> scan_rule ? rules_check_all : NULL;
+    h.rules_cfg = &e -> rules;                           /* vit autant que l'Engine, qui détruit les tables avant de se libérer */
     h.sink = _ring_sink;
     h.ctx = s;
     s -> ft = ft_create_with(cfg -> table_size, &h);
@@ -488,6 +493,28 @@ int engine_ring_name(Engine *e, const char *ifname, char *out, size_t size){
     }
     snprintf(out, size, "%s", s -> ring_name);
     pthread_mutex_unlock(&e -> lock);
+    return 0;
+}
+
+/* ═════════════════════ les réglages des règles (à chaud, sans verrou : tout est atomique) ═════════════════════ */
+
+int engine_rules_set_enabled(Engine *e, int rule, int enabled){
+    if (e == NULL) return _fail("engine_rules_set_enabled : engine NULL");
+    if (rules_set_enabled(&e -> rules, rule, enabled) != 0) return _fail("règle inconnue (%d)", rule);
+    return 0;
+}
+
+int engine_rules_set_threshold(Engine *e, int rule, uint32_t threshold){
+    if (e == NULL) return _fail("engine_rules_set_threshold : engine NULL");
+    if (rules_name(rule) == NULL) return _fail("règle inconnue (%d)", rule);
+    if (!rules_has_threshold(rule)) return _fail("la règle '%s' n'a pas de seuil", rules_name(rule));
+    if (rules_set_threshold(&e -> rules, rule, threshold) != 0) return _fail("le seuil de '%s' doit être >= 1", rules_name(rule));
+    return 0;
+}
+
+int engine_rules_get(Engine *e, int rule, int *enabled, uint32_t *threshold){
+    if (e == NULL) return _fail("engine_rules_get : engine NULL");
+    if (rules_get(&e -> rules, rule, enabled, threshold) != 0) return _fail("règle inconnue (%d)", rule);
     return 0;
 }
 

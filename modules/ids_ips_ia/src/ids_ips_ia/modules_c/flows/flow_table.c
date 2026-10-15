@@ -186,6 +186,7 @@ int ft_unblock_ip(FlowTable *ft, const uint8_t *ip, int v4){
 
 int ft_is_blocked(FlowTable *ft, const uint8_t *ip, int v4){
     if (ft == NULL || ip == NULL || (v4 != 0 && v4 != 1)) return 0;
+    if (ft -> blocked -> nbr_elements == 0) return 0;   // liste vide (le cas courant) : on évite le hachage, c'est le chemin chaud
     struct PortPerIpKey key;
     _make_ip_key(&key, ip, v4);
     return dict_getitem(ft -> blocked, &key) != NULL;
@@ -227,19 +228,29 @@ int ft_add(FlowTable *ft, const void *key, const FlowEntry *entry){
     return (r1 == 0 && r2 == 0) ? 0 : -1;
 }
 
-// Après chaque paquet : la règle donne un verdict ; BLOCK met l'IP initiatrice sur la liste noire ;
-// un flux TCP fini est retiré ; un flux trop long est envoyé puis repart de zéro. À appeler en DERNIER : le flux peut être libéré ici.
+// Après chaque paquet : la règle donne un FlowRuleResult. Un verdict (hors UNKNOW) est gardé dans le flux avec la règle qui l'a donné.
+// BLOCK : l'IP initiatrice va sur la liste noire, sa PortMap est remise à zéro (si l'admin la débloque, elle repart de 0 au lieu
+// d'être re-bloquée au paquet suivant), et le flux est envoyé au sink (END_BLOCKED) puis retiré : plus rien ne le fera vivre.
+// Ensuite : un flux TCP fini est retiré ; un flux trop long est envoyé puis repart de zéro.
+// À appeler en DERNIER : le flux peut être libéré ici.
 static void _after_packet(FlowTable *ft, FlowEntry *entry, uint64_t now_ms){
     FlowData *d = entry -> data;
     if (ft -> hooks.check != NULL){
         struct PortPerIpKey ip_key;
         const uint8_t *ip = d -> v4 ? d -> header.ipv4_headers.initiator_ip : d -> header.ipv6_headers.initiator_ip;
         _make_ip_key(&ip_key, ip, d -> v4);
-        FlowRuleResult v = ft -> hooks.check(d, (const struct PortMap *)dict_getitem(ft -> port_per_ip, &ip_key));
-        if (v.verdict != UNKNOW) d -> verdict = v.verdict;          // UNKNOW = pas d'avis : on garde l'ancien verdict
-        if (v.verdict == BLOCK) {
-            ft_block_ip(ft, ip, d -> v4);   // le flux RESTE dans la table (avec son verdict) jusqu'à son expiration
-            _send_record(ft, entry, v.reason);
+        FlowRuleResult r = ft -> hooks.check(d, (const struct PortMap *)dict_getitem(ft -> port_per_ip, &ip_key), ft -> hooks.rules_cfg);
+        if (r.verdict != UNKNOW){                   // UNKNOW = pas d'avis : on garde l'ancien verdict (et sa règle)
+            d -> verdict = r.verdict;
+            d -> rule_reason = (uint8_t)r.reason;
+        }
+        if (r.verdict == BLOCK){
+            ft_block_ip(ft, ip, d -> v4);           // si la liste noire est pleine (-1), le flux part quand même : Python bloquera
+            struct PortMap *pm = dict_getitem(ft -> port_per_ip, &ip_key);
+            if (pm != NULL) portmap_reset(pm);      // remet les ports et le compteur à 0 ; garde refcount (les autres flux de l'IP existent encore)
+            ft -> n_blocked_flows += 1;
+            _ft_remove(ft, entry, END_BLOCKED);     // envoie au sink PUIS retire ; entry et d n'existent plus après
+            return;
         }
     }
     if (ft -> hooks.close_on_tcp_end && d -> proto == (uint8_t)TCP && (d -> flag_count.rst > 0 || d -> flag_count.fin >= 2)){
@@ -261,7 +272,10 @@ static void _after_packet(FlowTable *ft, FlowEntry *entry, uint64_t now_ms){
 }
 
 // Le point d'entrée : un paquet parsé arrive. now_ms = heure réelle en ms (realtime_ms() en prod, une fausse heure dans les tests).
-// Ordre : IP bloquée ? → ménage → fiche → règles.  0 = succès (un paquet d'une IP bloquée est ignoré, pas une erreur), -1 = refusé.
+// Ordre : IP bloquée (source OU destination) ? → ménage → fiche → règles.
+// 0 = succès (un paquet d'une IP bloquée est ignoré, pas une erreur), -1 = refusé.
+// La destination compte aussi : sinon les réponses de la victime à un attaquant bloqué (RST, SYN-ACK retransmis) créeraient de faux flux
+// « initiés par la victime », dont les ports visités sont ceux de l'attaquant.
 int ft_process(FlowTable *ft, ParserResult *pr, uint64_t now_ms){
     if (ft == NULL || pr == NULL) return -1;
     if (pr -> code != (uint8_t)SUCCES) return -1;
@@ -269,7 +283,7 @@ int ft_process(FlowTable *ft, ParserResult *pr, uint64_t now_ms){
     PacketTuple t;
     if (pr_tuple(pr, &t) != 0) return -1;           // pas de l'IP (ARP...) : on refuse
 
-    if (ft_is_blocked(ft, t.src_ip, t.v4)){         // IP bloquée : on ne stocke RIEN pour elle
+    if (ft_is_blocked(ft, t.src_ip, t.v4) || ft_is_blocked(ft, t.dst_ip, t.v4)){   // IP bloquée : on ne stocke RIEN pour elle
         ft -> n_blocked_pkts += 1;
         return 0;
     }

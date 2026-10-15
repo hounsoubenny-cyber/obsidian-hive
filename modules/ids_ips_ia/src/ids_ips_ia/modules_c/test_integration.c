@@ -379,7 +379,10 @@ static void t_mem_flow(void) {
     CHECK_EQ(offsetof(FlowData, octets_data_ltr), 96, "octets_data_ltr à 96 (uint64, aligné sur 8)");
     CHECK_EQ(offsetof(FlowData, octets_data_rtl), 104, "octets_data_rtl à 104");
     CHECK_EQ(offsetof(FlowData, proto), 112, "proto à 112");
-    CHECK_EQ(offsetof(FlowData, verdict), 116, "verdict à 116 (3 octets de remplissage avant)");
+    CHECK_EQ(offsetof(FlowData, rule_reason), 113, "rule_reason à 113 : dans le remplissage entre proto et verdict");
+    CHECK_EQ(offsetof(FlowData, verdict), 116, "verdict à 116 (rule_reason n'a pas bougé la mémoire)");
+    CHECK_EQ(sizeof(FlowRuleResult), 8, "FlowRuleResult = verdict + reason (2 enums de 4 octets)");
+    CHECK(RULE_COUNT <= 256, "les règles tiennent dans un uint8_t");
     CHECK_EQ(sizeof(FlowRecord), 176, "sizeof(FlowRecord) : clé 44 + remplissage 4 + FlowData 120 + reason 4 + remplissage 4");
     CHECK_EQ(offsetof(FlowRecord, data), 48, "FlowRecord.data à 48");
     CHECK_EQ(offsetof(FlowRecord, reason), 168, "FlowRecord.reason à 168");
@@ -393,10 +396,10 @@ static void t_mem_flow(void) {
 }
 
 static void t_mem_table_dict_portmap(void) {
-    CHECK_EQ(sizeof(FlowTable), 96, "sizeof(FlowTable)");
-    CHECK_EQ(offsetof(FlowTable, hooks), 40, "hooks à 40");
-    CHECK_EQ(offsetof(FlowTable, blocked), 88, "blocked à 88");
-    CHECK_EQ(sizeof(struct FlowHooks), 48, "sizeof(FlowHooks) : idle_ms 8, max_ms 8, close_on_tcp_end 1 + 7 de remplissage, 3 pointeurs de 8");
+    CHECK_EQ(sizeof(FlowTable), 112, "sizeof(FlowTable)");
+    CHECK_EQ(offsetof(FlowTable, hooks), 48, "hooks à 48 (n_blocked_flows est venu s'ajouter avant)");
+    CHECK_EQ(offsetof(FlowTable, blocked), 104, "blocked à 104");
+    CHECK_EQ(sizeof(struct FlowHooks), 56, "sizeof(FlowHooks) : idle_ms 8, max_ms 8, close_on_tcp_end 1 + 7 de remplissage, 4 pointeurs de 8 (check, rules_cfg, sink, ctx)");
     CHECK_EQ(sizeof(DChainedList), 24, "sizeof(DChainedList)");
     CHECK_EQ(sizeof(Dict), 72, "sizeof(Dict)");
     CHECK_EQ(sizeof(Entry), 32, "sizeof(Entry) du dict");
@@ -672,10 +675,12 @@ static void sink_collect(const FlowRecord *r, void *ctx) {
     if (g -> n < 16) g -> rec[g -> n] = *r;
     g -> n++;
 }
+static RulesConfig g_rules;                  /* les réglages que la table lit ; les tests peuvent les changer « à chaud » */
 static FlowTable *table_avec(uint32_t size, uint64_t idle_ms, uint8_t close_tcp, FlowRuleFn rule) {
     FlowTable *ft = ft_create(size);
     struct FlowHooks h = {0};
-    h.idle_ms = idle_ms; h.close_on_tcp_end = close_tcp; h.check = rule; h.sink = sink_collect; h.ctx = &got;
+    rules_config_default(&g_rules);          /* défauts : toutes les règles actives, scan à 20 ports */
+    h.idle_ms = idle_ms; h.close_on_tcp_end = close_tcp; h.check = rule; h.rules_cfg = &g_rules; h.sink = sink_collect; h.ctx = &got;
     ft_set_hooks(ft, &h);
     memset(&got, 0, sizeof got);
     return ft;
@@ -841,39 +846,183 @@ static void t_liste_noire(void) {
 
 static void t_regle_scan_unitaire(void) {
     struct PortMap pm;
+    RulesConfig cfg;
+    rules_config_default(&cfg);
     portmap_init(&pm);
-    CHECK_EQ(rule_port_scan(NULL, NULL), UNKNOW, "pas de PortMap → pas d'avis");
+    CHECK_EQ(rule_port_scan(NULL, NULL, &cfg).verdict, UNKNOW, "pas de PortMap → pas d'avis");
     for (int p = 1; p < SCAN_PORT_THRESHOLD; p++) portmap_add(&pm, (uint16_t)p);
     CHECK_EQ(pm.count, SCAN_PORT_THRESHOLD - 1, "19 ports");
-    CHECK_EQ(rule_port_scan(NULL, &pm), UNKNOW, "19 ports : pas d'avis");
+    CHECK_EQ(rule_port_scan(NULL, &pm, &cfg).verdict, UNKNOW, "19 ports : pas d'avis");
     portmap_add(&pm, 9999);
-    CHECK_EQ(rule_port_scan(NULL, &pm), BLOCK, "20 ports : BLOCK");
+    FlowRuleResult r = rule_port_scan(NULL, &pm, &cfg);
+    CHECK_EQ(r.verdict, BLOCK, "20 ports : BLOCK");
+    CHECK_EQ(r.reason, RULE_PORT_SCAN, "la raison : RULE_PORT_SCAN");
+    CHECK_EQ(rule_port_scan(NULL, &pm, NULL).verdict, UNKNOW, "cfg NULL → rien d'actif");
+}
+
+/* un client normal, du SYN à la fin : aucune règle ne doit s'en mêler */
+static void t_trafic_normal_pas_bloque(void) {
+    FlowTable *ft = table_avec(16, 0, 0, rules_check_all);
+    uint8_t b[128];
+    const uint8_t *c = IP4(10, 0, 0, 1), *s = IP4(10, 0, 0, 2);
+    feed(ft, b, tcp4_pkt(b, c, 5000, s, 80, SYN));
+    feed(ft, b, tcp4_pkt(b, s, 80, c, 5000, SYN | ACK));
+    feed(ft, b, tcp4_pkt(b, c, 5000, s, 80, ACK));
+    feed(ft, b, tcp4_pkt(b, c, 5000, s, 80, PSH | ACK));
+    feed(ft, b, tcp4_pkt(b, c, 5000, s, 80, FIN | ACK));
+    feed(ft, b, tcp4_pkt(b, s, 80, c, 5000, FIN | ACK));
+    CHECK_EQ(ft_is_blocked(ft, c, 1), 0, "le client n'est pas bloqué");
+    CHECK_EQ(ft_is_blocked(ft, s, 1), 0, "le serveur non plus");
+    CHECK_EQ(ft -> nbr_elements, 1, "le flux est toujours là");
+    FlowEntry *e = flow_of(ft, b, 54);
+    if (e) CHECK_EQ(e -> data -> verdict, UNKNOW, "verdict UNKNOW");
+    if (e) CHECK_EQ(e -> data -> rule_reason, RULE_NONE, "aucune règle");
+    CHECK_EQ(got.n, 0, "rien envoyé");
+    ft_destroy(ft);
 }
 
 static void t_regle_scan_bloque_l_ip(void) {
-    FlowTable *ft = table_avec(64, 0, 0, rule_port_scan);
+    FlowTable *ft = table_avec(64, 0, 0, rules_check_all);
     uint8_t b[128];
     for (uint16_t p = 1000; p < 1025; p++)       /* 25 ports visités par la même IP */
         feed(ft, b, tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), p, SYN));
     CHECK_EQ(ft_is_blocked(ft, IP4(10, 9, 9, 9), 1), 1, "le scanner est sur la liste noire");
-    CHECK_EQ(ft -> nbr_elements, SCAN_PORT_THRESHOLD, "20 flux stockés, les 5 suivants ignorés");
+    CHECK_EQ(ft -> nbr_elements, SCAN_PORT_THRESHOLD - 1, "19 flux restent : le 20e est parti au blocage, les 5 suivants sont ignorés");
     CHECK_EQ(ft -> n_blocked_pkts, 5, "5 paquets ignorés");
+    CHECK_EQ(ft -> n_blocked_flows, 1, "1 flux retiré par blocage");
+    CHECK_EQ(got.n, 1, "le flux bloqué est parti au sink tout de suite");
+    CHECK_EQ(got.rec[0].reason, END_BLOCKED, "raison de départ : END_BLOCKED");
+    CHECK_EQ(got.rec[0].data.verdict, BLOCK, "avec son verdict BLOCK");
+    CHECK_EQ(got.rec[0].data.rule_reason, RULE_PORT_SCAN, "et la règle qui l'a décidé");
     int n = tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), 1019, SYN);
-    FlowEntry *dernier = flow_of(ft, b, n);
-    CHECK(dernier != NULL, "le 20e flux est là");
-    if (dernier) CHECK_EQ(dernier -> data -> verdict, BLOCK, "son verdict : BLOCK (le flux reste, avec son verdict)");
+    CHECK(flow_of(ft, b, n) == NULL, "le 20e flux n'est plus dans la table");
     n = tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), 1000, SYN);
     FlowEntry *premier = flow_of(ft, b, n);
-    if (premier) CHECK_EQ(premier -> data -> verdict, UNKNOW, "le 1er flux est resté UNKNOW");
+    CHECK(premier != NULL, "le 1er flux est encore là (il expirera tout seul)");
+    if (premier) CHECK_EQ(premier -> data -> verdict, UNKNOW, "et il est resté UNKNOW");
+    struct PortMap *pm = portmap_v4(ft, IP4(10, 9, 9, 9));
+    CHECK(pm != NULL, "la PortMap existe encore : 19 flux de cette IP vivent");
+    if (pm) {
+        CHECK_EQ(pm -> count, 0, "mais elle a été remise à zéro au blocage");
+        CHECK_EQ(pm -> refcount, SCAN_PORT_THRESHOLD - 1, "refcount intact (19 flux)");
+    }
     CHECK_EQ(feed(ft, b, syn(b, 5, 2000)), 0, "un client normal n'est pas touché");
     CHECK_EQ(ft_is_blocked(ft, IP4(10, 0, 0, 5), 1), 0, "pas bloqué");
+
+    /* la victime répond à l'attaquant bloqué : ces paquets sont ignorés, ils ne fabriquent pas de faux flux « initiés par la victime » */
+    int avant = ft -> nbr_elements;
+    CHECK_EQ(feed(ft, b, tcp4_pkt(b, IP4(10, 0, 0, 2), 1030, IP4(10, 9, 9, 9), 40000, RST | ACK)), 0, "réponse vers l'IP bloquée → 0");
+    CHECK_EQ(ft -> nbr_elements, avant, "aucun flux créé");
+    CHECK_EQ(ft -> n_blocked_pkts, 6, "compté comme ignoré");
+
+    /* l'admin débloque : l'IP repart de zéro et n'est pas re-bloquée tout de suite */
+    CHECK_EQ(ft_unblock_ip(ft, IP4(10, 9, 9, 9), 1), 0, "débloquée");
+    for (uint16_t p = 2000; p < 2005; p++)
+        feed(ft, b, tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), p, SYN));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 9, 9, 9), 1), 0, "5 nouveaux ports : pas re-bloquée (compteur reparti de 0)");
+    pm = portmap_v4(ft, IP4(10, 9, 9, 9));
+    if (pm) CHECK_EQ(pm -> count, 5, "5 ports comptés");
+    ft_destroy(ft);
+}
+
+static void t_regles_a_chaud(void) {
+    FlowTable *ft = table_avec(128, 0, 0, rules_check_all);
+    uint8_t b[128];
+    CHECK_EQ(rules_set_enabled(&g_rules, RULE_PORT_SCAN, 0), 0, "port_scan désactivée pendant que la table tourne");
+    for (uint16_t p = 1000; p < 1030; p++)
+        feed(ft, b, tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), p, SYN));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 9, 9, 9), 1), 0, "30 ports mais règle désactivée : pas bloquée");
+    CHECK_EQ(ft -> nbr_elements, 30, "30 flux stockés");
+    CHECK_EQ(rules_set_enabled(&g_rules, RULE_PORT_SCAN, 1), 0, "réactivée");
+    feed(ft, b, tcp4_pkt(b, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), 1030, SYN));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 9, 9, 9), 1), 1, "au paquet suivant la règle s'applique : bloquée");
+
+    CHECK_EQ(rules_set_threshold(&g_rules, RULE_PORT_SCAN, 5), 0, "seuil abaissé à 5");
+    for (uint16_t p = 1000; p < 1006; p++)
+        feed(ft, b, tcp4_pkt(b, IP4(10, 8, 8, 8), 40000, IP4(10, 0, 0, 2), p, SYN));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 8, 8, 8), 1), 1, "avec un seuil de 5, 5 ports suffisent");
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 7, 7, 7), 1), 0, "une IP qui n'a rien fait n'est pas touchée");
+    ft_destroy(ft);
+}
+
+static void t_regles_scan_tcp_bloquent(void) {
+    struct { const char *nom; uint8_t flags; FlowRuleReason regle; } cas[] = {
+        { "NULL (aucun drapeau)",  0,               RULE_NULL_SCAN },
+        { "Xmas (FIN+PSH+URG)",    FIN | PSH | URG, RULE_XMAS_SCAN },
+        { "FIN seul",              FIN,             RULE_FIN_SCAN  },
+    };
+    for (int i = 0; i < 3; i++) {
+        FlowTable *ft = table_avec(16, 0, 0, rules_check_all);
+        uint8_t b[128];
+        feed(ft, b, tcp4_pkt(b, IP4(10, 7, 7, 7), 4444, IP4(10, 0, 0, 2), 80, cas[i].flags));
+        CHECK_EQ(ft_is_blocked(ft, IP4(10, 7, 7, 7), 1), 1, cas[i].nom);
+        CHECK_EQ(ft -> nbr_elements, 0, "le flux est retiré tout de suite");
+        CHECK_EQ(ft -> port_per_ip -> nbr_elements, 0, "et sa PortMap libérée (dernier flux de l'IP)");
+        CHECK_EQ(got.n, 1, "envoyé au sink");
+        CHECK_EQ(got.rec[0].reason, END_BLOCKED, "raison END_BLOCKED");
+        CHECK_EQ(got.rec[0].data.verdict, BLOCK, "verdict BLOCK");
+        CHECK_EQ(got.rec[0].data.rule_reason, cas[i].regle, "la bonne règle est notée");
+        CHECK_EQ(got.rec[0].data.n_pkt_ltr, 1, "1 paquet");
+        ft_destroy(ft);
+    }
+    /* désactivée : le même paquet passe */
+    FlowTable *ft = table_avec(16, 0, 0, rules_check_all);
+    uint8_t b[128];
+    rules_set_enabled(&g_rules, RULE_NULL_SCAN, 0);
+    feed(ft, b, tcp4_pkt(b, IP4(10, 7, 7, 7), 4444, IP4(10, 0, 0, 2), 80, 0));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 7, 7, 7), 1), 0, "null_scan désactivée : pas bloquée");
+    CHECK_EQ(ft -> nbr_elements, 1, "flux stocké");
+    ft_destroy(ft);
+}
+
+static void t_regle_flood_marque_sans_bloquer(void) {
+    FlowTable *ft = table_avec(16, 0, 0, rules_check_all);
+    uint8_t b[128];
+    g_now = 5000;                                /* tous les paquets dans la même milliseconde : mesuré sur FLOOD_MIN_WINDOW_MS */
+    int n = udp4_pkt(b, IP4(10, 6, 6, 6), 5000, IP4(10, 0, 0, 2), 53);
+    for (int i = 0; i < 900; i++) feed(ft, b, n);
+    FlowEntry *e = flow_of(ft, b, n);
+    CHECK(e != NULL, "flux présent");
+    if (e) CHECK_EQ(e -> data -> verdict, UNKNOW, "900 paquets en 100 ms = 9000/s : sous le seuil de 10000");
+    for (int i = 0; i < 200; i++) feed(ft, b, n);
+    if (e) {
+        CHECK_EQ(e -> data -> verdict, LIMIT_REACHED, "1100 paquets en 100 ms : LIMIT_REACHED");
+        CHECK_EQ(e -> data -> rule_reason, RULE_FLOOD, "règle flood");
+    }
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 6, 6, 6), 1), 0, "un flood est marqué, l'IP n'est pas bloquée");
+    CHECK_EQ(ft -> nbr_elements, 1, "le flux reste dans la table");
+    CHECK_EQ(got.n, 0, "rien n'est parti");
+    ft_destroy(ft);
+}
+
+static void t_sans_cfg_aucune_regle(void) {
+    FlowTable *ft = ft_create(16);
+    struct FlowHooks h = {0};
+    h.check = rules_check_all; h.sink = sink_collect; h.ctx = &got;      /* rules_cfg reste NULL */
+    ft_set_hooks(ft, &h);
+    memset(&got, 0, sizeof got);
+    uint8_t b[128];
+    feed(ft, b, tcp4_pkt(b, IP4(10, 7, 7, 7), 4444, IP4(10, 0, 0, 2), 80, 0));
+    CHECK_EQ(ft_is_blocked(ft, IP4(10, 7, 7, 7), 1), 0, "sans réglages, aucune règle ne s'applique");
+    CHECK_EQ(ft -> nbr_elements, 1, "le flux est stocké");
+    ft_destroy(ft);
+}
+
+static void t_liste_noire_destination(void) {
+    FlowTable *ft = ft_create(8);
+    uint8_t b[128];
+    ft_block_ip(ft, IP4(10, 0, 0, 2), 1);
+    CHECK_EQ(feed(ft, b, syn(b, 1, 1000)), 0, "paquet VERS une IP bloquée → 0 (ignoré)");
+    CHECK_EQ(ft -> nbr_elements, 0, "aucun flux");
+    CHECK_EQ(ft -> n_blocked_pkts, 1, "compté");
     ft_destroy(ft);
 }
 
 static int appels_regle;
-static FlowVerdict regle_une_fois(const FlowData *d, const struct PortMap *pm) {
-    (void)d; (void)pm;
-    return appels_regle++ == 0 ? LIMIT_REACHED : UNKNOW;
+static FlowRuleResult regle_une_fois(const FlowData *d, const struct PortMap *pm, const struct RulesConfig *cfg) {
+    (void)d; (void)pm; (void)cfg;
+    FlowRuleResult r = { appels_regle++ == 0 ? LIMIT_REACHED : UNKNOW, RULE_FLOOD };
+    return r;
 }
 static void t_regle_unknow_garde_le_verdict(void) {
     appels_regle = 0;
@@ -886,6 +1035,7 @@ static void t_regle_unknow_garde_le_verdict(void) {
     FlowEntry *e = flow_of(ft, b, n);
     CHECK_EQ(appels_regle, 3, "la règle est appelée à CHAQUE paquet");
     if (e) CHECK_EQ(e -> data -> verdict, LIMIT_REACHED, "UNKNOW ne remet pas le verdict à zéro");
+    if (e) CHECK_EQ(e -> data -> rule_reason, RULE_FLOOD, "la règle du verdict est gardée aussi");
     CHECK_EQ(ft_is_blocked(ft, IP4(10, 0, 0, 1), 1), 0, "LIMIT_REACHED ne bloque pas l'IP");
     ft_destroy(ft);
 }
@@ -943,7 +1093,7 @@ static void t_delete_entry(void) {
 }
 
 static void t_fuites_expiration_et_sink(void) {
-    FlowTable *ft = table_avec(16, 50, 1, rule_port_scan);
+    FlowTable *ft = table_avec(16, 50, 1, rules_check_all);
     uint8_t b[128];
     for (int i = 0; i < 3000; i++) {
         g_now = 1000 + (uint64_t)i * 7;
@@ -1107,7 +1257,13 @@ int main(int argc, char **argv) {
     RUN_LEAKS("sink NULL : pas de copie, pas de plantage",      t_sans_sink_pas_de_copie);
     RUN_LEAKS("liste noire : bloquer, ignorer, débloquer",      t_liste_noire);
     RUN("règle scan : seuil",                                   t_regle_scan_unitaire);
-    RUN_LEAKS("règle scan : bloque l'IP, le flux reste",        t_regle_scan_bloque_l_ip);
+    RUN_LEAKS("liste noire : la destination compte aussi",      t_liste_noire_destination);
+    RUN_LEAKS("trafic normal : aucune règle ne se déclenche",   t_trafic_normal_pas_bloque);
+    RUN_LEAKS("règle scan : bloque, envoie, retire, remet à 0", t_regle_scan_bloque_l_ip);
+    RUN_LEAKS("règles : réglages modifiés à chaud",             t_regles_a_chaud);
+    RUN_LEAKS("règles NULL / Xmas / FIN : bloquent et retirent", t_regles_scan_tcp_bloquent);
+    RUN_LEAKS("règle flood : marque sans bloquer",              t_regle_flood_marque_sans_bloquer);
+    RUN_LEAKS("sans réglages : aucune règle",                   t_sans_cfg_aucune_regle);
     RUN_LEAKS("règle : UNKNOW garde le verdict",                t_regle_unknow_garde_le_verdict);
     RUN_LEAKS("TCP : FIN des deux côtés et RST",                t_fin_tcp);
     RUN_LEAKS("TCP : option désactivée par défaut",             t_fin_tcp_desactive_par_defaut);

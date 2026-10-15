@@ -14,7 +14,8 @@ struct FlowHooks{
     uint64_t idle_ms;           // un flux sans paquet depuis idle_ms est retiré ; 0 = pas d'expiration
     uint64_t max_ms;            // un flux qui dure depuis max_ms est envoyé au sink puis repart de zéro ; 0 = pas de limite
     uint8_t close_on_tcp_end;   // 1 = un RST (ou FIN des deux côtés) retire le flux tout de suite
-    FlowRuleFn check;           // règle appelée après chaque paquet ; NULL = aucune
+    FlowRuleFn check;           // règle appelée après chaque paquet ; NULL = aucune (en général rules_check_all)
+    const struct RulesConfig *rules_cfg;   // les réglages donnés tels quels à check ; peuvent changer à chaud (champs atomiques). Doit vivre aussi longtemps que la table
     FlowSinkFn sink;            // reçoit chaque flux qui part ; NULL = on jette sans copier
     void *ctx;                  // donné tel quel au sink (il n'y a pas de closure en C)
 };
@@ -26,7 +27,8 @@ struct FlowTable{
     DChainedList *flow_dcl;     // même FlowEntry, rangées de la plus ancienne (head) à la plus récente (tail)
     Dict *port_per_ip;          // IP source → PortMap (ports distincts visités)
     uint32_t n_evicted;         // nombre de flux chassés (table pleine) depuis la création
-    uint32_t n_blocked_pkts;    // paquets ignorés parce que leur IP source est bloquée
+    uint32_t n_blocked_pkts;    // paquets ignorés parce que leur IP (source ou destination) est bloquée
+    uint32_t n_blocked_flows;   // flux retirés parce qu'une règle a bloqué leur IP (END_BLOCKED)
     struct FlowHooks hooks;
     Dict *blocked;              // liste noire : PortPerIpKey → marqueur
 };

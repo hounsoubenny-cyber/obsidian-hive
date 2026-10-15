@@ -8,7 +8,7 @@
 #                                       (seulement pour les NOUVEAUX tests)
 #
 # NOUVEAUX tests (mini-framework test_common.h : un test = un process, plantage = test rouge) :
-#     utils  portmap  dchained_list  flow  flow_table  integration  capture  mmap_ring
+#     utils  portmap  dchained_list  rules  flow  flow_table  integration  capture  mmap_ring  ipset  engine
 #       (capture = socket réel : lancer avec  sudo -E ./run_tests.sh capture   ·   CAP_IFACE=veth0 pour choisir ton interface)
 #       (integration = conventions 0/-1/1, carte mémoire, et vrais octets de paquets de bout en bout)
 # Tests EXISTANTS (tes propres fichiers, lancés tels quels) :
@@ -38,13 +38,14 @@ SRC[integration]="test_integration.c parser/parser.c flows/flow.c flows/flow_tab
 SRC[capture]="capture/test_capture.c capture/capture.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[capture]=new
 SRC[mmap_ring]="mmap_ring/test_mmap_ring.c mmap_ring/mmap_ring.c"; KIND[mmap_ring]=new
 SRC[ipset]="ipset/test_ipset.c ipset/ipset.c utils/utils.c"; KIND[ipset]=new
+SRC[rules]="rules/test_rules.c rules/rules.c portmap/portmap.c"; KIND[rules]=new
 SRC[engine]="engine/test_engine.c engine/engine.c capture/capture.c ipset/ipset.c mmap_ring/mmap_ring.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[engine]=new
 # existants
 SRC[dict]="utils/utils.c dict/test_dict.c dict/dict.c";                                        KIND[dict]=old
 SRC[parser]="parser/test_parser.c parser/parser.c";                              KIND[parser]=old
 SRC[parser_hard]="parser/test_parser_hard.c parser/parser.c";                    KIND[parser_hard]=old
 SRC[parser_claude]="parser/test_parser_claude.c parser/parser.c";                KIND[parser_claude]=old
-ORDER=(utils portmap dchained_list flow flow_table integration capture mmap_ring ipset engine dict parser parser_hard parser_claude)
+ORDER=(utils portmap dchained_list rules flow flow_table integration capture mmap_ring ipset engine dict parser parser_hard parser_claude)
 
 VERBOSE=0
 NAMES=()
@@ -87,7 +88,8 @@ for name in "${NAMES[@]}"; do
     bin="$OUT/$name"
     echo
     echo "════════ $name ($([ "${KIND[$name]}" = new ] && echo nouveaux tests || echo "tes tests existants")) ════════"
-    if ! $CC $FLAGS ${SRC[$name]} -o "$bin" 2> "$OUT/$name.compile.log"; then
+    LIBS=""; case "$name" in capture|engine) LIBS="-lpcap" ;; esac     # capture.c utilise libpcap (comme setup.py)
+    if ! $CC $FLAGS ${SRC[$name]} -o "$bin" $LIBS 2> "$OUT/$name.compile.log"; then
         echo "✗✗ $name : la compilation a échoué"
         cat "$OUT/$name.compile.log"
         RESULT[$name]="ne compile pas"
