@@ -1,0 +1,30 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="alexBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161a22"/>
+      <stop offset="100%" stop-color="#0d0f14"/>
+    </linearGradient>
+    <linearGradient id="alexAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5c04f"/>
+      <stop offset="100%" stop-color="#f5a623"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#alexBg)" stroke="#262c3a" stroke-width="1.5"/>
+
+  <!-- anneau de scan (dégradé conique simulé par arcs) -->
+  <circle cx="27" cy="27" r="13" fill="none" stroke="#1f2430" stroke-width="4.5"/>
+  <path d="M27 14 A13 13 0 0 1 40 27" fill="none" stroke="url(#alexAccent)"
+        stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M40 27 A13 13 0 0 1 33.5 38.4" fill="none" stroke="url(#alexAccent)"
+        stroke-width="4.5" stroke-linecap="round" opacity="0.55"/>
+
+  <!-- verre de la loupe -->
+  <circle cx="27" cy="27" r="8.5" fill="#0d0f14" stroke="url(#alexAccent)" stroke-width="1.2"/>
+
+  <!-- manche de la loupe -->
+  <line x1="36" y1="36" x2="47" y2="47" stroke="url(#alexAccent)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- petit point de détection dans le verre -->
+  <circle cx="27" cy="27" r="2.3" fill="url(#alexAccent)"/>
+</svg>

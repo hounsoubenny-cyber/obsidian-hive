@@ -1,0 +1,10 @@
+{
+  "productName": "Obsidian Hive",
+  "apiBaseUrl": "http://localhost:8000/api",
+  "wsUrl": "ws://localhost:8000/api/core_ws/ws",
+  "themes": ["dark", "light"],
+  "defaultTheme": "dark",
+  "defaultLanguage": "fr",
+  "redirectDelayAfterLogin": 30,
+  "demoMode": false
+}

@@ -107,6 +107,7 @@ enum FlowEndReason{
     END_EVICTED = 3,            // table pleine : le plus ancien est chassé
     END_SHUTDOWN = 4,           // ft_destroy : on vide la table
     END_MAX_DURATION = 5,       // le flux dure depuis max_ms : on envoie un instantané, puis il repart de zéro (il RESTE dans la table)
+    END_RULE_BLOCKED = 6,       // FLUX SIGNALER PAR UNE RÈGLE
 };
 
 // Copie À PLAT d'un flux qui part (aucun pointeur) : c'est ça qu'on envoie dans le ring, lisible par Python

@@ -1,0 +1,31 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="corBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c8cff"/>
+      <stop offset="100%" stop-color="#5b6ee8"/>
+    </linearGradient>
+    <radialGradient id="corGlow" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#corBg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#corGlow)"/>
+
+  <!-- éclat principal (4 branches, façon icône Sparkles) -->
+  <path d="M32 12
+           C33 21 35 27 44 28
+           C35 29 33 35 32 44
+           C31 35 29 29 20 28
+           C29 27 31 21 32 12 Z"
+        fill="#ffffff"/>
+
+  <!-- petit éclat secondaire, en haut à droite -->
+  <path d="M47 14
+           C47.6 18 49 19.4 53 20
+           C49 20.6 47.6 22 47 26
+           C46.4 22 45 20.6 41 20
+           C45 19.4 46.4 18 47 14 Z"
+        fill="#ffffff" opacity="0.85"/>
+</svg>

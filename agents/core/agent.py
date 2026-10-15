@@ -28,7 +28,6 @@ fait qu'elle peut aussi être invoquée en mode "synthèse périodique" sans
 conversation persistée du tout.
 """
 
-import asyncio
 import inspect
 import logging
 from pydantic import BaseModel, Field

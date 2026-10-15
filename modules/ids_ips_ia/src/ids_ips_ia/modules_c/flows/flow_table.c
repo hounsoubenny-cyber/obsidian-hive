@@ -235,9 +235,12 @@ static void _after_packet(FlowTable *ft, FlowEntry *entry, uint64_t now_ms){
         struct PortPerIpKey ip_key;
         const uint8_t *ip = d -> v4 ? d -> header.ipv4_headers.initiator_ip : d -> header.ipv6_headers.initiator_ip;
         _make_ip_key(&ip_key, ip, d -> v4);
-        FlowVerdict v = ft -> hooks.check(d, (const struct PortMap *)dict_getitem(ft -> port_per_ip, &ip_key));
-        if (v != UNKNOW) d -> verdict = v;          // UNKNOW = pas d'avis : on garde l'ancien verdict
-        if (v == BLOCK) ft_block_ip(ft, ip, d -> v4);   // le flux RESTE dans la table (avec son verdict) jusqu'à son expiration
+        FlowRuleResult v = ft -> hooks.check(d, (const struct PortMap *)dict_getitem(ft -> port_per_ip, &ip_key));
+        if (v.verdict != UNKNOW) d -> verdict = v.verdict;          // UNKNOW = pas d'avis : on garde l'ancien verdict
+        if (v.verdict == BLOCK) {
+            ft_block_ip(ft, ip, d -> v4);   // le flux RESTE dans la table (avec son verdict) jusqu'à son expiration
+            _send_record(ft, entry, v.reason);
+        }
     }
     if (ft -> hooks.close_on_tcp_end && d -> proto == (uint8_t)TCP && (d -> flag_count.rst > 0 || d -> flag_count.fin >= 2)){
         _ft_remove(ft, entry, END_TCP_CLOSED);
