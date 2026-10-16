@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../flows/flow.h"          /* FlowRecord : ce que Python lit dans les rings (176 octets) */
+#include "../ipset_m/ipset_m.h"
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────────
  * Le moteur : c'est CE fichier que Python appelle (via Cython). Il assemble tout le reste.
@@ -110,4 +111,18 @@ int engine_ignore_add(Engine *e, const char *ip, int which);
 int engine_ignore_remove(Engine *e, const char *ip, int which);   /* -1 si l'IP n'y était pas */
 int engine_ignore_contains(Engine *e, const char *ip, int which); /* question : 1 / 0 (0 aussi si le texte n'est pas une IP) */
 uint32_t engine_ignore_count(Engine *e, int which);               /* which = IGNORE_SRC ou IGNORE_DST */
+
+/* La liste noire PARTAGÉE (ipset_m) : toutes les captures et Python lisent et écrivent la même. Les IP bloquées sont ignorées
+ * (source ET destination) par toutes les captures, au paquet suivant. Une règle qui bloque y écrit toute seule (raison, date,
+ * expiration = engine_rules_set_block_ttl) ; engine_block_add est le blocage manuel d'un admin.
+ * Pour que le blocage et nft restent d'accord : même durée des deux côtés, et appeler engine_block_expire régulièrement. */
+int engine_block_add(Engine *e, const char *ip, uint64_t ttl_ms);    /* manuel ; ttl_ms = 0 : pour toujours. Déjà bloquée : métadonnées remplacées */
+int engine_block_remove(Engine *e, const char *ip);                  /* -1 si l'IP n'était pas bloquée */
+int engine_block_is_blocked(Engine *e, const char *ip);              /* question : 1 / 0 (0 aussi si le texte n'est pas une IP) */
+uint32_t engine_block_count(Engine *e);
+uint32_t engine_block_expire(Engine *e);                             /* débloque celles dont le délai est passé (horloge = realtime_ms) ; rend leur nombre */
+int engine_block_snapshot(Engine *e, struct IpBlockInfo **out, uint32_t *n);   /* toutes les IP bloquées + métadonnées, triées (récentes d'abord) ; 0 / -1 */
+void engine_block_snapshot_free(struct IpBlockInfo *list);
+int engine_rules_set_block_ttl(Engine *e, uint64_t ttl_ms);          /* durée des blocages décidés par une règle, à chaud ; 0 = pour toujours */
+uint64_t engine_rules_get_block_ttl(Engine *e);
 #endif

@@ -448,6 +448,127 @@ static void t_appels_concurrents(void) {
     engine_destroy(e);
 }
 
+/* ═══════════════════════════ liste noire partagée ═══════════════════════════ */
+
+static void t_block_api(void) {
+    Engine *e = engine_create();
+    CHECK_EQ(engine_block_count(e), 0, "liste vide au départ");
+    CHECK_EQ(engine_block_add(e, "10.0.0.1", 0), 0, "bloquer pour toujours");
+    CHECK_EQ(engine_block_is_blocked(e, "10.0.0.1"), 1, "bloquée");
+    CHECK_EQ(engine_block_is_blocked(e, "10.0.0.2"), 0, "une autre non");
+    CHECK_EQ(engine_block_add(e, "2001:db8::1", 60000), 0, "IPv6 avec une durée de 60 s");
+    CHECK_EQ(engine_block_is_blocked(e, "2001:0db8:0:0:0:0:0:1"), 1, "même IPv6 écrite autrement");
+    CHECK_EQ(engine_block_count(e), 2, "2 IP");
+
+    struct IpBlockInfo *list = NULL;
+    uint32_t n = 0;
+    CHECK_EQ(engine_block_snapshot(e, &list, &n), 0, "photo de la liste");
+    CHECK_EQ(n, 2, "2 lignes");
+    int ok4 = 0, ok6 = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        if (list[i].v4 && list[i].ip[0] == 10 && list[i].ip[3] == 1)
+            ok4 = list[i].meta.source == IPM_SRC_MANUAL && list[i].meta.rule == 0 && list[i].meta.blocked_at_ms > 0 && list[i].meta.until_ms == 0;
+        if (!list[i].v4 && list[i].ip[0] == 0x20 && list[i].ip[15] == 1)
+            ok6 = list[i].meta.source == IPM_SRC_MANUAL && list[i].meta.until_ms == list[i].meta.blocked_at_ms + 60000;
+    }
+    CHECK(ok4, "IPv4 : manuelle, pour toujours, datée");
+    CHECK(ok6, "IPv6 : expiration = date + 60 s");
+    engine_block_snapshot_free(list);
+
+    CHECK_EQ(engine_block_add(e, "pas une ip", 0), -1, "texte invalide → -1");
+    CHECK_EQ(engine_block_add(e, NULL, 0), -1, "NULL → -1");
+    CHECK_EQ(engine_block_add(NULL, "10.0.0.1", 0), -1, "engine NULL → -1");
+    CHECK_EQ(engine_block_remove(e, "10.0.0.1"), 0, "débloquer");
+    CHECK_EQ(engine_block_remove(e, "10.0.0.1"), -1, "débloquer une IP qui ne l'est pas → -1");
+    CHECK_EQ(engine_block_remove(e, "pas une ip"), -1, "texte invalide → -1");
+    CHECK_EQ(engine_block_is_blocked(e, "pas une ip"), 0, "question sur un texte invalide → 0");
+
+    CHECK_EQ(engine_block_add(e, "10.0.0.9", 1), 0, "durée de 1 ms");
+    sleep_ms(20);
+    CHECK_EQ(engine_block_expire(e), 1, "une IP expire");
+    CHECK_EQ(engine_block_is_blocked(e, "10.0.0.9"), 0, "elle est débloquée");
+    CHECK_EQ(engine_block_expire(e), 0, "l'IPv6 (60 s) n'a pas expiré");
+    CHECK_EQ(engine_block_count(e), 1, "reste l'IPv6");
+
+    CHECK_EQ(engine_rules_get_block_ttl(e), 0, "durée des blocages automatiques : 0 par défaut (pour toujours)");
+    CHECK_EQ(engine_rules_set_block_ttl(e, 5000), 0, "réglée à 5 s, à chaud");
+    CHECK_EQ(engine_rules_get_block_ttl(e), 5000, "relue");
+    CHECK_EQ(engine_rules_set_block_ttl(NULL, 5000), -1, "engine NULL");
+    CHECK_EQ(engine_rules_get_block_ttl(NULL), 0, "engine NULL → 0");
+    engine_destroy(e);
+}
+
+/* UN socket, `count` ports de destination différents : un scan de ports */
+static void udp_scan(uint16_t first, int count) {
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in to; memset(&to, 0, sizeof to);
+    to.sin_family = AF_INET; inet_pton(AF_INET, "127.0.0.1", &to.sin_addr);
+    uint8_t b = 0;
+    for (int i = 0; i < count; i++) { to.sin_port = htons((uint16_t)(first + i)); sendto(s, &b, 1, 0, (struct sockaddr *)&to, sizeof to); }
+    close(s);
+}
+
+static void t_blocage_en_direct(int mmsg) {
+    if (!can_capture()) return;
+    Engine *e = engine_create();
+    struct EngineConfig c;
+    test_cfg(&c, prefix("bl"), mmsg);
+    CHECK_EQ(engine_start(e, &c), 0, "start");
+    CHECK_EQ(engine_rules_set_block_ttl(e, 60000), 0, "blocages automatiques : 60 s");
+
+    udp_scan(41000, 30);                                                  /* 30 ports en une fois : la règle port_scan se déclenche */
+    int blocked = 0;
+    for (int w = 0; w < 3000 && !blocked; w += 50) {
+        blocked = engine_block_is_blocked(e, "127.0.0.1");
+        if (!blocked) sleep_ms(50);
+    }
+    CHECK(blocked, "le scan bloque 127.0.0.1 tout seul, dans la liste partagée");
+
+    struct IpBlockInfo *list = NULL;
+    uint32_t n = 0;
+    CHECK_EQ(engine_block_snapshot(e, &list, &n), 0, "photo");
+    CHECK_EQ(n, 1, "une seule IP bloquée");
+    if (n == 1) {
+        CHECK_EQ(list[0].meta.rule, RULE_PORT_SCAN, "raison : port_scan");
+        CHECK_EQ(list[0].meta.source, IPM_SRC_AUTO, "source : automatique");
+        CHECK(list[0].meta.blocked_at_ms > 0, "date du blocage");
+        CHECK_EQ(list[0].meta.until_ms, list[0].meta.blocked_at_ms + 60000, "expiration = date + 60 s");
+    }
+    engine_block_snapshot_free(list);
+
+    FlowRecord recs[128];
+    int got = 0, found = 0;
+    for (int w = 0; w < 2000 && !found; w += 50) {                        /* le flux bloqué est parti tout de suite dans le ring */
+        int r = engine_read(e, "lo", recs + got, 128 - got);
+        if (r > 0) got += r;
+        for (int i = 0; i < got; i++)
+            if (recs[i].reason == END_BLOCKED && recs[i].data.verdict == BLOCK && recs[i].data.rule_reason == RULE_PORT_SCAN) found = 1;
+        if (!found) sleep_ms(50);
+    }
+    CHECK(found, "le ring contient le flux : reason END_BLOCKED, verdict BLOCK, rule_reason PORT_SCAN");
+
+    struct EngineStats st1, st2, st3;
+    sleep_ms(200);                                                        /* les compteurs sont rafraîchis à chaque pause de la capture (poll_ms) : on laisse passer un cycle */
+    CHECK_EQ(engine_stats(e, "lo", &st1), 0, "stats");
+    CHECK(st1.blocked_flows >= 1, "blocked_flows compte le flux retiré par blocage");
+    udp_burst(41500, 20, 10);
+    sleep_ms(300);
+    CHECK_EQ(engine_stats(e, "lo", &st2), 0, "stats");
+    CHECK(st2.blocked_pkts > st1.blocked_pkts, "les paquets suivants de cette IP sont ignorés");
+
+    CHECK_EQ(engine_block_remove(e, "127.0.0.1"), 0, "l'admin débloque (Python) : aucune autre action côté C");
+    udp_burst(41600, 5, 10);
+    sleep_ms(300);
+    CHECK_EQ(engine_stats(e, "lo", &st3), 0, "stats");
+    CHECK(st3.frames_ok > st2.frames_ok, "après le déblocage le trafic est de nouveau suivi");
+    CHECK_EQ(engine_block_is_blocked(e, "127.0.0.1"), 0, "elle n'est pas re-bloquée tout de suite (compteur de ports remis à zéro)");
+
+    engine_stop(e, "lo");
+    engine_release(e, "lo");
+    engine_destroy(e);
+}
+BOTH(t_blocage_en_direct)
+
 int main(int argc, char **argv) {
     tc_begin("test_engine.c", argc, argv);
 
@@ -469,6 +590,9 @@ int main(int argc, char **argv) {
     printf("\n── 4. listes d'IP pendant la capture ──\n");
     RUN_LEAKS("recv : ignorer source, destination, retirer",    t_ignore_pendant_la_capture_recv);
     RUN_LEAKS("mmsg : ignorer source, destination, retirer",    t_ignore_pendant_la_capture_mmsg);
+    RUN_LEAKS("liste noire : API, expiration, durée",           t_block_api);
+    RUN_LEAKS("recv : scan → blocage automatique → déblocage",  t_blocage_en_direct_recv);
+    RUN_LEAKS("mmsg : scan → blocage automatique → déblocage",  t_blocage_en_direct_mmsg);
 
     printf("\n── 5. ring plein, segment ancien, deux interfaces ──\n");
     RUN_LEAKS("recv : ring plein ne bloque pas la capture",     t_ring_plein_ne_bloque_pas_recv);

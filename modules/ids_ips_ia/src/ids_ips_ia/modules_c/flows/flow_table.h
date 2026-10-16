@@ -5,6 +5,7 @@
 #include "../dchained_list/dchained_list.h"
 #include "../portmap/portmap.h"
 #include "../rules/rules.h"
+#include "../ipset_m/ipset_m.h"
 
 // Où part un flux qui quitte la table : le sink COPIE ce qu'il veut de *rec (rec disparaît au retour).
 typedef void (*FlowSinkFn)(const FlowRecord *rec, void *ctx);
@@ -30,7 +31,9 @@ struct FlowTable{
     uint32_t n_blocked_pkts;    // paquets ignorés parce que leur IP (source ou destination) est bloquée
     uint32_t n_blocked_flows;   // flux retirés parce qu'une règle a bloqué leur IP (END_BLOCKED)
     struct FlowHooks hooks;
-    Dict *blocked;              // liste noire : PortPerIpKey → marqueur
+    IpSetM *blocklist;          // liste noire : la sienne (ft_create) ou celle de l'Engine (ft_use_blocklist), partagée par toutes les tables
+    int reader;                 // numéro de lecteur de CETTE table (donc de sa thread de capture) dans la liste noire
+    int owns_blocklist;         // 1 = elle l'a créée et la détruira
 };
 
 // Clé du dict port_per_ip. pad sert à ce que memcmp compare toujours les mêmes octets.
@@ -56,4 +59,6 @@ int ft_expire(FlowTable *ft, uint64_t now_ms);                   // nombre de fl
 int ft_block_ip(FlowTable *ft, const uint8_t *ip, int v4);       // 0 = ok, -1 = échec
 int ft_unblock_ip(FlowTable *ft, const uint8_t *ip, int v4);     // 0 = ok, -1 = n'était pas bloquée
 int ft_is_blocked(FlowTable *ft, const uint8_t *ip, int v4);     // 1 = bloquée, 0 = non
+int ft_block_ip_meta(FlowTable *ft, const uint8_t *ip, int v4, const struct IpBlockMeta *meta);   // idem ft_block_ip, avec la raison, la date et l'expiration
+int ft_use_blocklist(FlowTable *ft, IpSetM *shared);             // 0 = ok, -1 = refusé (plus de slot de lecteur : la table garde sa liste). À appeler AVANT que la thread de capture ne démarre
 #endif

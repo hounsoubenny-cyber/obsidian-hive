@@ -70,20 +70,22 @@ FlowTable *ft_create(uint32_t size){
     if (size == 0) return NULL;
     Dict *flow_dict = create_ft_dict(size);
     Dict *port_per_ip = create_dict(size, port_key_hash, port_key_compare, port_key_dup, port_key_free, NULL, free);
-    Dict *blocked = create_dict(64, port_key_hash, port_key_compare, port_key_dup, port_key_free, NULL, NULL);
+    IpSetM *blocklist = ipset_m_create(1024);                 // sa propre liste noire ; l'Engine la remplace par la sienne (ft_use_blocklist)
     DChainedList *flow_dcl = create_dcl(size);
     FlowTable *ft = calloc(1, sizeof(FlowTable));    // calloc : hooks à 0 = rien d'actif
-    if (flow_dict == NULL || port_per_ip == NULL || blocked == NULL || flow_dcl == NULL || ft == NULL){
-        dict_clear(flow_dict); dict_clear(port_per_ip); dict_clear(blocked);   // dict_clear(NULL) ne fait rien
+    int reader = blocklist != NULL ? ipset_m_register(blocklist) : -1;
+    if (flow_dict == NULL || port_per_ip == NULL || blocklist == NULL || reader < 0 || flow_dcl == NULL || ft == NULL){
+        dict_clear(flow_dict); dict_clear(port_per_ip);   // dict_clear(NULL) ne fait rien
+        ipset_m_destroy(blocklist);                       // idem
         free(flow_dcl); free(ft);
         return NULL;
     }
     ft -> flow_dcl = flow_dcl; ft -> flow_dict = flow_dict;
-    ft -> port_per_ip = port_per_ip; ft -> blocked = blocked;
+    ft -> port_per_ip = port_per_ip;
+    ft -> blocklist = blocklist; ft -> reader = reader; ft -> owns_blocklist = 1;
     ft -> size = size;
     return ft;
 }
-
 // Envoie au sink une copie à plat du flux (rien si pas de sink). Le flux n'est pas modifié.
 static void _send_record(FlowTable *ft, const FlowEntry *entry, uint32_t reason){
     if (ft -> hooks.sink == NULL || entry -> data == NULL || entry -> key == NULL) return;
@@ -125,6 +127,7 @@ void ft_evict_oldest(FlowTable *ft){
     _evict_oldest(ft, END_EVICTED);
 }
 
+
 FlowTable *ft_create_with(uint32_t size, const struct FlowHooks *hooks){
     FlowTable *ft = ft_create(size);
     if (ft != NULL && hooks != NULL) ft -> hooks = *hooks;
@@ -139,7 +142,10 @@ void ft_destroy(FlowTable *ptr){
     if (ptr -> flow_dict != NULL) dict_clear(ptr -> flow_dict);
     if (ptr -> flow_dcl != NULL) free(ptr -> flow_dcl);
     if (ptr -> port_per_ip != NULL) dict_clear(ptr -> port_per_ip);
-    if (ptr -> blocked != NULL) dict_clear(ptr -> blocked);
+    if (ptr -> blocklist != NULL){
+        ipset_m_unregister(ptr -> blocklist, ptr -> reader);   // plus personne ne la lit pour nous
+        if (ptr -> owns_blocklist) ipset_m_destroy(ptr -> blocklist);
+    }
     free(ptr);
 }
 
@@ -153,6 +159,7 @@ int ft_set_hooks(FlowTable *ft, const struct FlowHooks *hooks){
 // et on s'arrête au premier flux assez récent (tous les suivants le sont aussi). Retourne le nombre de flux retirés.
 int ft_expire(FlowTable *ft, uint64_t now_ms){
     if (ft == NULL) return -1;
+    ipset_m_quiescent(ft -> blocklist, ft -> reader);   // le ménage passe aussi quand rien n\'arrive : un lecteur au repos ne retarde personne
     if (ft -> hooks.idle_ms == 0) return 0;         // expiration désactivée
     int n = 0;
     while (ft -> flow_dcl -> head != NULL){
@@ -168,31 +175,42 @@ int ft_expire(FlowTable *ft, uint64_t now_ms){
 
 /* ───────────── liste noire ───────────── */
 
-static char BLOCKED_MARK = 1;                       // valeur du dict : seule la clé compte
+
+int ft_block_ip_meta(FlowTable *ft, const uint8_t *ip, int v4, const struct IpBlockMeta *meta){
+    if (ft == NULL || ip == NULL || (v4 != 0 && v4 != 1)) return -1;
+    return ipset_m_add(ft -> blocklist, ip, v4, meta);        // meta NULL : bloquée par une règle, sans date
+}
 
 int ft_block_ip(FlowTable *ft, const uint8_t *ip, int v4){
-    if (ft == NULL || ip == NULL || (v4 != 0 && v4 != 1)) return -1;
-    struct PortPerIpKey key;
-    _make_ip_key(&key, ip, v4);
-    return dict_setitem(ft -> blocked, &key, &BLOCKED_MARK);
+    return ft_block_ip_meta(ft, ip, v4, NULL);
 }
 
 int ft_unblock_ip(FlowTable *ft, const uint8_t *ip, int v4){
     if (ft == NULL || ip == NULL || (v4 != 0 && v4 != 1)) return -1;
-    struct PortPerIpKey key;
-    _make_ip_key(&key, ip, v4);
-    return dict_delitem(ft -> blocked, &key);
+    return ipset_m_remove(ft -> blocklist, ip, v4);
 }
 
+// Chemin chaud : sans verrou. Liste vide (le cas courant) : on ne cherche même pas.
 int ft_is_blocked(FlowTable *ft, const uint8_t *ip, int v4){
     if (ft == NULL || ip == NULL || (v4 != 0 && v4 != 1)) return 0;
-    if (ft -> blocked -> nbr_elements == 0) return 0;   // liste vide (le cas courant) : on évite le hachage, c'est le chemin chaud
-    struct PortPerIpKey key;
-    _make_ip_key(&key, ip, v4);
-    return dict_getitem(ft -> blocked, &key) != NULL;
+    if (ipset_m_count(ft -> blocklist) == 0) return 0;
+    return ipset_m_contains(ft -> blocklist, ft -> reader, ip, v4);
 }
 
-/* ───────────── lecture ───────────── */
+int ft_use_blocklist(FlowTable *ft, IpSetM *shared){
+    if (ft == NULL || shared == NULL) return -1;
+    if (ft -> blocklist == shared) return 0;
+    int reader = ipset_m_register(shared);
+    if (reader < 0) return -1;                                // plus de place pour un lecteur : la table garde sa liste
+    if (ft -> blocklist != NULL){
+        ipset_m_unregister(ft -> blocklist, ft -> reader);
+        if (ft -> owns_blocklist) ipset_m_destroy(ft -> blocklist);
+    }
+    ft -> blocklist = shared;
+    ft -> reader = reader;
+    ft -> owns_blocklist = 0;
+    return 0;
+}
 
 FlowEntry *ft_get(FlowTable *ft, const void *key){
     if (ft == NULL || key == NULL) return NULL;
@@ -245,7 +263,11 @@ static void _after_packet(FlowTable *ft, FlowEntry *entry, uint64_t now_ms){
             d -> rule_reason = (uint8_t)r.reason;
         }
         if (r.verdict == BLOCK){
-            ft_block_ip(ft, ip, d -> v4);           // si la liste noire est pleine (-1), le flux part quand même : Python bloquera
+            {                                           // si la liste noire est pleine (-1), le flux part quand même : Python bloquera
+                uint64_t ttl = rules_get_block_ttl(ft -> hooks.rules_cfg);
+                struct IpBlockMeta meta = { (uint8_t)r.reason, IPM_SRC_AUTO, now_ms, ttl != 0 ? now_ms + ttl : 0 };
+                ft_block_ip_meta(ft, ip, d -> v4, &meta);
+            }
             struct PortMap *pm = dict_getitem(ft -> port_per_ip, &ip_key);
             if (pm != NULL) portmap_reset(pm);      // remet les ports et le compteur à 0 ; garde refcount (les autres flux de l'IP existent encore)
             ft -> n_blocked_flows += 1;
@@ -278,6 +300,7 @@ static void _after_packet(FlowTable *ft, FlowEntry *entry, uint64_t now_ms){
 // « initiés par la victime », dont les ports visités sont ceux de l'attaquant.
 int ft_process(FlowTable *ft, ParserResult *pr, uint64_t now_ms){
     if (ft == NULL || pr == NULL) return -1;
+    ipset_m_quiescent(ft -> blocklist, ft -> reader);   // « entre deux paquets, je ne tiens aucune table » : c'est ce qui permet de libérer les anciennes
     if (pr -> code != (uint8_t)SUCCES) return -1;
 
     PacketTuple t;

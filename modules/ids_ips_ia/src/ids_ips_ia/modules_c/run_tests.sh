@@ -33,14 +33,14 @@ SRC[utils]="utils/test_utils.c utils/utils.c";                                  
 SRC[portmap]="portmap/test_portmap.c portmap/portmap.c";                         KIND[portmap]=new
 SRC[dchained_list]="dchained_list/test_dchained_list.c dchained_list/dchained_list.c"; KIND[dchained_list]=new
 SRC[flow]="utils/utils.c flows/test_flow.c flows/flow.c dict/dict.c";                          KIND[flow]=new
-SRC[flow_table]="flows/test_flow_table.c flows/flow_table.c flows/flow.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[flow_table]=new
-SRC[integration]="test_integration.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[integration]=new
-SRC[capture]="capture/test_capture.c capture/capture.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[capture]=new
+SRC[flow_table]="flows/test_flow_table.c flows/flow_table.c flows/flow.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c ipset_m/ipset_m.c ipset/ipset.c"; KIND[flow_table]=new
+SRC[integration]="test_integration.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c ipset_m/ipset_m.c ipset/ipset.c"; KIND[integration]=new
+SRC[capture]="capture/test_capture.c capture/capture.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c ipset_m/ipset_m.c ipset/ipset.c"; KIND[capture]=new
 SRC[mmap_ring]="mmap_ring/test_mmap_ring.c mmap_ring/mmap_ring.c"; KIND[mmap_ring]=new
 SRC[ipset]="ipset/test_ipset.c ipset/ipset.c utils/utils.c"; KIND[ipset]=new
 SRC[ipset_m]="ipset_m/test_ipset_m.c ipset_m/ipset_m.c ipset/ipset.c dict/dict.c utils/utils.c"; KIND[ipset_m]=new
 SRC[rules]="rules/test_rules.c rules/rules.c portmap/portmap.c"; KIND[rules]=new
-SRC[engine]="engine/test_engine.c engine/engine.c capture/capture.c ipset/ipset.c mmap_ring/mmap_ring.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c"; KIND[engine]=new
+SRC[engine]="engine/test_engine.c engine/engine.c capture/capture.c ipset/ipset.c mmap_ring/mmap_ring.c parser/parser.c flows/flow.c flows/flow_table.c dict/dict.c dchained_list/dchained_list.c portmap/portmap.c utils/utils.c rules/rules.c ipset_m/ipset_m.c"; KIND[engine]=new
 # existants
 SRC[dict]="utils/utils.c dict/test_dict.c dict/dict.c";                                        KIND[dict]=old
 SRC[parser]="parser/test_parser.c parser/parser.c";                              KIND[parser]=old

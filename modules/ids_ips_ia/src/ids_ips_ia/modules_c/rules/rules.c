@@ -106,8 +106,17 @@ void rules_config_default(RulesConfig *cfg){
         atomic_store_explicit(&cfg -> rule[i].threshold, 0, memory_order_relaxed);
     }
     for (int i = 1; i < (int)RULE_COUNT; i++) atomic_store_explicit(&cfg -> rule[i].enabled, 1, memory_order_relaxed);
+    atomic_store_explicit(&cfg -> block_ttl_ms, 0, memory_order_relaxed);
     atomic_store_explicit(&cfg -> rule[RULE_PORT_SCAN].threshold, SCAN_PORT_THRESHOLD, memory_order_relaxed);
     atomic_store_explicit(&cfg -> rule[RULE_FLOOD].threshold, FLOOD_PPS_THRESHOLD, memory_order_relaxed);
+}
+
+void rules_set_block_ttl(RulesConfig *cfg, uint64_t ttl_ms){
+    if (cfg != NULL) atomic_store_explicit(&cfg -> block_ttl_ms, ttl_ms, memory_order_relaxed);
+}
+
+uint64_t rules_get_block_ttl(const RulesConfig *cfg){
+    return cfg == NULL ? 0 : atomic_load_explicit(&cfg -> block_ttl_ms, memory_order_relaxed);
 }
 
 int rules_has_threshold(int rule){

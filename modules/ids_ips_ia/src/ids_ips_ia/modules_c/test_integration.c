@@ -396,9 +396,10 @@ static void t_mem_flow(void) {
 }
 
 static void t_mem_table_dict_portmap(void) {
-    CHECK_EQ(sizeof(FlowTable), 112, "sizeof(FlowTable)");
+    CHECK_EQ(sizeof(FlowTable), 120, "sizeof(FlowTable)");
     CHECK_EQ(offsetof(FlowTable, hooks), 48, "hooks à 48 (n_blocked_flows est venu s'ajouter avant)");
-    CHECK_EQ(offsetof(FlowTable, blocked), 104, "blocked à 104");
+    CHECK_EQ(offsetof(FlowTable, blocklist), 104, "blocklist (pointeur vers la liste noire) à 104");
+    CHECK_EQ(offsetof(FlowTable, reader), 112, "reader à 112");
     CHECK_EQ(sizeof(struct FlowHooks), 56, "sizeof(FlowHooks) : idle_ms 8, max_ms 8, close_on_tcp_end 1 + 7 de remplissage, 4 pointeurs de 8 (check, rules_cfg, sink, ctx)");
     CHECK_EQ(sizeof(DChainedList), 24, "sizeof(DChainedList)");
     CHECK_EQ(sizeof(Dict), 72, "sizeof(Dict)");
@@ -975,6 +976,92 @@ static void t_regles_scan_tcp_bloquent(void) {
     ft_destroy(ft);
 }
 
+/* ───── la liste noire PARTAGÉE (ipset_m) ───── */
+
+static void t_blocklist_partagee_entre_tables(void) {
+    IpSetM *m = ipset_m_create(64);
+    FlowTable *a = table_avec(64, 0, 0, rules_check_all);
+    FlowTable *b = table_avec(64, 0, 0, rules_check_all);
+    CHECK_EQ(ft_use_blocklist(a, m), 0, "la table A utilise la liste partagée");
+    CHECK_EQ(ft_use_blocklist(b, m), 0, "la table B aussi");
+    rules_set_block_ttl(&g_rules, 60000);
+    g_now = 1000000;
+    uint8_t buf[128];
+    for (uint16_t p = 1000; p < 1025; p++)
+        feed(a, buf, tcp4_pkt(buf, IP4(10, 9, 9, 9), 40000, IP4(10, 0, 0, 2), p, SYN));
+    CHECK_EQ(ipset_m_is_blocked(m, IP4(10, 9, 9, 9), 1), 1, "bloquée par une règle de A : elle est dans la liste partagée");
+    CHECK_EQ(ft_is_blocked(b, IP4(10, 9, 9, 9), 1), 1, "B la voit tout de suite");
+    struct IpBlockMeta meta;
+    memset(&meta, 0, sizeof meta);
+    CHECK_EQ(ipset_m_get(m, IP4(10, 9, 9, 9), 1, &meta), 1, "métadonnées disponibles");
+    CHECK_EQ(meta.rule, RULE_PORT_SCAN, "la raison : la règle qui a bloqué");
+    CHECK_EQ(meta.source, IPM_SRC_AUTO, "source : automatique");
+    CHECK_EQ(meta.blocked_at_ms, 1000000, "date du blocage = l'heure du paquet");
+    CHECK_EQ(meta.until_ms, 1060000, "expiration = date + durée réglée à chaud (60 s)");
+
+    feed(b, buf, tcp4_pkt(buf, IP4(10, 9, 9, 9), 41000, IP4(10, 0, 0, 3), 80, SYN));
+    CHECK_EQ(b -> nbr_elements, 0, "B ignore l'IP bloquée par A");
+    CHECK_EQ(b -> n_blocked_pkts, 1, "paquet compté comme ignoré");
+    CHECK_EQ(ipset_m_remove(m, IP4(10, 9, 9, 9), 1), 0, "l'admin débloque (côté Python)");
+    feed(b, buf, tcp4_pkt(buf, IP4(10, 9, 9, 9), 41000, IP4(10, 0, 0, 3), 80, SYN));
+    CHECK_EQ(b -> nbr_elements, 1, "B suit de nouveau cette IP : débloquer côté C suffit");
+
+    rules_set_block_ttl(&g_rules, 0);
+    for (uint16_t p = 2000; p < 2025; p++)
+        feed(a, buf, tcp4_pkt(buf, IP4(10, 8, 8, 8), 40000, IP4(10, 0, 0, 2), p, SYN));
+    CHECK_EQ(ipset_m_get(m, IP4(10, 8, 8, 8), 1, &meta), 1, "deuxième scanner bloqué");
+    CHECK_EQ(meta.until_ms, 0, "durée 0 : pour toujours");
+
+    struct IpBlockMeta man = { 0, IPM_SRC_MANUAL, g_now, 0 };
+    CHECK_EQ(ipset_m_add(m, IP4(10, 0, 0, 5), 1, &man), 0, "blocage manuel dans la liste partagée");
+    int avant = (int)a -> nbr_elements;
+    feed(a, buf, syn(buf, 5, 3000));
+    CHECK_EQ((int)a -> nbr_elements, avant, "A ignore une IP bloquée à la main");
+    ft_destroy(a);
+    ft_destroy(b);
+    ipset_m_destroy(m);
+}
+
+static void t_blocklist_les_tables_annoncent_leur_repos(void) {
+    IpSetM *m = ipset_m_create(64);
+    FlowTable *ft = table_avec(16, 0, 0, NULL);
+    CHECK_EQ(ft_use_blocklist(ft, m), 0, "la table lit la liste partagée");
+    uint8_t ip[4], buf[128];
+    for (uint32_t i = 0; i < 2000; i++) { ip[0] = 10; ip[1] = 1; ip[2] = (uint8_t)(i >> 8); ip[3] = (uint8_t)i; ipset_m_add(m, ip, 1, NULL); }
+    struct IpSetMStats st;
+    ipset_m_stats(m, &st);
+    CHECK(st.retired_pending >= 1, "la table n'a encore rien annoncé : les anciennes tables attendent");
+    CHECK_EQ(ipset_m_reclaim(m), 0, "rien n'est libérable");
+    feed(ft, buf, syn(buf, 1, 1000));                         /* ft_process annonce « je ne tiens aucune table » */
+    CHECK(ipset_m_reclaim(m) >= 1, "après un paquet traité, les anciennes tables sont libérées");
+    ipset_m_stats(m, &st);
+    CHECK_EQ(st.retired_pending, 0, "plus rien en attente");
+    for (uint32_t i = 0; i < 3000; i++) { ip[0] = 10; ip[1] = 2; ip[2] = (uint8_t)(i >> 8); ip[3] = (uint8_t)i; ipset_m_add(m, ip, 1, NULL); }
+    ipset_m_stats(m, &st);
+    CHECK(st.retired_pending >= 1, "de nouvelles bascules : de nouveau en attente");
+    ft_expire(ft, g_now);                                     /* le ménage (rien n'arrive) annonce aussi le repos */
+    CHECK(ipset_m_reclaim(m) >= 1, "ft_expire annonce aussi le repos");
+    ft_destroy(ft);
+    ipset_m_destroy(m);
+}
+
+static void t_blocklist_trop_de_lecteurs(void) {
+    IpSetM *m = ipset_m_create(64);
+    int ids[IPSET_M_MAX_READERS];
+    for (int i = 0; i < IPSET_M_MAX_READERS; i++) ids[i] = ipset_m_register(m);
+    FlowTable *ft = table_avec(16, 0, 0, NULL);
+    CHECK_EQ(ft_use_blocklist(ft, m), -1, "plus de slot de lecteur : refusé");
+    CHECK_EQ(ft_use_blocklist(NULL, m), -1, "table NULL");
+    CHECK_EQ(ft_use_blocklist(ft, NULL), -1, "liste NULL");
+    uint8_t ip[4] = {10, 0, 0, 1};
+    CHECK_EQ(ft_block_ip(ft, ip, 1), 0, "la table garde sa propre liste et fonctionne");
+    CHECK_EQ(ft_is_blocked(ft, ip, 1), 1, "elle bloque");
+    CHECK_EQ(ipset_m_is_blocked(m, ip, 1), 0, "sans toucher à la liste partagée");
+    for (int i = 0; i < IPSET_M_MAX_READERS; i++) ipset_m_unregister(m, ids[i]);
+    ft_destroy(ft);
+    ipset_m_destroy(m);
+}
+
 static void t_regle_flood_marque_sans_bloquer(void) {
     FlowTable *ft = table_avec(16, 0, 0, rules_check_all);
     uint8_t b[128];
@@ -1262,6 +1349,9 @@ int main(int argc, char **argv) {
     RUN_LEAKS("règle scan : bloque, envoie, retire, remet à 0", t_regle_scan_bloque_l_ip);
     RUN_LEAKS("règles : réglages modifiés à chaud",             t_regles_a_chaud);
     RUN_LEAKS("règles NULL / Xmas / FIN : bloquent et retirent", t_regles_scan_tcp_bloquent);
+    RUN_LEAKS("liste noire partagée : 2 tables, métadonnées, TTL", t_blocklist_partagee_entre_tables);
+    RUN_LEAKS("liste noire : les tables annoncent leur repos",  t_blocklist_les_tables_annoncent_leur_repos);
+    RUN_LEAKS("liste noire : plus de slot de lecteur",          t_blocklist_trop_de_lecteurs);
     RUN_LEAKS("règle flood : marque sans bloquer",              t_regle_flood_marque_sans_bloquer);
     RUN_LEAKS("sans réglages : aucune règle",                   t_sans_cfg_aucune_regle);
     RUN_LEAKS("règle : UNKNOW garde le verdict",                t_regle_unknow_garde_le_verdict);

@@ -24,6 +24,7 @@ struct RuleSetting{
 
 struct RulesConfig{
     struct RuleSetting rule[RULE_COUNT];
+    _Atomic uint64_t block_ttl_ms;  // durée d'un blocage DÉCIDÉ PAR UNE RÈGLE, en ms (0 = pour toujours). Modifiable à chaud.
 };
 typedef struct RulesConfig RulesConfig;
 
@@ -54,6 +55,8 @@ void rules_config_default(RulesConfig *cfg);                                 // 
 int rules_set_enabled(RulesConfig *cfg, int rule, int enabled);              // -1 si règle inconnue
 int rules_set_threshold(RulesConfig *cfg, int rule, uint32_t threshold);     // -1 si règle inconnue, sans seuil, ou seuil == 0
 int rules_get(const RulesConfig *cfg, int rule, int *enabled, uint32_t *threshold);   // -1 si règle inconnue ; pointeurs facultatifs (NULL permis)
+void rules_set_block_ttl(RulesConfig *cfg, uint64_t ttl_ms);                 // 0 = pour toujours
+uint64_t rules_get_block_ttl(const RulesConfig *cfg);
 int rules_has_threshold(int rule);                                           // question : cette règle a-t-elle un seuil ?
 const char *rules_name(int rule);                                            // « port_scan »... ; NULL si règle inconnue
 int rules_by_name(const char *name);                                         // l'inverse ; -1 si inconnu

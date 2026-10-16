@@ -41,6 +41,8 @@ struct Counters{                                        /* écrits par la thread
     _Atomic uint64_t kernel_recv, kernel_drop;
 };
 
+#define ENGINE_BLOCKLIST_INITIAL 4096                    /* capacité de départ de la liste noire : elle grandit seule */
+
 struct Slot{                                            /* une capture = une case du tableau de l'Engine */
     int state;                                          /* ENGINE_SLOT_FREE / RUNNING / STOPPED, sous le verrou de l'Engine */
     Engine *eng;
@@ -61,6 +63,7 @@ struct Engine{
     pthread_mutex_t lock;                               /* protège le tableau des captures (démarrer, arrêter, lire, stats) */
     IpSet *ign_src, *ign_dst;                           /* partagées : la thread de capture ne fait que les LIRE, sans verrou */
     struct RulesConfig rules;                           /* partagés : champs atomiques, Python les change à chaud, les captures les lisent */
+    IpSetM *blocklist;                                  /* partagée : lue SANS verrou par les captures (ft_is_blocked), écrite sous son propre mutex */
     struct Slot slots[ENGINE_MAX_CAPTURES];
 };
 
@@ -270,6 +273,14 @@ Engine *engine_create(void){
         _fail("mémoire insuffisante (listes d'IP)");
         return NULL;
     }
+    e -> blocklist = ipset_m_create(ENGINE_BLOCKLIST_INITIAL);
+    if (e -> blocklist == NULL){
+        ipset_destroy(e -> ign_src);
+        ipset_destroy(e -> ign_dst);
+        free(e);
+        _fail("mémoire insuffisante (liste noire)");
+        return NULL;
+    }
     rules_config_default(&e -> rules);
     pthread_mutex_init(&e -> lock, NULL);
     return e;
@@ -343,6 +354,12 @@ int engine_start(Engine *e, const struct EngineConfig *cfg){
         _free_resources(s);
         pthread_mutex_unlock(&e -> lock);
         return _fail("impossible de créer la table de flux (table_size = %u)", cfg -> table_size);
+    }
+
+    if (ft_use_blocklist(s -> ft, e -> blocklist) != 0){      /* la table lit désormais la liste noire PARTAGÉE */
+        _free_resources(s);
+        pthread_mutex_unlock(&e -> lock);
+        return _fail("trop de captures en même temps pour la liste noire partagée (%d au plus)", IPSET_M_MAX_READERS);
     }
 
     /* 3) la capture (socket, filtre BPF, tampon) : c'est ici que « pas root » se voit */
@@ -432,6 +449,7 @@ void engine_destroy(Engine *e){
     pthread_mutex_unlock(&e -> lock);
     ipset_destroy(e -> ign_src);
     ipset_destroy(e -> ign_dst);
+    ipset_m_destroy(e -> blocklist);                     /* les captures sont arrêtées : plus aucun lecteur */
     pthread_mutex_destroy(&e -> lock);
     free(e);
 }
@@ -558,4 +576,63 @@ int engine_ignore_contains(Engine *e, const char *ip, int which){
 uint32_t engine_ignore_count(Engine *e, int which){
     if (e == NULL) return 0;
     return which == IGNORE_DST ? ipset_count(e -> ign_dst) : ipset_count(e -> ign_src);
+}
+
+
+/* ═════════════════════ la liste noire partagée ═════════════════════ */
+
+int engine_block_add(Engine *e, const char *ip, uint64_t ttl_ms){
+    uint8_t b[16];
+    int v4;
+    if (e == NULL) return _fail("engine_block_add : engine NULL");
+    if (_parse_ip(ip, b, &v4) != 0) return _fail("'%s' n'est pas une adresse IP", ip != NULL ? ip : "(NULL)");
+    uint64_t now = realtime_ms();
+    struct IpBlockMeta meta = { 0, IPM_SRC_MANUAL, now, ttl_ms != 0 ? now + ttl_ms : 0 };
+    if (ipset_m_add(e -> blocklist, b, v4, &meta) != 0)
+        return _fail("liste noire : ajout impossible (mémoire, ou une capture n'annonce plus son point de repos)");
+    return 0;
+}
+
+int engine_block_remove(Engine *e, const char *ip){
+    uint8_t b[16];
+    int v4;
+    if (e == NULL) return _fail("engine_block_remove : engine NULL");
+    if (_parse_ip(ip, b, &v4) != 0) return _fail("'%s' n'est pas une adresse IP", ip != NULL ? ip : "(NULL)");
+    if (ipset_m_remove(e -> blocklist, b, v4) != 0) return _fail("'%s' n'était pas bloquée", ip);
+    return 0;
+}
+
+int engine_block_is_blocked(Engine *e, const char *ip){
+    uint8_t b[16];
+    int v4;
+    if (e == NULL || _parse_ip(ip, b, &v4) != 0) return 0;
+    return ipset_m_is_blocked(e -> blocklist, b, v4);
+}
+
+uint32_t engine_block_count(Engine *e){
+    return e == NULL ? 0 : ipset_m_count(e -> blocklist);
+}
+
+uint32_t engine_block_expire(Engine *e){
+    return e == NULL ? 0 : ipset_m_expire(e -> blocklist, realtime_ms());
+}
+
+int engine_block_snapshot(Engine *e, struct IpBlockInfo **out, uint32_t *n){
+    if (e == NULL) return _fail("engine_block_snapshot : engine NULL");
+    if (ipset_m_snapshot(e -> blocklist, out, n) != 0) return _fail("mémoire insuffisante (liste des IP bloquées)");
+    return 0;
+}
+
+void engine_block_snapshot_free(struct IpBlockInfo *list){
+    ipset_m_snapshot_free(list);
+}
+
+int engine_rules_set_block_ttl(Engine *e, uint64_t ttl_ms){
+    if (e == NULL) return _fail("engine_rules_set_block_ttl : engine NULL");
+    rules_set_block_ttl(&e -> rules, ttl_ms);
+    return 0;
+}
+
+uint64_t engine_rules_get_block_ttl(Engine *e){
+    return e == NULL ? 0 : rules_get_block_ttl(&e -> rules);
 }
