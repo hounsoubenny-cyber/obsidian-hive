@@ -81,7 +81,9 @@ FlowRuleResult rule_flood(const FlowData *data, const struct PortMap *ports, con
 }
 
 // Ordre : les plus bon marché et les plus sûres d'abord
-static const FlowRuleFn RULES[] = { rule_null_scan, rule_xmas_scan, rule_fin_scan, rule_port_scan, rule_flood };
+static const FlowRuleFn RULES[] = { 
+    rule_null_scan, rule_xmas_scan, rule_fin_scan, rule_port_scan, rule_flood
+ };
 
 FlowRuleResult rules_check_all(const FlowData *data, const struct PortMap *ports, const struct RulesConfig *cfg){
     FlowRuleResult limit = _no_opinion();

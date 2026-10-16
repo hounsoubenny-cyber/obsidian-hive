@@ -27,7 +27,7 @@ FEATURES_NAME = get_features_names()
 PORT = 8000
 """int: Port d'écoute par défaut pour l'API FastAPI."""
 
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 """str: Hôte d'écoute par défaut ('0.0.0.0' pour toutes les interfaces)."""
 
 REQUEST = 30

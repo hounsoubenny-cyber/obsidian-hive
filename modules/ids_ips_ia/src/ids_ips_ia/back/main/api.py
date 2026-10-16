@@ -175,7 +175,10 @@ async def catch_all(full_path: str):
     excluded_prefixes = ["api/", "docs", "redoc", "openapi.json"]
     if any(full_path.startswith(prefix) for prefix in excluded_prefixes):
         raise HTTPException(404, detail="Route non trouvée")
-
+    
+    if full_path.startswith("..") or "\x00" in full_path or os.path.isabs(full_path):
+        raise HTTPException(status_code=404, detail="Introuvable")
+        
     if full_path.startswith("static/"):
         return FileResponse(os.path.join(STATICDIR, full_path))
 

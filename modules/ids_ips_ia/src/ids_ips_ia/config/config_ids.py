@@ -89,6 +89,21 @@ BUFFER_SIZE = int(CAPTURE_CONFIG.get("BUFFER_SIZE", "64")) * 1024 * 1024
 # Débloquer avec sudo sysctl -w net.core.rmem_max=wanted * 1024 * 1024
 SRC_IGNORED_IP = CAPTURE_CONFIG.get("SRC_IGNORED_IP", [])
 DST_IGNORED_IP = CAPTURE_CONFIG.get("DST_IGNORED_IP", [])
+if CAPTURE_CONFIG.get("IGNORE_LOCAL", False):
+    import socket
+    from ids_ips_ia.ids_ips_utils.suricata_integration import LocalIPS
+    ips = LocalIPS().get_ips()
+    ips_string = []
+    for ip in ips:
+        try:
+            ip_string = socket.inet_pton(socket.AF_INET if ":" not in ip else socket.AF_INET6, ip.split("/")[0])
+            ips_string.append(ip_string)
+        except:
+            pass
+        
+    SRC_IGNORED_IP.extend(ips_string)
+    DST_IGNORED_IP.extend(ips_string)
+    
 N_TRIAl = GLOBAL_CONFIG.get("N_TRIALS", 10)
 GRAPH = GLOBAL_CONFIG.get("GRAPH", True)
 REQUEST_LIMIT = GLOBAL_CONFIG.get("REQUEST_LIMIT", 30)

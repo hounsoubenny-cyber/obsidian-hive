@@ -140,7 +140,7 @@ class LocalIPS:
             pass
         
         return False
-        
+
     def __contains__(self, ip):
         return self.is_local_ip(ip)
 

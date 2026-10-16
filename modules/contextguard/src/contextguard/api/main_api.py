@@ -145,6 +145,9 @@ async def catch_all(full_path: str):
     print(full_path)
     if any(full_path.startswith(prefix) for prefix in excluded_prefixes):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route non trouvée")
+    
+    if full_path.startswith("..") or "\x00" in full_path or os.path.isabs(full_path):
+        raise HTTPException(status_code=404, detail="Introuvable")
         
     return FileResponse(INDEX_HTML)
  

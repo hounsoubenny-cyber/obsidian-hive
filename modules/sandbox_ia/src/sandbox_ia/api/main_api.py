@@ -10,16 +10,10 @@ import os
 import sys
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.join(__file__, "..", ".."))))
 
-import json
 import uvicorn
 import threading
-import time
-import signal
-import asyncio
 import aiohttp
 import atexit
-import contextlib
-from datetime import datetime
 
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse, FileResponse
@@ -210,6 +204,9 @@ async def catch_all(full_path: str):
     if any(full_path.startswith(p) for p in excluded):
         raise HTTPException(404, detail="Route non trouvée")
     
+    if full_path.startswith("..") or "\x00" in full_path or os.path.isabs(full_path):
+        raise HTTPException(status_code=404, detail="Introuvable")
+        
     if full_path.startswith("static/") or full_path.startswith("build/"):
         return FileResponse(os.path.join(BUILD_DIR, full_path))
     

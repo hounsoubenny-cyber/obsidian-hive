@@ -177,6 +177,7 @@ CLASS_CONFIG = {
         "BUFFER_SIZE": 64,
         "SRC_IGNORED_IP": [],
         "DST_IGNORED_IP": [],
+        "IGNORE_LOCAL": False,
     },
     "GLOBAL_CONFIG" : {
       "model_file": f"model_{date}.pkl",
@@ -193,7 +194,7 @@ CLASS_CONFIG = {
       "verbose": 1,
       "API_CONFIG": {
           "port": 8080,
-          "host": "0.0.0.0"
+          "host": "127.0.0.1"
       },
       "REQUEST_LIMIT": 30,
       "GRAPHS": True,

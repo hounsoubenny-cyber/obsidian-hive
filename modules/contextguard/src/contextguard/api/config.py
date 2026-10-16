@@ -22,7 +22,7 @@ SAFE_CLASSE = "safe"
 NOT_BEFORE = 0.1
 EXP = 60 * 8
 LIMITE = 30
-IP = "0.0.0.0"
+IP = "127.0.0.1"
 PORT = 8000
 USE_ONNX = False
 

@@ -150,8 +150,21 @@ def flow_addresses(rec):
 
 
 # ───── réglages des règles (à chaud) ─────
-RULE_IDS = {"port_scan": 1, "null_scan": 2, "xmas_scan": 3, "fin_scan": 4, "flood": 5}
-RULE_NAMES = {0: "none", 1: "port_scan", 2: "null_scan", 3: "xmas_scan", 4: "fin_scan", 5: "flood"}   # valeur de FlowData.rule_reason
+RULE_IDS = {
+    "port_scan": 1, 
+    "null_scan": 2, 
+    "xmas_scan": 3, 
+    "fin_scan": 4, 
+    "flood": 5
+}
+RULE_NAMES = {
+    0: "none",
+    1: "port_scan",
+    2: "null_scan", 
+    3: "xmas_scan", 
+    4: "fin_scan",
+    5: "flood"
+}   # valeur de FlowData.rule_reason
 
 def _rule_id(rule):
     if isinstance(rule, str):

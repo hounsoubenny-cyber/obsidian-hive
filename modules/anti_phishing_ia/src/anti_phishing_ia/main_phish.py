@@ -2267,6 +2267,9 @@ async def catch_all(full_path: str):
     if any(full_path.startswith(prefix) for prefix in excluded_prefixes):
         raise HTTPException(404, detail="Route non trouvée")
 
+    if full_path.startswith("..") or "\x00" in full_path or os.path.isabs(full_path):
+        raise HTTPException(status_code=404, detail="Introuvable")
+        
     if full_path.startswith("static/"):
         return FileResponse(os.path.join(BUILD_DIR, full_path))
 
@@ -2328,9 +2331,9 @@ async def run(host: str, port: str, app: FastAPI, url: str):
     th, _ = start(app, host, port)
     th.start()
     time.sleep(2)
-
+    
+    result = {"error": []}
     try:
-        result = {"error": []}
         target = f'http://{host}:{port}/api/analyze'
         async with aiohttp.ClientSession() as session:
             DATA["url"] = url
@@ -2360,7 +2363,8 @@ async def run(host: str, port: str, app: FastAPI, url: str):
         input("Fermé ? ")
         stop(th, 2)
         await close_api(target.replace('/analyze', "/close"))
-        return result
+        
+    return result
 
 
 # ============================================================================

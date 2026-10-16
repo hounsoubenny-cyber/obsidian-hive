@@ -7,7 +7,7 @@ Created on Tue May 26 09:05:03 2026
 """
 
 import os
-IP = "0.0.0.0"
+IP = "127.0.0.1"
 PORT = 9000
 API_HOST_PUBLIC = "localhost"  
 API_PORT = 9000

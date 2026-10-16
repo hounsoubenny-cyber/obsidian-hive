@@ -16,7 +16,7 @@ from simulateur_attaque_ia.configs.utils import _get_api_keys, _get_llm_env
 NOT_BEFORE = 0.1
 EXP = 60 * 8
 LIMITE = 30
-IP = "0.0.0.0"
+IP = "127.0.0.1"
 PORT = 8080
 STATIC_DIR = "."
 BUILD_DIR = "."

@@ -165,7 +165,7 @@
     "verbose": 1,
     "API_CONFIG": {
       "port": 8080,
-      "host": "0.0.0.0"
+      "host": "127.0.0.1"
     },
     "REQUEST_LIMIT": 30,
     "GRAPHS": true,

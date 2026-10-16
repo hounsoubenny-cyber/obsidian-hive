@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 15 10:37:13 2026
+
+@author: hounsousamuel
+"""
+
 """test_rules_core_c.py : teste, côté Python, ce qui a été ajouté à core_c.pyx pour les règles :
 rules_set / rules_get (à chaud), noms des règles, FLOW_DTYPE.rule_reason, END_REASONS[6].
 
