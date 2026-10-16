@@ -82,6 +82,26 @@ cdef extern from "../modules_c/engine/engine.h":
     int engine_rules_set_enabled(CEngine *e, int rule, int enabled) nogil
     int engine_rules_set_threshold(CEngine *e, int rule, uint32_t threshold) nogil
     int engine_rules_get(CEngine *e, int rule, int *enabled, uint32_t *threshold) nogil
+    cdef int IPM_SRC_AUTO
+    cdef int IPM_SRC_MANUAL
+    struct IpBlockMeta:
+        uint8_t rule
+        uint8_t source
+        uint64_t blocked_at_ms
+        uint64_t until_ms
+    struct IpBlockInfo:
+        uint8_t v4
+        uint8_t ip[16]
+        IpBlockMeta meta
+    int engine_block_add(CEngine *e, const char *ip, uint64_t ttl_ms) nogil
+    int engine_block_remove(CEngine *e, const char *ip) nogil
+    int engine_block_is_blocked(CEngine *e, const char *ip) nogil
+    uint32_t engine_block_count(CEngine *e) nogil
+    uint32_t engine_block_expire(CEngine *e) nogil
+    int engine_block_snapshot(CEngine *e, IpBlockInfo **out, uint32_t *n) nogil
+    void engine_block_snapshot_free(IpBlockInfo *list) nogil
+    int engine_rules_set_block_ttl(CEngine *e, uint64_t ttl_ms) nogil
+    uint64_t engine_rules_get_block_ttl(CEngine *e) nogil
 
 
 class EngineError(RuntimeError):
@@ -91,6 +111,7 @@ class EngineError(RuntimeError):
 STATES = {0: "libre", 1: "en cours", 2: "arrêtée", 3: "en erreur"}
 END_REASONS = {1: "inactif", 2: "tcp-fini", 3: "chassé", 4: "arrêt", 5: "durée-max", 6: "bloqué"}
 IGNORE = {"src": IGNORE_SRC, "dst": IGNORE_DST, "both": IGNORE_BOTH}
+BLOCK_SOURCES = {1: "auto", 2: "manual"}      # IpBlockMeta.source : bloquée par une règle, ou par un admin
 
 # Un flux dans le ring = 176 octets. Les positions viennent de sizeof / offsetof mesurés sur flow.h et flow_table.h.
 # Pour une clé, un en-tête v4 ou v6 : on garde les octets bruts (key, hdr) ; flow_addresses() les décode.
@@ -387,6 +408,81 @@ cdef class Engine:
         if engine_rules_get(self._e, r, &en, &th) != 0:
             raise ValueError(_rules_last_error())
         return {"enabled": bool(en), "threshold": int(th) if th != 0 else None}
+
+    # ───── la liste noire partagée (toutes les captures + Python) ─────
+
+    def block(self, ip, ttl_ms=0):
+        """Bloque une IP à la main : toutes les captures l'ignorent (source ET destination) dès le paquet suivant.
+        ttl_ms : durée en millisecondes, 0 = pour toujours. Déjà bloquée : ses métadonnées sont remplacées.
+        Ne touche PAS à nft : bloque aussi côté pare-feu, avec la MÊME durée (un set nft accepte « timeout »)."""
+        self._alive()
+        ip = str(ipaddress.ip_address(ip))
+        if int(ttl_ms) < 0:
+            raise ValueError("ttl_ms doit être >= 0 (0 = pour toujours)")
+        cdef bytes b = _b(ip)
+        _check(engine_block_add(self._e, b, <uint64_t>int(ttl_ms)))
+
+    def unblock(self, ip):
+        """Débloque une IP (bloquée à la main ou par une règle). EngineError si elle ne l'était pas."""
+        self._alive()
+        ip = str(ipaddress.ip_address(ip))
+        cdef bytes b = _b(ip)
+        _check(engine_block_remove(self._e, b))
+
+    def is_blocked(self, ip):
+        self._alive()
+        cdef bytes b = _b(str(ipaddress.ip_address(ip)))
+        return engine_block_is_blocked(self._e, b) == 1
+
+    def blocked_count(self):
+        self._alive()
+        return engine_block_count(self._e)
+
+    def expire(self):
+        """Débloque les IP dont la durée est passée ; rend leur nombre. À appeler régulièrement (par exemple chaque seconde)."""
+        self._alive()
+        return engine_block_expire(self._e)
+
+    def blocked_list(self):
+        """Toutes les IP bloquées, les plus récemment bloquées d'abord : une liste de dicts
+        {"ip", "version" (4 ou 6), "rule" (nom), "rule_id", "source" ("auto" ou "manual"), "blocked_at_ms", "until_ms" (None = pour toujours)}.
+        Les dates sont en millisecondes depuis 1970 : int(time.time() * 1000)."""
+        self._alive()
+        cdef IpBlockInfo *lst = NULL
+        cdef uint32_t n = 0
+        cdef uint32_t i
+        cdef IpBlockInfo *it
+        _check(engine_block_snapshot(self._e, &lst, &n))
+        out = []
+        try:
+            for i in range(n):
+                it = &lst[i]
+                if it.v4:
+                    ip = str(ipaddress.IPv4Address((<char *>it.ip)[:4]))
+                else:
+                    ip = str(ipaddress.IPv6Address((<char *>it.ip)[:16]))
+                out.append({
+                    "ip": ip, "version": 4 if it.v4 else 6,
+                    "rule": RULE_NAMES.get(it.meta.rule, str(it.meta.rule)), "rule_id": it.meta.rule,
+                    "source": BLOCK_SOURCES.get(it.meta.source, str(it.meta.source)),
+                    "blocked_at_ms": it.meta.blocked_at_ms,
+                    "until_ms": it.meta.until_ms if it.meta.until_ms != 0 else None,
+                })
+        finally:
+            engine_block_snapshot_free(lst)
+        return out
+
+    def rules_set_block_ttl(self, ttl_ms):
+        """Durée des blocages décidés par une RÈGLE, en millisecondes, à chaud. 0 = pour toujours.
+        Garde la même durée côté nft : lis-la avec rules_block_ttl()."""
+        self._alive()
+        if int(ttl_ms) < 0:
+            raise ValueError("ttl_ms doit être >= 0 (0 = pour toujours)")
+        _check(engine_rules_set_block_ttl(self._e, <uint64_t>int(ttl_ms)))
+
+    def rules_block_ttl(self):
+        self._alive()
+        return engine_rules_get_block_ttl(self._e)
 
 
 cdef dict _stats_dict(EngineStats *st):

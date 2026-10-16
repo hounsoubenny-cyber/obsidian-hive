@@ -23,6 +23,7 @@ C = os.path.abspath(os.path.join(DIR, "..", "modules_c"))
 C_DIR_FILES = [
     ('engine', 'engine.c'),
     ('ipset', 'ipset.c'),
+    ('ipset_m', 'ipset_m.c'),
     ('mmap_ring', 'mmap_ring.c'),
     ('capture', 'capture.c'),
     ('capture', 'bpf_filter.c'),

@@ -147,6 +147,138 @@ def test_stats_blocked_flows():
         assert "blocked_flows" in s and s["blocked_flows"] == 0
 
 
+# ───────────── la liste noire partagée : block / unblock / is_blocked / blocked_list / expire ─────────────
+
+def test_block_manuel_et_liste():
+    e = new_engine()
+    assert e.blocked_count() == 0 and e.blocked_list() == []
+    assert not e.is_blocked("10.0.0.1")
+    e.block("10.0.0.1")
+    e.block("2001:db8::1", ttl_ms=60000)
+    assert e.is_blocked("10.0.0.1") and e.is_blocked("2001:0db8:0:0:0:0:0:1"), "même IPv6 écrite autrement"
+    assert e.blocked_count() == 2
+    lst = e.blocked_list()
+    by_ip = {d["ip"]: d for d in lst}
+    d4, d6 = by_ip["10.0.0.1"], by_ip["2001:db8::1"]
+    assert d4["version"] == 4 and d4["source"] == "manual" and d4["rule"] == "none" and d4["rule_id"] == 0
+    assert d4["until_ms"] is None and d4["blocked_at_ms"] > 0, "pour toujours : until_ms vaut None"
+    assert d6["version"] == 6 and d6["until_ms"] == d6["blocked_at_ms"] + 60000, "expiration = date + 60 s"
+    assert lst[0]["blocked_at_ms"] >= lst[1]["blocked_at_ms"], "les plus récentes d'abord"
+    e.unblock("10.0.0.1")
+    assert not e.is_blocked("10.0.0.1") and e.blocked_count() == 1
+
+
+def test_block_erreurs():
+    e = new_engine()
+    assert _leve(core.EngineError, e.unblock, "10.0.0.1"), "débloquer une IP qui ne l'est pas"
+    assert _leve(ValueError, e.block, "pas une ip")
+    assert _leve(ValueError, e.unblock, "pas une ip")
+    assert _leve(ValueError, e.is_blocked, "pas une ip")
+    assert _leve(ValueError, e.block, "10.0.0.1", ttl_ms=-1)
+    e.block("10.0.0.1")
+    e.block("10.0.0.1", ttl_ms=5000)                         # déjà bloquée : métadonnées remplacées, toujours 1 IP
+    assert e.blocked_count() == 1
+    assert e.blocked_list()[0]["until_ms"] is not None
+
+
+def test_block_expiration():
+    import time
+    e = new_engine()
+    e.block("10.0.0.9", ttl_ms=1)
+    e.block("10.0.0.8")                                      # pour toujours
+    time.sleep(0.02)
+    assert e.expire() == 1, "une seule a expiré"
+    assert not e.is_blocked("10.0.0.9") and e.is_blocked("10.0.0.8")
+    assert e.expire() == 0
+
+
+def test_duree_des_blocages_automatiques():
+    e = new_engine()
+    assert e.rules_block_ttl() == 0, "0 = pour toujours, par défaut"
+    e.rules_set_block_ttl(5000)
+    assert e.rules_block_ttl() == 5000
+    assert _leve(ValueError, e.rules_set_block_ttl, -1)
+    e.rules_set_block_ttl(0)
+    assert e.rules_block_ttl() == 0
+
+
+def test_block_threads_en_parallele():
+    e = new_engine()
+    erreurs = []
+
+    def travail(t):
+        try:
+            for i in range(200):
+                ip = "10.%d.%d.%d" % (t, i // 256, i % 256)
+                e.block(ip)
+                assert e.is_blocked(ip)
+                if i % 50 == 0:
+                    for d in e.blocked_list():            # une photo pendant que les autres écrivent
+                        assert d["version"] == 4
+        except Exception as ex:                           # noqa
+            erreurs.append(repr(ex))
+
+    ths = [threading.Thread(target=travail, args=(t,)) for t in range(4)]
+    for t in ths:
+        t.start()
+    for t in ths:
+        t.join()
+    assert not erreurs, erreurs[:2]
+    assert e.blocked_count() == 800
+    assert len(e.blocked_list()) == 800
+    for t in range(4):
+        for i in range(200):
+            e.unblock("10.%d.%d.%d" % (t, i // 256, i % 256))
+    assert e.blocked_count() == 0
+
+
+def _peut_capturer():
+    import socket
+    try:
+        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, 0)
+        s.close()
+        return True
+    except (PermissionError, OSError, AttributeError):
+        return False
+
+
+def test_scan_reel_blocage_automatique_et_deblocage():
+    """Un vrai scan de ports sur lo : la règle bloque, le flux part dans le ring, l'admin débloque. Il faut root."""
+    if not _peut_capturer():
+        print("      (ignoré : pas root / pas CAP_NET_RAW)")
+        return
+    import os, socket, time
+    e = new_engine()
+    e.start("lo", ring_prefix="pt%d" % (os.getpid() % 100000), use_mmsg=False, idle_ms=300, max_ms=0,
+            ring_size=1 << 20, table_size=1024, buffer_mb=4, poll_ms=50)
+    e.rules_set_block_ttl(60000)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    for port in range(41000, 41030):                         # 30 ports différents depuis UN socket : un scan
+        s.sendto(b"x", ("127.0.0.1", port))
+    s.close()
+    fin = time.time() + 3
+    while time.time() < fin and not e.is_blocked("127.0.0.1"):
+        time.sleep(0.05)
+    assert e.is_blocked("127.0.0.1"), "la règle port_scan a bloqué l'IP toute seule"
+    lst = e.blocked_list()
+    assert len(lst) == 1
+    d = lst[0]
+    assert d["ip"] == "127.0.0.1" and d["rule"] == "port_scan" and d["source"] == "auto"
+    assert d["until_ms"] == d["blocked_at_ms"] + 60000, "la durée réglée à chaud est appliquée"
+    trouve, fin = False, time.time() + 2
+    while time.time() < fin and not trouve:                  # le flux bloqué est parti tout de suite dans le ring
+        for r in e.read("lo"):
+            if r["reason"] == 6 and r["rule_reason"] == 1 and r["verdict"] != 0:
+                trouve = True
+        if not trouve:
+            time.sleep(0.05)
+    assert trouve, "le ring contient un flux : reason 6 (bloqué), rule_reason 1 (port_scan), un verdict"
+    e.unblock("127.0.0.1")
+    assert not e.is_blocked("127.0.0.1") and e.blocked_list() == []
+    e.stop("lo")
+    e.release("lo")
+
+
 if __name__ == "__main__":
     echecs = 0
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
