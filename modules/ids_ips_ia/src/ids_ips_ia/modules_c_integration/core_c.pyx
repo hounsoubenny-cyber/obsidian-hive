@@ -40,6 +40,7 @@ cdef extern from "../modules_c/engine/engine.h":
         uint32_t batch_size
         uint32_t max_turns
         int poll_ms
+        
     struct EngineStats:
         char ifname[32]
         char ring_name[64]
@@ -494,5 +495,6 @@ cdef dict _stats_dict(EngineStats *st):
         "flows_exported": st.flows_exported, "flows_lost": st.flows_lost, "flows_evicted": st.flows_evicted,
         "kernel_recv": st.kernel_recv, "kernel_drop": st.kernel_drop, "active_flows": st.active_flows,
         "ring_size": st.ring_size, "ring_used": st.ring_used, "ring_free": st.ring_free,
-        "ring_n_read": st.ring_n_read, "ring_n_write": st.ring_n_write, "ring_dropped": st.ring_dropped, "blocked_flows": st.blocked_flows,
+        "ring_n_read": st.ring_n_read, "ring_n_write": st.ring_n_write,
+        "ring_dropped": st.ring_dropped, "blocked_flows": st.blocked_flows,
     }

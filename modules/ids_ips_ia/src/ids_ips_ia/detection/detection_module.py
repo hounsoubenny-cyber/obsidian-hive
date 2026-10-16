@@ -1027,10 +1027,10 @@ class AnomalyDetector:
                                 scores_deque.append(scores)
                                 self.graph.add_data3(scores)
 
-                            source = "Combined" if pkt_pred == -1 and alert else "Snort" if alert else "IA"
+                            source = "Combined" if pkt_pred == -1 and alert else "Suricata" if alert else "IA"
                             if verbose:
                                 scr_ip_resolution = await resolve_hostname(alert['src_ip'])
-                                logger.info(f"[SNORT+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
+                                logger.info(f"[SURICATA+MODELE] Anomalie confirmée pour {alert['message']} (IP: {alert['src_ip']}) --> ({scr_ip_resolution})")
 
                             self.log_anomaly(pkt_fea, pkt_combined_pred, source=source)
                             self._add_alert(
