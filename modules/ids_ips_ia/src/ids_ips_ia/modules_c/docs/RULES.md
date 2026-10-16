@@ -53,7 +53,7 @@ Selon la norme TCP, un port fermé répond `RST` et un port ouvert se tait : le 
 ## Que se passe-t-il sur un `BLOCK` ?
 
 1. Le verdict et `rule_reason` sont écrits dans le flux.
-2. L'IP initiatrice entre dans la liste noire (`ft_block_ip`).
+2. L'IP initiatrice entre dans la **liste noire partagée** (`ipset_m`) : la règle comme raison, l'heure du paquet comme date, et une expiration si la durée des blocages est réglée (`block_ttl`).
 3. Sa `PortMap` est remise à zéro (`portmap_reset`) : si l'admin la débloque, elle repart de 0 au lieu d'être re-bloquée au paquet suivant.
 4. Le flux est envoyé au sink avec `END_BLOCKED`, puis retiré (`_ft_remove`).
 5. Ensuite, tout paquet dont la **source ou la destination** est bloquée est ignoré (les réponses de la victime ne fabriquent pas de faux flux).
@@ -74,11 +74,29 @@ eng.rules_get()          # {nom: {"enabled": bool, "threshold": int | None}}
 
 Désactiver une règle ne débloque pas les IP qu'elle a déjà bloquées.
 
+## La liste noire partagée (`ipset_m`)
+
+Une seule liste pour **toutes les captures et pour Python**. Comme `AF_PACKET` voit les paquets **avant** nft, une IP bloquée par nft continue d'arriver : c'est cette liste qui dit à la capture de l'**ignorer** (source ET destination).
+
+```python
+eng.block("10.0.0.1", ttl_ms=600_000)   # manuel ; ttl_ms=0 : pour toujours
+eng.unblock("10.0.0.1")                 # débloquer côté C suffit : la table repart de zéro
+eng.is_blocked("10.0.0.1")
+eng.blocked_list()                      # [{"ip", "version", "rule", "source", "blocked_at_ms", "until_ms"}, ...]
+eng.expire()                            # débloque celles dont la durée est passée : à appeler régulièrement
+eng.rules_set_block_ttl(600_000)        # durée des blocages décidés par une RÈGLE (à chaud, 0 = pour toujours)
+```
+
+- Une règle qui bloque écrit elle-même dans la liste : la raison (`rule`), `source = "auto"`, la date et l'expiration.
+- Débloquer : un seul appel `unblock` côté C, puis nft. Le compteur de ports de l'IP a été remis à zéro au blocage, elle n'est pas re-bloquée tout de suite.
+- Les lectures des captures se font sans verrou ; les écritures (règles, Python) passent par un mutex. Détails : `ipset_m/ipset_m.h`.
+
 ## Limites à connaître
 
 - **Spoofing** : un seul paquet suffit pour bloquer. Quelqu'un peut forger l'adresse source d'une IP légitime pour la faire bloquer. Les listes « ignorer » (`ign_src` / `ign_dst`) passent **avant** les règles : elles servent de liste blanche (passerelle, DNS...).
 - Les seuils par défaut sont des estimations : à régler sur le trafic réel.
-- La liste noire est encore un `Dict` interne à la table : Python ne peut pas la lire ni la modifier.
+- Un blocage « pour toujours » (`block_ttl` à 0) ne s'efface que par un `unblock`. Un blocage temporaire expire quand `expire()` est appelée : garde **la même durée dans nft** (un set nft accepte `timeout`).
+- Pas encore d'escalade : une IP bloquée est ignorée, donc on ne la voit plus récidiver. Une IP débloquée repart de zéro.
 
 ## Ajouter une règle
 
